@@ -1,0 +1,12 @@
+[package]
+name = "libquickjs"
+version = "0.1.0"
+authors = ["Saúl Cabrera <saulecabrera@gmail.com>"]
+edition = "2018"
+build = "build.rs"
+
+[dependencies]
+libc = "0.2"
+
+[build-dependencies]
+cc = "1.0"
