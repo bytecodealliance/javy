@@ -1,9 +1,4 @@
 fn main() {
-    let target = std::env::var("TARGET");
-    if target.unwrap() == "wasm32-wasi" {
-        std::env::set_var("CFLAGS", "--sysroot /opt/wasi-sysroot -c");
-    }
-
     cc::Build::new()
         .files(&[
                "quickjs/cutils.c",
@@ -18,6 +13,7 @@ fn main() {
             "\"2021-03-27\"",
             )
         .define("CONFIG_BIGNUM", None)
+        .cargo_metadata(true)
         // The below flags are used by the official Makefile.
         .flag_if_supported("-Wchar-subscripts")
         .flag_if_supported("-Wno-array-bounds")
@@ -34,8 +30,6 @@ fn main() {
         .flag_if_supported("-Wno-implicit-fallthrough")
         .flag_if_supported("-Wno-enum-conversion")
         .opt_level(2)
-        // use a WASM-enabled archiver
-        .archiver("/usr/local/opt/llvm/bin/llvm-ar")
         .compile("quickjs");
 
 }

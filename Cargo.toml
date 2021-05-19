@@ -1,19 +1,6 @@
-[package]
-name = "javy"
-version = "0.1.0"
-authors = ["Saúl Cabrera <saulecabrera@gmail.com>"]
-edition = "2018"
-
-[lib]
-crate-type = ["cdylib"]
-
-[dependencies]
-libquickjs = {path = "./libquickjs"}
-
 [workspace]
 members = [
-  "libquickjs",
+  "quickjs-sys",
+  "javy"
 ]
 
-[features]
-wizer = []

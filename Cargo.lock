@@ -10,19 +10,12 @@ checksum = "e3c69b077ad434294d3ce9f1f6143a2a4b89a8a2d54ef813d85003a4fd1137fd"
 name = "javy"
 version = "0.1.0"
 dependencies = [
- "libquickjs",
+ "quickjs-sys",
 ]
 
 [[package]]
-name = "libc"
-version = "0.2.93"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9385f66bf6105b241aa65a61cb923ef20efc665cb9f9bb50ac2f0c4b7f378d41"
-
-[[package]]
-name = "libquickjs"
+name = "quickjs-sys"
 version = "0.1.0"
 dependencies = [
  "cc",
- "libc",
 ]
