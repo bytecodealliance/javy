@@ -10,5 +10,17 @@ crate-type = ["cdylib"]
 [dependencies]
 quickjs-sys = { path = "../quickjs-sys" }
 
+[dev-dependencies]
+criterion = "0.3"
+wasmtime = "0.26.0"
+wasmtime-wasi = "0.26.0"
+
+[[bench]]
+name = "startup"
+harness = false
+
 [features]
 wizer = []
+
+[profile.release]
+lto = true

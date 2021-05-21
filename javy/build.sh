@@ -3,18 +3,23 @@ export CC_wasm32_wasi="/opt/wasi-sdk/bin/clang --sysroot=/opt/wasi-sdk/share/was
 export AR_wasm32_wasi="/opt/wasi-sdk/bin/ar"
 export CFLAGS="--sysroot=/opt/wasi-sdk/share/wasi-sysroot"
 
-cargo build --target=wasm32-wasi --release --verbose
 
-if [  -f javy.wat ]; then
-  rm javy.wat
+if [ -f javy/benches/javy.control.wasm ]; then
+  rm javy/benches/javy.control.wasm
 fi
 
-if [ -f javy.wasm ]; then
-  rm javy.wasm
+if [ -f javy/benches/javy.wizer.wasm ]; then
+  rm javy/benches/javy.wizer.wasm
 fi
+
+cargo build --target=wasm32-wasi --release
 
 if [ -f target/wasm32-wasi/release/javy.wasm ]; then
-  cp target/wasm32-wasi/release/javy.wasm .
-  wasm2wat javy.wasm -o javy.wat
+  cp target/wasm32-wasi/release/javy.wasm javy/benches/javy.control.wasm
 fi
 
+cargo build --target=wasm32-wasi --release --features wizer
+
+if [ -f target/wasm32-wasi/release/javy.wasm ]; then
+  wizer --allow-wasi target/wasm32-wasi/release/javy.wasm -o javy/benches/javy.wizer.wasm
+fi

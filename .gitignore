@@ -1,3 +1,12 @@
 /target
 javy.wat
 javy.wasm
+
+.obj/
+*.a
+*.o
+
+qjsc
+qjs
+qjscalc
+
