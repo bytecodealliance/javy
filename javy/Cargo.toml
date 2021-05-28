@@ -16,7 +16,7 @@ wasmtime = "0.26.0"
 wasmtime-wasi = "0.26.0"
 
 [[bench]]
-name = "startup"
+name = "qjs_wasmtime"
 harness = false
 
 [features]

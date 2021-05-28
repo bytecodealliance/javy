@@ -22,4 +22,6 @@ cargo build --target=wasm32-wasi --release --features wizer
 
 if [ -f target/wasm32-wasi/release/javy.wasm ]; then
   wizer --allow-wasi target/wasm32-wasi/release/javy.wasm -o javy/benches/javy.wizer.wasm
+  wasm-strip javy/benches/javy.wizer.wasm
+  $HOME/src/github.com/WebAssembly/binaryen/bin/wasm-opt -O3 -o javy/benches/javy.opt.wizer.wasm javy/benches/javy.wizer.wasm
 fi

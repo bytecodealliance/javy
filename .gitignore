@@ -2,6 +2,8 @@
 javy.wat
 javy.wasm
 
+.DS_Store
+
 .obj/
 *.a
 *.o
@@ -9,4 +11,4 @@ javy.wasm
 qjsc
 qjs
 qjscalc
-
+test_bindings.rs
