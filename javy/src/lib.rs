@@ -25,7 +25,7 @@ pub extern "C" fn init() {
         );
 
         let o = q::JS_GetGlobalObject(ctx);
-        let f = q::JS_GetPropertyStr(ctx, o, CStr::from_bytes_with_nul("fib\0".as_bytes()).unwrap().as_ptr());
+        let f = q::JS_GetPropertyStr(ctx, o, CStr::from_bytes_with_nul("main\0".as_bytes()).unwrap().as_ptr());
         FN = Some(f);
     }
 }
@@ -39,8 +39,14 @@ pub extern "C" fn run() -> i32 {
         let ctx = CTX.unwrap();
         let f = FN.unwrap();
         let o = q::JS_GetGlobalObject(ctx);
-        let args = [5 as u64];
-        let result = q::JS_Call(ctx, f, o, 1, args.as_ptr() as *mut u64);
+        let encoded = rmp_serde::to_vec(&10).unwrap();
+        let args = q::JS_NewArray(ctx);
+
+        for (idx, value) in encoded.into_iter().enumerate() {
+            q::JS_DefinePropertyValueUint32(ctx, args, idx as u32, value as u64, q::JS_PROP_C_W_E as i32);
+        }
+
+        let result = q::JS_Call(ctx, f, o, 1 as i32, [args].as_ptr() as *mut u64);
 
         let tag = result >> 32;
         if tag == q::JS_TAG_INT as u64 {

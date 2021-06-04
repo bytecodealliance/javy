@@ -9,6 +9,9 @@ crate-type = ["cdylib"]
 
 [dependencies]
 quickjs-sys = { path = "../quickjs-sys" }
+rmp = "^0.8"
+rmp-serde = "^0.15"
+serde = { version = "1.0.123", features = ["derive"] }
 
 [dev-dependencies]
 criterion = "0.3"
