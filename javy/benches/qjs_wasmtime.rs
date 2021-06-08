@@ -37,7 +37,6 @@ fn exec(linker: &Linker, module: &Module) {
     let run = instance.get_func("run").unwrap();
     let result = run.call(&[]).unwrap();
     assert_eq!(result.len(), 1);
-    assert_eq!(result[0].i32(), Some(8));
 }
 
 
