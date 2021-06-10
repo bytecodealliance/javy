@@ -1,56 +1,26 @@
 use quickjs_sys as q;
-use std::ffi::CString;
+
+mod context;
+mod sample;
+
+use context::*;
 
 static mut JS_CONTEXT: Option<Context> = None;
-static mut ENTRYPOINT: Option<q::JSValue> = None;
-
-#[derive(Debug, Copy, Clone)]
-struct Context {
-    raw: *mut q::JSContext,
-    rt: *mut q::JSRuntime,
-}
-
-impl Context {
-    fn new() -> Option<Self> {
-        let rt = unsafe { q::JS_NewRuntime() };
-        if rt.is_null() {
-            return None;
-        }
-
-        let context = unsafe { q::JS_NewContext(rt) };
-        if context.is_null() {
-            // Free the runtime
-            return None;
-        }
-
-        Some(Self {
-            raw: context,
-            rt
-        })
-    }
-}
+static mut ENTRYPOINT: Option<(q::JSValue, q::JSValue)> = None;
 
 #[export_name = "wizer.initialize"]
 pub extern "C" fn init() {
     let bytes = include_bytes!("index.js");
-    let code = make_cstring(bytes.to_vec());
-
     unsafe {
         JS_CONTEXT = Some(Context::new().unwrap());
         let context = JS_CONTEXT.unwrap();
 
-        q::JS_Eval(
-            context.raw,
-            code.as_ptr(),
-            (bytes.len() - 1) as _,
-            make_cstring("script").as_ptr(),
-            q::JS_EVAL_TYPE_GLOBAL as i32
-        );
+        context.eval(bytes, "script");
+        let global = context.global();
+        let script = context.get_property("Shopify", global);
+        let main = context.get_property("main", script);
 
-        let global = q::JS_GetGlobalObject(context.raw);
-        let shopifyscript = q::JS_GetPropertyStr(context.raw, global, make_cstring("Shopify").as_ptr());
-        let main = q::JS_GetPropertyStr(context.raw, shopifyscript, make_cstring("main").as_ptr());
-        ENTRYPOINT = Some(main);
+        ENTRYPOINT = Some((script, main));
     }
 
 }
@@ -62,53 +32,30 @@ pub extern "C" fn run() -> i32 {
 
     unsafe {
         let context = JS_CONTEXT.unwrap();
-        let main = ENTRYPOINT.unwrap();
+        let main_pair = ENTRYPOINT.unwrap();
 
-        let global = q::JS_GetGlobalObject(context.raw);
+        let value: rmpv::Value = rmp_serde::from_slice(sample::DATA).unwrap();
+        let json = serde_json::to_string(&value).unwrap();
+        let arg = context.serialize_string(&json);
 
-        let encoded = &[131,175,101,120,116,101,110,115,105,111,110,95,112,111,105,110,116,175,112,97,121,109,101,110,116,95,109,101,116,104,111,100,115,165,105,110,112,117,116,130,177,112,117,114,99,104,97,115,101,95,112,114,111,112,111,115,97,108,132,177,109,101,114,99,104,97,110,100,105,115,101,95,108,105,110,101,115,145,134,162,105,100,161,48,167,118,97,114,105,97,110,116,130,162,105,100,1,167,112,114,111,100,117,99,116,132,162,105,100,2,165,116,105,116,108,101,167,111,114,97,110,103,101,115,164,116,97,103,115,146,164,116,97,103,65,164,116,97,103,66,169,103,105,102,116,95,99,97,114,100,195,168,113,117,97,110,116,105,116,121,4,165,116,105,116,108,101,167,111,114,97,110,103,101,115,170,112,114,111,112,101,114,116,105,101,115,146,130,163,107,101,121,162,107,49,165,118,97,108,117,101,162,118,49,130,163,107,101,121,162,107,50,165,118,97,108,117,101,162,118,50,165,112,114,105,99,101,130,168,115,117,98,117,110,105,116,115,205,3,232,168,99,117,114,114,101,110,99,121,163,67,65,68,174,100,101,108,105,118,101,114,121,95,108,105,110,101,115,145,132,171,100,101,115,116,105,110,97,116,105,111,110,140,170,102,105,114,115,116,95,110,97,109,101,168,79,114,100,105,110,97,114,121,169,108,97,115,116,95,110,97,109,101,163,74,111,101,167,99,111,109,112,97,110,121,167,83,104,111,112,105,102,121,168,97,100,100,114,101,115,115,49,175,49,50,51,32,70,97,107,101,32,83,116,114,101,101,116,168,97,100,100,114,101,115,115,50,160,168,97,100,100,114,101,115,115,51,160,165,112,104,111,110,101,170,49,49,49,49,49,49,49,49,49,49,164,99,105,116,121,168,87,97,116,101,114,108,111,111,163,122,105,112,166,78,50,76,48,66,54,173,112,114,111,118,105,110,99,101,95,99,111,100,101,162,79,78,172,99,111,117,110,116,114,121,95,99,111,100,101,162,67,65,166,112,111,95,98,111,120,194,177,109,101,114,99,104,97,110,100,105,115,101,95,108,105,110,101,115,145,134,162,105,100,161,48,167,118,97,114,105,97,110,116,132,162,105,100,1,167,112,114,111,100,117,99,116,134,162,105,100,2,165,116,105,116,108,101,167,111,114,97,110,103,101,115,164,116,97,103,115,146,164,116,97,103,65,164,116,97,103,66,169,103,105,102,116,95,99,97,114,100,195,166,118,101,110,100,111,114,170,76,105,111,110,101,108,32,76,76,67,164,116,121,112,101,167,74,101,119,108,101,114,121,163,115,107,117,170,109,121,45,111,114,97,110,103,101,115,176,99,111,109,112,97,114,101,95,97,116,95,112,114,105,99,101,192,168,113,117,97,110,116,105,116,121,4,165,116,105,116,108,101,167,111,114,97,110,103,101,115,170,112,114,111,112,101,114,116,105,101,115,146,130,163,107,101,121,162,107,49,165,118,97,108,117,101,162,118,49,130,163,107,101,121,162,107,50,165,118,97,108,117,101,162,118,50,165,112,114,105,99,101,130,168,115,117,98,117,110,105,116,115,205,3,232,168,99,117,114,114,101,110,99,121,163,67,65,68,168,115,116,114,97,116,101,103,121,133,162,105,100,1,164,110,97,109,101,164,110,97,109,101,164,99,111,100,101,164,99,111,100,101,166,115,111,117,114,99,101,166,115,111,117,114,99,101,174,112,104,111,110,101,95,114,101,113,117,105,114,101,100,195,166,97,109,111,117,110,116,130,168,115,117,98,117,110,105,116,115,205,3,232,168,99,117,114,114,101,110,99,121,163,67,65,68,166,108,111,99,97,108,101,162,101,110,174,98,117,121,101,114,95,105,100,101,110,116,105,116,121,130,168,99,117,115,116,111,109,101,114,134,162,105,100,1,165,101,109,97,105,108,176,106,111,101,64,111,114,100,105,110,97,114,121,46,99,111,109,164,116,97,103,115,145,163,118,105,112,171,111,114,100,101,114,95,99,111,117,110,116,3,171,116,111,116,97,108,95,115,112,101,110,116,130,168,115,117,98,117,110,105,116,115,205,3,232,168,99,117,114,114,101,110,99,121,163,67,65,68,177,97,99,99,101,112,116,115,95,109,97,114,107,101,116,105,110,103,195,165,101,109,97,105,108,176,106,111,101,64,111,114,100,105,110,97,114,121,46,99,111,109,175,112,97,121,109,101,110,116,95,109,101,116,104,111,100,115,146,131,162,105,100,206,7,91,205,21,164,110,97,109,101,176,83,104,111,112,105,102,121,32,112,97,121,109,101,110,116,115,165,99,97,114,100,115,147,164,86,105,115,97,170,77,97,115,116,101,114,99,97,114,100,168,68,105,115,99,111,118,101,114,131,162,105,100,206,58,222,104,177,164,110,97,109,101,166,80,97,121,80,97,108,165,99,97,114,100,115,146,164,86,105,115,97,164,65,109,101,120,173,99,111,110,102,105,103,117,114,97,116,105,111,110,129,167,101,110,116,114,105,101,115,146,130,163,107,101,121,164,110,97,109,101,165,118,97,108,117,101,178,69,120,116,101,110,115,105,111,110,32,68,105,115,99,111,117,110,116,130,163,107,101,121,166,97,109,111,117,110,116,165,118,97,108,117,101,161,49].to_vec();
-        let arg = serialize_byte_array(&context, &encoded);
-        // TODO: Remove hardcoded arg count
-        let result = q::JS_Call(context.raw, main, global, 1 as i32, [arg].as_ptr() as *mut u64);
-        let values = deserialize_byte_array(&context, &result);
+        let result = context.call(main_pair.1, main_pair.0, &[arg]);
 
-        values.len() as i32
+        let tag = result >> 32;
+        if tag == q::JS_TAG_EXCEPTION as u64 {
+            let ex = q::JS_GetException(context.raw);
+            let exception = context.deserialize_string(to_string(context.raw, ex));
+            println!("{:?}", exception);
+        }
+
+        let response: serde_json::Value = serde_json::from_str(&context.deserialize_string(result)).unwrap();
+        let bytes = rmp_serde::to_vec(&response).unwrap();
+
+        return bytes.len() as i32;
     }
 }
 
-fn serialize_byte_array(context: &Context, bytes: &Vec<u8>) -> q::JSValue {
-    let array = unsafe { q::JS_NewArray(context.raw) };
 
-    for (idx, value) in bytes.into_iter().enumerate() {
-        unsafe {
-            q::JS_DefinePropertyValueUint32(context.raw, array, idx as u32, *value as u64, q::JS_PROP_C_W_E as i32)
-        };
-    }
 
-    array
+fn to_string(context: *mut q::JSContext, value: q::JSValue) -> q::JSValue {
+    unsafe { q::JS_ToString(context, value) }
 }
-
-// The deserialization can fail in several ways. Those ways are not handled here
-// for the sake of prototyping.
-// 1. `length` might not exist in the array
-// 2. Index of out bounds
-// 3. Value might not be an integer (needs to be an integer, u8 more specifically)
-
-fn deserialize_byte_array(ctx: &Context, val: &q::JSValue) -> Vec<u8> {
-    // This check will return false for Uint8Array.
-    // TODO: Figure out how to check for Uint8Array
-    // let is_array = unsafe { q::JS_IsArray(ctx.raw, *val) };
-    // assert!(is_array > 0, "Expected array");
-    let len = unsafe { q::JS_GetPropertyStr(ctx.raw, *val, make_cstring("length").as_ptr()) };
-    let mut values = Vec::new();
-    for index in 0..(len as usize) {
-        let raw_value = unsafe { q::JS_GetPropertyUint32(ctx.raw, *val, index as u32) };
-        values.push(raw_value as u8);
-    }
-    values
-}
-
-fn make_cstring(value: impl Into<Vec<u8>>) -> CString {
-    CString::new(value).unwrap()
-}
-
