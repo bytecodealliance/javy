@@ -34,7 +34,7 @@ fn linker(store: &Store) -> Linker {
 
 fn exec(linker: &Linker, module: &Module) {
     let instance = linker.instantiate(&module).unwrap();
-    let run = instance.get_func("run").unwrap();
+    let run = instance.get_func("shopify_main").unwrap();
     let result = run.call(&[]).unwrap();
     assert_eq!(result.len(), 1);
     assert_eq!(result[0].i32(), Some(1179));
@@ -58,14 +58,6 @@ fn quickjs_startup(c: &mut Criterion) {
 
         b.iter(|| exec(&linker, &module))
     });
-
-    // group.bench_function("assemblyscript.optimized", |b| {
-    //     let store = store_from_config(true);
-    //     let linker = linker(&store);
-    //     let module = Module::new(store.engine(), &include_bytes!("as.optimized.wasm")).unwrap();
-
-    //     b.iter(|| exec(&linker, &module));
-    // });
 
     group.finish();
 }

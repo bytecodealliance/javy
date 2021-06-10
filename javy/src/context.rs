@@ -55,10 +55,11 @@ impl Context {
         unsafe { JS_Call(self.raw, fun, from, args.len() as i32, args.as_ptr() as *mut u64) }
     }
 
-    // TODO: Make this more generic, probably put it in a convert mod
+    // TODO: Make the following functions more generic, probably put it in a convert mod
     pub fn serialize_string(&self, val: &str) -> JSValue {
         unsafe { JS_NewStringLen(self.raw, val.as_ptr() as *const c_char, val.len() as _) }
     }
+
 
     pub fn deserialize_string(&self, val: JSValue) -> String {
         let ptr = unsafe { JS_ToCStringLen2(self.raw, std::ptr::null_mut(), val, 0) };

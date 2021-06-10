@@ -2,6 +2,7 @@ use quickjs_sys as q;
 
 mod context;
 mod sample;
+mod engine;
 
 use context::*;
 
@@ -25,7 +26,7 @@ pub extern "C" fn init() {
 
 }
 
-#[export_name = "run"]
+#[export_name = "shopify_main"]
 pub extern "C" fn run() -> i32 {
     #[cfg(not(feature = "wizer"))]
     init();
@@ -33,8 +34,9 @@ pub extern "C" fn run() -> i32 {
     unsafe {
         let context = JS_CONTEXT.unwrap();
         let main_pair = ENTRYPOINT.unwrap();
+        let input_bytes = sample::DATA;//engine::load();
 
-        let value: rmpv::Value = rmp_serde::from_slice(sample::DATA).unwrap();
+        let value: rmpv::Value = rmp_serde::from_slice(&input_bytes).unwrap();
         let json = serde_json::to_string(&value).unwrap();
         let arg = context.serialize_string(&json);
 
@@ -48,9 +50,10 @@ pub extern "C" fn run() -> i32 {
         }
 
         let response: serde_json::Value = serde_json::from_str(&context.deserialize_string(result)).unwrap();
-        let bytes = rmp_serde::to_vec(&response).unwrap();
+        let output_bytes = rmp_serde::to_vec(&response).unwrap();
+        //engine::store(&output_bytes);
 
-        return bytes.len() as i32;
+        output_bytes.len() as i32
     }
 }
 
