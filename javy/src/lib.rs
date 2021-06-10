@@ -1,51 +1,64 @@
 use quickjs_sys as q;
-use std::ffi::{CStr, CString};
 
-static mut CTX: Option<*mut q::JSContext> = None;
-static mut FN: Option<q::JSValue> = None;
+mod context;
+mod sample;
+mod engine;
+
+use context::*;
+
+static mut JS_CONTEXT: Option<Context> = None;
+static mut ENTRYPOINT: Option<(q::JSValue, q::JSValue)> = None;
 
 #[export_name = "wizer.initialize"]
 pub extern "C" fn init() {
+    let bytes = include_bytes!("index.js");
     unsafe {
-        let rt = q::JS_NewRuntime();
-        CTX = Some(q::JS_NewContext(rt));
+        JS_CONTEXT = Some(Context::new().unwrap());
+        let context = JS_CONTEXT.unwrap();
 
-        let bytes = include_bytes!("fib.js");
-        let cstr = CString::new(bytes.to_vec()).unwrap();
-        let code = cstr.as_c_str();
-        let name = CStr::from_bytes_with_nul("script\0".as_bytes()).unwrap();
-        let ctx = CTX.unwrap();
+        context.eval(bytes, "script");
+        let global = context.global();
+        let script = context.get_property("Shopify", global);
+        let main = context.get_property("main", script);
 
-        q::JS_Eval(
-            CTX.unwrap(),
-            code.as_ptr(),
-            (bytes.len() - 1) as _,
-            name.as_ptr(),
-            q::JS_EVAL_TYPE_GLOBAL as i32
-        );
-
-        let o = q::JS_GetGlobalObject(ctx);
-        let f = q::JS_GetPropertyStr(ctx, o, CStr::from_bytes_with_nul("fib\0".as_bytes()).unwrap().as_ptr());
-        FN = Some(f);
+        ENTRYPOINT = Some((script, main));
     }
+
 }
 
-#[export_name = "run"]
+#[export_name = "shopify_main"]
 pub extern "C" fn run() -> i32 {
     #[cfg(not(feature = "wizer"))]
     init();
 
     unsafe {
-        let ctx = CTX.unwrap();
-        let f = FN.unwrap();
-        let o = q::JS_GetGlobalObject(ctx);
-        let args = [5 as u64];
-        let result = q::JS_Call(ctx, f, o, 1, args.as_ptr() as *mut u64);
+        let context = JS_CONTEXT.unwrap();
+        let main_pair = ENTRYPOINT.unwrap();
+        let input_bytes = sample::DATA;//engine::load();
+
+        let value: rmpv::Value = rmp_serde::from_slice(&input_bytes).unwrap();
+        let json = serde_json::to_string(&value).unwrap();
+        let arg = context.serialize_string(&json);
+
+        let result = context.call(main_pair.1, main_pair.0, &[arg]);
 
         let tag = result >> 32;
-        if tag == q::JS_TAG_INT as u64 {
-            return result as i32;
+        if tag == q::JS_TAG_EXCEPTION as u64 {
+            let ex = q::JS_GetException(context.raw);
+            let exception = context.deserialize_string(to_string(context.raw, ex));
+            println!("{:?}", exception);
         }
-        return -1;
+
+        let response: serde_json::Value = serde_json::from_str(&context.deserialize_string(result)).unwrap();
+        let output_bytes = rmp_serde::to_vec(&response).unwrap();
+        //engine::store(&output_bytes);
+
+        output_bytes.len() as i32
     }
+}
+
+
+
+fn to_string(context: *mut q::JSContext, value: q::JSValue) -> q::JSValue {
+    unsafe { q::JS_ToString(context, value) }
 }
