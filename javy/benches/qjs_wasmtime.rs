@@ -3,18 +3,10 @@ use wasmtime_wasi::sync::WasiCtxBuilder;
 use wasmtime_wasi::Wasi;
 use wasmtime::*;
 
-fn store_from_config(alter_limits: bool) -> Store {
+fn store_from_config() -> Store {
     let mut config = Config::new();
 
     config.cranelift_opt_level(OptLevel::SpeedAndSize);
-
-    if alter_limits {
-        config
-            .max_instances(1000000)
-            .max_tables(1000000)
-            .max_memories(1000000)
-            .static_memory_maximum_size(0);
-    }
 
     Wasi::add_to_config(&mut config);
     Store::new(&Engine::new(&config).unwrap())
@@ -44,17 +36,21 @@ fn exec(linker: &Linker, module: &Module) {
 fn quickjs_startup(c: &mut Criterion) {
     let mut group = c.benchmark_group("qjs wasmtime");
     group.bench_function("control", |b| {
-        let store = store_from_config(false);
+        let store = store_from_config();
         let linker = linker(&store);
-        let module = Module::new(store.engine(), &include_bytes!("javy.control.wasm")).unwrap();
+        let bytes = &include_bytes!("javy.control.wasm");
+        let compiled = store.engine().precompile_module(*bytes).unwrap();
+        let module = Module::from_binary(store.engine(), &compiled).unwrap();
 
         b.iter(|| exec(&linker, &module))
     });
 
     group.bench_function("wizer", |b| {
-        let store = store_from_config(false);
+        let store = store_from_config();
         let linker = linker(&store);
-        let module = Module::new(store.engine(), &include_bytes!("javy.opt.wizer.wasm")).unwrap();
+        let bytes = &include_bytes!("javy.opt.wizer.wasm");
+        let compiled = store.engine().precompile_module(*bytes).unwrap();
+        let module = Module::from_binary(store.engine(), &compiled).unwrap();
 
         b.iter(|| exec(&linker, &module))
     });
