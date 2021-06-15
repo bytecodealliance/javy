@@ -29,14 +29,14 @@ pub extern "C" fn init() {
 }
 
 #[export_name = "shopify_main"]
-pub extern "C" fn run() {
+pub extern "C" fn run()  {
     #[cfg(not(feature = "wizer"))]
     init();
 
     unsafe {
         let context = JS_CONTEXT.unwrap();
         let main_pair = ENTRYPOINT.unwrap();
-        let input_bytes = engine::load(); // sample::DATA;
+        let input_bytes = engine::load();//sample::DATA;
 
         let input_value = input::prepare(&context, &input_bytes);
         let result = context.call(main_pair.1, main_pair.0, &[input_value]);
@@ -51,7 +51,7 @@ pub extern "C" fn run() {
         let output_bytes = output::prepare(&context, result);
 
 
-        //output_bytes.len() as i32
+        // output_bytes.len() as i32
         engine::store(&output_bytes);
     }
 }
