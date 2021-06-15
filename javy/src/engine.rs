@@ -1,8 +1,8 @@
 #[link(wasm_import_module = "shopify_v1")]
 extern "C" {
-  pub fn input_len(len: *const usize) -> u16;
-  pub fn input_copy(buffer: *mut u8) -> u16;
-  pub fn output_copy(buffer: *const u8, len: usize) -> u16;
+  pub fn input_len(len: *const usize);
+  pub fn input_copy(buffer: *mut u8);
+  pub fn output_copy(buffer: *const u8, len: usize);
 }
 
 pub fn load() -> Vec<u8> {

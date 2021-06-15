@@ -29,7 +29,7 @@ fn exec(linker: &Linker, module: &Module) {
     let run = instance.get_func("shopify_main").unwrap();
     let result = run.call(&[]).unwrap();
     assert_eq!(result.len(), 1);
-    assert_eq!(result[0].i32(), Some(1179));
+    assert_eq!(result[0].i32(), Some(54));
 }
 
 

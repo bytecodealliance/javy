@@ -3,6 +3,8 @@ use quickjs_sys as q;
 mod context;
 mod sample;
 mod engine;
+mod input;
+mod output;
 
 use context::*;
 
@@ -27,20 +29,17 @@ pub extern "C" fn init() {
 }
 
 #[export_name = "shopify_main"]
-pub extern "C" fn run() -> i32 {
+pub extern "C" fn run() {
     #[cfg(not(feature = "wizer"))]
     init();
 
     unsafe {
         let context = JS_CONTEXT.unwrap();
         let main_pair = ENTRYPOINT.unwrap();
-        let input_bytes = sample::DATA;//engine::load();
+        let input_bytes = engine::load(); // sample::DATA;
 
-        let value: rmpv::Value = rmp_serde::from_slice(&input_bytes).unwrap();
-        let json = serde_json::to_string(&value).unwrap();
-        let arg = context.serialize_string(&json);
-
-        let result = context.call(main_pair.1, main_pair.0, &[arg]);
+        let input_value = input::prepare(&context, &input_bytes);
+        let result = context.call(main_pair.1, main_pair.0, &[input_value]);
 
         let tag = result >> 32;
         if tag == q::JS_TAG_EXCEPTION as u64 {
@@ -49,16 +48,15 @@ pub extern "C" fn run() -> i32 {
             println!("{:?}", exception);
         }
 
-        let response: serde_json::Value = serde_json::from_str(&context.deserialize_string(result)).unwrap();
-        let output_bytes = rmp_serde::to_vec(&response).unwrap();
-        //engine::store(&output_bytes);
+        let output_bytes = output::prepare(&context, result);
 
-        output_bytes.len() as i32
+
+        //output_bytes.len() as i32
+        engine::store(&output_bytes);
     }
 }
-
-
 
 fn to_string(context: *mut q::JSContext, value: q::JSValue) -> q::JSValue {
     unsafe { q::JS_ToString(context, value) }
 }
+
