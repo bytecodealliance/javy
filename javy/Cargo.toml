@@ -11,11 +11,11 @@ crate-type = ["cdylib"]
 quickjs-sys = { path = "../quickjs-sys" }
 rmp = "^0.8"
 rmp-serde = "^0.15"
-serde = { version = "1.0.123", features = ["derive"] }
+serde = { version = "1.0.123", default-features = false }
 serde_json = "1.0"
+serde-transcode = "1.1.0"
 rmpv = { version = "0.4", features = ["with-serde"] }
-Inflector = "0.11.4"
-cfg-if = "1.0.0"
+wee_alloc = "0.4.5"
 
 
 [dev-dependencies]
@@ -24,7 +24,7 @@ wasmtime = "0.26.0"
 wasmtime-wasi = "0.26.0"
 
 [[bench]]
-name = "qjs_wasmtime"
+name = "wasmtime"
 harness = false
 
 [features]
@@ -32,3 +32,4 @@ wizer = []
 
 [profile.release]
 lto = true
+opt-level = 3

@@ -12,3 +12,6 @@ qjsc
 qjs
 qjscalc
 test_bindings.rs
+
+deploy_module.sh
+run_module.sh
