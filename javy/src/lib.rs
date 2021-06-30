@@ -1,12 +1,16 @@
 use quickjs_sys as q;
 
 mod context;
-mod sample;
 mod engine;
 mod input;
 mod output;
+mod value;
 
 use context::*;
+
+
+#[global_allocator]
+static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 static mut JS_CONTEXT: Option<Context> = None;
 static mut ENTRYPOINT: Option<(q::JSValue, q::JSValue)> = None;
@@ -18,45 +22,37 @@ pub extern "C" fn init() {
         JS_CONTEXT = Some(Context::new().unwrap());
         let context = JS_CONTEXT.unwrap();
 
-        context.eval(bytes, "script");
+        let _ = context.compile(bytes, "script");
         let global = context.global();
-        let script = context.get_property("Shopify", global);
-        let main = context.get_property("main", script);
+        let shopify = context.get_property("Shopify", global);
+        let main = context.get_property("main", shopify);
 
-        ENTRYPOINT = Some((script, main));
+        ENTRYPOINT = Some((shopify, main));
     }
 
 }
 
 #[export_name = "shopify_main"]
-pub extern "C" fn run()  {
+pub extern "C" fn run() {
     #[cfg(not(feature = "wizer"))]
     init();
 
     unsafe {
         let context = JS_CONTEXT.unwrap();
-        let main_pair = ENTRYPOINT.unwrap();
-        let input_bytes = engine::load();//sample::DATA;
+        let (shopify, main) = ENTRYPOINT.unwrap();
+        let input_bytes = engine::load();
 
-        let input_value = input::prepare(&context, &input_bytes);
-        let result = context.call(main_pair.1, main_pair.0, &[input_value]);
+        let serializer = input::prepare(&context, &input_bytes);
+        let result = serializer.context.call(main, shopify, &[serializer.value]);
 
-        let tag = result >> 32;
-        if tag == q::JS_TAG_EXCEPTION as u64 {
+        if serializer.context.is_exception(result) {
             let ex = q::JS_GetException(context.raw);
-            let exception = context.deserialize_string(to_string(context.raw, ex));
+            let exception = context.to_string(ex);
             println!("{:?}", exception);
         }
 
-        let output_bytes = output::prepare(&context, result);
-
-
-        // output_bytes.len() as i32
-        engine::store(&output_bytes);
+        let output = output::prepare(&serializer.context, result);
+        engine::store(&output);
     }
-}
-
-fn to_string(context: *mut q::JSContext, value: q::JSValue) -> q::JSValue {
-    unsafe { q::JS_ToString(context, value) }
 }
 
