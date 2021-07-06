@@ -86,21 +86,12 @@ fn exec(linker: &Linker, module: &Module) {
 
 fn js(c: &mut Criterion) {
     let mut group = c.benchmark_group("wasmtime");
-    group.bench_function("control", |b| {
+
+    group.bench_function("js", |b| {
         let store = store_from_config();
         store.set(javascript()).unwrap();
         let linker = linker(&store);
-        let bytes = &include_bytes!("javy.control.wasm");
-        let module = Module::from_binary(store.engine(), *bytes).unwrap();
-
-        b.iter(|| exec(&linker, &module))
-    });
-
-    group.bench_function("wizer", |b| {
-        let store = store_from_config();
-        store.set(javascript()).unwrap();
-        let linker = linker(&store);
-        let bytes = &include_bytes!("javy.opt.wizer.wasm");
+        let bytes = &include_bytes!("js.wasm");
         let module = Module::from_binary(store.engine(), *bytes).unwrap();
 
         b.iter(|| exec(&linker, &module))
