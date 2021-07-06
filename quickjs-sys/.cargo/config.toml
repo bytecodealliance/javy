@@ -1,7 +1,0 @@
-[target.wasm32-wasi]
-rustflags = [
-  "-C", "target-feature=-crt-static",
-  "-C", "link-args=-Wl,--no-entry"
-]
-
-linker = "/opt/wasi-sdk/bin/clang"
