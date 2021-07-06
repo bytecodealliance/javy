@@ -35,6 +35,10 @@ JavaScript code, and executes it in a WebAssebmly embedded JavaScript runtime.
 After all the dependencies are installed, run `make profile=release`. You
 should now have access to the executable in `target/release/javy`
 
+Alternatively you can run `make profile=release && cargo install --path crates/cli`.
+After running the previous command you'll have a global installation of the
+executable.
+
 #### Compiling to WebAssembly
 
 You can create a WebAssembly binary from JavaScript by:
