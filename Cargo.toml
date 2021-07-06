@@ -1,6 +1,7 @@
 [workspace]
 members = [
-  "quickjs-sys",
-  "javy"
+  "crates/quickjs-sys",
+  "crates/core",
+  "crates/cli"
 ]
 

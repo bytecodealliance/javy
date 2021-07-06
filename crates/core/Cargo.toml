@@ -1,0 +1,32 @@
+[package]
+name = "javy-core"
+version = "0.1.0"
+authors = ["Saúl Cabrera <saulecabrera@gmail.com>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+quickjs-sys = { path = "../quickjs-sys" }
+serde = { version = "1.0.123", default-features = false }
+serde-transcode = "1.1.0"
+rmp = "^0.8"
+rmp-serde = "^0.15"
+rmpv = { version = "0.4", features = ["with-serde"] }
+wee_alloc = "0.4.5"
+
+
+[dev-dependencies]
+criterion = "0.3"
+wasmtime = "0.27.0"
+wasmtime-wasi = "0.27.0"
+serde_json = "1.0"
+
+[[bench]]
+name = "wasmtime"
+harness = false
+
+[profile.release]
+lto = true
+opt-level = 3
