@@ -19,7 +19,8 @@ JavaScript code, and executes it in a WebAssebmly embedded JavaScript runtime.
 #### Requirements
 
 - Rust v1.52.0
-
+- [rustup](https://rustup.rs/)
+- wasm32-wasi, can be installed via `rustup target add wasm32-wasi`
 - `wasm-strip`: https://github.com/WebAssembly/wabt, which can be installed
   via `brew install wabt`
 
