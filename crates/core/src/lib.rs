@@ -57,13 +57,13 @@ pub extern "C" fn run() {
         let serializer = input::prepare(&context, &input_bytes);
         let result = context.call(main, shopify, &[serializer.value]);
 
-        if serializer.context.is_exception(result) {
+        if context.is_exception(result) {
             let ex = q::JS_GetException(context.raw);
             let exception = context.to_string(ex);
             println!("{:?}", exception);
         }
 
-        let output = output::prepare(&serializer.context, result);
+        let output = output::prepare(&context, result);
         engine::store(&output);
     }
 }
