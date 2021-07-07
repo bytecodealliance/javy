@@ -2,7 +2,7 @@ use wizer::Wizer;
 use anyhow::{Error, Result, bail};
 use tempfile::NamedTempFile;
 use std::{fs, io::Write};
-use std::process::{Command, ExitStatus};
+use std::process::Command;
 
 pub(crate) struct Optimizer {
     pub wasm: Vec<u8>,
