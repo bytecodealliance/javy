@@ -18,5 +18,7 @@ fn main() {
         })
         .expect("Couldn't retrieve root dir");
 
+        println!("cargo:rerun-if-changed={:?}", root);
+
         std::fs::copy(root, out_dir.join("engine.wasm")).unwrap();
 }
