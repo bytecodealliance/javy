@@ -4,7 +4,7 @@ mod context;
 mod engine;
 mod input;
 mod output;
-mod value;
+mod serialization;
 
 use context::*;
 
@@ -35,8 +35,8 @@ pub extern "C" fn init() {
 
         let _ = context.compile(&bytes, &script_name);
         let global = context.global();
-        let shopify = context.get_property("Shopify", global);
-        let main = context.get_property("main", shopify);
+        let shopify = context.get_str_property("Shopify", global);
+        let main = context.get_str_property("main", shopify);
 
         ENTRYPOINT = Some((shopify, main));
     }
@@ -55,7 +55,7 @@ pub extern "C" fn run() {
         let input_bytes = engine::load();
 
         let serializer = input::prepare(&context, &input_bytes);
-        let result = serializer.context.call(main, shopify, &[serializer.value]);
+        let result = context.call(main, shopify, &[serializer.value]);
 
         if serializer.context.is_exception(result) {
             let ex = q::JS_GetException(context.raw);

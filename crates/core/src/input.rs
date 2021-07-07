@@ -1,4 +1,4 @@
-use crate::value::*;
+use crate::serialization::*;
 
 pub fn prepare(context: &crate::Context, bytes: &[u8]) -> Serializer {
     let mut deserializer = rmp_serde::Deserializer::from_read_ref(bytes);
