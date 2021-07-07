@@ -48,7 +48,7 @@ impl <'de> Deserializer<'de> {
     }
 
     pub fn next_key(&mut self) -> Option<q::JSValue> {
-        if self.offset > self.len {
+        if self.offset >= self.len {
             return None;
         }
 
