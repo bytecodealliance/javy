@@ -28,7 +28,7 @@ JavaScript code, and executes it in a WebAssebmly embedded JavaScript runtime.
   - Download a release for your platform from https://github.com/WebAssembly/binaryen/releases/
   - Put the binaries in `bin` under `/usr/local/bin`
   - Put the binaries in `include` under `/usr/local/include`
-  - Put the binaries in `lib` under `/usr/local/include`
+  - Put the binaries in `lib` under `/usr/local/lib`
 
 
 #### Building
