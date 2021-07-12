@@ -118,37 +118,39 @@ impl<'a> ser::Serializer for &'a mut Serializer {
     // Ints and Floats
 
     fn serialize_i8(self, v: i8) -> Result<()> {
-        self.serialize_i64(i64::from(v))
+        self.serialize_i32(i32::from(v))
     }
 
     fn serialize_i16(self, v: i16) -> Result<()> {
-        self.serialize_i64(i64::from(v))
+        self.serialize_i32(i32::from(v))
     }
 
     fn serialize_i32(self, v: i32) -> Result<()> {
-        self.serialize_i64(i64::from(v))
+        self.value = unsafe { self.context.new_int32(v) };
+        Ok(())
     }
 
-    fn serialize_i64(self, v: i64) -> Result<()> {
-        self.value = v as u64;
-        Ok(())
+    fn serialize_i64(self, _v: i64) -> Result<()> {
+        // big int
+        unreachable!()
     }
 
     fn serialize_u8(self, v: u8) -> Result<()> {
-        self.serialize_u64(u64::from(v))
+        self.serialize_i32(i32::from(v))
     }
 
     fn serialize_u16(self, v: u16) -> Result<()> {
-        self.serialize_u64(u64::from(v))
+        self.serialize_i32(i32::from(v))
     }
 
     fn serialize_u32(self, v: u32) -> Result<()> {
-        self.serialize_u64(u64::from(v))
+        self.value = unsafe { self.context.new_float64(v as f64) };
+        Ok(())
     }
 
-    fn serialize_u64(self, v: u64) -> Result<()> {
-        self.value = v;
-        Ok(())
+    fn serialize_u64(self, _v: u64) -> Result<()> {
+        // big int
+        unreachable!()
     }
 
     fn serialize_f32(self, v: f32) -> Result<()> {
@@ -475,6 +477,9 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
                 }
             },
             tag => {
+                // u32 are also serialized as f64;
+                // here it's worth checking if `self.value` is actually a f32 or f64
+                // if it is not, then it can safely be deserialized as u32
                 if unsafe { self.context.is_float64(self.value) } {
                     return self.deserialize_f64(visitor);
                 }
@@ -553,13 +558,8 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     where
         V: de::Visitor<'de>,
     {
-        let mut val = 0 as f64;
-        unsafe {
-            q::JS_ToFloat64(self.context.raw, &mut val, self.value)
-        };
+        let val = unsafe { self.context.to_float64(self.value) };
         visitor.visit_f64(val)
-
-        // visitor.visit_f64(f64::from_bits(self.value))
     }
 
     fn deserialize_bool<V>(self, visitor: V) -> Result<V::Value>
