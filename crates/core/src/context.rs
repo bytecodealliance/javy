@@ -52,6 +52,18 @@ impl Context {
         unsafe { JS_Call(self.raw, fun, from, args.len() as i32, args.as_ptr() as *mut u64) }
     }
 
+    pub unsafe fn new_float64(&self, val: f64) -> JSValue {
+        JS_NewFloat64_Ext(self.raw, val)
+    }
+
+    pub unsafe fn is_float64(&self, val: JSValue) -> bool {
+        JS_IsFloat64_Ext(self.get_tag(val) as i32) > 0
+    }
+
+    pub unsafe fn new_bool(&self, val: bool) -> JSValue {
+        JS_NewBool_Ext(self.raw, val as i32)
+    }
+
     pub fn new_string(&self, val: &str) -> JSValue {
         unsafe { JS_NewStringLen(self.raw, val.as_ptr() as *const c_char, val.len() as _) }
     }

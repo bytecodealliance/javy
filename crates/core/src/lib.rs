@@ -25,6 +25,8 @@ static mut ENTRYPOINT: Option<(q::JSValue, q::JSValue)> = None;
 //  2. If not present just evaluate the top level statement (?)
 #[export_name = "wizer.initialize"]
 pub extern "C" fn init() {
+    // This could be problematic given that the allowed dirs should be known ahead-of-time
+    // For now the workaround in the CLI is to set ~ as the allow dir
     let input = env::var("JAVY_INPUT").expect("Couldn't read JAVY_INPUT env var");
     let script_name = input.clone();
     let js: PathBuf = input.into();

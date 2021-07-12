@@ -156,18 +156,14 @@ impl<'a> ser::Serializer for &'a mut Serializer {
     }
 
     fn serialize_f64(self, v: f64) -> Result<()> {
-        self.value = v as u64;
+        self.value = unsafe { self.context.new_float64(v) };
         Ok(())
     }
 
     // Boolean
 
     fn serialize_bool(self, b: bool) -> Result<()> {
-        if b {
-            self.value = ((1 as u64) | q::JS_TAG_BOOL as u64) << 32;
-        } else {
-            self.value = ((0 as u64) | q::JS_TAG_BOOL as u64) << 32;
-        }
+        self.value = unsafe { self.context.new_bool(b) };
 
         Ok(())
     }
@@ -471,7 +467,6 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             q::JS_TAG_BOOL => self.deserialize_bool(visitor),
             q::JS_TAG_NULL | q::JS_TAG_UNDEFINED => self.deserialize_unit(visitor),
             q::JS_TAG_STRING => self.deserialize_str(visitor),
-            q::JS_TAG_FLOAT64 => self.deserialize_f64(visitor),
             q::JS_TAG_OBJECT => {
                 if self.context.is_array(self.value) {
                     self.deserialize_seq(visitor)
@@ -479,7 +474,15 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
                     self.deserialize_map(visitor)
                 }
             },
-            _ => Err(Error::Message("Error".to_string()))
+            tag => {
+                if unsafe { self.context.is_float64(self.value) } {
+                    return self.deserialize_f64(visitor);
+                }
+
+                println!("TAG: {:?}", tag);
+
+                Err(Error::Message("Couldn't deserialize value".to_string()))
+            }
         }
     }
 
@@ -550,7 +553,13 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     where
         V: de::Visitor<'de>,
     {
-        visitor.visit_f64(self.value as f64)
+        let mut val = 0 as f64;
+        unsafe {
+            q::JS_ToFloat64(self.context.raw, &mut val, self.value)
+        };
+        visitor.visit_f64(val)
+
+        // visitor.visit_f64(f64::from_bits(self.value))
     }
 
     fn deserialize_bool<V>(self, visitor: V) -> Result<V::Value>
