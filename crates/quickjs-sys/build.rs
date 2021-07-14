@@ -15,6 +15,7 @@ fn build() {
                "quickjs/libregexp.c",
                "quickjs/libunicode.c",
                "quickjs/quickjs.c",
+               "extensions/value.c",
         ])
         .define("_GNU_SOURCE", None)
         .define(

@@ -44,7 +44,7 @@ fn linker(store: &Store) -> Linker {
                 mem.write(offset as usize, &len.to_ne_bytes())
                     .expect("Couldn't write input length to module memory");
             },
-            )
+        )
         .expect("Could not define input_len import");
 
     linker
@@ -58,7 +58,7 @@ fn linker(store: &Store) -> Linker {
                 mem.write(offset as usize, input.as_ref())
                     .expect("Couldn't write input to module memory");
             },
-            )
+        )
         .expect("Could not define input_copy import");
 
     linker
@@ -72,7 +72,7 @@ fn linker(store: &Store) -> Linker {
                     .expect("Couldn't read output from module memory");
                 assert!(buf.len() > 0);
             },
-            )
+        )
         .expect("Could not define output_copy import");
 
      linker

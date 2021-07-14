@@ -8,6 +8,7 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
+anyhow = "1.0"
 quickjs-sys = { path = "../quickjs-sys" }
 serde = { version = "1.0.123", default-features = false }
 serde-transcode = "1.1.0"

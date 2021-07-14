@@ -3,6 +3,7 @@ use anyhow::{Error, Result, bail};
 use tempfile::NamedTempFile;
 use std::{fs, io::Write};
 use std::process::Command;
+use dirs::home_dir;
 
 pub(crate) struct Optimizer {
     pub wasm: Vec<u8>,
@@ -17,7 +18,7 @@ impl Optimizer {
         self.wasm = Wizer::new()
             .allow_wasi(true)
             .inherit_env(true)
-            .dir(".")
+            .dir(home_dir().unwrap())
             .run(&self.wasm)?;
         Ok(self)
     }
