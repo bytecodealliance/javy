@@ -1,9 +1,9 @@
-use wizer::Wizer;
-use anyhow::{Error, Result, bail};
-use tempfile::NamedTempFile;
-use std::{fs, io::Write};
+use anyhow::{bail, Error, Result};
+use std::path::PathBuf;
 use std::process::Command;
-use dirs::home_dir;
+use std::{fs, io::Write};
+use tempfile::NamedTempFile;
+use wizer::Wizer;
 
 pub(crate) struct Optimizer {
     pub wasm: Vec<u8>,
@@ -11,14 +11,16 @@ pub(crate) struct Optimizer {
 
 impl Optimizer {
     pub fn new(wasm: &[u8]) -> Self {
-        Self { wasm: Vec::from(wasm) }
+        Self {
+            wasm: Vec::from(wasm),
+        }
     }
 
-    pub fn initialize(&mut self) -> Result<&mut Self, Error> {
+    pub fn initialize(&mut self, working_dir: PathBuf) -> Result<&mut Self, Error> {
         self.wasm = Wizer::new()
             .allow_wasi(true)
             .inherit_env(true)
-            .dir(home_dir().unwrap())
+            .dir(working_dir)
             .run(&self.wasm)?;
         Ok(self)
     }
@@ -27,9 +29,7 @@ impl Optimizer {
         let mut file = NamedTempFile::new()?;
         file.write_all(&self.wasm)?;
 
-        let output = Command::new("wasm-strip")
-            .arg(&file.path())
-            .output()?;
+        let output = Command::new("wasm-strip").arg(&file.path()).output()?;
 
         if !output.status.success() {
             bail!(format!("Couldn't apply wasm-strip: {:?}", output.stderr));

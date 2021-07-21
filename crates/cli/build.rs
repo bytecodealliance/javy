@@ -1,24 +1,34 @@
-use std::path::PathBuf;
 use std::env;
+use std::path::PathBuf;
 
 fn main() {
     let profile = env::var("PROFILE").expect("Couldn't retrieve profile");
-    let out_dir: PathBuf = env::var("OUT_DIR").expect("Couldn't retrieve out dir").into();
+    if profile != "release" {
+        eprintln!("only --release is supported due to https://github.com/bytecodealliance/wizer/issues/27");
+        std::process::exit(1);
+    }
+
+    let out_dir: PathBuf = env::var("OUT_DIR")
+        .expect("Couldn't retrieve out dir")
+        .into();
     let root: PathBuf = std::env::var("CARGO_MANIFEST_DIR")
         .map(PathBuf::from)
         .ok()
         .map(|mut b| {
             b.pop();
             b.pop();
-            b
-                .join("target")
+            b.join("target")
                 .join("wasm32-wasi")
                 .join(profile)
                 .join("javy_core.wasm")
         })
-        .expect("Couldn't retrieve root dir");
+        .expect("failed to create path");
 
-        println!("cargo:rerun-if-changed={:?}", root);
+    if !root.exists() {
+        eprintln!("compile core using `cd crates/core && cargo build && cd -`");
+        std::process::exit(1);
+    }
 
-        std::fs::copy(root, out_dir.join("engine.wasm")).unwrap();
+    println!("cargo:rerun-if-changed={:?}", root);
+    std::fs::copy(root, out_dir.join("engine.wasm")).unwrap();
 }
