@@ -2,8 +2,8 @@ use anyhow::Result;
 use proptest::prelude::*;
 use serde::Serialize;
 
-mod runner;
 mod convert;
+mod runner;
 
 use crate::runner::Runner;
 
@@ -37,8 +37,7 @@ proptest! {
     fn test_i32(s in any::<i32>()) {
         let bytes: Vec<u8> = convert::to_rmp_bytes(s);
 
-        let result = Runner::new().unwrap()
-            .define_imports().unwrap()
+        let result = Runner::default()
             .exec(bytes).unwrap();
 
         let output = convert::to_rmpv(&result);
@@ -50,8 +49,7 @@ proptest! {
     fn test_u16(s in any::<u16>()) {
         let bytes: Vec<u8> = convert::to_rmp_bytes(s);
 
-        let result = Runner::new().unwrap()
-            .define_imports().unwrap()
+        let result = Runner::default()
             .exec(bytes).unwrap();
 
         let output = convert::to_rmpv(&result);
@@ -63,8 +61,7 @@ proptest! {
     fn test_u32(s in any::<u32>()) {
         let bytes: Vec<u8> = convert::to_rmp_bytes(s);
 
-        let result = Runner::new().unwrap()
-            .define_imports().unwrap()
+        let result = Runner::default()
             .exec(bytes).unwrap();
 
         let output = convert::to_rmpv(&result);
@@ -77,8 +74,7 @@ proptest! {
     fn test_f32(s in any::<f32>()) {
         let bytes: Vec<u8> = convert::to_rmp_bytes(s);
 
-        let result = Runner::new().unwrap()
-            .define_imports().unwrap()
+        let result = Runner::default()
             .exec(bytes).unwrap();
 
         let output = convert::to_rmpv(&result);
@@ -91,8 +87,7 @@ proptest! {
     fn test_f64(s in any::<f64>()) {
         let bytes: Vec<u8> = convert::to_rmp_bytes(s);
 
-        let result = Runner::new().unwrap()
-            .define_imports().unwrap()
+        let result = Runner::default()
             .exec(bytes).unwrap();
 
         let output = convert::to_rmpv(&result);
@@ -103,11 +98,9 @@ proptest! {
 
     #[test]
     fn test_string(s in any::<String>()) {
-        println!("{:?}", s);
         let bytes: Vec<u8> = convert::to_rmp_bytes(&s);
 
-        let result = Runner::new().unwrap()
-            .define_imports().unwrap()
+        let result = Runner::default()
             .exec(bytes).unwrap();
 
         let output = convert::to_rmpv(&result);
@@ -119,8 +112,7 @@ proptest! {
     fn test_array_primitives(v in proptest::collection::vec(value(), 1..100)) {
         let bytes: Vec<u8> = convert::to_rmp_bytes(&v);
 
-        let result = Runner::new().unwrap()
-            .define_imports().unwrap()
+        let result = Runner::default()
             .exec(bytes).unwrap();
 
         let output = convert::to_rmpv(&result);
@@ -134,9 +126,7 @@ proptest! {
 fn test_null() -> Result<()> {
     let bytes: Vec<u8> = convert::to_rmp_bytes(());
 
-    let result = Runner::new()?
-        .define_imports()?
-        .exec(bytes)?;
+    let result = Runner::default().exec(bytes)?;
 
     let output = convert::to_rmpv(&result);
 
@@ -148,8 +138,7 @@ fn test_null() -> Result<()> {
 #[test]
 fn test_bool() -> Result<()> {
     let input = vec![true, false];
-    let mut runner = Runner::new()?;
-    runner.define_imports()?;
+    let mut runner = Runner::default();
 
     for v in input {
         let bytes: Vec<u8> = convert::to_rmp_bytes(v);

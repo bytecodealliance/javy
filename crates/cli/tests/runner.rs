@@ -1,145 +1,156 @@
-use wasmtime::{Linker, Store, Module, Caller, Engine, OptLevel, Config};
-use wasmtime_wasi::{sync::WasiCtxBuilder, Wasi};
-use std::fs;
+use anyhow::{Result};
+use std::path::{Path, PathBuf};
 use std::process::Command;
-use anyhow::{Result, bail};
-use std::path::PathBuf;
-use std::cell::RefCell;
+use std::fs;
+use std::io::{self, Write};
+use wasmtime::{Caller, Config, Engine, Linker, Module, OptLevel, Store};
+use wasmtime_wasi::sync::WasiCtxBuilder;
+use wasmtime_wasi::WasiCtx;
 
-pub struct Runner{
+pub struct Runner {
     wasm: Vec<u8>,
-    linker: Linker,
-    store: Store
+    linker: Linker<StoreContext>,
 }
 
-#[derive(Debug, Clone)]
 struct StoreContext {
-    input: RefCell<Vec<u8>>,
-    input_len: RefCell<usize>,
-    output: RefCell<Vec<u8>>,
+    input: Vec<u8>,
+    output: Vec<u8>,
+    wasi: WasiCtx,
+}
+
+impl Default for StoreContext {
+    fn default() -> Self {
+        let wasi = WasiCtxBuilder::new().inherit_stdio().build();
+
+        Self {
+            wasi,
+            input: Vec::default(),
+            output: Vec::default(),
+        }
+    }
+}
+
+fn root_dir() -> PathBuf {
+    std::env::var("CARGO_MANIFEST_DIR")
+        .expect("failed to get current cargo dir")
+        .into()
+}
+
+impl Default for Runner {
+    fn default() -> Self {
+        Self::new("identity.js")
+    }
 }
 
 impl Runner {
-    pub fn new() -> Result<Self> {
-        let root_dir = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR")?);
-        let js_file = root_dir.join("tests").join("index.js");
-        let wasm_file = root_dir.join("tests").join("index.wasm");
+    fn new(js_file: impl AsRef<Path>) -> Self {
+        let root = root_dir();
+        let wasm_file = root.join("tests")
+            .join("target")
+            .join("out.wasm");
+
+        let js_file = root.join("tests").join("fixtures").join(js_file);
 
         let output = Command::new(env!("CARGO_BIN_EXE_javy"))
+            .current_dir(root)
             .arg(&js_file)
             .arg("-o")
             .arg(&wasm_file)
-            .output()?;
+            .output()
+            .expect("failed to run command");
+
+        io::stdout().write_all(&output.stdout).unwrap();
+        io::stderr().write_all(&output.stderr).unwrap();
 
         if !output.status.success() {
-            bail!("Couldn't create wasm binary");
+            panic!("terminated with status = {}", output.status);
         }
 
-        let store = setup_store()?;
-        let wasm = fs::read(&wasm_file)?;
+        let wasm = fs::read(&wasm_file)
+            .expect("failed to read wasm module");
 
-        Ok(Self {
-            wasm,
-            store: store.clone(),
-            linker: setup_linker(&store)?,
-        })
-    }
+        let engine = setup_engine();
+        let linker = setup_linker(&engine);
 
-    pub fn define_imports(&mut self) -> Result<&mut Self> {
-        self.linker
-            .func(
-                "shopify_v1",
-                "input_len",
-                move |caller: Caller, offset: i32| {
-                    let context = caller.store().get::<StoreContext>().unwrap();
-                    let mem = caller.get_export("memory").unwrap().into_memory().unwrap();
-                    let len = context.input_len.clone().into_inner();
-                    mem.write(offset as usize, &len.to_ne_bytes()).unwrap();
-                },
-            )?;
-
-        self.linker
-            .func(
-                "shopify_v1",
-                "input_copy",
-                move |caller: Caller, offset: i32| {
-                    let context = caller.store().get::<StoreContext>().unwrap();
-                    let mem = caller.get_export("memory").unwrap().into_memory().unwrap();
-                    mem.write(offset as usize, &context.input.clone().into_inner()).unwrap();
-                },
-            )?;
-
-        self.linker
-            .func(
-                "shopify_v1",
-                "output_copy",
-                move |caller: Caller, offset: i32, len: i32| {
-                    let context = caller.store().get::<StoreContext>().unwrap();
-                    let mem = caller.get_export("memory").unwrap().into_memory().unwrap();
-                    let mut buf = vec![0; len as usize];
-                    mem.read(offset as usize, buf.as_mut_slice()).unwrap();
-
-                    context.with_output(buf.to_vec());
-                },
-            )?;
-
-        self.store.set(StoreContext::default()).unwrap();
-
-
-        Ok(self)
+        Self { wasm, linker }
     }
 
     pub fn exec(&mut self, input: Vec<u8>) -> Result<Vec<u8>> {
-        let context = self.store.get::<StoreContext>().unwrap();
-        context.with_input(input);
+        let mut store = Store::new(self.linker.engine(), StoreContext::new(input));
 
-        let module = Module::from_binary(&self.store.engine(), &self.wasm)?;
-        let instance = self.linker.instantiate(&module)?;
-        let run = instance.get_typed_func::<(), ()>("shopify_main")?;
+        let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
 
-        run.call(())?;
-        let context = self.store.get::<StoreContext>().unwrap();
-        Ok(context.output.clone().into_inner())
+        let instance = self.linker.instantiate(&mut store, &module)?;
+        let run = instance.get_typed_func::<(), (), _>(&mut store, "shopify_main")?;
+
+        run.call(&mut store, ())?;
+
+        Ok(store.into_data().output)
     }
 }
 
 impl StoreContext {
-    pub fn default() -> Self {
+    fn new(input: Vec<u8>) -> Self {
         Self {
-            input: RefCell::new(vec![]),
-            input_len: RefCell::new(0),
-            output: RefCell::new(vec![]),
+            input,
+            ..Default::default()
         }
     }
-
-    pub fn with_output(&self, output: Vec<u8>) -> &Self {
-        self.output.replace(output);
-        self
-    }
-
-    pub fn with_input(&self, input: Vec<u8>) -> &Self {
-        let len = input.len();
-        self.input.replace(input);
-        self.input_len.replace(len);
-        self
-    }
 }
 
-fn setup_store() -> Result<Store> {
+fn setup_engine() -> Engine {
     let mut config = Config::new();
     config.cranelift_opt_level(OptLevel::SpeedAndSize);
-    Wasi::add_to_config(&mut config);
-    Ok(Store::new(&Engine::new(&config)?))
+    Engine::new(&config).expect("failed to create engine")
 }
 
-fn setup_linker(store: &Store) -> Result<Linker> {
-    let wasi_ctx_builder = WasiCtxBuilder::new()
-        .inherit_stdio()
-        .inherit_args()
-        .unwrap()
-        .build();
+fn setup_linker(engine: &Engine) -> Linker<StoreContext> {
+    let mut linker = Linker::new(engine);
 
-    assert!(Wasi::set_context(&store, wasi_ctx_builder).is_ok());
+    wasmtime_wasi::sync::add_to_linker(&mut linker, |ctx: &mut StoreContext| &mut ctx.wasi)
+        .expect("failed to add wasi context");
 
-    Ok(Linker::new(store))
+    linker
+        .func_wrap(
+            "shopify_v1",
+            "input_len",
+            move |mut caller: Caller<'_, StoreContext>, offset: i32| {
+                let len = caller.data().input.len();
+                let mem = caller.get_export("memory").unwrap().into_memory().unwrap();
+                mem.write(caller, offset as usize, &len.to_ne_bytes())
+                    .unwrap();
+            },
+        )
+        .expect("failed to define input_len");
+
+    linker
+        .func_wrap(
+            "shopify_v1",
+            "input_copy",
+            move |mut caller: Caller<'_, StoreContext>, offset: i32| {
+                let input = caller.data().input.clone(); // TODO: avoid this copy
+                let mem = caller.get_export("memory").unwrap().into_memory().unwrap();
+                mem.write(caller, offset as usize, input.as_slice())
+                    .unwrap();
+            },
+        )
+        .expect("failed to define input_copy");
+
+    linker
+        .func_wrap(
+            "shopify_v1",
+            "output_copy",
+            move |mut caller: Caller<'_, StoreContext>, offset: i32, len: i32| {
+                let mem = caller.get_export("memory").unwrap().into_memory().unwrap();
+                let mut buf = vec![0; len as usize];
+                mem.read(&mut caller, offset as usize, buf.as_mut_slice())
+                    .unwrap();
+
+                caller.data_mut().output.resize(buf.len(), 0);
+                caller.data_mut().output.copy_from_slice(buf.as_slice());
+            },
+        )
+        .expect("failed to define output_copy");
+
+    linker
 }

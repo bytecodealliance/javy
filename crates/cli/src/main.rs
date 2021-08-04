@@ -1,11 +1,10 @@
-mod options;
 mod opt;
+mod options;
 
-use std::env;
-use anyhow::Result;
-use structopt::StructOpt;
 use crate::options::Options;
-
+use anyhow::Result;
+use std::env;
+use structopt::StructOpt;
 
 // TODO
 // Use `join` here instead to ensure that this will work on Windows
@@ -16,8 +15,13 @@ fn main() -> Result<()> {
 
     let engine: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/engine.wasm"));
 
+    let working_dir = opts
+        .working_dir
+        .or_else(|| std::env::current_dir().ok())
+        .expect("Failed to get current working directory");
+
     let optimized = opt::Optimizer::new(engine)
-        .initialize()?
+        .initialize(working_dir)?
         .strip()?
         .passes()?
         .wasm();
