@@ -1,11 +1,34 @@
 containers:
   default:
     build:
-      from: ubuntu-latest
-      type: ci
+      timeout: 20m
+      env:
+        PIPA_DOCKERFILE: .shopify-build/Dockerfile
+        PIPA_DOCKER_CACHE_FROM_BRANCH: "true"
+        PIPA_TAG_BRANCH: "true"
 
 steps:
   - label: Tests
     timeout: 5m
+    cache:
+    - $HOME/.cargo
+    - target/
     run:
-    - echo "Hello World"
+    - cd crates/quickjs-sys/ && cargo test && cd -
+    - cd crates/core/ && cargo test && cd -
+    # Core WASM binary is required before running the CLI integration tests.
+    # --release is used to skip a debug only assertion in wizer.
+    - cd crates/core/ && cargo build --release && cd -
+    - cd crates/cli/ && cargo test && cd -
+    # Check that the benchmark can at least compile successfully to avoid rotting.
+    - cd crates/cli/ && cargo check --benches && cd -
+
+  - label: Fmt
+    timeout: 5m
+    cache:
+    - $HOME/.cargo
+    - target/
+    run:
+    - cargo fmt -- --check
+    - cargo clippy -- -D warnings
+
