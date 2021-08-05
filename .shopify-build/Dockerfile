@@ -4,3 +4,5 @@ RUN apt-get update && \
   apt-get install -y build-essential cmake && \
   rustup component add clippy rustfmt && \
   rustup target add wasm32-wasi
+
+COPY . .
