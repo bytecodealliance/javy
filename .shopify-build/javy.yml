@@ -14,6 +14,8 @@ steps:
     - $HOME/.cargo
     - target/
     run:
+    - echo $PWD
+    - ls -lh
     - cd crates/quickjs-sys/ && cargo test && cd -
     - cd crates/core/ && cargo test && cd -
     # Core WASM binary is required before running the CLI integration tests.

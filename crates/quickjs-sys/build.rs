@@ -1,8 +1,10 @@
 use std::env;
 
 fn main() {
-    env::set_var("CC_wasm32_wasi", "wasi-sdk/bin/clang");
-    env::set_var("AR_wasm32_wasi", "wasi-sdk/bin/ar");
+    if cfg!(target_os = "macos") {
+        env::set_var("CC_wasm32_wasi", "wasi-sdk/bin/clang");
+        env::set_var("AR_wasm32_wasi", "wasi-sdk/bin/ar");
+    }
     env::set_var("CFLAGS", "--sysroot=wasi-sdk/share/wasi-sysroot");
     build();
 }
