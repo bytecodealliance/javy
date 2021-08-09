@@ -14,12 +14,7 @@ steps:
     - $HOME/.cargo
     - target/
     run:
-    # Core WASM binary is required before running the CLI integration tests.
-    # --release is used to skip a debug only assertion in wizer.
-    - cd crates/core/ && cargo build --release && cd -
-    - cd crates/cli/ && cargo test && cd -
-    # Check that the benchmark can at least compile successfully to avoid rotting.
-    - cd crates/cli/ && cargo check --benches && cd -
+    - make test
 
   - label: Fmt
     timeout: 5m
@@ -27,9 +22,5 @@ steps:
     - $HOME/.cargo
     - target/
     run:
-    - cargo fmt -- --check
-    # Individualy check each crate due to target incompatibilities. We should most likely not use a cargo workspace.
-    - cd crates/quickjs-sys/ && cargo clippy -- -D warnings && cd -
-    - cd crates/core/ && cargo clippy -- -D warnings && cd -
-    - cd crates/cli/ && cargo clippy -- -D warnings && cd -
+    - make fmt
 
