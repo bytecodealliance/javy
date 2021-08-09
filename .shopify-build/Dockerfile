@@ -1,4 +1,4 @@
-FROM rust:1.52
+FROM rust:1.53
 
 RUN apt-get update && \
   apt-get install -y build-essential cmake clang && \
