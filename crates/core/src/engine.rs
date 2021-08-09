@@ -1,14 +1,14 @@
 #[link(wasm_import_module = "shopify_v1")]
 extern "C" {
-    pub fn input_len(len: *mut usize) -> u32;
+    pub fn input_len(len: *const usize) -> u32;
     pub fn input_copy(buffer: *mut u8) -> u32;
     pub fn output_copy(buffer: *const u8, len: usize) -> u32;
 }
 
 pub fn load() -> Vec<u8> {
-    let mut len = 0;
+    let len = 0;
     unsafe {
-        input_len(&mut len);
+        input_len(&len);
     }
 
     let mut input_buffer = vec![0; len];

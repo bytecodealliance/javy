@@ -111,11 +111,13 @@ fn setup_linker(engine: &Engine) -> Linker<StoreContext> {
         .func_wrap(
             "shopify_v1",
             "input_len",
-            move |mut caller: Caller<'_, StoreContext>, offset: i32| {
+            |mut caller: Caller<'_, StoreContext>, offset: i32| -> i32 {
                 let len = caller.data().input.len();
                 let mem = caller.get_export("memory").unwrap().into_memory().unwrap();
                 mem.write(caller, offset as usize, &len.to_ne_bytes())
                     .unwrap();
+
+                0
             },
         )
         .expect("failed to define input_len");
@@ -124,11 +126,13 @@ fn setup_linker(engine: &Engine) -> Linker<StoreContext> {
         .func_wrap(
             "shopify_v1",
             "input_copy",
-            move |mut caller: Caller<'_, StoreContext>, offset: i32| {
+            |mut caller: Caller<'_, StoreContext>, offset: i32| -> i32 {
                 let input = caller.data().input.clone(); // TODO: avoid this copy
                 let mem = caller.get_export("memory").unwrap().into_memory().unwrap();
                 mem.write(caller, offset as usize, input.as_slice())
                     .unwrap();
+
+                0
             },
         )
         .expect("failed to define input_copy");
@@ -137,7 +141,7 @@ fn setup_linker(engine: &Engine) -> Linker<StoreContext> {
         .func_wrap(
             "shopify_v1",
             "output_copy",
-            move |mut caller: Caller<'_, StoreContext>, offset: i32, len: i32| {
+            |mut caller: Caller<'_, StoreContext>, offset: i32, len: i32| -> i32 {
                 let mem = caller.get_export("memory").unwrap().into_memory().unwrap();
                 let mut buf = vec![0; len as usize];
                 mem.read(&mut caller, offset as usize, buf.as_mut_slice())
@@ -145,6 +149,8 @@ fn setup_linker(engine: &Engine) -> Linker<StoreContext> {
 
                 caller.data_mut().output.resize(buf.len(), 0);
                 caller.data_mut().output.copy_from_slice(buf.as_slice());
+
+                0
             },
         )
         .expect("failed to define output_copy");

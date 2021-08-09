@@ -208,7 +208,7 @@ fn bindgen_test_layout_timespec() {
 pub struct _IO_FILE {
     _unused: [u8; 0],
 }
-pub type FILE = _IO_FILE;
+#[allow(clippy::upper_case_acronyms)] pub type FILE = _IO_FILE;
 pub type va_list = __builtin_va_list;
 pub type __isoc_va_list = __builtin_va_list;
 #[repr(C)]

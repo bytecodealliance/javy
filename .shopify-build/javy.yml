@@ -14,7 +14,7 @@ steps:
     - $HOME/.cargo
     - target/
     run:
-    - make test
+    - make tests
 
   - label: Fmt
     timeout: 5m

@@ -7,10 +7,10 @@ cli: core
 core:
 		cd crates/core && cargo build --release
 
-test: core
+tests: core
 		cd crates/cli \
 				&& cargo test --release \
-				&& cargo check --benches
+				&& cargo check --benches --release
 
 fmt:
 		cd crates/quickjs-sys/ \
