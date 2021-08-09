@@ -1,15 +1,16 @@
 use std::env;
 
 fn main() {
-    if cfg!(target_os = "macos") {
-        env::set_var("CC_wasm32_wasi", "wasi-sdk/bin/clang");
-        env::set_var("AR_wasm32_wasi", "wasi-sdk/bin/ar");
-    }
-    env::set_var("CFLAGS", "--sysroot=wasi-sdk/share/wasi-sysroot");
-    build();
-}
+    let target_platform = match std::env::consts::OS {
+        v @ "linux" => v,
+        v @ "macos" => v,
+        not_supported => panic!("{} is not supported.", not_supported),
+    };
 
-fn build() {
+    env::set_var("CC_wasm32_wasi", format!("vendor/{}/wasi-sdk/bin/clang", target_platform));
+    env::set_var("AR_wasm32_wasi", format!("vendor/{}/wasi-sdk/bin/ar", target_platform));
+    env::set_var("CFLAGS", format!("--sysroot=vendor/{}/wasi-sdk/share/wasi-sysroot", target_platform));
+
     cc::Build::new()
         .files(&[
                "quickjs/cutils.c",
@@ -44,4 +45,3 @@ fn build() {
         .opt_level(2)
         .compile("quickjs");
 }
-
