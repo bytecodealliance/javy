@@ -9,7 +9,7 @@ containers:
 
 steps:
   - label: Tests
-    timeout: 5m
+    timeout: 15m
     cache:
     - $HOME/.cargo
     - target/
@@ -28,5 +28,8 @@ steps:
     - target/
     run:
     - cargo fmt -- --check
-    - cargo clippy -- -D warnings
+    # Individualy check each crate due to target incompatibilities. We should most likely not use a cargo workspace.
+    - cd crates/quickjs-sys/ && cargo clippy -- -D warnings && cd -
+    - cd crates/core/ && cargo clippy -- -D warnings && cd -
+    - cd crates/cli/ && cargo clippy -- -D warnings && cd -
 
