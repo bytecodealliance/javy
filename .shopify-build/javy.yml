@@ -14,8 +14,6 @@ steps:
     - $HOME/.cargo
     - target/
     run:
-    - cd crates/quickjs-sys/ && cargo build && cd -
-    - cd crates/core/ && cargo test && cd -
     # Core WASM binary is required before running the CLI integration tests.
     # --release is used to skip a debug only assertion in wizer.
     - cd crates/core/ && cargo build --release && cd -

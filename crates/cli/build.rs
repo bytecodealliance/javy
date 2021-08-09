@@ -13,12 +13,6 @@ fn main() {
         std::process::exit(0);
     }
 
-    let profile = env::var("PROFILE").expect("Couldn't retrieve profile");
-    if profile == "debug" {
-        eprintln!("debug profile is not supported due to https://github.com/bytecodealliance/wizer/issues/27");
-        std::process::exit(1);
-    }
-
     let engine_path: PathBuf = std::env::var("CARGO_MANIFEST_DIR")
         .map(PathBuf::from)
         .ok()
@@ -27,7 +21,7 @@ fn main() {
             b.pop();
             b.join("target")
                 .join("wasm32-wasi")
-                .join(profile)
+                .join("release")
                 .join("javy_core.wasm")
         })
         .expect("failed to create path");
