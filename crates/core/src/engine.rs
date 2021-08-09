@@ -1,6 +1,6 @@
 #[link(wasm_import_module = "shopify_v1")]
 extern "C" {
-    pub fn input_len(len: *const usize) -> u32;
+    pub fn input_len(len: *mut usize) -> u32;
     pub fn input_copy(buffer: *mut u8) -> u32;
     pub fn output_copy(buffer: *const u8, len: usize) -> u32;
 }

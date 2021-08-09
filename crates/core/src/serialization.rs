@@ -24,8 +24,8 @@ pub struct Deserializer<'de> {
 impl Serializer {
     pub fn from_context(context: Context) -> Self {
         Self {
-            key: 0 as u64,
-            value: 0 as u64,
+            key: 0_u64,
+            value: 0_u64,
             context,
         }
     }
@@ -192,7 +192,7 @@ impl<'a> ser::Serializer for &'a mut Serializer {
     // Null
 
     fn serialize_unit(self) -> Result<()> {
-        self.value = ((0 as u64) | q::JS_TAG_NULL as u64) << 32;
+        self.value = (q::JS_TAG_NULL as u64) << 32;
         Ok(())
     }
 

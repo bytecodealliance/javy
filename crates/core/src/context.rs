@@ -1,3 +1,4 @@
+#![allow(clippy::wrong_self_convention)]
 use quickjs_sys::*;
 use std::{ffi::CString, os::raw::c_char, ptr};
 

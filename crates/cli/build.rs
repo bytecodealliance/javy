@@ -37,6 +37,6 @@ fn main() {
     // Only copy the file when it exists. Cargo will take care of re-running this script when the file changes.
     if engine_path.exists() {
         std::fs::copy(&engine_path, out_dir.join("engine.wasm"))
-            .expect(format!("failed to copy engine from {:?}", engine_path).as_str());
+            .unwrap_or_else(|_| panic!("failed to copy engine from {:?}", engine_path));
     }
 }
