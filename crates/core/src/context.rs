@@ -23,10 +23,7 @@ impl Context {
             return None;
         }
 
-        Some(Self {
-            raw: context,
-            rt,
-        })
+        Some(Self { raw: context, rt })
     }
 
     pub fn compile(&self, bytes: &[u8], name: &str) -> JSValue {
@@ -49,7 +46,15 @@ impl Context {
     }
 
     pub fn call(&self, fun: JSValue, from: JSValue, args: &[JSValue]) -> JSValue {
-        unsafe { JS_Call(self.raw, fun, from, args.len() as i32, args.as_ptr() as *mut u64) }
+        unsafe {
+            JS_Call(
+                self.raw,
+                fun,
+                from,
+                args.len() as i32,
+                args.as_ptr() as *mut u64,
+            )
+        }
     }
 
     pub unsafe fn new_float64(&self, val: f64) -> JSValue {
@@ -75,9 +80,7 @@ impl Context {
     }
 
     pub fn new_array(&self) -> JSValue {
-        unsafe {
-            JS_NewArray(self.raw)
-        }
+        unsafe { JS_NewArray(self.raw) }
     }
 
     pub unsafe fn new_int32(&self, val: i32) -> JSValue {
@@ -89,9 +92,7 @@ impl Context {
     }
 
     pub fn new_object(&self) -> JSValue {
-        unsafe {
-            JS_NewObject(self.raw)
-        }
+        unsafe { JS_NewObject(self.raw) }
     }
 
     pub fn get_str_property(&self, name: &str, from: JSValue) -> JSValue {
@@ -100,7 +101,15 @@ impl Context {
 
     pub fn set_str_property(&self, target: JSValue, key: &str, val: JSValue) {
         let key_name = make_cstring(key);
-        unsafe { JS_DefinePropertyValueStr(self.raw, target, key_name.as_ptr(), val, JS_PROP_C_W_E as i32); }
+        unsafe {
+            JS_DefinePropertyValueStr(
+                self.raw,
+                target,
+                key_name.as_ptr(),
+                val,
+                JS_PROP_C_W_E as i32,
+            );
+        }
     }
 
     pub fn set_property_raw(&self, target: JSValue, key: *const i8, val: JSValue) {
@@ -115,9 +124,7 @@ impl Context {
     }
 
     pub fn get_uint32_property(&self, target: JSValue, at: u32) -> JSValue {
-        unsafe {
-            JS_GetPropertyUint32(self.raw, target, at)
-        }
+        unsafe { JS_GetPropertyUint32(self.raw, target, at) }
     }
 
     pub fn get_own_properties(&self, obj: JSValue) -> (*mut JSPropertyEnum, i32) {
@@ -125,25 +132,38 @@ impl Context {
         let mut properties: *mut JSPropertyEnum = ptr::null_mut();
         let mut count = 0;
 
-        let result = unsafe { JS_GetOwnPropertyNames(self.raw, &mut properties, &mut count, obj, flags) };
+        let result =
+            unsafe { JS_GetOwnPropertyNames(self.raw, &mut properties, &mut count, obj, flags) };
         assert!(result == 0);
 
         (properties, count as i32)
     }
 
     pub fn get_internal_property(&self, obj: JSValue, key: JSAtom) -> JSValue {
-        unsafe {
-            JS_GetPropertyInternal(self.raw, obj, key, obj, 0)
-        }
+        unsafe { JS_GetPropertyInternal(self.raw, obj, key, obj, 0) }
     }
 
     pub fn json_parse(&self, json_string: &str) -> JSValue {
         let buf = json_string.as_ptr() as *const std::os::raw::c_char;
-        unsafe { JS_ParseJSON(self.raw, buf, json_string.len() as _, make_cstring("input").as_ptr()) }
+        unsafe {
+            JS_ParseJSON(
+                self.raw,
+                buf,
+                json_string.len() as _,
+                make_cstring("input").as_ptr(),
+            )
+        }
     }
 
     pub fn json_stringify(&self, obj: JSValue) -> JSValue {
-        unsafe { JS_JSONStringify(self.raw, obj, JS_TAG_UNDEFINED as u64, JS_TAG_UNDEFINED as u64) }
+        unsafe {
+            JS_JSONStringify(
+                self.raw,
+                obj,
+                JS_TAG_UNDEFINED as u64,
+                JS_TAG_UNDEFINED as u64,
+            )
+        }
     }
 
     pub fn get_tag(&self, val: JSValue) -> u64 {
@@ -165,10 +185,7 @@ impl Context {
 
     pub fn deserialize_string(&self, val: JSValue) -> String {
         let cstr = unsafe { std::ffi::CStr::from_ptr(self.to_c_str_ptr(val)) };
-        cstr
-            .to_str()
-            .unwrap()
-            .to_string()
+        cstr.to_str().unwrap().to_string()
     }
 
     pub fn is_exception(&self, val: JSValue) -> bool {
@@ -176,7 +193,7 @@ impl Context {
     }
 
     pub fn is_array(&self, val: JSValue) -> bool {
-      unsafe { JS_IsArray(self.raw, val) > 0 }
+        unsafe { JS_IsArray(self.raw, val) > 0 }
     }
 
     // pub fn create_callback<'a, F>(&self, callback: F) -> JSValue

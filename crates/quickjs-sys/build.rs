@@ -1,30 +1,39 @@
 use std::env;
 
 fn main() {
-    let target_platform = match std::env::consts::OS {
+    let host_platform = match std::env::consts::OS {
         v @ "linux" => v,
         v @ "macos" => v,
         not_supported => panic!("{} is not supported.", not_supported),
     };
 
-    env::set_var("CC_wasm32_wasi", format!("vendor/{}/wasi-sdk/bin/clang", target_platform));
-    env::set_var("AR_wasm32_wasi", format!("vendor/{}/wasi-sdk/bin/ar", target_platform));
-    env::set_var("CFLAGS", format!("--sysroot=vendor/{}/wasi-sdk/share/wasi-sysroot", target_platform));
+    env::set_var(
+        "CC_wasm32_wasi",
+        format!("vendor/{}/wasi-sdk/bin/clang", host_platform),
+    );
+    env::set_var(
+        "AR_wasm32_wasi",
+        format!("vendor/{}/wasi-sdk/bin/ar", host_platform),
+    );
+    env::set_var(
+        "CFLAGS",
+        format!(
+            "--sysroot=vendor/{}/wasi-sdk/share/wasi-sysroot",
+            host_platform
+        ),
+    );
 
     cc::Build::new()
         .files(&[
-               "quickjs/cutils.c",
-               "quickjs/libbf.c",
-               "quickjs/libregexp.c",
-               "quickjs/libunicode.c",
-               "quickjs/quickjs.c",
-               "extensions/value.c",
+            "quickjs/cutils.c",
+            "quickjs/libbf.c",
+            "quickjs/libregexp.c",
+            "quickjs/libunicode.c",
+            "quickjs/quickjs.c",
+            "extensions/value.c",
         ])
         .define("_GNU_SOURCE", None)
-        .define(
-            "CONFIG_VERSION",
-            "\"2021-03-27\"",
-            )
+        .define("CONFIG_VERSION", "\"2021-03-27\"")
         .define("CONFIG_BIGNUM", None)
         .cargo_metadata(true)
         // The below flags are used by the official Makefile.

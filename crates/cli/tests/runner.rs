@@ -1,8 +1,8 @@
-use anyhow::{Result};
-use std::path::{Path, PathBuf};
-use std::process::Command;
+use anyhow::Result;
 use std::fs;
 use std::io::{self, Write};
+use std::path::{Path, PathBuf};
+use std::process::Command;
 use wasmtime::{Caller, Config, Engine, Linker, Module, OptLevel, Store};
 use wasmtime_wasi::sync::WasiCtxBuilder;
 use wasmtime_wasi::WasiCtx;
@@ -45,9 +45,7 @@ impl Default for Runner {
 impl Runner {
     fn new(js_file: impl AsRef<Path>) -> Self {
         let root = root_dir();
-        let wasm_file = root.join("tests")
-            .join("target")
-            .join("out.wasm");
+        let wasm_file = root.join("tests").join("target").join("out.wasm");
 
         let js_file = root.join("tests").join("fixtures").join(js_file);
 
@@ -66,8 +64,7 @@ impl Runner {
             panic!("terminated with status = {}", output.status);
         }
 
-        let wasm = fs::read(&wasm_file)
-            .expect("failed to read wasm module");
+        let wasm = fs::read(&wasm_file).expect("failed to read wasm module");
 
         let engine = setup_engine();
         let linker = setup_linker(&engine);

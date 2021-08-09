@@ -1,5 +1,5 @@
-use quickjs_sys as q;
 use crate::serialization::Deserializer;
+use quickjs_sys as q;
 
 pub fn prepare(context: &crate::Context, val: q::JSValue) -> Vec<u8> {
     let mut output = Vec::new();
@@ -10,4 +10,3 @@ pub fn prepare(context: &crate::Context, val: q::JSValue) -> Vec<u8> {
 
     output
 }
-

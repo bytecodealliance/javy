@@ -6,4 +6,3 @@ pub fn prepare(context: &crate::Context, bytes: &[u8]) -> Serializer {
     serde_transcode::transcode(&mut deserializer, &mut serializer).unwrap();
     serializer
 }
-
