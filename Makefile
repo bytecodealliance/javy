@@ -12,16 +12,22 @@ tests: core
 				&& cargo test --release \
 				&& cargo check --benches --release
 
-fmt:
+fmt: fmt-quickjs-sys fmt-core fmt-cli
+
+fmt-quickjs-sys:
 		cd crates/quickjs-sys/ \
 				&& cargo fmt -- --check \
 				&& cargo clippy -- -D warnings \
 				&& cd - \
-		&& cd crates/core/ \
+
+fmt-core:
+		cd crates/core/ \
 				&& cargo fmt -- --check \
 				&& cargo clippy -- -D warnings \
 				&& cd - \
-		&& cd crates/cli/ \
+
+fmt-cli:
+		cd crates/cli/ \
 				&& cargo fmt -- --check \
 				&& cargo clippy -- -D warnings \
 				&& cd -

@@ -9,7 +9,7 @@ containers:
 
 steps:
   - label: Tests
-    timeout: 15m
+    timeout: 20m
     cache:
     - $HOME/.cargo
     - target/
@@ -17,7 +17,7 @@ steps:
     - make tests
 
   - label: Fmt
-    timeout: 5m
+    timeout: 20m
     cache:
     - $HOME/.cargo
     - target/
