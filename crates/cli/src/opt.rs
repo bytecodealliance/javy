@@ -5,6 +5,8 @@ use std::{fs, io::Write};
 use tempfile::NamedTempFile;
 use wizer::Wizer;
 
+use crate::prebuilt;
+
 pub(crate) struct Optimizer {
     pub wasm: Vec<u8>,
 }
@@ -29,7 +31,7 @@ impl Optimizer {
         let mut file = NamedTempFile::new()?;
         file.write_all(&self.wasm)?;
 
-        let output = Command::new("wasm-strip").arg(&file.path()).output()?;
+        let output = Command::new(prebuilt::wasm_strip()).arg(&file.path()).output()?;
 
         if !output.status.success() {
             bail!(format!("Couldn't apply wasm-strip: {:?}", output.stderr));
@@ -49,7 +51,7 @@ impl Optimizer {
 
         file.write_all(&self.wasm)?;
 
-        let output = Command::new("wasm-opt")
+        let output = Command::new(prebuilt::wasm_opt())
             .arg(file.path())
             .arg("-O3")
             .arg("--dce")
