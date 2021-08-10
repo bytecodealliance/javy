@@ -14,20 +14,13 @@ fn main() -> Result<()> {
     let opts = Options::from_args();
     env::set_var("JAVY_INPUT", &opts.input);
 
-    let engine: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/engine.wasm"));
+    let wasm: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/engine.wasm"));
 
-    let working_dir = opts
-        .working_dir
-        .or_else(|| std::env::current_dir().ok())
-        .expect("Failed to get current working directory");
+    opt::Optimizer::new(wasm, opts.input.clone())
+        .strip(true)
+        .optimize(true)
+        .write_optimized_wasm(opts.output)?;
 
-    let optimized = opt::Optimizer::new(engine)
-        .initialize(working_dir)?
-        .strip()?
-        .passes()?
-        .wasm();
-
-    std::fs::write(opts.output, &optimized)?;
     env::remove_var("JAVY_INPUT");
     Ok(())
 }

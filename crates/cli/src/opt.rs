@@ -1,75 +1,67 @@
 use anyhow::{bail, Error, Result};
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 use std::process::Command;
-use std::{fs, io::Write};
-use tempfile::NamedTempFile;
 use wizer::Wizer;
 
 use crate::prebuilt;
 
-pub(crate) struct Optimizer {
-    pub wasm: Vec<u8>,
+pub(crate) struct Optimizer<'a> {
+    strip: bool,
+    optimize: bool,
+    script: PathBuf,
+    wasm: &'a [u8],
 }
 
-impl Optimizer {
-    pub fn new(wasm: &[u8]) -> Self {
-        Self {
-            wasm: Vec::from(wasm),
-        }
+impl<'a> Optimizer<'a> {
+    pub fn new(wasm: &'a [u8], script: PathBuf) -> Self {
+        Self { wasm, script, strip: false, optimize: false }
     }
 
-    pub fn initialize(&mut self, working_dir: PathBuf) -> Result<&mut Self, Error> {
-        self.wasm = Wizer::new()
+    pub fn strip(self, strip: bool) -> Self {
+        Self { strip, ..self }
+    }
+
+    pub fn optimize(self, optimize: bool) -> Self {
+        Self { optimize, ..self }
+    }
+
+    pub fn write_optimized_wasm(self, dest: impl AsRef<Path>) -> Result<(), Error> {
+        let dir = self.script.parent()
+            .filter(Path::is_dir)
+            .ok_or(anyhow::anyhow!("input script is not a file"))?;
+
+        let wasm = Wizer::new()
             .allow_wasi(true)
             .inherit_env(true)
-            .dir(working_dir)
-            .run(&self.wasm)?;
-        Ok(self)
-    }
+            .dir(dir)
+            .run(self.wasm)?;
 
-    pub fn strip(&mut self) -> Result<&mut Self, Error> {
-        let mut file = NamedTempFile::new()?;
-        file.write_all(&self.wasm)?;
+        std::fs::write(dest.as_ref(), wasm)?;
 
-        let output = Command::new(prebuilt::wasm_strip())
-            .arg(&file.path())
-            .output()?;
+        if self.strip {
+            let output = Command::new(prebuilt::wasm_strip())
+                .arg(dest.as_ref())
+                .output()?;
 
-        if !output.status.success() {
-            bail!(format!("Couldn't apply wasm-strip: {:?}", output.stderr));
+            if !output.status.success() {
+                bail!(format!("Couldn't apply wasm-strip: {:?}", output.stderr));
+            }
         }
 
-        self.wasm = fs::read(file.path())?;
+        if self.optimize {
+            let output = Command::new(prebuilt::wasm_opt())
+                .arg(dest.as_ref())
+                .arg("-O3")
+                .arg("--dce")
+                .arg("-o")
+                .arg(dest.as_ref())
+                .output()?;
 
-        Ok(self)
-    }
-
-    // TODO
-    // Add setters that better represent the optimization passes
-    // and apply them via `wasm-opt` when requesting the final binary
-    pub fn passes(&mut self) -> Result<&mut Self, Error> {
-        let mut file = NamedTempFile::new()?;
-        let out_file = file.path().with_extension("wasm-opt.wasm");
-
-        file.write_all(&self.wasm)?;
-
-        let output = Command::new(prebuilt::wasm_opt())
-            .arg(file.path())
-            .arg("-O3")
-            .arg("--dce")
-            .arg("-o")
-            .arg(&out_file)
-            .output()?;
-
-        if !output.status.success() {
-            bail!(format!("Couldn't apply wasm-opt: {:?}", output.stderr));
+            if !output.status.success() {
+                bail!(format!("Couldn't apply wasm-opt: {:?}", output.stderr));
+            }
         }
 
-        self.wasm = fs::read(out_file)?;
-        Ok(self)
-    }
-
-    pub fn wasm(&self) -> Vec<u8> {
-        self.wasm.clone()
+        Ok(())
     }
 }
