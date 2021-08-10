@@ -45,8 +45,7 @@ impl Default for Runner {
 impl Runner {
     fn new(js_file: impl AsRef<Path>) -> Self {
         let root = root_dir();
-        let wasm_file = root.join("tests").join("target").join("out.wasm");
-
+        let wasm_file = std::env::temp_dir().join("out.wasm");
         let js_file = root.join("tests").join("fixtures").join(js_file);
 
         let output = Command::new(env!("CARGO_BIN_EXE_javy"))
