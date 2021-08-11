@@ -1,15 +1,18 @@
-use quickjs_sys as q;
-use serde::{Serialize, de, ser};
-use std::{fmt::{self, Display}, ptr};
 use crate::context::Context;
+use quickjs_sys as q;
+use serde::{de, ser, Serialize};
+use std::{
+    fmt::{self, Display},
+    ptr,
+};
 
 pub struct Serializer {
     pub context: Context,
     pub key: q::JSValue,
-    pub value: q::JSValue
+    pub value: q::JSValue,
 }
 
-pub struct Deserializer <'de> {
+pub struct Deserializer<'de> {
     pub context: &'de Context,
     pub value: q::JSValue,
     pub atom: q::JSAtom,
@@ -18,18 +21,17 @@ pub struct Deserializer <'de> {
     pub offset: isize,
 }
 
-
 impl Serializer {
     pub fn from_context(context: Context) -> Self {
         Self {
-            key: 0 as u64,
-            value: 0 as u64,
+            key: 0_u64,
+            value: 0_u64,
             context,
         }
     }
 }
 
-impl <'de> Deserializer<'de> {
+impl<'de> Deserializer<'de> {
     pub fn from(context: &'de Context, value: q::JSValue) -> Self {
         Self {
             context,
@@ -67,9 +69,11 @@ impl <'de> Deserializer<'de> {
 
     pub fn next_element(&mut self) -> Option<q::JSValue> {
         if self.offset >= self.len {
-            return None
+            return None;
         }
-        let val = self.context.get_uint32_property(self.value, self.offset as u32);
+        let val = self
+            .context
+            .get_uint32_property(self.value, self.offset as u32);
         self.offset += 1;
         Some(val)
     }
@@ -188,7 +192,7 @@ impl<'a> ser::Serializer for &'a mut Serializer {
     // Null
 
     fn serialize_unit(self) -> Result<()> {
-        self.value = ((0 as u64) | q::JS_TAG_NULL as u64) << 32;
+        self.value = (q::JS_TAG_NULL as u64) << 32;
         Ok(())
     }
 
@@ -212,11 +216,7 @@ impl<'a> ser::Serializer for &'a mut Serializer {
         self.serialize_str(variant)
     }
 
-    fn serialize_newtype_struct<T>(
-        self,
-        _name: &'static str,
-        value: &T,
-    ) -> Result<()>
+    fn serialize_newtype_struct<T>(self, _name: &'static str, value: &T) -> Result<()>
     where
         T: ?Sized + Serialize,
     {
@@ -249,11 +249,7 @@ impl<'a> ser::Serializer for &'a mut Serializer {
         Ok(self)
     }
 
-    fn serialize_struct(
-        self,
-        _name: &'static str,
-        len: usize,
-    ) -> Result<Self::SerializeStruct> {
+    fn serialize_struct(self, _name: &'static str, len: usize) -> Result<Self::SerializeStruct> {
         self.serialize_map(Some(len))
     }
 
@@ -405,7 +401,8 @@ impl<'a> ser::SerializeMap for &'a mut Serializer {
         let mut map_serializer = Serializer::from_context(self.context);
         value.serialize(&mut map_serializer)?;
         let key_name = self.context.to_c_str_ptr(self.key);
-        self.context.set_property_raw(self.value, key_name, map_serializer.value);
+        self.context
+            .set_property_raw(self.value, key_name, map_serializer.value);
         Ok(())
     }
 
@@ -428,7 +425,6 @@ impl<'a> ser::SerializeStruct for &'a mut Serializer {
         self.context.set_str_property(obj, key, v);
         self.value = obj;
         Ok(())
-
     }
 
     fn end(self) -> Result<()> {
@@ -475,7 +471,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
                 } else {
                     self.deserialize_map(visitor)
                 }
-            },
+            }
             tag => {
                 // u32 are also serialized as f64;
                 // here it's worth checking if `self.value` is actually a f32 or f64
@@ -626,22 +622,14 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         visitor.visit_unit()
     }
 
-    fn deserialize_unit_struct<V>(
-        self,
-        _name: &'static str,
-        visitor: V,
-    ) -> Result<V::Value>
+    fn deserialize_unit_struct<V>(self, _name: &'static str, visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
     {
         self.deserialize_unit(visitor)
     }
 
-    fn deserialize_newtype_struct<V>(
-        self,
-        _name: &'static str,
-        visitor: V,
-    ) -> Result<V::Value>
+    fn deserialize_newtype_struct<V>(self, _name: &'static str, visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
     {
@@ -724,7 +712,7 @@ impl<'de> de::MapAccess<'de> for Deserializer<'de> {
     {
         if let Some(k) = self.next_key() {
             let mut key_deserializer = Deserializer::from(&self.context, k);
-            return seed.deserialize(&mut key_deserializer).map(Some)
+            return seed.deserialize(&mut key_deserializer).map(Some);
         }
 
         Ok(None)
@@ -734,18 +722,16 @@ impl<'de> de::MapAccess<'de> for Deserializer<'de> {
     where
         V: de::DeserializeSeed<'de>,
     {
-
         if let Ok(p) = self.next_value() {
             let mut prop_deserializer = Deserializer::from(&self.context, p);
-            return seed.deserialize(&mut prop_deserializer)
+            return seed.deserialize(&mut prop_deserializer);
         }
 
         Err(Error::Message("Error deserializing value".to_string()))
-
     }
 }
 
-impl <'de> de::SeqAccess<'de> for Deserializer<'de> {
+impl<'de> de::SeqAccess<'de> for Deserializer<'de> {
     type Error = Error;
 
     fn next_element_seed<T>(&mut self, seed: T) -> Result<Option<T::Value>>
@@ -754,7 +740,7 @@ impl <'de> de::SeqAccess<'de> for Deserializer<'de> {
     {
         if let Some(e) = self.next_element() {
             let mut element_deserializer = Deserializer::from(&self.context, e);
-            return seed.deserialize(&mut element_deserializer).map(Some)
+            return seed.deserialize(&mut element_deserializer).map(Some);
         }
 
         Ok(None)

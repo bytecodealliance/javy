@@ -42,7 +42,6 @@ pub extern "C" fn init() {
     }
 }
 
-
 // TODO
 //
 // Improve ergonomics around errors
@@ -67,4 +66,3 @@ pub extern "C" fn run() {
         engine::store(&output);
     }
 }
-

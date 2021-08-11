@@ -1,7 +1,7 @@
 use criterion::{criterion_group, criterion_main, Criterion};
+use wasmtime::*;
 use wasmtime_wasi::sync::WasiCtxBuilder;
 use wasmtime_wasi::Wasi;
-use wasmtime::*;
 
 fn store_from_config() -> Store {
     let mut config = Config::new();
@@ -75,7 +75,7 @@ fn linker(store: &Store) -> Linker {
         )
         .expect("Could not define output_copy import");
 
-     linker
+    linker
 }
 
 fn exec(linker: &Linker, module: &Module) {
@@ -112,4 +112,3 @@ fn js(c: &mut Criterion) {
 
 criterion_group!(benches, js);
 criterion_main!(benches);
-

@@ -1,0 +1,26 @@
+containers:
+  default:
+    build:
+      timeout: 20m
+      env:
+        PIPA_DOCKERFILE: .shopify-build/Dockerfile
+        PIPA_DOCKER_CACHE_FROM_BRANCH: "true"
+        PIPA_TAG_BRANCH: "true"
+
+steps:
+  - label: Tests
+    timeout: 20m
+    cache:
+    - $HOME/.cargo
+    - target/
+    run:
+    - make tests
+
+  - label: Fmt
+    timeout: 20m
+    cache:
+    - $HOME/.cargo
+    - target/
+    run:
+    - make fmt
+
