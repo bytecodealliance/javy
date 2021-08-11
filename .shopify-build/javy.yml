@@ -13,6 +13,8 @@ steps:
     cache:
     - $HOME/.cargo
     - target/
+    env:
+      PROPTEST_TIMEOUT: 180000 # 3mins
     run:
     - make tests
 

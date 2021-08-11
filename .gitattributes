@@ -1,1 +1,2 @@
 crates/quickjs-sys/vendor/** linguist-generated
+crates/cli/vendor/** linguist-generated

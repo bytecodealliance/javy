@@ -19,6 +19,7 @@ proptest = "1"
 
 [dependencies]
 wizer = { git = "https://github.com/bytecodealliance/wizer", branch = "main" }
+which = "4.2"
 structopt = "0.3"
 anyhow = "1.0"
 tempfile = "3.2.0"
