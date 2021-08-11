@@ -8,6 +8,12 @@ fn prebuilt_binary(name: &str, bytes: &[u8]) -> PathBuf {
       if !tmp_binary.exists() {
         std::fs::write(&tmp_binary, bytes)
           .unwrap_or_else(|err| panic!("failed to write to {:?}: {}", &tmp_binary, err));
+
+        if cfg!(target_family = "unix") {
+          use std::os::unix::fs::PermissionsExt;
+          std::fs::set_permissions(&tmp_binary, std::fs::Permissions::from_mode(0o744))
+            .unwrap_or_else(|err| panic!("failed to set permissions to {:?}: {}", &tmp_binary, err));;
+        }
       }
 
       tmp_binary
