@@ -58,7 +58,7 @@ fn copy_engine_binary() {
     }
 }
 
-// Copy OS specific prebuild binaries to a known location. The binaries will be embedded in the final binary and
+// Copy OS specific pre-built binaries to a known location. The binaries will be embedded in the final binary and
 // extracted to a temporary location if it's not already installed.
 fn copy_prebuilt_binaries() {
     let target_dir = PathBuf::from(std::env::var("OUT_DIR").unwrap());
