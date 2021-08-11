@@ -31,7 +31,9 @@ impl Optimizer {
         let mut file = NamedTempFile::new()?;
         file.write_all(&self.wasm)?;
 
-        let output = Command::new(prebuilt::wasm_strip()).arg(&file.path()).output()?;
+        let output = Command::new(prebuilt::wasm_strip())
+            .arg(&file.path())
+            .output()?;
 
         if !output.status.success() {
             bail!(format!("Couldn't apply wasm-strip: {:?}", output.stderr));
