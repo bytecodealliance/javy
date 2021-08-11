@@ -2,8 +2,11 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-    stub_engine_for_clippy();
-    copy_engine_binary();
+    if let Ok("cargo-clippy") = env::var("CARGO_CFG_FEATURE").as_ref().map(String::as_str) {
+        stub_engine_for_clippy();
+    } else {
+        copy_engine_binary();
+    }
 }
 
 // When using clippy, we need to write a stubbed engine.wasm file to ensure compilation succeeds. This
@@ -13,14 +16,10 @@ fn stub_engine_for_clippy() {
         .expect("failed to retrieve out dir")
         .into();
 
-    if let Ok("cargo-clippy") = env::var("CARGO_CFG_FEATURE").as_ref().map(String::as_str) {
-        let engine_path = out_dir.join("engine.wasm");
-        if !engine_path.exists() {
-            std::fs::write(engine_path, "").expect("failed to write empty engine.wasm stub");
-            println!("cargo:warning=using stubbed engine.wasm for static analysis purposes...");
-        }
-
-        std::process::exit(0);
+    let engine_path = out_dir.join("engine.wasm");
+    if !engine_path.exists() {
+        std::fs::write(engine_path, "").expect("failed to write empty engine.wasm stub");
+        println!("cargo:warning=using stubbed engine.wasm for static analysis purposes...");
     }
 }
 
