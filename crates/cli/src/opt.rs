@@ -27,7 +27,7 @@ impl<'a> Optimizer<'a> {
 
     pub fn write_optimized_wasm(self, dest: impl AsRef<Path>) -> Result<(), Error> {
         let dir = self.script.parent()
-            .filter(Path::is_dir)
+            .filter(|p| p.is_dir())
             .ok_or(anyhow::anyhow!("input script is not a file"))?;
 
         let wasm = Wizer::new()
