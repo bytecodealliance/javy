@@ -18,8 +18,7 @@ fn main() {
 // When using clippy, we need to write a stubbed engine.wasm file to ensure compilation succeeds. This
 // skips building the actual engine.wasm binary that would be injected into the CLI binary.
 fn stub_engine_for_clippy() {
-    let engine_path = PathBuf::from(env::var("OUT_DIR").unwrap())
-        .join("engine.wasm");
+    let engine_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("engine.wasm");
 
     if !engine_path.exists() {
         std::fs::write(engine_path, &[]).expect("failed to write empty engine.wasm stub");
@@ -59,8 +58,7 @@ fn copy_engine_binary() {
     println!("cargo:rerun-if-changed={:?}", engine_path);
 
     if engine_path.exists() {
-        let copied_engine_path = PathBuf::from(env::var("OUT_DIR").unwrap())
-            .join("engine.wasm");
+        let copied_engine_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("engine.wasm");
 
         fs::copy(&engine_path, &copied_engine_path).unwrap();
         optimize_engine(&copied_engine_path);
@@ -78,10 +76,7 @@ fn optimize_engine(engine_path: impl AsRef<Path>) {
 
 fn run_wasm_strip(engine_path: impl AsRef<Path>) {
     let wasm_strip = which::which("wasm-strip")
-        .unwrap_or_else(|_| {
-            PathBuf::from(env::var("OUT_DIR").unwrap())
-                .join("vendor/wasm-opt")
-        });
+        .unwrap_or_else(|_| PathBuf::from(env::var("OUT_DIR").unwrap()).join("vendor/wasm-opt"));
 
     let output = Command::new(wasm_strip)
         .arg(engine_path.as_ref())
@@ -96,10 +91,7 @@ fn run_wasm_strip(engine_path: impl AsRef<Path>) {
 
 fn run_wasm_opt(engine_path: impl AsRef<Path>) {
     let wasm_opt = which::which("wasm-opt")
-        .unwrap_or_else(|_| {
-            PathBuf::from(env::var("OUT_DIR").unwrap())
-                .join("vendor/wasm-opt")
-        });
+        .unwrap_or_else(|_| PathBuf::from(env::var("OUT_DIR").unwrap()).join("vendor/wasm-opt"));
 
     let output = Command::new(wasm_opt)
         .arg(engine_path.as_ref())

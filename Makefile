@@ -10,7 +10,6 @@ core:
 				&& cargo build --target=wasm32-wasi \
 				&& cd -
 
-
 tests: core
 		cd crates/cli \
 				&& cargo test \
