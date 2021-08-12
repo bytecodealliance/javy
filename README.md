@@ -1,5 +1,7 @@
 # Javy: A _Jav_ aScript to WebAssembl _y_  toolchain
 
+[![Build status](https://badge.buildkite.com/7f78e611f58950fa1d3f26b3486c941bc9a104f593ccf57fa8.svg)](https://buildkite.com/shopify/javy)
+
 [About this repo](#about-this-repo) | [How to use this repo](#how-to-use-this-repo)
 
 ## About this repo
@@ -18,25 +20,17 @@ JavaScript code, and executes it in a WebAssebmly embedded JavaScript runtime.
 
 #### Requirements
 
-- Rust v1.52.0
+- Rust v1.53.0
 - [rustup](https://rustup.rs/)
 - wasm32-wasi, can be installed via `rustup target add wasm32-wasi`
-- `wasm-strip`: https://github.com/WebAssembly/wabt, which can be installed
-  via `brew install wabt`
-
-- `wasm-opt`: https://github.com/WebAssembly/binaryen
-  - Download a release for your platform from https://github.com/WebAssembly/binaryen/releases/
-  - Put the binaries in `bin` under `/usr/local/bin`
-  - Put the binaries in `include` under `/usr/local/include`
-  - Put the binaries in `lib` under `/usr/local/lib`
 
 
 #### Building
 
-After all the dependencies are installed, run `make profile=release`. You
+After all the dependencies are installed, run `make`. You
 should now have access to the executable in `target/release/javy`
 
-Alternatively you can run `make profile=release && cargo install --path crates/cli`.
+Alternatively you can run `make && cargo install --path crates/cli`.
 After running the previous command you'll have a global installation of the
 executable.
 
