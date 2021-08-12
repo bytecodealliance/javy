@@ -7,16 +7,19 @@ fn main() {
         not_supported => panic!("{} is not supported.", not_supported),
     };
 
+    env::set_var("CC_x86_64-unknown-linux-gnu", "gcc");
+
     env::set_var(
         "CC_wasm32_wasi",
-        format!("vendor/{}/wasi-sdk/bin/clang", host_platform),
+        format!("vendor/{}/wasi-sdk/bin/clang", host_platform,),
     );
     env::set_var(
         "AR_wasm32_wasi",
         format!("vendor/{}/wasi-sdk/bin/ar", host_platform),
     );
+
     env::set_var(
-        "CFLAGS",
+        "CFLAGS_wasm32_wasi",
         format!(
             "--sysroot=vendor/{}/wasi-sdk/share/wasi-sysroot",
             host_platform

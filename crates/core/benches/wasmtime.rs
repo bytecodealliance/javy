@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use wasmtime::*;
-use wasmtime_wasi::{WasiCtxBuilder, WasiCtx, sync};
+use wasmtime_wasi::{sync, WasiCtx, WasiCtxBuilder};
 
 struct Data {
     wasi: WasiCtx,
@@ -16,9 +16,7 @@ impl Data {
 impl Default for Data {
     fn default() -> Self {
         Self {
-            wasi: WasiCtxBuilder::new()
-                .inherit_stdio()
-                .build(),
+            wasi: WasiCtxBuilder::new().inherit_stdio().build(),
             input: vec![],
         }
     }
@@ -50,13 +48,15 @@ fn make_linker(store: &mut Store<Data>) -> Linker<Data> {
             "shopify_v1",
             "input_len",
             move |mut caller: Caller<'_, Data>, offset: i32| {
-                let memory = caller.get_export("memory")
+                let memory = caller
+                    .get_export("memory")
                     .and_then(|slot| slot.into_memory())
                     .expect("Couldn't get access to caller's memory");
 
                 let data = caller.data();
                 let len = data.input.len();
-                memory.write(caller.as_context_mut(), offset as usize, &len.to_ne_bytes())
+                memory
+                    .write(caller.as_context_mut(), offset as usize, &len.to_ne_bytes())
                     .expect("Couldn't write input length");
             },
         )
@@ -67,13 +67,16 @@ fn make_linker(store: &mut Store<Data>) -> Linker<Data> {
             "shopify_v1",
             "input_copy",
             move |mut caller: Caller<'_, Data>, offset: i32| {
-                let memory = caller.get_export("memory")
+                let memory = caller
+                    .get_export("memory")
                     .and_then(|slot| slot.into_memory())
                     .expect("Couldn't get access to caller's memory");
 
                 let (backing_memory, data) = memory.data_and_store_mut(&mut caller);
                 let offset = offset as usize;
-                let slot = backing_memory.get_mut(offset..offset + data.input.len()).expect("Couldn't allocate memory space to copy input");
+                let slot = backing_memory
+                    .get_mut(offset..offset + data.input.len())
+                    .expect("Couldn't allocate memory space to copy input");
                 slot.copy_from_slice(&data.input);
             },
         )
@@ -84,7 +87,8 @@ fn make_linker(store: &mut Store<Data>) -> Linker<Data> {
             "shopify_v1",
             "output_copy",
             move |mut caller: Caller<'_, Data>, offset: i32, len: i32| {
-                let mem = caller.get_export("memory")
+                let mem = caller
+                    .get_export("memory")
                     .and_then(|slot| slot.into_memory())
                     .expect("Couldn't get access to caller's memory");
 
@@ -101,7 +105,9 @@ fn make_linker(store: &mut Store<Data>) -> Linker<Data> {
 
 fn exec(store: &mut Store<Data>, linker: &Linker<Data>, module: &Module) {
     let instance = linker.instantiate(&mut *store, &module).unwrap();
-    let run = instance.get_typed_func::<(), (), _>(&mut *store, "shopify_main").unwrap();
+    let run = instance
+        .get_typed_func::<(), (), _>(&mut *store, "shopify_main")
+        .unwrap();
     run.call(&mut *store, ()).unwrap();
 }
 
