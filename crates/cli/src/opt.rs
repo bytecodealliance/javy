@@ -1,5 +1,5 @@
-use anyhow::{bail, Error, Result};
-use std::path::{PathBuf, Path};
+use anyhow::{bail, Context, Error, Result};
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use wizer::Wizer;
 
@@ -14,7 +14,12 @@ pub(crate) struct Optimizer<'a> {
 
 impl<'a> Optimizer<'a> {
     pub fn new(wasm: &'a [u8], script: PathBuf) -> Self {
-        Self { wasm, script, strip: false, optimize: false }
+        Self {
+            wasm,
+            script,
+            strip: false,
+            optimize: false,
+        }
     }
 
     pub fn strip(self, strip: bool) -> Self {
@@ -26,9 +31,11 @@ impl<'a> Optimizer<'a> {
     }
 
     pub fn write_optimized_wasm(self, dest: impl AsRef<Path>) -> Result<(), Error> {
-        let dir = self.script.parent()
+        let dir = self
+            .script
+            .parent()
             .filter(|p| p.is_dir())
-            .ok_or(anyhow::anyhow!("input script is not a file"))?;
+            .context("input script is not a file")?;
 
         let wasm = Wizer::new()
             .allow_wasi(true)
