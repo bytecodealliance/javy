@@ -7,11 +7,6 @@ use wasmtime::{Caller, Config, Engine, Linker, Module, OptLevel, Store};
 use wasmtime_wasi::sync::WasiCtxBuilder;
 use wasmtime_wasi::WasiCtx;
 
-pub struct Runner {
-    wasm: Vec<u8>,
-    linker: Linker<StoreContext>,
-}
-
 struct StoreContext {
     input: Vec<u8>,
     output: Vec<u8>,
@@ -30,10 +25,9 @@ impl Default for StoreContext {
     }
 }
 
-fn root_dir() -> PathBuf {
-    std::env::var("CARGO_MANIFEST_DIR")
-        .expect("failed to get current cargo dir")
-        .into()
+pub struct Runner {
+    wasm: Vec<u8>,
+    linker: Linker<StoreContext>,
 }
 
 impl Default for Runner {
@@ -43,8 +37,8 @@ impl Default for Runner {
 }
 
 impl Runner {
-    fn new(js_file: impl AsRef<Path>) -> Self {
-        let root = root_dir();
+    pub fn new(js_file: impl AsRef<Path>) -> Self {
+        let root = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
         let wasm_file = std::env::temp_dir().join("out.wasm");
         let js_file = root.join("tests").join("fixtures").join(js_file);
 
