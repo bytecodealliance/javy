@@ -1,4 +1,4 @@
-use anyhow::{bail, Error, Result};
+use anyhow::{bail, Context, Error, Result};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use wizer::Wizer;
@@ -35,7 +35,7 @@ impl<'a> Optimizer<'a> {
             .script
             .parent()
             .filter(|p| p.is_dir())
-            .ok_or(anyhow::anyhow!("input script is not a file"))?;
+            .context("input script is not a file")?;
 
         let wasm = Wizer::new()
             .allow_wasi(true)
