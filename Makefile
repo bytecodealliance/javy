@@ -5,12 +5,13 @@ cli: core
 		cd crates/cli && cargo build --release
 
 core:
-		cd crates/core && cargo build --release
+		cd crates/core \
+			&& cargo check --benches --release \
+			&& cargo build --release
 
 tests: core
 		cd crates/cli \
-				&& cargo test --release \
-				&& cargo check --benches --release
+				&& cargo test --release
 
 fmt: fmt-quickjs-sys fmt-core fmt-cli
 
