@@ -12,11 +12,12 @@ use structopt::StructOpt;
 
 fn main() -> Result<()> {
     let opts = Options::from_args();
-    env::set_var("JAVY_INPUT", &opts.input);
+    let canonical = std::fs::canonicalize(&opts.input)?;
+    env::set_var("JAVY_INPUT", &canonical);
 
     let wasm: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/engine.wasm"));
 
-    opt::Optimizer::new(wasm, opts.input.clone())
+    opt::Optimizer::new(wasm, canonical)
         .strip(true)
         .optimize(true)
         .write_optimized_wasm(opts.output)?;
