@@ -9,7 +9,6 @@ core:
 
 tests: core
 		cd crates/cli \
-				&& cargo test --release \
 				&& cargo check --benches --release
 
 fmt: fmt-quickjs-sys fmt-core fmt-cli
