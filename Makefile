@@ -2,15 +2,17 @@
 .DEFAULT_GOAL := cli
 
 cli: core
-		cd crates/cli && cargo build --release
+		cd crates/cli && cargo build && cd -
 
 check-benchmarks:
 	cd crates/benchmarks \
-		&& cargo check --benches --release
+				&& cargo check --benches --release \
+				&& cd -
 
 core:
 		cd crates/core \
-			&& cargo build --release --target=wasm32-wasi
+				&& cargo build --release --target=wasm32-wasi \
+				&& cd -
 
 test-core:
 	cd crates/core \
@@ -24,13 +26,13 @@ fmt-quickjs-sys:
 		cd crates/quickjs-sys/ \
 				&& cargo fmt -- --check \
 				&& cargo clippy -- -D warnings \
-				&& cd - \
+				&& cd -
 
 fmt-core:
 		cd crates/core/ \
 				&& cargo fmt -- --check \
 				&& cargo clippy -- -D warnings \
-				&& cd - \
+				&& cd -
 
 fmt-cli:
 		cd crates/cli/ \
