@@ -14,7 +14,7 @@ steps:
     - $HOME/.cargo
     - target/
     env:
-      PROPTEST_TIMEOUT: 180000 # 3mins
+      PROPTEST_TIMEOUT: "180000" # 3mins
     run:
     - make tests
 
