@@ -5,12 +5,11 @@ cli: core
 		cd crates/cli && cargo build --release
 
 core:
-		cd crates/core && cargo build --release
+		cd crates/core \
+			&& cargo check --benches --release \
+			&& cargo build --release --target=wasm32-wasi
 
 tests: core
-		cd crates/cli \
-				&& cargo test --release \
-				&& cargo check --benches --release
 
 fmt: fmt-quickjs-sys fmt-core fmt-cli
 
