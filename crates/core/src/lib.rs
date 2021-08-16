@@ -21,6 +21,7 @@ static mut ENTRYPOINT: Option<(q::JSValue, q::JSValue)> = None;
 // AOT validations:
 //  1. Ensure that the required exports are present
 //  2. If not present just evaluate the top level statement (?)
+
 #[export_name = "wizer.initialize"]
 pub extern "C" fn init() {
     // This could be problematic given that the allowed dirs should be known ahead-of-time
@@ -62,7 +63,7 @@ pub extern "C" fn run() {
             println!("{:?}", exception);
         }
 
-        let output = output::prepare(&context, result);
-        engine::store(&output);
+        let mut output = output::prepare(&context, result);
+        engine::store(&mut output);
     }
 }
