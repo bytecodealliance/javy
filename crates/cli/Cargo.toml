@@ -11,6 +11,7 @@ name = "javy"
 [dev-dependencies]
 wasmtime = "0.29.0"
 wasmtime-wasi = "0.29.0"
+wasi-common = "0.29"
 serde = "1.0.126"
 serde_json = "1.0.64"
 rmp-serde = "0.15.5"

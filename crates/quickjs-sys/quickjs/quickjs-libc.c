@@ -457,8 +457,8 @@ static JSValue js_std_loadFile(JSContext *ctx, JSValueConst this_val,
 
 typedef JSModuleDef *(JSInitModuleFunc)(JSContext *ctx,
                                         const char *module_name);
-
-#if defined(_WIN32) || defined(_QJS_WASI)
+#if !defined(_QJS_WASI)
+#if defined(_WIN32)
 static JSModuleDef *js_module_loader_so(JSContext *ctx,
                                         const char *module_name)
 {
@@ -515,6 +515,7 @@ static JSModuleDef *js_module_loader_so(JSContext *ctx,
     return m;
 }
 #endif /* !_WIN32 */
+#endif
 
 int js_module_set_import_meta(JSContext *ctx, JSValueConst func_val,
                               JS_BOOL use_realpath, JS_BOOL is_main)

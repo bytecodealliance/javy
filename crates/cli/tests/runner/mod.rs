@@ -1,29 +1,11 @@
 use anyhow::Result;
 use std::fs;
-use std::io::{self, Write};
+use std::io::{self, Write, Cursor};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use wasmtime::{Caller, Config, Engine, Linker, Module, OptLevel, Store};
 use wasmtime_wasi::sync::WasiCtxBuilder;
 use wasmtime_wasi::WasiCtx;
-
-struct StoreContext {
-    input: Vec<u8>,
-    output: Vec<u8>,
-    wasi: WasiCtx,
-}
-
-impl Default for StoreContext {
-    fn default() -> Self {
-        let wasi = WasiCtxBuilder::new().inherit_stdio().build();
-
-        Self {
-            wasi,
-            input: Vec::default(),
-            output: Vec::default(),
-        }
-    }
-}
 
 pub struct Runner {
     wasm: Vec<u8>,
@@ -65,8 +47,8 @@ impl Runner {
         Self { wasm, linker }
     }
 
-    pub fn exec(&mut self, input: Vec<u8>) -> Result<Vec<u8>> {
-        let mut store = Store::new(self.linker.engine(), StoreContext::new(input));
+    pub fn exec(&mut self, ctx: impl Into<StoreContext>) -> Result<Vec<u8>> {
+        let mut store = Store::new(self.linker.engine(), ctx.into());
 
         let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
 
@@ -79,12 +61,35 @@ impl Runner {
     }
 }
 
-impl StoreContext {
-    fn new(input: Vec<u8>) -> Self {
+pub struct StoreContext {
+    input: Vec<u8>,
+    output: Vec<u8>,
+    wasi: WasiCtx,
+}
+
+impl Default for StoreContext {
+    fn default() -> Self {
+        let wasi = WasiCtxBuilder::new().inherit_stdio().build();
+
         Self {
-            input,
-            ..Default::default()
+            wasi,
+            input: Vec::default(),
+            output: Vec::default(),
         }
+    }
+}
+
+impl From<Vec<u8>> for StoreContext {
+    fn from(input: Vec<u8>) -> Self {
+        Self { input, ..Default::default() }
+    }
+}
+
+impl StoreContext {
+    pub fn pipe_stdout(&mut self) -> wasi_common::pipe::WritePipe<Cursor<Vec<u8>>> {
+        let pipe = wasi_common::pipe::WritePipe::new_in_memory();
+        self.wasi.set_stdout(Box::new(pipe.clone()));
+        pipe
     }
 }
 
