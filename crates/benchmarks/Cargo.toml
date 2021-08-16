@@ -1,0 +1,16 @@
+[package]
+name = "benchmarks"
+version = "0.1.0"
+authors = ["Saúl Cabrera <saulecabrera@gmail.com>"]
+edition = "2018"
+
+[dev-dependencies]
+criterion = "0.3"
+wasmtime = "0.29.0"
+wasmtime-wasi = "0.29.0"
+serde_json = "1.0"
+rmp-serde = "^0.15"
+
+[[bench]]
+name = "wasmtime"
+harness = false
