@@ -5,7 +5,7 @@ cli: core
 		cd crates/cli && cargo build && cd -
 
 check-benchmarks:
-	cd crates/benchmarks \
+		cd crates/benchmarks \
 				&& cargo check --benches --release \
 				&& cd -
 
@@ -15,8 +15,8 @@ core:
 				&& cd -
 
 test-core:
-	cd crates/core \
-		&& cargo wasi test --features standalone-wasi -- --nocapture
+		cd crates/core \
+				&& cargo wasi test --features standalone-wasi -- --nocapture
 
 tests: check-benchmarks test-core
 

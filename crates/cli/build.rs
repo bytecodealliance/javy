@@ -53,7 +53,7 @@ fn copy_engine_binary() {
     let mut engine_path = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
     engine_path.pop();
     engine_path.pop();
-    let engine_path = engine_path.join("target/wasm32-wasi/debug/javy_core.wasm");
+    let engine_path = engine_path.join("target/wasm32-wasi/release/javy_core.wasm");
 
     println!("cargo:rerun-if-changed={:?}", engine_path);
 
