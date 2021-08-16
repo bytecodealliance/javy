@@ -17,17 +17,6 @@ rmp-serde = "^0.15"
 rmpv = { version = "0.4", features = ["with-serde"] }
 wee_alloc = "0.4.5"
 
-
-[dev-dependencies]
-criterion = "0.3"
-wasmtime = "0.29.0"
-wasmtime-wasi = "0.29.0"
-serde_json = "1.0"
-
-[[bench]]
-name = "wasmtime"
-harness = false
-
 [profile.release]
 lto = true
 opt-level = 3
