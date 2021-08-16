@@ -42,10 +42,16 @@
 #include <conio.h>
 #include <utime.h>
 #else
+#if !defined(_QJS_WASI)
 #include <dlfcn.h>
+#endif
+#if !defined(_QJS_WASI)
 #include <termios.h>
+#endif
 #include <sys/ioctl.h>
+#if !defined(_QJS_WASI)
 #include <sys/wait.h>
+#endif
 
 #if defined(__APPLE__)
 typedef sig_t sighandler_t;
@@ -57,7 +63,7 @@ typedef sig_t sighandler_t;
 
 #endif
 
-#if !defined(_WIN32)
+#if !defined(_WIN32) && !defined(_QJS_WASI)
 /* enable the os.Worker API. IT relies on POSIX threads */
 #define USE_WORKER
 #endif
@@ -452,8 +458,7 @@ static JSValue js_std_loadFile(JSContext *ctx, JSValueConst this_val,
 typedef JSModuleDef *(JSInitModuleFunc)(JSContext *ctx,
                                         const char *module_name);
 
-
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(_QJS_WASI)
 static JSModuleDef *js_module_loader_so(JSContext *ctx,
                                         const char *module_name)
 {
@@ -1666,6 +1671,7 @@ static JSValue js_os_isatty(JSContext *ctx, JSValueConst this_val,
     return JS_NewBool(ctx, (isatty(fd) != 0));
 }
 
+#if !defined(_QJS_WASI)
 #if defined(_WIN32)
 static JSValue js_os_ttyGetWinSize(JSContext *ctx, JSValueConst this_val,
                                    int argc, JSValueConst *argv)
@@ -1770,6 +1776,7 @@ static JSValue js_os_ttySetRaw(JSContext *ctx, JSValueConst this_val,
 }
 
 #endif /* !_WIN32 */
+#endif
 
 static JSValue js_os_remove(JSContext *ctx, JSValueConst this_val,
                              int argc, JSValueConst *argv)
@@ -2832,6 +2839,7 @@ static int my_execvpe(const char *filename, char **argv, char **envp)
     return -1;
 }
 
+#if !defined(_QJS_WASI)
 /* exec(args[, options]) -> exitcode */
 static JSValue js_os_exec(JSContext *ctx, JSValueConst this_val,
                           int argc, JSValueConst *argv)
@@ -3029,6 +3037,7 @@ static JSValue js_os_exec(JSContext *ctx, JSValueConst this_val,
     ret_val = JS_EXCEPTION;
     goto done;
 }
+#endif
 
 /* waitpid(pid, block) -> [pid, status] */
 static JSValue js_os_waitpid(JSContext *ctx, JSValueConst this_val,
@@ -3594,9 +3603,11 @@ static const JSCFunctionListEntry js_os_funcs[] = {
     JS_CFUNC_DEF("seek", 3, js_os_seek ),
     JS_CFUNC_MAGIC_DEF("read", 4, js_os_read_write, 0 ),
     JS_CFUNC_MAGIC_DEF("write", 4, js_os_read_write, 1 ),
+#if !defined(_QJS_WASI)
     JS_CFUNC_DEF("isatty", 1, js_os_isatty ),
     JS_CFUNC_DEF("ttyGetWinSize", 1, js_os_ttyGetWinSize ),
     JS_CFUNC_DEF("ttySetRaw", 1, js_os_ttySetRaw ),
+#endif
     JS_CFUNC_DEF("remove", 1, js_os_remove ),
     JS_CFUNC_DEF("rename", 2, js_os_rename ),
     JS_CFUNC_MAGIC_DEF("setReadHandler", 2, js_os_setReadHandler, 0 ),
@@ -3649,9 +3660,11 @@ static const JSCFunctionListEntry js_os_funcs[] = {
     JS_CFUNC_MAGIC_DEF("lstat", 1, js_os_stat, 1 ),
     JS_CFUNC_DEF("symlink", 2, js_os_symlink ),
     JS_CFUNC_DEF("readlink", 1, js_os_readlink ),
-    JS_CFUNC_DEF("exec", 1, js_os_exec ),
     JS_CFUNC_DEF("waitpid", 2, js_os_waitpid ),
+#if !defined(_QJS_WASI)
+    JS_CFUNC_DEF("exec", 1, js_os_exec ),
     OS_FLAG(WNOHANG),
+#endif
     JS_CFUNC_DEF("pipe", 0, js_os_pipe ),
     JS_CFUNC_DEF("kill", 2, js_os_kill ),
     JS_CFUNC_DEF("dup", 1, js_os_dup ),
