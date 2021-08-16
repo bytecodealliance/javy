@@ -18,11 +18,15 @@ impl Context {
             return None;
         }
 
+        unsafe {  js_std_init_handlers(rt); }
+
         let context = unsafe { JS_NewContext(rt) };
         if context.is_null() {
             // Free the runtime
             return None;
         }
+
+        unsafe { js_std_add_helpers(context, 0, std::ptr::null_mut()); }
 
         Some(Self { raw: context, rt })
     }
