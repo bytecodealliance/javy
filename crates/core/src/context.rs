@@ -1,6 +1,6 @@
 #![allow(clippy::wrong_self_convention)]
 use quickjs_sys::*;
-use std::{ffi::CString, os::raw::c_char, ptr};
+use std::{ffi::CString, io, os::raw::c_char, os::raw::c_int, os::raw::c_void, ptr};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Context {
@@ -11,23 +11,25 @@ pub struct Context {
 // TODO
 // Extract the 'pure value' functions
 
-impl Context {
-    pub fn new() -> Option<Self> {
+impl Default for Context {
+    fn default() -> Self {
         let rt = unsafe { JS_NewRuntime() };
         if rt.is_null() {
-            return None;
+            panic!("failed to initialize js runtime");
         }
 
         let context = unsafe { JS_NewContext(rt) };
         if context.is_null() {
             // Free the runtime
-            return None;
+            panic!("failed to initialize js context");
         }
 
-        Some(Self { raw: context, rt })
+        Self { raw: context, rt }
     }
+}
 
-    pub fn compile(&self, bytes: &[u8], name: &str) -> JSValue {
+impl Context {
+    pub fn eval(&self, bytes: &[u8], name: &str) -> JSValue {
         let input = make_cstring(bytes.to_vec());
         let script_name = make_cstring(name);
 
@@ -219,43 +221,56 @@ impl Context {
         self.get_tag(val) == JS_TAG_STRING
     }
 
-    // pub fn create_callback<'a, F>(&self, callback: F) -> JSValue
-    // where F: Fn() -> JSValue + 'a
-    // {
-    //     let f = move |_argc: c_int, _argv: *mut JSValue| -> JSValue {
-    //         callback()
-    //     };
+    pub fn new_callback<F>(&self, f: F) -> JSValue
+    where
+        F: FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue,
+    {
+        // Lifetime is not respected and behavior is undefined. If we truly want to support
+        // closure and capture the environment, it must live as long as &self.
+        //
+        // The following example will not produce the expected result:
+        //
+        // ```rs
+        // let bar = "bar".to_string();
+        // self.create_callback(|_, _, _, _, _| println!("foo: {}", &bar));
+        // ```
+        let trampoline = build_trampoline(&f);
+        let data = &f as *const _ as *mut c_void as *mut JSValue;
 
-    //     let (data, trampoline) = unsafe { build_trampoline(f) };
-    //     unsafe {
-    //         JS_NewCFunctionData(self.raw, trampoline, 0, 1, 1, data)
-    //     }
-    // }
+        unsafe { JS_NewCFunctionData(self.raw, trampoline, 0, 1, 1, data) }
+    }
+
+    pub fn set_property(&self, receiver: JSValue, name: impl Into<Vec<u8>>, value: JSValue) {
+        unsafe {
+            JS_SetPropertyStr(self.raw, receiver, make_cstring(name).as_ptr(), value);
+        }
+    }
 }
 
-// unsafe fn build_trampoline<F>(closure: F) -> (*mut JSValue, JSCFunctionData)
-//     where F: Fn(c_int, *mut JSValue) -> JSValue
-//     {
-//         unsafe extern "C" fn trampoline<F>(
-//             _ctx: *mut JSContext,
-//             _this: JSValue,
-//             argc: c_int,
-//             argv: *mut JSValue,
-//             _magic: c_int,
-//             data: *mut JSValue,
-//             ) -> JSValue
-//             where
-//                 F: Fn(c_int, *mut JSValue) -> JSValue,
-//             {
-//                 let closure_ptr = data;
-//                 let closure: &mut F = &mut *(closure_ptr as *mut F);
-//                 (*closure)(argc, argv)
-//             }
+fn build_trampoline<F>(_f: &F) -> JSCFunctionData
+where
+    F: FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue,
+{
+    // We build a trampoline to jump between c <-> rust and allow closing over a specific context.
+    // For more info around how this works, see https://adventures.michaelfbryan.com/posts/rust-closures-in-ffi/.
+    unsafe extern "C" fn trampoline<F>(
+        ctx: *mut JSContext,
+        this: JSValue,
+        argc: c_int,
+        argv: *mut JSValue,
+        magic: c_int,
+        data: *mut JSValue,
+    ) -> JSValue
+    where
+        F: FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue,
+    {
+        let closure_ptr = data;
+        let closure: &mut F = &mut *(closure_ptr as *mut F);
+        (*closure)(ctx, this, argc, argv, magic)
+    }
 
-//         let boxed = Box::new(closure);
-//         let value = &*boxed as *const F as *mut c_void as *const JSValue as *mut JSValue;
-//         (value, Some(trampoline::<F>))
-//     }
+    Some(trampoline::<F>)
+}
 
 fn make_cstring(value: impl Into<Vec<u8>>) -> CString {
     CString::new(value).unwrap()

@@ -23,7 +23,8 @@ JavaScript code, and executes it in a WebAssebmly embedded JavaScript runtime.
 - Rust v1.53.0
 - [rustup](https://rustup.rs/)
 - wasm32-wasi, can be installed via `rustup target add wasm32-wasi`
-
+- wasmtime-cli, can be installed via `cargo install wasmtime-cli`
+- cargo-wasi, can be installed via `cargo install cargo-wasi`
 
 #### Building
 

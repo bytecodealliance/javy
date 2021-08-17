@@ -2,13 +2,16 @@ use quickjs_sys as q;
 
 mod context;
 mod engine;
+mod globals;
 mod input;
 mod js_binding;
 mod output;
 mod serialization;
 
 use context::*;
+use globals::register_globals;
 
+use std::io;
 use std::{env, fs, path::PathBuf};
 
 #[cfg(not(test))]
@@ -33,10 +36,11 @@ pub extern "C" fn init() {
     let js: PathBuf = input.into();
     let bytes = fs::read(js).unwrap();
     unsafe {
-        JS_CONTEXT = Some(Context::new().unwrap());
-        let context = JS_CONTEXT.unwrap();
+        JS_CONTEXT = Some(Context::default());
+        let mut context = JS_CONTEXT.unwrap();
+        register_globals(&mut context, io::stdout());
 
-        let _ = context.compile(&bytes, &script_name);
+        let _ = context.eval(&bytes, &script_name);
         let global = context.global();
         let shopify = context.get_str_property("Shopify", global);
         let main = context.get_str_property("main", shopify);

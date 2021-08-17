@@ -4,4 +4,11 @@ extern "C" {
     pub fn JS_NewUint32_Ext(ctx: *mut JSContext, val: u32) -> JSValue;
     pub fn JS_NewFloat64_Ext(ctx: *mut JSContext, float: f64) -> JSValue;
     pub fn JS_IsFloat64_Ext(tag: i32) -> i32;
+
+    pub static ext_js_null: JSValue;
+    pub static ext_js_undefined: JSValue;
+    pub static ext_js_false: JSValue;
+    pub static ext_js_true: JSValue;
+    pub static ext_js_exception: JSValue;
+    pub static ext_js_uninitialized: JSValue;
 }
