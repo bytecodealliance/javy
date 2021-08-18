@@ -12,7 +12,11 @@ core:
 		cd crates/core \
 			&& cargo build --release --target=wasm32-wasi
 
-tests: check-benchmarks core
+test-core:
+	cd crates/core \
+		&& cargo wasi test --features standalone-wasi -- --nocapture
+
+tests: check-benchmarks test-core
 
 fmt: fmt-quickjs-sys fmt-core fmt-cli
 
