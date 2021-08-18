@@ -63,7 +63,7 @@ impl Context {
     }
 
     pub unsafe fn is_float64(&self, val: JSValue) -> bool {
-        JS_IsFloat64_Ext(self.get_tag(val) as i32) > 0
+        JS_IsFloat64_Ext(self.get_tag(val) as i32) == 1
     }
 
     pub unsafe fn to_float64(&self, val: JSValue) -> f64 {
