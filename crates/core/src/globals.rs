@@ -49,19 +49,42 @@ where
 mod tests {
     use super::register_globals;
     use crate::context::Context;
+    use std::io;
+    use std::rc::Rc;
+    use std::cell::RefCell;
+
+    #[derive(Default, Clone)]
+    struct SharedStream(Rc<RefCell<Vec<u8>>>);
+
+    impl SharedStream {
+        fn clear(&mut self) {
+            (*self.0).borrow_mut().clear();
+        }
+    }
+
+    impl io::Write for SharedStream {
+        fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+            (*self.0).borrow_mut().write(buf)
+        }
+
+        fn flush(&mut self) -> io::Result<()> {
+            (*self.0).borrow_mut().flush()
+        }
+    }
 
     #[test]
     fn test_console_log() {
-        let mut stream: Vec<u8> = Vec::new();
+        let mut stream = SharedStream::default();
 
         let mut ctx = Context::default();
-        register_globals(&mut ctx, &mut stream);
+        register_globals(&mut ctx, stream.clone());
+
         ctx.eval(b"console.log(\"hello world\");", "main");
-        assert_eq!(b"hello world\n", &stream[..]);
+        assert_eq!(b"hello world\n", stream.0.borrow().as_slice());
 
         stream.clear();
 
         ctx.eval(b"console.log(\"bonjour\", \"le\", \"monde\")", "main");
-        assert_eq!(b"bonjour le monde\n", &stream[..]);
+        assert_eq!(b"bonjour le monde\n", stream.0.borrow().as_slice());
     }
 }
