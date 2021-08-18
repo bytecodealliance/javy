@@ -28,7 +28,7 @@ where
             }
 
             let str_ptr = unsafe { JS_ToCStringLen2(ctx, len, *argv.offset(i as isize), 0) };
-            if str_ptr == std::ptr::null() {
+            if str_ptr.is_null() {
                 return unsafe { ext_js_exception };
             }
 
@@ -36,11 +36,11 @@ where
             let str_len = unsafe { *len as usize };
             let buffer = unsafe { std::slice::from_raw_parts(str_ptr, str_len) };
 
-            stream.write(buffer).unwrap();
+            stream.write_all(buffer).unwrap();
             unsafe { JS_FreeCString(ctx, str_ptr as *const i8) };
         }
 
-        write!(stream, "\n").unwrap();
+        writeln!(stream,).unwrap();
         unsafe { ext_js_undefined }
     }
 }

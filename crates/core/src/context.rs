@@ -1,6 +1,6 @@
 #![allow(clippy::wrong_self_convention)]
 use quickjs_sys::*;
-use std::{ffi::CString, io, os::raw::c_char, os::raw::c_int, os::raw::c_void, ptr};
+use std::{ffi::CString, os::raw::c_char, os::raw::c_int, os::raw::c_void, ptr};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Context {
