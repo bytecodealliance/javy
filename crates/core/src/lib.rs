@@ -10,6 +10,7 @@ use context::*;
 
 use std::{env, fs, path::PathBuf};
 
+#[cfg(not(test))]
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
