@@ -49,9 +49,9 @@ where
 mod tests {
     use super::register_globals;
     use crate::context::Context;
+    use std::cell::RefCell;
     use std::io;
     use std::rc::Rc;
-    use std::cell::RefCell;
 
     #[derive(Default, Clone)]
     struct SharedStream(Rc<RefCell<Vec<u8>>>);
