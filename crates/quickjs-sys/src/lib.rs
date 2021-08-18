@@ -3,5 +3,5 @@
 #![allow(non_snake_case)]
 #![allow(clippy::all)]
 
-include!("bindings.rs");
+include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 include!("extensions/value.rs");

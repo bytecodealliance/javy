@@ -16,6 +16,8 @@ steps:
     env:
       PROPTEST_TIMEOUT: "180000" # 3mins
     run:
+    - clang --version
+    - clang -print-targets
     - make tests
 
   - label: Fmt

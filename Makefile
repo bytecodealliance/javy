@@ -16,7 +16,8 @@ core:
 
 test-core:
 		cd crates/core \
-				&& cargo wasi test --features standalone-wasi -- --nocapture
+				&& cargo wasi test --features standalone-wasi -- --nocapture \
+				&& cd -
 
 tests: check-benchmarks test-core
 
@@ -25,13 +26,13 @@ fmt: fmt-quickjs-sys fmt-core fmt-cli
 fmt-quickjs-sys:
 		cd crates/quickjs-sys/ \
 				&& cargo fmt -- --check \
-				&& cargo clippy -- -D warnings \
+				&& cargo clippy --target=wasm32-wasi -- -D warnings \
 				&& cd -
 
 fmt-core:
 		cd crates/core/ \
 				&& cargo fmt -- --check \
-				&& cargo clippy -- -D warnings \
+				&& cargo clippy --target=wasm32-wasi -- -D warnings \
 				&& cd -
 
 fmt-cli:
