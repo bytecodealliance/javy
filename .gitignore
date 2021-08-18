@@ -1,4 +1,4 @@
-/target
+target/
 javy.wat
 javy.wasm
 index.js
