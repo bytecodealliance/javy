@@ -12,9 +12,7 @@ anyhow = "1.0"
 quickjs-sys = { path = "../quickjs-sys" }
 serde = { version = "1.0.123", default-features = false }
 serde-transcode = "1.1.0"
-rmp = "^0.8"
 rmp-serde = "^0.15"
-rmpv = { version = "0.4", features = ["with-serde"] }
 wee_alloc = "0.4.5"
 
 [dev-dependencies]
