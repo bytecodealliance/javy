@@ -813,6 +813,7 @@ dependencies = [
  "rmp-serde",
  "serde",
  "serde-transcode",
+ "serde_json",
  "wee_alloc",
 ]
 
