@@ -53,7 +53,7 @@ pub extern "C" fn run() {
     unsafe {
         let context = JS_CONTEXT.unwrap();
         let (shopify, main) = ENTRYPOINT.unwrap();
-        let input_bytes = engine::load();
+        let input_bytes = engine::load().expect("Couldn't load input");
 
         let serializer = input::prepare(&context, &input_bytes);
         let result = context.call(main, shopify, &[serializer.value]);
@@ -64,7 +64,7 @@ pub extern "C" fn run() {
             println!("{:?}", exception);
         }
 
-        let mut output = output::prepare(&context, result);
-        engine::store(&mut output);
+        let output = output::prepare(&context, result);
+        engine::store(&output).expect("Couldn't store output");
     }
 }
