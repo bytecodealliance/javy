@@ -1,8 +1,8 @@
 use super::value::Value;
 use anyhow::{anyhow, Result};
 use quickjs_sys::{
-    JSContext, JSRuntime, JS_Eval, JS_NewContext, JS_NewRuntime, JS_EVAL_TYPE_GLOBAL,
-    JS_GetGlobalObject, JS_Call, JSValue
+    JSContext, JSRuntime, JSValue, JS_Call, JS_Eval, JS_GetGlobalObject, JS_NewContext,
+    JS_NewRuntime, JS_EVAL_TYPE_GLOBAL,
 };
 use std::ffi::CString;
 
@@ -114,7 +114,7 @@ mod tests {
         let contents = "globalThis.foo = function() { return 1; }";
         let _ = ctx.eval_global(SCRIPT_NAME, contents)?;
         let global = ctx.global_object()?;
-        let fun = global.get_property("foo")?;
+        let fun = global.property("foo")?;
         let result = ctx.call(&fun, &global, &[]);
         assert!(result.is_ok());
         Ok(())
