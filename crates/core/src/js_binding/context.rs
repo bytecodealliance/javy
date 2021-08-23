@@ -2,6 +2,7 @@ use super::value::Value;
 use anyhow::{anyhow, Result};
 use quickjs_sys::{
     JSContext, JSRuntime, JS_Eval, JS_NewContext, JS_NewRuntime, JS_EVAL_TYPE_GLOBAL,
+    JS_GetGlobalObject, JS_Call, JSValue
 };
 use std::ffi::CString;
 
