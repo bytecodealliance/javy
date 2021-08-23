@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use super::value::Value;
 use anyhow::{anyhow, Result};
 use quickjs_sys::{

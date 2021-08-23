@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use super::context::Context;
 use anyhow::{anyhow, Result};
 use quickjs_sys::{
