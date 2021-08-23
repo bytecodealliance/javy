@@ -919,7 +919,8 @@ mod tests {
         #[test]
         fn test_undefined() -> Result<()> {
             let context = Context::new().expect("Couldn't create context");
-            let mut deserializer = ValueDeserializer::from(&context, (q::JS_TAG_UNDEFINED as u64) << 32);
+            let mut deserializer =
+                ValueDeserializer::from(&context, (q::JS_TAG_UNDEFINED as u64) << 32);
 
             type U = ();
             let result = U::deserialize(&mut deserializer)?;
@@ -930,10 +931,8 @@ mod tests {
         #[test]
         fn test_nan() -> Result<()> {
             let context = Context::new().expect("Couldn't create context");
-            let mut deserializer = ValueDeserializer::from(
-                &context,
-                unsafe { context.new_float64(f64::NAN) },
-            );
+            let mut deserializer =
+                ValueDeserializer::from(&context, unsafe { context.new_float64(f64::NAN) });
 
             let result = f64::deserialize(&mut deserializer)?;
             assert!(result.is_nan());
@@ -943,10 +942,8 @@ mod tests {
         #[test]
         fn test_infinity() -> Result<()> {
             let context = Context::new().expect("Couldn't create context");
-            let mut deserializer = ValueDeserializer::from(
-                &context,
-                unsafe { context.new_float64(f64::INFINITY) },
-            );
+            let mut deserializer =
+                ValueDeserializer::from(&context, unsafe { context.new_float64(f64::INFINITY) });
 
             let result = f64::deserialize(&mut deserializer)?;
             assert!(result.is_infinite() && result.is_sign_positive());
@@ -956,10 +953,9 @@ mod tests {
         #[test]
         fn test_negative_infinity() -> Result<()> {
             let context = Context::new().expect("Couldn't create context");
-            let mut deserializer = ValueDeserializer::from(
-                &context,
-                unsafe { context.new_float64(f64::NEG_INFINITY) },
-            );
+            let mut deserializer = ValueDeserializer::from(&context, unsafe {
+                context.new_float64(f64::NEG_INFINITY)
+            });
 
             let result = f64::deserialize(&mut deserializer)?;
             assert!(result.is_infinite() && result.is_sign_negative());
