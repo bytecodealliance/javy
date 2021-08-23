@@ -838,7 +838,7 @@ mod tests {
             let mut serializer = ValueSerializer::from_context(context);
             serializer.serialize_unit()?;
 
-            assert!(context.get_tag(serializer.value) == q::JS_TAG_NULL as u64);
+            assert_eq!(context.get_tag(serializer.value), q::JS_TAG_NULL as u64);
             Ok(())
         }
 
