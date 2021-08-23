@@ -758,6 +758,13 @@ mod tests {
         use serde::Serializer;
 
         quickcheck! {
+            fn test_i16(v: i16) -> Result<bool> {
+                let context = Context::new().expect("Couldn't create context");
+                let mut serializer = ValueSerializer::from_context(context);
+                serializer.serialize_i16(v)?;
+                Ok(context.get_tag(serializer.value) == q::JS_TAG_INT as u64)
+            }
+
             fn test_i32(v: i32) -> Result<bool> {
                 let context = Context::new().expect("Couldn't create context");
                 let mut serializer = ValueSerializer::from_context(context);
@@ -788,7 +795,7 @@ mod tests {
                 }
             }
 
-            fn test_f32(v: f64) -> Result<bool> {
+            fn test_f64(v: f64) -> Result<bool> {
                 let context = Context::new().expect("Couldn't create context");
                 let mut serializer = ValueSerializer::from_context(context);
                 serializer.serialize_f64(v)?;
@@ -830,7 +837,38 @@ mod tests {
             let context = Context::new().expect("Couldn't create context");
             let mut serializer = ValueSerializer::from_context(context);
             serializer.serialize_unit()?;
+
             assert!(context.get_tag(serializer.value) == q::JS_TAG_NULL as u64);
+            Ok(())
+        }
+
+        #[test]
+        fn test_nan() -> Result<()> {
+            let context = Context::new().expect("Couldn't create context");
+            let mut serializer = ValueSerializer::from_context(context);
+            serializer.serialize_f64(f64::NAN)?;
+
+            assert!(unsafe { context.is_float64(serializer.value) });
+            Ok(())
+        }
+
+        #[test]
+        fn test_infinity() -> Result<()> {
+            let context = Context::new().expect("Couldn't create context");
+            let mut serializer = ValueSerializer::from_context(context);
+            serializer.serialize_f64(f64::INFINITY)?;
+
+            assert!(unsafe { context.is_float64(serializer.value) });
+            Ok(())
+        }
+
+        #[test]
+        fn test_negative_infinity() -> Result<()> {
+            let context = Context::new().expect("Couldn't create context");
+            let mut serializer = ValueSerializer::from_context(context);
+            serializer.serialize_f64(f64::NEG_INFINITY)?;
+
+            assert!(unsafe { context.is_float64(serializer.value) });
             Ok(())
         }
     }
@@ -875,6 +913,56 @@ mod tests {
             type U = ();
             let result = U::deserialize(&mut deserializer)?;
             assert_eq!(result, ());
+            Ok(())
+        }
+
+        #[test]
+        fn test_undefined() -> Result<()> {
+            let context = Context::new().expect("Couldn't create context");
+            let mut deserializer = ValueDeserializer::from(&context, (q::JS_TAG_UNDEFINED as u64) << 32);
+
+            type U = ();
+            let result = U::deserialize(&mut deserializer)?;
+            assert_eq!(result, ());
+            Ok(())
+        }
+
+        #[test]
+        fn test_nan() -> Result<()> {
+            let context = Context::new().expect("Couldn't create context");
+            let mut deserializer = ValueDeserializer::from(
+                &context,
+                unsafe { context.new_float64(f64::NAN) },
+            );
+
+            let result = f64::deserialize(&mut deserializer)?;
+            assert!(result.is_nan());
+            Ok(())
+        }
+
+        #[test]
+        fn test_infinity() -> Result<()> {
+            let context = Context::new().expect("Couldn't create context");
+            let mut deserializer = ValueDeserializer::from(
+                &context,
+                unsafe { context.new_float64(f64::INFINITY) },
+            );
+
+            let result = f64::deserialize(&mut deserializer)?;
+            assert!(result.is_infinite() && result.is_sign_positive());
+            Ok(())
+        }
+
+        #[test]
+        fn test_negative_infinity() -> Result<()> {
+            let context = Context::new().expect("Couldn't create context");
+            let mut deserializer = ValueDeserializer::from(
+                &context,
+                unsafe { context.new_float64(f64::NEG_INFINITY) },
+            );
+
+            let result = f64::deserialize(&mut deserializer)?;
+            assert!(result.is_infinite() && result.is_sign_negative());
             Ok(())
         }
     }
