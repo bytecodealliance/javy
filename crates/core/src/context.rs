@@ -1,6 +1,7 @@
 #![allow(clippy::wrong_self_convention)]
 use quickjs_sys::*;
-use std::{ffi::CString, os::raw::c_char, ptr};
+use core::slice;
+use std::{ffi::CString, ffi::CStr, os::raw::c_char, ptr};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Context {
@@ -184,9 +185,20 @@ impl Context {
         unsafe { JS_ToCStringLen2(self.raw, std::ptr::null_mut(), val, 0) }
     }
 
+    pub fn to_c_str_ptr2(&self, val: JSValue) -> &[u8] {
+        unsafe {
+            let mut len: size_t = 0;
+            let ptr = JS_ToCStringLen2(self.raw, &mut len, val, 0);
+            let ptr = ptr as *const u8;
+            let len = len as usize;
+            slice::from_raw_parts(ptr, len)
+            // std::str::from_utf8()
+        }
+    }
+
     pub fn deserialize_string(&self, val: JSValue) -> String {
-        let cstr = unsafe { std::ffi::CStr::from_ptr(self.to_c_str_ptr(val)) };
-        cstr.to_str().unwrap().to_string()
+        let cstr = self.to_c_str_ptr2(val);
+        std::str::from_utf8(cstr).unwrap().to_string()
     }
 
     pub fn is_exception(&self, val: JSValue) -> bool {

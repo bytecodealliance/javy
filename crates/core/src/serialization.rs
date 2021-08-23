@@ -830,7 +830,25 @@ mod tests {
 
                 Ok(context.get_tag(serializer.value) == q::JS_TAG_BOOL as u64)
             }
+
+            // fn test_str(v: String) -> Result<bool> {
+            //     let context = Context::new().expect("Couldn't create context");
+            //     let mut serializer = ValueSerializer::from_context(context);
+            //     serializer.serialize_str(v.as_str())?;
+
+            //     Ok(context.get_tag(serializer.value) == q::JS_TAG_STRING as u64)
+            // }
         }
+
+        // #[test]
+        // fn test_str() -> Result<()> {
+        //     let context = Context::new().expect("Couldn't create context");
+        //     let mut serializer = ValueSerializer::from_context(context);
+        //     serializer.serialize_str("")?;
+
+        //     assert_eq!(context.get_tag(serializer.value), q::JS_TAG_STRING as u64);
+        //     Ok(())
+        // }
 
         #[test]
         fn test_null() -> Result<()> {
@@ -960,6 +978,60 @@ mod tests {
             let result = f64::deserialize(&mut deserializer)?;
             assert!(result.is_infinite() && result.is_sign_negative());
             Ok(())
+        }
+    }
+
+    mod roundtrips {
+        use anyhow::Result;
+        use crate::serialization::{Serializer as ValueSerializer, Deserializer as ValueDeserializer};
+        use crate::Context;
+        use serde::{Serializer, Deserialize};
+        use quickcheck::quickcheck;
+        // use quickjs_sys as q;
+
+
+        quickcheck! {
+            fn test_str(v: String) -> Result<bool> {
+                // let input = "Hello world! ❤️".to_string();
+                let context = Context::new().unwrap();
+                let mut serializer = ValueSerializer::from_context(context);
+                serializer.serialize_str(v.as_str()).unwrap();
+
+                // assert_eq!(context.get_tag(serializer.value), q::JS_TAG_STRING as u64);
+
+                let context = Context::new().unwrap();
+                let mut deserializer = ValueDeserializer::from(&context, serializer.value);
+
+                let result = String::deserialize(&mut deserializer).unwrap();
+                Ok(v == result)
+            }
+        }
+
+        // fn test_str2() {
+        //     let v = "\u{8b}X\u{e};\u{8a}′ ª\u{2}9\rgpL￼\u{602}¢&⁋t\u{f}S\u{999c8}\u{2003}靭77\u{97}\u{46f50}y‛®ச¥¡\u{3}Y}@\t\u{70f}즬S\u{12}\u{0}\u{fffe}W\u{3c66e}8:\u{94}q".to_string();
+        //     let context = Context::new().unwrap();
+        //     let mut serializer = ValueSerializer::from_context(context);
+        //     serializer.serialize_str(v.as_str()).unwrap();
+
+        //     let context = Context::new().unwrap();
+        //     let mut deserializer = ValueDeserializer::from(&context, serializer.value);
+
+        //     let result = String::deserialize(&mut deserializer).unwrap();
+        //     assert_eq!(v, result)
+        // }
+
+        #[test]
+        fn test_str3() {
+            let v = "\u{0}lol\u{0}".to_string();
+            let context = Context::new().unwrap();
+            let mut serializer = ValueSerializer::from_context(context);
+            serializer.serialize_str(v.as_str()).unwrap();
+
+            let context = Context::new().unwrap();
+            let mut deserializer = ValueDeserializer::from(&context, serializer.value);
+
+            let result = String::deserialize(&mut deserializer).unwrap();
+            assert_eq!(v, result)
         }
     }
 }
