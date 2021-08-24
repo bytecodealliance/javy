@@ -3,6 +3,7 @@ use quickjs_sys as q;
 mod context;
 mod engine;
 mod input;
+mod js_binding;
 mod output;
 mod serialization;
 
