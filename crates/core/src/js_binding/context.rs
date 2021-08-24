@@ -74,18 +74,18 @@ impl Context {
 mod tests {
     use super::super::value::PropertyAccess;
     use super::Context;
-    use anyhow::Result as R;
+    use anyhow::Result;
     const SCRIPT_NAME: &str = "context.js";
 
     #[test]
-    fn test_new_returns_a_context() -> R<()> {
+    fn test_new_returns_a_context() -> Result<()> {
         let ctx = Context::new();
         assert!(ctx.is_ok());
         Ok(())
     }
 
     #[test]
-    fn test_context_evalutes_code_globally() -> R<()> {
+    fn test_context_evalutes_code_globally() -> Result<()> {
         let ctx = Context::new()?;
         let contents = "var a = 1;";
         let val = ctx.eval_global(SCRIPT_NAME, contents);
@@ -94,7 +94,7 @@ mod tests {
     }
 
     #[test]
-    fn test_context_reports_invalid_code() -> R<()> {
+    fn test_context_reports_invalid_code() -> Result<()> {
         let ctx = Context::new()?;
         let contents = "a + 1 * z;";
         let val = ctx.eval_global(SCRIPT_NAME, contents);
@@ -103,7 +103,7 @@ mod tests {
     }
 
     #[test]
-    fn test_context_allows_access_to_global_object() -> R<()> {
+    fn test_context_allows_access_to_global_object() -> Result<()> {
         let ctx = Context::new()?;
         let val = ctx.global_object();
         assert!(val.is_ok());
@@ -111,7 +111,7 @@ mod tests {
     }
 
     #[test]
-    fn test_context_allows_calling_a_function() -> R<()> {
+    fn test_context_allows_calling_a_function() -> Result<()> {
         let ctx = Context::new()?;
         let contents = "globalThis.foo = function() { return 1; }";
         let _ = ctx.eval_global(SCRIPT_NAME, contents)?;

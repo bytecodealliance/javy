@@ -171,11 +171,11 @@ fn is_exception(t: i32) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{Context, PropertyAccess, Value};
-    use anyhow::Result as R;
+    use anyhow::Result;
     const SCRIPT_NAME: &str = "value.js";
 
     #[test]
-    fn test_value_objects_allow_retrieving_a_str_property() -> R<()> {
+    fn test_value_objects_allow_retrieving_a_str_property() -> Result<()> {
         let ctx = Context::new()?;
         let contents = "globalThis.bar = 1;";
         let _ = ctx.eval_global(SCRIPT_NAME, contents)?;
@@ -186,7 +186,7 @@ mod tests {
     }
 
     #[test]
-    fn test_value_objects_allow_setting_a_str_property() -> R<()> {
+    fn test_value_objects_allow_setting_a_str_property() -> Result<()> {
         let ctx = Context::new()?;
         let obj = Value::object(ctx.inner())?;
         obj.set("foo", &Value::from_i32(ctx.inner(), 1_i32)?)?;
@@ -197,7 +197,7 @@ mod tests {
     }
 
     #[test]
-    fn test_value_objects_allow_setting_a_indexed_property() -> R<()> {
+    fn test_value_objects_allow_setting_a_indexed_property() -> Result<()> {
         let ctx = Context::new()?;
         let seq = Value::array(ctx.inner())?;
         seq.set(0_u32, &Value::from_str(ctx.inner(), "value")?)?;
@@ -208,7 +208,7 @@ mod tests {
     }
 
     #[test]
-    fn test_value_objects_allow_retrieving_a_indexed_property() -> R<()> {
+    fn test_value_objects_allow_retrieving_a_indexed_property() -> Result<()> {
         let ctx = Context::new()?;
         let contents = "globalThis.arr = [1];";
         let _ = ctx.eval_global(SCRIPT_NAME, contents)?;
@@ -219,7 +219,7 @@ mod tests {
     }
 
     #[test]
-    fn test_creates_a_value_from_f64() -> R<()> {
+    fn test_creates_a_value_from_f64() -> Result<()> {
         let ctx = Context::new()?;
         let val = f64::MIN;
         let val = Value::from_f64(ctx.inner(), val);
@@ -229,7 +229,7 @@ mod tests {
     }
 
     #[test]
-    fn test_creates_a_value_from_i32() -> R<()> {
+    fn test_creates_a_value_from_i32() -> Result<()> {
         let ctx = Context::new()?;
         let val = i32::MIN;
         let val = Value::from_i32(ctx.inner(), val);
@@ -239,7 +239,7 @@ mod tests {
     }
 
     #[test]
-    fn test_creates_a_value_from_u32() -> R<()> {
+    fn test_creates_a_value_from_u32() -> Result<()> {
         let ctx = Context::new()?;
         let val = u32::MIN;
         let val = Value::from_u32(ctx.inner(), val);
@@ -249,7 +249,7 @@ mod tests {
     }
 
     #[test]
-    fn test_creates_a_value_from_bool() -> R<()> {
+    fn test_creates_a_value_from_bool() -> Result<()> {
         let ctx = Context::new()?;
         let val = false;
         let val = Value::from_bool(ctx.inner(), val);
@@ -259,7 +259,7 @@ mod tests {
     }
 
     #[test]
-    fn test_creates_a_value_from_str() -> R<()> {
+    fn test_creates_a_value_from_str() -> Result<()> {
         let ctx = Context::new()?;
         let val = "script.js";
         let val = Value::from_str(ctx.inner(), val);
@@ -269,7 +269,7 @@ mod tests {
     }
 
     #[test]
-    fn test_constructs_a_value_as_an_array() -> R<()> {
+    fn test_constructs_a_value_as_an_array() -> Result<()> {
         let ctx = Context::new()?;
         let val = Value::array(ctx.inner());
         assert!(val.is_ok());
@@ -278,7 +278,7 @@ mod tests {
     }
 
     #[test]
-    fn test_constructs_a_value_as_an_object() -> R<()> {
+    fn test_constructs_a_value_as_an_object() -> Result<()> {
         let ctx = Context::new()?;
         let val = Value::object(ctx.inner());
         assert!(val.is_ok());
@@ -287,7 +287,7 @@ mod tests {
     }
 
     #[test]
-    fn test_allows_representing_a_value_as_f64() -> R<()> {
+    fn test_allows_representing_a_value_as_f64() -> Result<()> {
         let ctx = Context::new()?;
         let val = Value::from_f64(ctx.inner(), f64::MIN)?.as_f64();
         assert_eq!(val, f64::MIN);
