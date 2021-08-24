@@ -931,8 +931,7 @@ mod tests {
             let context = Context::new().expect("Couldn't create context");
             let mut deserializer = ValueDeserializer::from(&context, (q::JS_TAG_NULL as u64) << 32);
 
-            type U = ();
-            let result = U::deserialize(&mut deserializer)?;
+            let result = <()>::deserialize(&mut deserializer)?;
             assert_eq!(result, ());
             Ok(())
         }
@@ -943,8 +942,7 @@ mod tests {
             let mut deserializer =
                 ValueDeserializer::from(&context, (q::JS_TAG_UNDEFINED as u64) << 32);
 
-            type U = ();
-            let result = U::deserialize(&mut deserializer)?;
+            let result = <()>::deserialize(&mut deserializer)?;
             assert_eq!(result, ());
             Ok(())
         }

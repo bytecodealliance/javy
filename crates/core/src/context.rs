@@ -1,5 +1,4 @@
 #![allow(clippy::wrong_self_convention)]
-use core::slice;
 use quickjs_sys::*;
 use std::{ffi::CString, os::raw::c_char, ptr};
 
@@ -187,7 +186,7 @@ impl Context {
             let ptr = JS_ToCStringLen2(self.raw, &mut len, val, 0);
             let ptr = ptr as *const u8;
             let len = len as usize;
-            slice::from_raw_parts(ptr, len)
+            std::slice::from_raw_parts(ptr, len)
         }
     }
 
