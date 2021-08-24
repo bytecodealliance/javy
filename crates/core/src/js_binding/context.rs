@@ -36,13 +36,16 @@ impl Context {
         content: impl Into<Vec<u8>>,
     ) -> Result<Value> {
         let name = CString::new(name)?;
-        let content = CString::new(content)?;
+        let mut content = content.into();
+        if content.last().filter(|b| **b == b'\0').is_none() {
+            content.push(b'\0');
+        }
 
         let raw = unsafe {
             JS_Eval(
                 self.inner,
                 content.as_ptr() as _,
-                content.as_bytes().len() as _,
+                (content.len() - 1) as _,
                 name.as_ptr(),
                 JS_EVAL_TYPE_GLOBAL as i32,
             )
@@ -123,6 +126,14 @@ mod tests {
         let fun = global.get_property("foo")?;
         let result = ctx.call(&fun, &global, &[]);
         assert!(result.is_ok());
+        Ok(())
+    }
+
+    #[test]
+    fn test_context_allows_nul_terminated_strings() -> Result<()> {
+        let ctx = Context::default();
+        let contents = b"var a = 1;var b = \"\0\";";
+        ctx.eval_global(SCRIPT_NAME, &contents[..]).unwrap();
         Ok(())
     }
 }
