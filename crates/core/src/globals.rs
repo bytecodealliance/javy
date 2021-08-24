@@ -21,19 +21,19 @@ where
     T: Write,
 {
     move |ctx: *mut JSContext, _this: JSValue, argc: c_int, argv: *mut JSValue, _magic: c_int| {
-        let len: *mut size_t = &mut 0;
+        let mut len: size_t = 0;
         for i in 0..argc {
             if i != 0 {
                 write!(stream, " ").unwrap();
             }
 
-            let str_ptr = unsafe { JS_ToCStringLen2(ctx, len, *argv.offset(i as isize), 0) };
+            let str_ptr = unsafe { JS_ToCStringLen2(ctx, &mut len, *argv.offset(i as isize), 0) };
             if str_ptr.is_null() {
                 return unsafe { ext_js_exception };
             }
 
             let str_ptr = str_ptr as *const u8;
-            let str_len = unsafe { *len as usize };
+            let str_len = len as usize;
             let buffer = unsafe { std::slice::from_raw_parts(str_ptr, str_len) };
 
             stream.write_all(buffer).unwrap();
