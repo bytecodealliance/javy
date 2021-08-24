@@ -7,7 +7,7 @@ pub fn register_globals<T>(ctx: &mut Context, log_stream: T)
 where
     T: Write,
 {
-    let console_log_callback = ctx.new_callback(console_log_to(log_stream));
+    let console_log_callback = unsafe { ctx.new_callback(console_log_to(log_stream)) };
     let global_object = ctx.global();
     let console_object = ctx.new_object();
     ctx.set_property(console_object, "log", console_log_callback);

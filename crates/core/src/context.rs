@@ -221,7 +221,11 @@ impl Context {
         self.get_tag(val) == JS_TAG_STRING
     }
 
-    pub fn new_callback<F>(&self, f: F) -> JSValue
+    /// Creates a new JSValue that can be registered as a callback.
+    ///
+    /// This operation is unsafe since it's up to the caller to ensure that the environment used by the closure
+    /// must live as long as the JSRuntime.
+    pub unsafe fn new_callback<F>(&self, f: F) -> JSValue
     where
         F: FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue,
     {
@@ -237,7 +241,7 @@ impl Context {
         let trampoline = build_trampoline(&f);
         let data = &f as *const _ as *mut c_void as *mut JSValue;
 
-        unsafe { JS_NewCFunctionData(self.raw, trampoline, 0, 1, 1, data) }
+        JS_NewCFunctionData(self.raw, trampoline, 0, 1, 1, data)
     }
 
     pub fn set_property(&self, receiver: JSValue, name: impl Into<Vec<u8>>, value: JSValue) {
