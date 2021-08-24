@@ -14,7 +14,6 @@ use std::{ffi::CString, os::raw::c_char};
 pub(crate) struct Value {
     context: *mut JSContext,
     value: JSValue,
-    tag: i32,
 }
 
 pub trait PropertyAccess<K, V> {
@@ -79,7 +78,6 @@ impl Value {
             Ok(Self {
                 context,
                 value: raw_value,
-                tag,
             })
         }
     }
