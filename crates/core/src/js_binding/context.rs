@@ -8,7 +8,7 @@ use quickjs_sys::{
 use std::ffi::CString;
 
 #[derive(Debug)]
-pub(crate) struct Context {
+pub struct Context {
     runtime: *mut JSRuntime,
     inner: *mut JSContext,
 }
@@ -30,16 +30,16 @@ impl Default for Context {
 }
 
 impl Context {
-    pub(crate) fn eval_global(&self, name: &str, contents: &str) -> Result<Value> {
-        let input = CString::new(contents)?;
-        let script_name = CString::new(name)?;
-        let len = contents.len() - 1;
+    pub fn eval_global(&self, name: impl Into<Vec<u8>>, content: impl Into<Vec<u8>>) -> Result<Value> {
+        let name = CString::new(name)?;
+        let content = CString::new(content)?;
+
         let raw = unsafe {
             JS_Eval(
                 self.inner,
-                input.as_ptr(),
-                len as _,
-                script_name.as_ptr(),
+                content.as_ptr() as _,
+                content.as_bytes().len() as _,
+                name.as_ptr(),
                 JS_EVAL_TYPE_GLOBAL as i32,
             )
         };
@@ -47,16 +47,16 @@ impl Context {
         Value::new(self.inner, raw)
     }
 
-    pub(crate) fn inner(&self) -> *mut JSContext {
+    pub fn inner(&self) -> *mut JSContext {
         self.inner
     }
 
-    pub(crate) fn global_object(&self) -> Result<Value> {
+    pub fn global_object(&self) -> Result<Value> {
         let raw = unsafe { JS_GetGlobalObject(self.inner) };
         Value::new(self.inner, raw)
     }
 
-    pub(crate) fn call(&self, fun: &Value, receiver: &Value, args: &[Value]) -> Result<Value> {
+    pub fn call(&self, fun: &Value, receiver: &Value, args: &[Value]) -> Result<Value> {
         let inner_args: Vec<JSValue> = args.iter().map(|v| v.inner()).collect();
         let return_val = unsafe {
             JS_Call(
