@@ -172,6 +172,10 @@ impl Context {
         val >> 32
     }
 
+    pub fn is_string(&self, val: JSValue) -> bool {
+        self.get_tag(val) as i32 == JS_TAG_STRING as i32
+    }
+
     pub fn to_string(&self, val: JSValue) -> String {
         let string = unsafe { JS_ToString(self.raw, val) };
         self.deserialize_string(string)
@@ -181,23 +185,18 @@ impl Context {
         unsafe { JS_AtomToString(self.raw, atom) }
     }
 
-    pub fn to_c_str_ptr(&self, val: JSValue) -> *const i8 {
-        unsafe { JS_ToCStringLen2(self.raw, std::ptr::null_mut(), val, 0) }
-    }
-
-    pub fn to_c_str_ptr2(&self, val: JSValue) -> &[u8] {
+    pub fn to_byte_slice(&self, val: JSValue) -> &[u8] {
         unsafe {
             let mut len: size_t = 0;
             let ptr = JS_ToCStringLen2(self.raw, &mut len, val, 0);
             let ptr = ptr as *const u8;
             let len = len as usize;
             slice::from_raw_parts(ptr, len)
-            // std::str::from_utf8()
         }
     }
 
     pub fn deserialize_string(&self, val: JSValue) -> String {
-        let cstr = self.to_c_str_ptr2(val);
+        let cstr = self.to_byte_slice(val);
         std::str::from_utf8(cstr).unwrap().to_string()
     }
 
