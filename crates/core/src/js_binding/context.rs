@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 use super::value::Value;
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use quickjs_sys::{
     JSContext, JSRuntime, JSValue, JS_Call, JS_Eval, JS_GetGlobalObject, JS_NewContext,
     JS_NewRuntime, JS_EVAL_TYPE_GLOBAL,
@@ -13,21 +13,23 @@ pub(crate) struct Context {
     inner: *mut JSContext,
 }
 
-impl Context {
-    pub(crate) fn new() -> Result<Self> {
+impl Default for Context {
+    fn default() -> Self {
         let runtime = unsafe { JS_NewRuntime() };
         if runtime.is_null() {
-            return Err(anyhow!("Couldn't create JavaScript runtime"));
+            panic!("Couldn't create JavaScript runtime");
         }
 
         let inner = unsafe { JS_NewContext(runtime) };
         if inner.is_null() {
-            return Err(anyhow!("Couldn't create JavaScript context"));
+            panic!("Couldn't create JavaScript context");
         }
 
-        Ok(Self { runtime, inner })
+        Self { runtime, inner }
     }
+}
 
+impl Context {
     pub(crate) fn eval_global(&self, name: &str, contents: &str) -> Result<Value> {
         let input = CString::new(contents)?;
         let script_name = CString::new(name)?;
@@ -79,14 +81,13 @@ mod tests {
 
     #[test]
     fn test_new_returns_a_context() -> Result<()> {
-        let ctx = Context::new();
-        assert!(ctx.is_ok());
+        let _ = Context::default();
         Ok(())
     }
 
     #[test]
     fn test_context_evalutes_code_globally() -> Result<()> {
-        let ctx = Context::new()?;
+        let ctx = Context::default();
         let contents = "var a = 1;";
         let val = ctx.eval_global(SCRIPT_NAME, contents);
         assert!(val.is_ok());
@@ -95,7 +96,7 @@ mod tests {
 
     #[test]
     fn test_context_reports_invalid_code() -> Result<()> {
-        let ctx = Context::new()?;
+        let ctx = Context::default();
         let contents = "a + 1 * z;";
         let val = ctx.eval_global(SCRIPT_NAME, contents);
         assert!(val.is_err());
@@ -104,7 +105,7 @@ mod tests {
 
     #[test]
     fn test_context_allows_access_to_global_object() -> Result<()> {
-        let ctx = Context::new()?;
+        let ctx = Context::default();
         let val = ctx.global_object();
         assert!(val.is_ok());
         Ok(())
@@ -112,7 +113,7 @@ mod tests {
 
     #[test]
     fn test_context_allows_calling_a_function() -> Result<()> {
-        let ctx = Context::new()?;
+        let ctx = Context::default();
         let contents = "globalThis.foo = function() { return 1; }";
         let _ = ctx.eval_global(SCRIPT_NAME, contents)?;
         let global = ctx.global_object()?;
