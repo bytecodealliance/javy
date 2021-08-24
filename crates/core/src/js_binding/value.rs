@@ -6,13 +6,13 @@ use quickjs_sys::{
     JS_GetPropertyUint32, JS_IsArray, JS_IsFloat64_Ext, JS_NewArray, JS_NewBool_Ext,
     JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewObject, JS_NewStringLen, JS_NewUint32_Ext,
     JS_ToFloat64, JS_PROP_C_W_E, JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_OBJECT,
-    JS_TAG_STRING,
+    JS_TAG_STRING, JSContext
 };
 use std::{ffi::CString, os::raw::c_char};
 
 #[derive(Debug, Clone)]
-pub(crate) struct Value<'v> {
-    context: &'v Context,
+pub(crate) struct Value {
+    context: *mut JSContext,
     value: JSValue,
     tag: i32,
 }
@@ -22,11 +22,11 @@ pub trait PropertyAccess<K, V> {
     fn set(&self, key: K, val: &V) -> Result<()>;
 }
 
-impl<'v> PropertyAccess<&str, Value<'v>> for Value<'v> {
+impl PropertyAccess<&str, Value> for Value {
     fn get(&self, key: &str) -> Result<Self> {
         let cstring_key = CString::new(key)?;
         let raw =
-            unsafe { JS_GetPropertyStr(self.context.inner(), self.value, cstring_key.as_ptr()) };
+            unsafe { JS_GetPropertyStr(self.context, self.value, cstring_key.as_ptr()) };
 
         Self::new(self.context, raw)
     }
@@ -36,7 +36,7 @@ impl<'v> PropertyAccess<&str, Value<'v>> for Value<'v> {
         // TODO: Exception handling
         let _raw = unsafe {
             JS_DefinePropertyValueStr(
-                self.context.inner(),
+                self.context,
                 self.value,
                 cstring_key.as_ptr(),
                 val.value,
@@ -48,9 +48,9 @@ impl<'v> PropertyAccess<&str, Value<'v>> for Value<'v> {
     }
 }
 
-impl<'v> PropertyAccess<u32, Value<'v>> for Value<'v> {
+impl PropertyAccess<u32, Value> for Value {
     fn get(&self, key: u32) -> Result<Self> {
-        let raw = unsafe { JS_GetPropertyUint32(self.context.inner(), self.value, key) };
+        let raw = unsafe { JS_GetPropertyUint32(self.context, self.value, key) };
         Self::new(self.context, raw)
     }
 
@@ -58,7 +58,7 @@ impl<'v> PropertyAccess<u32, Value<'v>> for Value<'v> {
         unsafe {
             let len = self.get("length")?;
             JS_DefinePropertyValueUint32(
-                self.context.inner(),
+                self.context,
                 self.value,
                 len.value as u32,
                 val.value,
@@ -69,8 +69,8 @@ impl<'v> PropertyAccess<u32, Value<'v>> for Value<'v> {
     }
 }
 
-impl<'v> Value<'v> {
-    pub(crate) fn new(context: &'v Context, raw_value: JSValue) -> Result<Self> {
+impl Value {
+    pub(crate) fn new(context: *mut JSContext, raw_value: JSValue) -> Result<Self> {
         let tag = get_tag(raw_value);
 
         if is_exception(tag) {
@@ -84,40 +84,40 @@ impl<'v> Value<'v> {
         }
     }
 
-    pub(crate) fn array(context: &'v Context) -> Result<Self> {
-        let raw = unsafe { JS_NewArray(context.inner()) };
+    pub(crate) fn array(context: *mut JSContext) -> Result<Self> {
+        let raw = unsafe { JS_NewArray(context) };
         Self::new(context, raw)
     }
 
-    pub(crate) fn object(context: &'v Context) -> Result<Self> {
-        let raw = unsafe { JS_NewObject(context.inner()) };
+    pub(crate) fn object(context: *mut JSContext) -> Result<Self> {
+        let raw = unsafe { JS_NewObject(context) };
         Self::new(context, raw)
     }
 
-    pub(crate) fn from_f64(context: &'v Context, val: f64) -> Result<Self> {
-        let raw = unsafe { JS_NewFloat64_Ext(context.inner(), val) };
+    pub(crate) fn from_f64(context: *mut JSContext, val: f64) -> Result<Self> {
+        let raw = unsafe { JS_NewFloat64_Ext(context, val) };
         Self::new(context, raw)
     }
 
-    pub(crate) fn from_i32(context: &'v Context, val: i32) -> Result<Self> {
-        let raw = unsafe { JS_NewInt32_Ext(context.inner(), val) };
+    pub(crate) fn from_i32(context: *mut JSContext, val: i32) -> Result<Self> {
+        let raw = unsafe { JS_NewInt32_Ext(context, val) };
         Self::new(context, raw)
     }
 
-    pub(crate) fn from_u32(context: &'v Context, val: u32) -> Result<Self> {
-        let raw = unsafe { JS_NewUint32_Ext(context.inner(), val) };
+    pub(crate) fn from_u32(context: *mut JSContext, val: u32) -> Result<Self> {
+        let raw = unsafe { JS_NewUint32_Ext(context, val) };
         Self::new(context, raw)
     }
 
-    pub(crate) fn from_bool(context: &'v Context, val: bool) -> Result<Self> {
-        let raw = unsafe { JS_NewBool_Ext(context.inner(), i32::from(val)) };
+    pub(crate) fn from_bool(context: *mut JSContext, val: bool) -> Result<Self> {
+        let raw = unsafe { JS_NewBool_Ext(context, i32::from(val)) };
         Self::new(context, raw)
     }
 
-    pub(crate) fn from_str(context: &'v Context, val: &str) -> Result<Self> {
+    pub(crate) fn from_str(context: *mut JSContext, val: &str) -> Result<Self> {
         let raw = unsafe {
             JS_NewStringLen(
-                context.inner(),
+                context,
                 val.as_ptr() as *const c_char,
                 val.len() as _,
             )
@@ -127,7 +127,7 @@ impl<'v> Value<'v> {
 
     pub(crate) fn as_f64(&self) -> f64 {
         let mut ret = 0_f64;
-        unsafe { JS_ToFloat64(self.context.inner(), &mut ret, self.value) };
+        unsafe { JS_ToFloat64(self.context, &mut ret, self.value) };
         ret
     }
 
@@ -152,7 +152,7 @@ impl<'v> Value<'v> {
     }
 
     pub(crate) fn is_array(&self) -> bool {
-        unsafe { JS_IsArray(self.context.inner(), self.value) == 1 }
+        unsafe { JS_IsArray(self.context, self.value) == 1 }
     }
 
     pub(crate) fn is_object(&self) -> bool {
@@ -188,8 +188,8 @@ mod tests {
     #[test]
     fn test_value_objects_allow_setting_a_str_property() -> R<()> {
         let ctx = Context::new()?;
-        let obj = Value::object(&ctx)?;
-        obj.set("foo", &Value::from_i32(&ctx, 1_i32)?)?;
+        let obj = Value::object(ctx.inner())?;
+        obj.set("foo", &Value::from_i32(ctx.inner(), 1_i32)?)?;
         let val = obj.get("foo");
         assert!(val.is_ok());
         assert!(val.unwrap().is_repr_as_i32());
@@ -199,8 +199,8 @@ mod tests {
     #[test]
     fn test_value_objects_allow_setting_a_indexed_property() -> R<()> {
         let ctx = Context::new()?;
-        let seq = Value::array(&ctx)?;
-        seq.set(0_u32, &Value::from_str(&ctx, "value")?)?;
+        let seq = Value::array(ctx.inner())?;
+        seq.set(0_u32, &Value::from_str(ctx.inner(), "value")?)?;
         let val = seq.get(0);
         assert!(val.is_ok());
         assert!(val.unwrap().is_str());
@@ -222,7 +222,7 @@ mod tests {
     fn test_creates_a_value_from_f64() -> R<()> {
         let ctx = Context::new()?;
         let val = f64::MIN;
-        let val = Value::from_f64(&ctx, val);
+        let val = Value::from_f64(ctx.inner(), val);
         assert!(val.is_ok());
         assert!(val.unwrap().is_repr_as_f64());
         Ok(())
@@ -232,7 +232,7 @@ mod tests {
     fn test_creates_a_value_from_i32() -> R<()> {
         let ctx = Context::new()?;
         let val = i32::MIN;
-        let val = Value::from_i32(&ctx, val);
+        let val = Value::from_i32(ctx.inner(), val);
         assert!(val.is_ok());
         assert!(val.unwrap().is_repr_as_i32());
         Ok(())
@@ -242,7 +242,7 @@ mod tests {
     fn test_creates_a_value_from_u32() -> R<()> {
         let ctx = Context::new()?;
         let val = u32::MIN;
-        let val = Value::from_u32(&ctx, val);
+        let val = Value::from_u32(ctx.inner(), val);
         assert!(val.is_ok());
         assert!(val.unwrap().is_repr_as_i32());
         Ok(())
@@ -252,7 +252,7 @@ mod tests {
     fn test_creates_a_value_from_bool() -> R<()> {
         let ctx = Context::new()?;
         let val = false;
-        let val = Value::from_bool(&ctx, val);
+        let val = Value::from_bool(ctx.inner(), val);
         assert!(val.is_ok());
         assert!(val.unwrap().is_bool());
         Ok(())
@@ -262,7 +262,7 @@ mod tests {
     fn test_creates_a_value_from_str() -> R<()> {
         let ctx = Context::new()?;
         let val = "script.js";
-        let val = Value::from_str(&ctx, val);
+        let val = Value::from_str(ctx.inner(), val);
         assert!(val.is_ok());
         assert!(val.unwrap().is_str());
         Ok(())
@@ -271,7 +271,7 @@ mod tests {
     #[test]
     fn test_constructs_a_value_as_an_array() -> R<()> {
         let ctx = Context::new()?;
-        let val = Value::array(&ctx);
+        let val = Value::array(ctx.inner());
         assert!(val.is_ok());
         assert!(val.unwrap().is_array());
         Ok(())
@@ -280,7 +280,7 @@ mod tests {
     #[test]
     fn test_constructs_a_value_as_an_object() -> R<()> {
         let ctx = Context::new()?;
-        let val = Value::object(&ctx);
+        let val = Value::object(ctx.inner());
         assert!(val.is_ok());
         assert!(val.unwrap().is_object());
         Ok(())
@@ -289,7 +289,7 @@ mod tests {
     #[test]
     fn test_allows_representing_a_value_as_f64() -> R<()> {
         let ctx = Context::new()?;
-        let val = Value::from_f64(&ctx, f64::MIN)?.as_f64();
+        let val = Value::from_f64(ctx.inner(), f64::MIN)?.as_f64();
         assert_eq!(val, f64::MIN);
         Ok(())
     }

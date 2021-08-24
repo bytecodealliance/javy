@@ -28,10 +28,6 @@ impl Context {
         Ok(Self { runtime, inner })
     }
 
-    pub(crate) fn inner(&self) -> *mut JSContext {
-        self.inner
-    }
-
     pub(crate) fn eval_global(&self, name: &str, contents: &str) -> Result<Value> {
         let input = CString::new(contents)?;
         let script_name = CString::new(name)?;
@@ -46,12 +42,16 @@ impl Context {
             )
         };
 
-        Value::new(self, raw)
+        Value::new(self.inner, raw)
+    }
+
+    pub(crate) fn inner(&self) -> *mut JSContext {
+        self.inner
     }
 
     pub(crate) fn global_object(&self) -> Result<Value> {
         let raw = unsafe { JS_GetGlobalObject(self.inner) };
-        Value::new(self, raw)
+        Value::new(self.inner, raw)
     }
 
     pub(crate) fn call(&self, fun: &Value, receiver: &Value, args: &[Value]) -> Result<Value> {
@@ -66,7 +66,7 @@ impl Context {
             )
         };
 
-        Value::new(self, return_val)
+        Value::new(self.inner, return_val)
     }
 }
 
