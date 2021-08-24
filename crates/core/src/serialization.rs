@@ -401,8 +401,11 @@ impl<'a> ser::SerializeMap for &'a mut Serializer {
         let mut map_serializer = Serializer::from_context(self.context);
         value.serialize(&mut map_serializer)?;
         let key_name = self.context.to_byte_slice(self.key);
-        self.context
-            .set_property_raw(self.value, key_name.as_ptr() as *const _, map_serializer.value);
+        self.context.set_property_raw(
+            self.value,
+            key_name.as_ptr() as *const _,
+            map_serializer.value,
+        );
         Ok(())
     }
 
@@ -754,7 +757,6 @@ mod tests {
         use crate::Context;
         use anyhow::Result;
         use quickcheck::quickcheck;
-        use quickjs_sys as q;
         use serde::Serializer;
 
         quickcheck! {
@@ -762,14 +764,14 @@ mod tests {
                 let context = Context::new().expect("Couldn't create context");
                 let mut serializer = ValueSerializer::from_context(context);
                 serializer.serialize_i16(v)?;
-                Ok(context.get_tag(serializer.value) == q::JS_TAG_INT as u64)
+                Ok(context.is_integer(serializer.value))
             }
 
             fn test_i32(v: i32) -> Result<bool> {
                 let context = Context::new().expect("Couldn't create context");
                 let mut serializer = ValueSerializer::from_context(context);
                 serializer.serialize_i32(v)?;
-                Ok(context.get_tag(serializer.value) == q::JS_TAG_INT as u64)
+                Ok(context.is_integer(serializer.value))
             }
 
             fn test_u16(v: u16) -> Result<bool> {
@@ -778,7 +780,7 @@ mod tests {
 
                 serializer.serialize_u16(v)?;
 
-                Ok(context.get_tag(serializer.value) == q::JS_TAG_INT as u64)
+                Ok(context.is_integer(serializer.value))
             }
 
             fn test_u32(v: u32) -> Result<bool> {
@@ -791,7 +793,7 @@ mod tests {
                 if v > i32::MAX as u32 {
                     Ok(unsafe {context.is_float64(serializer.value) })
                 } else {
-                    Ok(context.get_tag(serializer.value) == q::JS_TAG_INT as u64)
+                    Ok(context.is_integer(serializer.value))
                 }
             }
 
@@ -802,7 +804,7 @@ mod tests {
 
                 if v == 0.0_f64 {
                     if v.is_sign_positive() {
-                        return  Ok(context.get_tag(serializer.value) == q::JS_TAG_INT as u64);
+                        return  Ok(context.is_integer(serializer.value));
                     }
 
 
@@ -817,7 +819,7 @@ mod tests {
                 let range = (i32::MIN as f64)..=(i32::MAX as f64);
 
                 if zero_fractional_part && range.contains(&v) {
-                    Ok(context.get_tag(serializer.value) == q::JS_TAG_INT as u64)
+                    Ok(context.is_integer(serializer.value))
                 } else {
                     Ok(unsafe { context.is_float64(serializer.value) })
                 }
@@ -828,7 +830,7 @@ mod tests {
                 let mut serializer = ValueSerializer::from_context(context);
                 serializer.serialize_bool(v)?;
 
-                Ok(context.get_tag(serializer.value) == q::JS_TAG_BOOL as u64)
+                Ok(context.is_bool(serializer.value))
             }
 
             fn test_str(v: String) -> Result<bool> {
@@ -846,7 +848,7 @@ mod tests {
             let mut serializer = ValueSerializer::from_context(context);
             serializer.serialize_unit()?;
 
-            assert_eq!(context.get_tag(serializer.value), q::JS_TAG_NULL as u64);
+            assert!(context.is_null(serializer.value));
             Ok(())
         }
 
@@ -983,11 +985,13 @@ mod tests {
     }
 
     mod roundtrips {
-        use anyhow::Result;
-        use crate::serialization::{Serializer as ValueSerializer, Deserializer as ValueDeserializer};
+        use crate::serialization::{
+            Deserializer as ValueDeserializer, Serializer as ValueSerializer,
+        };
         use crate::Context;
-        use serde::{Serializer, Deserialize};
+        use anyhow::Result;
         use quickcheck::quickcheck;
+        use serde::{Deserialize, Serializer};
 
         quickcheck! {
             fn test_str(v: String) -> Result<bool> {
