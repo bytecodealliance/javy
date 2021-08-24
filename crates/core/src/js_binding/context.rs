@@ -30,7 +30,11 @@ impl Default for Context {
 }
 
 impl Context {
-    pub fn eval_global(&self, name: impl Into<Vec<u8>>, content: impl Into<Vec<u8>>) -> Result<Value> {
+    pub fn eval_global(
+        &self,
+        name: impl Into<Vec<u8>>,
+        content: impl Into<Vec<u8>>,
+    ) -> Result<Value> {
         let name = CString::new(name)?;
         let content = CString::new(content)?;
 
