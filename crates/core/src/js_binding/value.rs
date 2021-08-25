@@ -192,7 +192,10 @@ mod tests {
         let ctx = Context::default();
         let contents = "globalThis.arr = [1];";
         let _ = ctx.eval_global(SCRIPT_NAME, contents)?;
-        let val = ctx.global_object()?.get_property("arr")?.get_property_at_index(0);
+        let val = ctx
+            .global_object()?
+            .get_property("arr")?
+            .get_property_at_index(0);
         assert!(val.is_ok());
         assert!(val.unwrap().is_repr_as_i32());
         Ok(())
