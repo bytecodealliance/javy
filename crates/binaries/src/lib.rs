@@ -48,7 +48,6 @@ pub fn wasm_opt() -> Result<PathBuf> {
                 }
 
                 if !wasm_opt_dylib.exists() {
-                    // change this to lib64 if linux
                     std::fs::create_dir_all(root.join(&libdir))?;
                     std::fs::rename(root.join(&dylibname), root.join(&libdir).join(&dylibname))?;
                 }
@@ -85,7 +84,7 @@ fn dylibinfo(bin: Binary) -> Result<(String, String)> {
     match bin {
         Binary::WasmOpt => {
             if cfg!(target_os = "linux") {
-                return Ok(("lib64".into(), "libbinaryen.a".into()))
+                return Ok(("lib64".into(), "libbinaryen.a".into()));
             }
 
             if cfg!(target_os = "macos") {
@@ -93,8 +92,8 @@ fn dylibinfo(bin: Binary) -> Result<(String, String)> {
             }
 
             bail!("Target architecture not supported")
-        },
-        _ => Ok(("".into(), "".into()))
+        }
+        _ => Ok(("".into(), "".into())),
     }
 }
 

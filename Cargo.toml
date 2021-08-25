@@ -3,5 +3,6 @@ members = [
   "crates/quickjs-sys",
   "crates/core",
   "crates/cli",
-  "crates/benchmarks"
+  "crates/benchmarks",
+  "crates/binaries"
 ]

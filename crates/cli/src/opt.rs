@@ -3,8 +3,6 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use wizer::Wizer;
 
-use crate::prebuilt;
-
 pub(crate) struct Optimizer<'a> {
     strip: bool,
     optimize: bool,
@@ -46,7 +44,7 @@ impl<'a> Optimizer<'a> {
         std::fs::write(dest.as_ref(), wasm)?;
 
         if self.strip {
-            let output = Command::new(prebuilt::wasm_strip())
+            let output = Command::new(binaries::wasm_strip()?)
                 .arg(dest.as_ref())
                 .output()?;
 
@@ -56,7 +54,7 @@ impl<'a> Optimizer<'a> {
         }
 
         if self.optimize {
-            let output = Command::new(prebuilt::wasm_opt())
+            let output = Command::new(binaries::wasm_opt()?)
                 .arg(dest.as_ref())
                 .arg("-O3")
                 .arg("--dce")
