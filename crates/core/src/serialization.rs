@@ -761,21 +761,21 @@ mod tests {
 
         quickcheck! {
             fn test_i16(v: i16) -> Result<bool> {
-                let context = Context::new().expect("Couldn't create context");
+                let context = Context::default();
                 let mut serializer = ValueSerializer::from_context(context);
                 serializer.serialize_i16(v)?;
                 Ok(context.is_integer(serializer.value))
             }
 
             fn test_i32(v: i32) -> Result<bool> {
-                let context = Context::new().expect("Couldn't create context");
+                let context = Context::default();
                 let mut serializer = ValueSerializer::from_context(context);
                 serializer.serialize_i32(v)?;
                 Ok(context.is_integer(serializer.value))
             }
 
             fn test_u16(v: u16) -> Result<bool> {
-                let context = Context::new().expect("Couldn't create context");
+                let context = Context::default();
                 let mut serializer = ValueSerializer::from_context(context);
 
                 serializer.serialize_u16(v)?;
@@ -784,7 +784,7 @@ mod tests {
             }
 
             fn test_u32(v: u32) -> Result<bool> {
-                let context = Context::new().expect("Couldn't create context");
+                let context = Context::default();
                 let mut serializer = ValueSerializer::from_context(context);
 
                 serializer.serialize_u32(v)?;
@@ -798,7 +798,7 @@ mod tests {
             }
 
             fn test_f64(v: f64) -> Result<bool> {
-                let context = Context::new().expect("Couldn't create context");
+                let context = Context::default();
                 let mut serializer = ValueSerializer::from_context(context);
                 serializer.serialize_f64(v)?;
 
@@ -826,7 +826,7 @@ mod tests {
             }
 
             fn test_bool(v: bool) -> Result<bool> {
-                let context = Context::new().expect("Couldn't create context");
+                let context = Context::default();
                 let mut serializer = ValueSerializer::from_context(context);
                 serializer.serialize_bool(v)?;
 
@@ -834,7 +834,7 @@ mod tests {
             }
 
             fn test_str(v: String) -> Result<bool> {
-                let context = Context::new().expect("Couldn't create context");
+                let context = Context::default();
                 let mut serializer = ValueSerializer::from_context(context);
                 serializer.serialize_str(v.as_str())?;
 
@@ -844,7 +844,7 @@ mod tests {
 
         #[test]
         fn test_null() -> Result<()> {
-            let context = Context::new().expect("Couldn't create context");
+            let context = Context::default();
             let mut serializer = ValueSerializer::from_context(context);
             serializer.serialize_unit()?;
 
@@ -854,7 +854,7 @@ mod tests {
 
         #[test]
         fn test_nan() -> Result<()> {
-            let context = Context::new().expect("Couldn't create context");
+            let context = Context::default();
             let mut serializer = ValueSerializer::from_context(context);
             serializer.serialize_f64(f64::NAN)?;
 
@@ -864,7 +864,7 @@ mod tests {
 
         #[test]
         fn test_infinity() -> Result<()> {
-            let context = Context::new().expect("Couldn't create context");
+            let context = Context::default();
             let mut serializer = ValueSerializer::from_context(context);
             serializer.serialize_f64(f64::INFINITY)?;
 
@@ -874,7 +874,7 @@ mod tests {
 
         #[test]
         fn test_negative_infinity() -> Result<()> {
-            let context = Context::new().expect("Couldn't create context");
+            let context = Context::default();
             let mut serializer = ValueSerializer::from_context(context);
             serializer.serialize_f64(f64::NEG_INFINITY)?;
 
@@ -893,7 +893,7 @@ mod tests {
 
         quickcheck! {
             fn test_i32(v: i32) -> Result<bool> {
-                let context = Context::new().expect("Couldn't create context");
+                let context = Context::default();
                 let mut deserializer = ValueDeserializer::from(
                     &context,
                     unsafe { context.new_int32(v) }
@@ -904,7 +904,7 @@ mod tests {
             }
 
             fn test_bool(v: bool) -> Result<bool> {
-                let context = Context::new().expect("Couldn't create context");
+                let context = Context::default();
                 let mut deserializer = ValueDeserializer::from(
                     &context,
                     unsafe { context.new_bool(v) }
@@ -915,7 +915,7 @@ mod tests {
             }
 
             fn test_str(v: String) -> Result<bool> {
-                let context = Context::new().expect("Couldn't create context");
+                let context = Context::default();
                 let mut deserializer = ValueDeserializer::from(
                     &context,
                     context.new_string(v.as_str())
@@ -928,7 +928,7 @@ mod tests {
 
         #[test]
         fn test_null() -> Result<()> {
-            let context = Context::new().expect("Couldn't create context");
+            let context = Context::default();
             let mut deserializer = ValueDeserializer::from(&context, (q::JS_TAG_NULL as u64) << 32);
 
             let result = <()>::deserialize(&mut deserializer)?;
@@ -938,7 +938,7 @@ mod tests {
 
         #[test]
         fn test_undefined() -> Result<()> {
-            let context = Context::new().expect("Couldn't create context");
+            let context = Context::default();
             let mut deserializer =
                 ValueDeserializer::from(&context, (q::JS_TAG_UNDEFINED as u64) << 32);
 
@@ -949,7 +949,7 @@ mod tests {
 
         #[test]
         fn test_nan() -> Result<()> {
-            let context = Context::new().expect("Couldn't create context");
+            let context = Context::default();
             let mut deserializer =
                 ValueDeserializer::from(&context, unsafe { context.new_float64(f64::NAN) });
 
@@ -960,7 +960,7 @@ mod tests {
 
         #[test]
         fn test_infinity() -> Result<()> {
-            let context = Context::new().expect("Couldn't create context");
+            let context = Context::default();
             let mut deserializer =
                 ValueDeserializer::from(&context, unsafe { context.new_float64(f64::INFINITY) });
 
@@ -971,7 +971,7 @@ mod tests {
 
         #[test]
         fn test_negative_infinity() -> Result<()> {
-            let context = Context::new().expect("Couldn't create context");
+            let context = Context::default();
             let mut deserializer = ValueDeserializer::from(&context, unsafe {
                 context.new_float64(f64::NEG_INFINITY)
             });
@@ -993,11 +993,11 @@ mod tests {
 
         quickcheck! {
             fn test_str(v: String) -> Result<bool> {
-                let context = Context::new().unwrap();
+                let context = Context::default();
                 let mut serializer = ValueSerializer::from_context(context);
                 serializer.serialize_str(v.as_str()).unwrap();
 
-                let context = Context::new().unwrap();
+                let context = Context::default();
                 let mut deserializer = ValueDeserializer::from(&context, serializer.value);
 
                 let result = String::deserialize(&mut deserializer).unwrap();

@@ -20,3 +20,11 @@ JSValue JS_NewFloat64_Ext(JSContext *ctx, double d) {
 JS_BOOL JS_IsFloat64_Ext(int tag) {
   return JS_TAG_IS_FLOAT64(tag);
 }
+
+const JSValue ext_js_null = JS_NULL;
+const JSValue ext_js_undefined = JS_UNDEFINED;
+const JSValue ext_js_false = JS_FALSE;
+const JSValue ext_js_true = JS_TRUE;
+const JSValue ext_js_exception = JS_EXCEPTION;
+const JSValue ext_js_uninitialized = JS_UNINITIALIZED;
+
