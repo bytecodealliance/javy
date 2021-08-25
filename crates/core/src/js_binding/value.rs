@@ -15,57 +15,6 @@ pub struct Value {
     value: JSValue,
 }
 
-pub trait PropertyAccess<K, V> {
-    fn get(&self, key: K) -> Result<V>;
-    fn set(&self, key: K, val: &V) -> Result<()>;
-}
-
-impl PropertyAccess<&str, Value> for Value {
-    fn get(&self, key: &str) -> Result<Self> {
-        let cstring_key = CString::new(key)?;
-        let raw = unsafe { JS_GetPropertyStr(self.context, self.value, cstring_key.as_ptr()) };
-
-        Self::new(self.context, raw)
-    }
-
-    fn set(&self, key: &str, val: &Value) -> Result<()> {
-        let cstring_key = CString::new(key)?;
-        // TODO: Exception handling
-        let _raw = unsafe {
-            JS_DefinePropertyValueStr(
-                self.context,
-                self.value,
-                cstring_key.as_ptr(),
-                val.value,
-                JS_PROP_C_W_E as i32,
-            )
-        };
-
-        Ok(())
-    }
-}
-
-impl PropertyAccess<u32, Value> for Value {
-    fn get(&self, key: u32) -> Result<Self> {
-        let raw = unsafe { JS_GetPropertyUint32(self.context, self.value, key) };
-        Self::new(self.context, raw)
-    }
-
-    fn set(&self, _key: u32, val: &Value) -> Result<()> {
-        unsafe {
-            let len = self.get("length")?;
-            JS_DefinePropertyValueUint32(
-                self.context,
-                self.value,
-                len.value as u32,
-                val.value,
-                JS_PROP_C_W_E as i32,
-            );
-        }
-        Ok(())
-    }
-}
-
 impl Value {
     pub fn new(context: *mut JSContext, raw_value: JSValue) -> Result<Self> {
         let tag = get_tag(raw_value);
@@ -149,6 +98,45 @@ impl Value {
     pub fn is_object(&self) -> bool {
         !self.is_array() && get_tag(self.value) == JS_TAG_OBJECT
     }
+
+    pub fn get_property(&self, key: impl Into<Vec<u8>>) -> Result<Self> {
+        let cstring_key = CString::new(key)?;
+        let raw = unsafe { JS_GetPropertyStr(self.context, self.value, cstring_key.as_ptr()) };
+        Self::new(self.context, raw)
+    }
+
+    pub fn set_property(&self, key: impl Into<Vec<u8>>, val: &Value) -> Result<()> {
+        let cstring_key = CString::new(key)?;
+        let raw = unsafe {
+            JS_DefinePropertyValueStr(
+                self.context,
+                self.value,
+                cstring_key.as_ptr(),
+                val.value,
+                JS_PROP_C_W_E as i32,
+            )
+        };
+        Ok(())
+    }
+
+    pub fn get_property_at_index(&self, index: u32) -> Result<Self> {
+        let raw = unsafe { JS_GetPropertyUint32(self.context, self.value, index) };
+        Self::new(self.context, raw)
+    }
+
+    pub fn append_property(&self, val: &Value) -> Result<()> {
+        let len = self.get_property("length")?;
+        unsafe {
+            JS_DefinePropertyValueUint32(
+                self.context,
+                self.value,
+                len.value as u32,
+                val.value,
+                JS_PROP_C_W_E as i32,
+            );
+        }
+        Ok(())
+    }
 }
 
 fn get_tag(v: JSValue) -> i32 {
@@ -162,7 +150,7 @@ fn is_exception(t: i32) -> bool {
 #[cfg(test)]
 mod tests {
     use super::super::context::Context;
-    use super::{PropertyAccess, Value};
+    use super::Value;
     use anyhow::Result;
     const SCRIPT_NAME: &str = "value.js";
 
@@ -172,7 +160,7 @@ mod tests {
         let contents = "globalThis.bar = 1;";
         let _ = ctx.eval_global(SCRIPT_NAME, contents)?;
         let global = ctx.global_object()?;
-        let prop = global.get("bar");
+        let prop = global.get_property("bar");
         assert!(prop.is_ok());
         Ok(())
     }
@@ -181,8 +169,8 @@ mod tests {
     fn test_value_objects_allow_setting_a_str_property() -> Result<()> {
         let ctx = Context::default();
         let obj = Value::object(ctx.inner())?;
-        obj.set("foo", &Value::from_i32(ctx.inner(), 1_i32)?)?;
-        let val = obj.get("foo");
+        obj.set_property("foo", &Value::from_i32(ctx.inner(), 1_i32)?)?;
+        let val = obj.get_property("foo");
         assert!(val.is_ok());
         assert!(val.unwrap().is_repr_as_i32());
         Ok(())
@@ -192,8 +180,8 @@ mod tests {
     fn test_value_objects_allow_setting_a_indexed_property() -> Result<()> {
         let ctx = Context::default();
         let seq = Value::array(ctx.inner())?;
-        seq.set(0_u32, &Value::from_str(ctx.inner(), "value")?)?;
-        let val = seq.get(0);
+        seq.append_property(&Value::from_str(ctx.inner(), "value")?)?;
+        let val = seq.get_property_at_index(0);
         assert!(val.is_ok());
         assert!(val.unwrap().is_str());
         Ok(())
@@ -204,7 +192,7 @@ mod tests {
         let ctx = Context::default();
         let contents = "globalThis.arr = [1];";
         let _ = ctx.eval_global(SCRIPT_NAME, contents)?;
-        let val = ctx.global_object()?.get("arr")?.get(0);
+        let val = ctx.global_object()?.get_property("arr")?.get_property_at_index(0);
         assert!(val.is_ok());
         assert!(val.unwrap().is_repr_as_i32());
         Ok(())
