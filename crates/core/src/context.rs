@@ -63,7 +63,7 @@ impl Context {
     }
 
     pub unsafe fn is_float64(&self, val: JSValue) -> bool {
-        JS_IsFloat64_Ext(self.get_tag(val) as i32) == 1
+        JS_IsFloat64_Ext(self.get_tag(val)) == 1
     }
 
     pub unsafe fn to_float64(&self, val: JSValue) -> f64 {
@@ -167,8 +167,8 @@ impl Context {
         }
     }
 
-    pub fn get_tag(&self, val: JSValue) -> u64 {
-        val >> 32
+    pub fn get_tag(&self, val: JSValue) -> i32 {
+        (val >> 32) as i32
     }
 
     pub fn to_string(&self, val: JSValue) -> String {
@@ -180,21 +180,43 @@ impl Context {
         unsafe { JS_AtomToString(self.raw, atom) }
     }
 
-    pub fn to_c_str_ptr(&self, val: JSValue) -> *const i8 {
-        unsafe { JS_ToCStringLen2(self.raw, std::ptr::null_mut(), val, 0) }
+    pub fn to_byte_slice(&self, val: JSValue) -> &[u8] {
+        unsafe {
+            let mut len: size_t = 0;
+            let ptr = JS_ToCStringLen2(self.raw, &mut len, val, 0);
+            let ptr = ptr as *const u8;
+            let len = len as usize;
+            std::slice::from_raw_parts(ptr, len)
+        }
     }
 
     pub fn deserialize_string(&self, val: JSValue) -> String {
-        let cstr = unsafe { std::ffi::CStr::from_ptr(self.to_c_str_ptr(val)) };
-        cstr.to_str().unwrap().to_string()
+        let cstr = self.to_byte_slice(val);
+        std::str::from_utf8(cstr).unwrap().to_string()
     }
 
     pub fn is_exception(&self, val: JSValue) -> bool {
-        self.get_tag(val) == JS_TAG_EXCEPTION as u64
+        self.get_tag(val) == JS_TAG_EXCEPTION
     }
 
     pub fn is_array(&self, val: JSValue) -> bool {
         unsafe { JS_IsArray(self.raw, val) > 0 }
+    }
+
+    pub fn is_null(&self, val: JSValue) -> bool {
+        self.get_tag(val) == JS_TAG_NULL
+    }
+
+    pub fn is_bool(&self, val: JSValue) -> bool {
+        self.get_tag(val) == JS_TAG_BOOL
+    }
+
+    pub fn is_integer(&self, val: JSValue) -> bool {
+        self.get_tag(val) == JS_TAG_INT
+    }
+
+    pub fn is_string(&self, val: JSValue) -> bool {
+        self.get_tag(val) == JS_TAG_STRING
     }
 
     // pub fn create_callback<'a, F>(&self, callback: F) -> JSValue

@@ -400,9 +400,12 @@ impl<'a> ser::SerializeMap for &'a mut Serializer {
     {
         let mut map_serializer = Serializer::from_context(self.context);
         value.serialize(&mut map_serializer)?;
-        let key_name = self.context.to_c_str_ptr(self.key);
-        self.context
-            .set_property_raw(self.value, key_name, map_serializer.value);
+        let key_name = self.context.to_byte_slice(self.key);
+        self.context.set_property_raw(
+            self.value,
+            key_name.as_ptr() as *const _,
+            map_serializer.value,
+        );
         Ok(())
     }
 
@@ -754,15 +757,21 @@ mod tests {
         use crate::Context;
         use anyhow::Result;
         use quickcheck::quickcheck;
-        use quickjs_sys as q;
         use serde::Serializer;
 
         quickcheck! {
+            fn test_i16(v: i16) -> Result<bool> {
+                let context = Context::new().expect("Couldn't create context");
+                let mut serializer = ValueSerializer::from_context(context);
+                serializer.serialize_i16(v)?;
+                Ok(context.is_integer(serializer.value))
+            }
+
             fn test_i32(v: i32) -> Result<bool> {
                 let context = Context::new().expect("Couldn't create context");
                 let mut serializer = ValueSerializer::from_context(context);
                 serializer.serialize_i32(v)?;
-                Ok(context.get_tag(serializer.value) == q::JS_TAG_INT as u64)
+                Ok(context.is_integer(serializer.value))
             }
 
             fn test_u16(v: u16) -> Result<bool> {
@@ -771,7 +780,7 @@ mod tests {
 
                 serializer.serialize_u16(v)?;
 
-                Ok(context.get_tag(serializer.value) == q::JS_TAG_INT as u64)
+                Ok(context.is_integer(serializer.value))
             }
 
             fn test_u32(v: u32) -> Result<bool> {
@@ -784,18 +793,18 @@ mod tests {
                 if v > i32::MAX as u32 {
                     Ok(unsafe {context.is_float64(serializer.value) })
                 } else {
-                    Ok(context.get_tag(serializer.value) == q::JS_TAG_INT as u64)
+                    Ok(context.is_integer(serializer.value))
                 }
             }
 
-            fn test_f32(v: f64) -> Result<bool> {
+            fn test_f64(v: f64) -> Result<bool> {
                 let context = Context::new().expect("Couldn't create context");
                 let mut serializer = ValueSerializer::from_context(context);
                 serializer.serialize_f64(v)?;
 
                 if v == 0.0_f64 {
                     if v.is_sign_positive() {
-                        return  Ok(context.get_tag(serializer.value) == q::JS_TAG_INT as u64);
+                        return  Ok(context.is_integer(serializer.value));
                     }
 
 
@@ -810,7 +819,7 @@ mod tests {
                 let range = (i32::MIN as f64)..=(i32::MAX as f64);
 
                 if zero_fractional_part && range.contains(&v) {
-                    Ok(context.get_tag(serializer.value) == q::JS_TAG_INT as u64)
+                    Ok(context.is_integer(serializer.value))
                 } else {
                     Ok(unsafe { context.is_float64(serializer.value) })
                 }
@@ -821,7 +830,15 @@ mod tests {
                 let mut serializer = ValueSerializer::from_context(context);
                 serializer.serialize_bool(v)?;
 
-                Ok(context.get_tag(serializer.value) == q::JS_TAG_BOOL as u64)
+                Ok(context.is_bool(serializer.value))
+            }
+
+            fn test_str(v: String) -> Result<bool> {
+                let context = Context::new().expect("Couldn't create context");
+                let mut serializer = ValueSerializer::from_context(context);
+                serializer.serialize_str(v.as_str())?;
+
+                Ok(context.is_string(serializer.value))
             }
         }
 
@@ -830,7 +847,38 @@ mod tests {
             let context = Context::new().expect("Couldn't create context");
             let mut serializer = ValueSerializer::from_context(context);
             serializer.serialize_unit()?;
-            assert!(context.get_tag(serializer.value) == q::JS_TAG_NULL as u64);
+
+            assert!(context.is_null(serializer.value));
+            Ok(())
+        }
+
+        #[test]
+        fn test_nan() -> Result<()> {
+            let context = Context::new().expect("Couldn't create context");
+            let mut serializer = ValueSerializer::from_context(context);
+            serializer.serialize_f64(f64::NAN)?;
+
+            assert!(unsafe { context.is_float64(serializer.value) });
+            Ok(())
+        }
+
+        #[test]
+        fn test_infinity() -> Result<()> {
+            let context = Context::new().expect("Couldn't create context");
+            let mut serializer = ValueSerializer::from_context(context);
+            serializer.serialize_f64(f64::INFINITY)?;
+
+            assert!(unsafe { context.is_float64(serializer.value) });
+            Ok(())
+        }
+
+        #[test]
+        fn test_negative_infinity() -> Result<()> {
+            let context = Context::new().expect("Couldn't create context");
+            let mut serializer = ValueSerializer::from_context(context);
+            serializer.serialize_f64(f64::NEG_INFINITY)?;
+
+            assert!(unsafe { context.is_float64(serializer.value) });
             Ok(())
         }
     }
@@ -865,6 +913,17 @@ mod tests {
                 let result = bool::deserialize(&mut deserializer)?;
                 Ok(result == v)
             }
+
+            fn test_str(v: String) -> Result<bool> {
+                let context = Context::new().expect("Couldn't create context");
+                let mut deserializer = ValueDeserializer::from(
+                    &context,
+                    context.new_string(v.as_str())
+                );
+
+                let result = String::deserialize(&mut deserializer)?;
+                Ok(result == v)
+            }
         }
 
         #[test]
@@ -872,10 +931,78 @@ mod tests {
             let context = Context::new().expect("Couldn't create context");
             let mut deserializer = ValueDeserializer::from(&context, (q::JS_TAG_NULL as u64) << 32);
 
-            type U = ();
-            let result = U::deserialize(&mut deserializer)?;
+            let result = <()>::deserialize(&mut deserializer)?;
             assert_eq!(result, ());
             Ok(())
+        }
+
+        #[test]
+        fn test_undefined() -> Result<()> {
+            let context = Context::new().expect("Couldn't create context");
+            let mut deserializer =
+                ValueDeserializer::from(&context, (q::JS_TAG_UNDEFINED as u64) << 32);
+
+            let result = <()>::deserialize(&mut deserializer)?;
+            assert_eq!(result, ());
+            Ok(())
+        }
+
+        #[test]
+        fn test_nan() -> Result<()> {
+            let context = Context::new().expect("Couldn't create context");
+            let mut deserializer =
+                ValueDeserializer::from(&context, unsafe { context.new_float64(f64::NAN) });
+
+            let result = f64::deserialize(&mut deserializer)?;
+            assert!(result.is_nan());
+            Ok(())
+        }
+
+        #[test]
+        fn test_infinity() -> Result<()> {
+            let context = Context::new().expect("Couldn't create context");
+            let mut deserializer =
+                ValueDeserializer::from(&context, unsafe { context.new_float64(f64::INFINITY) });
+
+            let result = f64::deserialize(&mut deserializer)?;
+            assert!(result.is_infinite() && result.is_sign_positive());
+            Ok(())
+        }
+
+        #[test]
+        fn test_negative_infinity() -> Result<()> {
+            let context = Context::new().expect("Couldn't create context");
+            let mut deserializer = ValueDeserializer::from(&context, unsafe {
+                context.new_float64(f64::NEG_INFINITY)
+            });
+
+            let result = f64::deserialize(&mut deserializer)?;
+            assert!(result.is_infinite() && result.is_sign_negative());
+            Ok(())
+        }
+    }
+
+    mod roundtrips {
+        use crate::serialization::{
+            Deserializer as ValueDeserializer, Serializer as ValueSerializer,
+        };
+        use crate::Context;
+        use anyhow::Result;
+        use quickcheck::quickcheck;
+        use serde::{Deserialize, Serializer};
+
+        quickcheck! {
+            fn test_str(v: String) -> Result<bool> {
+                let context = Context::new().unwrap();
+                let mut serializer = ValueSerializer::from_context(context);
+                serializer.serialize_str(v.as_str()).unwrap();
+
+                let context = Context::new().unwrap();
+                let mut deserializer = ValueDeserializer::from(&context, serializer.value);
+
+                let result = String::deserialize(&mut deserializer).unwrap();
+                Ok(v == result)
+            }
         }
     }
 }
