@@ -76,7 +76,7 @@ fn optimize_engine(engine_path: impl AsRef<Path>) {
 
 fn run_wasm_strip(engine_path: impl AsRef<Path>) {
     let wasm_strip = which::which("wasm-strip")
-        .unwrap_or_else(|_| PathBuf::from(env::var("OUT_DIR").unwrap()).join("vendor/wasm-opt"));
+        .unwrap_or_else(|_| PathBuf::from(env::var("OUT_DIR").unwrap()).join("vendor/wasm-strip"));
 
     let output = Command::new(wasm_strip)
         .arg(engine_path.as_ref())
