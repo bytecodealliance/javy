@@ -28,7 +28,6 @@ JavaScript code, and executes it in a WebAssebmly embedded JavaScript runtime.
 
 #### Building
 
-Set `JAVY_SKIP_ENGINE_OPTIMIZATIONS=1` to disable engine optimizations
 After all the dependencies are installed, run `make`. You
 should now have access to the executable in `target/release/javy`
 
