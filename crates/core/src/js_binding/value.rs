@@ -1,12 +1,14 @@
 #![allow(dead_code)]
 use anyhow::{anyhow, Result};
 use quickjs_sys::{
-    JSContext, JSValue, JS_DefinePropertyValueStr, JS_DefinePropertyValueUint32, JS_GetPropertyStr,
-    JS_GetPropertyUint32, JS_IsArray, JS_IsFloat64_Ext, JS_NewArray, JS_NewBool_Ext,
-    JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewObject, JS_NewStringLen, JS_NewUint32_Ext,
+    size_t as JS_size_t, JSContext, JSValue, JS_DefinePropertyValueStr,
+    JS_DefinePropertyValueUint32, JS_GetException, JS_GetPropertyStr, JS_GetPropertyUint32,
+    JS_IsArray, JS_IsError, JS_IsFloat64_Ext, JS_NewArray, JS_NewBool_Ext, JS_NewFloat64_Ext,
+    JS_NewInt32_Ext, JS_NewObject, JS_NewStringLen, JS_NewUint32_Ext, JS_ToCStringLen2,
     JS_ToFloat64, JS_PROP_C_W_E, JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_OBJECT,
     JS_TAG_STRING,
 };
+use std::fmt;
 use std::{ffi::CString, os::raw::c_char};
 
 #[derive(Debug, Clone)]
@@ -15,17 +17,34 @@ pub struct Value {
     value: JSValue,
 }
 
+#[derive(Debug)]
+struct Exception {
+    msg: String,
+    stack: Option<String>,
+}
+
+impl fmt::Display for Exception {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.msg)?;
+        if let Some(stack) = &self.stack {
+            write!(f, "\n{}", stack)?;
+        }
+        Ok(())
+    }
+}
+
 impl Value {
     pub fn new(context: *mut JSContext, raw_value: JSValue) -> Result<Self> {
-        let tag = get_tag(raw_value);
+        let value = Self {
+            context,
+            value: raw_value,
+        };
 
-        if is_exception(tag) {
-            Err(anyhow!("Exception thrown by the JavaScript engine"))
+        if value.is_exception_value() {
+            let exception = value.as_exception()?;
+            Err(anyhow!("Uncaught {}", exception))
         } else {
-            Ok(Self {
-                context,
-                value: raw_value,
-            })
+            Ok(value)
         }
     }
 
@@ -71,24 +90,35 @@ impl Value {
         ret
     }
 
+    pub fn as_str(&self) -> Result<&str> {
+        unsafe {
+            let mut len: JS_size_t = 0;
+            let ptr = JS_ToCStringLen2(self.context, &mut len, self.value, 0);
+            let ptr = ptr as *const u8;
+            let len = len as usize;
+            let buffer = std::slice::from_raw_parts(ptr, len);
+            std::str::from_utf8(buffer).map_err(Into::into)
+        }
+    }
+
     pub fn inner(&self) -> JSValue {
         self.value
     }
 
     pub fn is_repr_as_f64(&self) -> bool {
-        unsafe { JS_IsFloat64_Ext(get_tag(self.value)) == 1 }
+        unsafe { JS_IsFloat64_Ext(self.get_tag()) == 1 }
     }
 
     pub fn is_repr_as_i32(&self) -> bool {
-        get_tag(self.value) == JS_TAG_INT
+        self.get_tag() == JS_TAG_INT
     }
 
     pub fn is_str(&self) -> bool {
-        get_tag(self.value) == JS_TAG_STRING
+        self.get_tag() == JS_TAG_STRING
     }
 
     pub fn is_bool(&self) -> bool {
-        get_tag(self.value) == JS_TAG_BOOL
+        self.get_tag() == JS_TAG_BOOL
     }
 
     pub fn is_array(&self) -> bool {
@@ -96,7 +126,11 @@ impl Value {
     }
 
     pub fn is_object(&self) -> bool {
-        !self.is_array() && get_tag(self.value) == JS_TAG_OBJECT
+        !self.is_array() && self.get_tag() == JS_TAG_OBJECT
+    }
+
+    pub fn is_undefined(&self) -> bool {
+        true
     }
 
     pub fn get_property(&self, key: impl Into<Vec<u8>>) -> Result<Self> {
@@ -137,14 +171,37 @@ impl Value {
         }
         Ok(())
     }
-}
 
-fn get_tag(v: JSValue) -> i32 {
-    (v >> 32) as i32
-}
+    pub fn is_exception_value(&self) -> bool {
+        self.get_tag() == JS_TAG_EXCEPTION
+    }
 
-fn is_exception(t: i32) -> bool {
-    t == JS_TAG_EXCEPTION
+    fn get_tag(&self) -> i32 {
+        (self.value >> 32) as i32
+    }
+
+    /// All methods in quickjs returns an exception value, not an object.
+    /// To actually retrieve the exception, we need to retrieve the exception object from the global state.
+    fn as_exception(&self) -> Result<Exception> {
+        let exception_value = unsafe { JS_GetException(self.context) };
+        let exception_obj = Self {
+            context: self.context,
+            value: exception_value,
+        };
+
+        let msg = exception_obj.as_str().map(ToString::to_string)?;
+        let mut stack = None;
+
+        let is_error = unsafe { JS_IsError(self.context, exception_obj.value) } != 0;
+        if is_error {
+            let stack_value = exception_obj.get_property("stack")?;
+            if !stack_value.is_undefined() {
+                stack.replace(stack_value.as_str().map(ToString::to_string)?);
+            }
+        }
+
+        Ok(Exception { msg, stack })
+    }
 }
 
 #[cfg(test)]
@@ -275,5 +332,63 @@ mod tests {
         let val = Value::from_f64(ctx.inner(), f64::MIN)?.as_f64();
         assert_eq!(val, f64::MIN);
         Ok(())
+    }
+
+    #[test]
+    fn test_value_as_str() {
+        let s = "hello";
+        let ctx = Context::default();
+        let val = Value::from_str(ctx.inner(), s).unwrap();
+        assert_eq!(val.as_str().unwrap(), s);
+    }
+
+    #[test]
+    fn test_value_as_str_middle_nul_terminator() {
+        let s = "hello\0world!";
+        let ctx = Context::default();
+        let val = Value::from_str(ctx.inner(), s).unwrap();
+        assert_eq!(val.as_str().unwrap(), s);
+    }
+
+    #[test]
+    fn test_exception() {
+        let ctx = Context::default();
+        let val = ctx.eval_global("main", "should_throw");
+        assert_eq!(
+            "Uncaught ReferenceError: 'should_throw' is not defined",
+            val.unwrap_err().to_string().as_str()
+        );
+    }
+
+    #[test]
+    fn test_exception_with_stack() {
+        let ctx = Context::default();
+        let script = r#"
+            function foo() { return bar(); }
+            function bar() { return foobar(); }
+            function foobar() {
+                for (var i = 0; i < 100; i++) {
+                    if (i > 25) {
+                        throw new Error("boom");
+                    }
+                }
+            }
+            foo();
+        "#;
+        let val = ctx.eval_global("main", script);
+        assert_eq!(
+            "Uncaught Error: boom",
+            val.unwrap_err().to_string().as_str()
+        )
+    }
+
+    #[test]
+    fn test_syntax_error() {
+        let ctx = Context::default();
+        let val = ctx.eval_global("main", "func boom() {}");
+        assert_eq!(
+            "Uncaught SyntaxError: expecting ';'",
+            val.unwrap_err().to_string().as_str()
+        );
     }
 }
