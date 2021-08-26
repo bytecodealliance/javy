@@ -6,7 +6,7 @@ use quickjs_sys::{
     JS_IsArray, JS_IsError, JS_IsFloat64_Ext, JS_NewArray, JS_NewBool_Ext, JS_NewFloat64_Ext,
     JS_NewInt32_Ext, JS_NewObject, JS_NewStringLen, JS_NewUint32_Ext, JS_ToCStringLen2,
     JS_ToFloat64, JS_PROP_C_W_E, JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_OBJECT,
-    JS_TAG_STRING, JS_TAG_UNDEFINED,
+    JS_TAG_STRING, JS_TAG_UNDEFINED, ext_js_null, ext_js_undefined, JS_TAG_NULL
 };
 use std::fmt;
 use std::{ffi::CString, os::raw::c_char};
@@ -84,6 +84,14 @@ impl Value {
         Self::new(context, raw)
     }
 
+    pub fn null(context: *mut JSContext) -> Result<Self> {
+        Self::new(context, unsafe { ext_js_null })
+    }
+
+    pub fn undefined(context: *mut JSContext) -> Result<Self> {
+        Self::new(context, unsafe { ext_js_undefined })
+    }
+
     pub fn as_f64(&self) -> f64 {
         let mut ret = 0_f64;
         unsafe { JS_ToFloat64(self.context, &mut ret, self.value) };
@@ -131,6 +139,10 @@ impl Value {
 
     pub fn is_undefined(&self) -> bool {
         self.get_tag() == JS_TAG_UNDEFINED
+    }
+
+    pub fn is_null(&self) -> bool {
+        self.get_tag() == JS_TAG_NULL
     }
 
     pub fn get_property(&self, key: impl Into<Vec<u8>>) -> Result<Self> {

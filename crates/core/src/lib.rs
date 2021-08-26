@@ -7,6 +7,7 @@ mod input;
 mod js_binding;
 mod output;
 mod serialization;
+mod serialize;
 
 use context::*;
 use globals::register_globals;

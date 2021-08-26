@@ -8,7 +8,7 @@ use quickjs_sys::{
 use std::ffi::CString;
 
 #[derive(Debug)]
-pub(crate) struct Context {
+pub struct Context {
     runtime: *mut JSRuntime,
     inner: *mut JSContext,
 }
@@ -30,7 +30,7 @@ impl Default for Context {
 }
 
 impl Context {
-    pub(crate) fn eval_global(&self, name: &str, contents: &str) -> Result<Value> {
+    pub fn eval_global(&self, name: &str, contents: &str) -> Result<Value> {
         let input = CString::new(contents)?;
         let script_name = CString::new(name)?;
         let len = contents.len() - 1;
@@ -47,11 +47,11 @@ impl Context {
         Value::new(self.inner, raw)
     }
 
-    pub(crate) fn inner(&self) -> *mut JSContext {
+    pub fn inner(&self) -> *mut JSContext {
         self.inner
     }
 
-    pub(crate) fn global_object(&self) -> Result<Value> {
+    pub fn global_object(&self) -> Result<Value> {
         let raw = unsafe { JS_GetGlobalObject(self.inner) };
         Value::new(self.inner, raw)
     }
