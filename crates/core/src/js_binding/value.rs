@@ -119,7 +119,7 @@ impl Value {
         Ok(())
     }
 
-    pub fn get_property_at_index(&self, index: u32) -> Result<Self> {
+    pub fn get_indexed_property(&self, index: u32) -> Result<Self> {
         let raw = unsafe { JS_GetPropertyUint32(self.context, self.value, index) };
         Self::new(self.context, raw)
     }
@@ -181,7 +181,7 @@ mod tests {
         let ctx = Context::default();
         let seq = Value::array(ctx.inner())?;
         seq.append_property(&Value::from_str(ctx.inner(), "value")?)?;
-        let val = seq.get_property_at_index(0);
+        let val = seq.get_indexed_property(0);
         assert!(val.is_ok());
         assert!(val.unwrap().is_str());
         Ok(())
@@ -195,7 +195,7 @@ mod tests {
         let val = ctx
             .global_object()?
             .get_property("arr")?
-            .get_property_at_index(0);
+            .get_indexed_property(0);
         assert!(val.is_ok());
         assert!(val.unwrap().is_repr_as_i32());
         Ok(())
