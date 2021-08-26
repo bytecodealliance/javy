@@ -41,5 +41,11 @@ fmt-cli:
 				&& cargo clippy -- -D warnings \
 				&& cd -
 
+fmt-binaries:
+		cd crates/binaries/ \
+				&& cargo fmt -- --check \
+				&& cargo clippy -- -D warnings \
+				&& cd -
+
 clean:
 		cargo clean

@@ -1,6 +1,5 @@
 mod opt;
 mod options;
-mod prebuilt;
 
 use crate::options::Options;
 use anyhow::Result;
