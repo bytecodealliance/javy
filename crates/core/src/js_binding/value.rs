@@ -107,7 +107,7 @@ impl Value {
 
     pub fn set_property(&self, key: impl Into<Vec<u8>>, val: &Value) -> Result<()> {
         let cstring_key = CString::new(key)?;
-        let raw = unsafe {
+        let _raw = unsafe {
             JS_DefinePropertyValueStr(
                 self.context,
                 self.value,
