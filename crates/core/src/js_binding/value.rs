@@ -1,12 +1,12 @@
 #![allow(dead_code)]
 use anyhow::{anyhow, Result};
 use quickjs_sys::{
-    size_t as JS_size_t, JSContext, JSValue, JS_DefinePropertyValueStr,
-    JS_DefinePropertyValueUint32, JS_GetException, JS_GetPropertyStr, JS_GetPropertyUint32,
-    JS_IsArray, JS_IsError, JS_IsFloat64_Ext, JS_NewArray, JS_NewBool_Ext, JS_NewFloat64_Ext,
-    JS_NewInt32_Ext, JS_NewObject, JS_NewStringLen, JS_NewUint32_Ext, JS_ToCStringLen2,
-    JS_ToFloat64, JS_PROP_C_W_E, JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_OBJECT,
-    JS_TAG_STRING, JS_TAG_UNDEFINED, ext_js_null, ext_js_undefined, JS_TAG_NULL
+    ext_js_null, ext_js_undefined, size_t as JS_size_t, JSContext, JSValue,
+    JS_DefinePropertyValueStr, JS_DefinePropertyValueUint32, JS_GetException, JS_GetPropertyStr,
+    JS_GetPropertyUint32, JS_IsArray, JS_IsError, JS_IsFloat64_Ext, JS_NewArray, JS_NewBool_Ext,
+    JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewObject, JS_NewStringLen, JS_NewUint32_Ext,
+    JS_ToCStringLen2, JS_ToFloat64, JS_PROP_C_W_E, JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT,
+    JS_TAG_NULL, JS_TAG_OBJECT, JS_TAG_STRING, JS_TAG_UNDEFINED,
 };
 use std::fmt;
 use std::{ffi::CString, os::raw::c_char};
@@ -192,7 +192,7 @@ impl Value {
         (self.value >> 32) as i32
     }
 
-    /// All methods in quickjs returns an exception value, not an object.
+    /// All methods in quickjs return an exception value, not an object.
     /// To actually retrieve the exception, we need to retrieve the exception object from the global state.
     fn as_exception(&self) -> Result<Exception> {
         let exception_value = unsafe { JS_GetException(self.context) };
@@ -246,7 +246,7 @@ mod tests {
     }
 
     #[test]
-    fn test_value_objects_allow_setting_a_indexed_property() -> Result<()> {
+    fn test_value_objects_allow_setting_an_indexed_property() -> Result<()> {
         let ctx = Context::default();
         let seq = Value::array(ctx.inner())?;
         seq.append_property(&Value::from_str(ctx.inner(), "value")?)?;
