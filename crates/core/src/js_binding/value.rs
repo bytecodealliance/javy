@@ -6,7 +6,7 @@ use quickjs_sys::{
     JS_IsArray, JS_IsError, JS_IsFloat64_Ext, JS_NewArray, JS_NewBool_Ext, JS_NewFloat64_Ext,
     JS_NewInt32_Ext, JS_NewObject, JS_NewStringLen, JS_NewUint32_Ext, JS_ToCStringLen2,
     JS_ToFloat64, JS_PROP_C_W_E, JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_OBJECT,
-    JS_TAG_STRING,
+    JS_TAG_STRING, JS_TAG_UNDEFINED,
 };
 use std::fmt;
 use std::{ffi::CString, os::raw::c_char};
@@ -130,7 +130,7 @@ impl Value {
     }
 
     pub fn is_undefined(&self) -> bool {
-        true
+        self.get_tag() == JS_TAG_UNDEFINED
     }
 
     pub fn get_property(&self, key: impl Into<Vec<u8>>) -> Result<Self> {
@@ -353,11 +353,13 @@ mod tests {
     #[test]
     fn test_exception() {
         let ctx = Context::default();
-        let val = ctx.eval_global("main", "should_throw");
-        assert_eq!(
-            "Uncaught ReferenceError: 'should_throw' is not defined",
-            val.unwrap_err().to_string().as_str()
-        );
+        let error = ctx
+            .eval_global("main", "should_throw")
+            .unwrap_err()
+            .to_string();
+        let expected_error =
+            "Uncaught ReferenceError: \'should_throw\' is not defined\n    at <eval> (main)\n";
+        assert_eq!(expected_error, error.as_str());
     }
 
     #[test]
@@ -375,20 +377,24 @@ mod tests {
             }
             foo();
         "#;
-        let val = ctx.eval_global("main", script);
-        assert_eq!(
-            "Uncaught Error: boom",
-            val.unwrap_err().to_string().as_str()
-        )
+        let expected_error = r#"Uncaught Error: boom
+    at foobar (main:7)
+    at bar (main)
+    at foo (main)
+    at <eval> (main:11)
+"#;
+        let error = ctx.eval_global("main", script).unwrap_err().to_string();
+        assert_eq!(expected_error, error.as_str());
     }
 
     #[test]
     fn test_syntax_error() {
         let ctx = Context::default();
-        let val = ctx.eval_global("main", "func boom() {}");
-        assert_eq!(
-            "Uncaught SyntaxError: expecting ';'",
-            val.unwrap_err().to_string().as_str()
-        );
+        let error = ctx
+            .eval_global("main", "func boom() {}")
+            .unwrap_err()
+            .to_string();
+        let expected_error = "Uncaught SyntaxError: expecting \';\'\n    at main:1\n";
+        assert_eq!(expected_error, error.as_str());
     }
 }
