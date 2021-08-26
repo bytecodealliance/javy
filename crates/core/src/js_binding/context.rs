@@ -74,7 +74,6 @@ impl Context {
 
 #[cfg(test)]
 mod tests {
-    use super::super::value::PropertyAccess;
     use super::Context;
     use anyhow::Result;
     const SCRIPT_NAME: &str = "context.js";
@@ -117,7 +116,7 @@ mod tests {
         let contents = "globalThis.foo = function() { return 1; }";
         let _ = ctx.eval_global(SCRIPT_NAME, contents)?;
         let global = ctx.global_object()?;
-        let fun = global.get("foo")?;
+        let fun = global.get_property("foo")?;
         let result = ctx.call(&fun, &global, &[]);
         assert!(result.is_ok());
         Ok(())
