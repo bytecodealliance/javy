@@ -141,7 +141,7 @@ impl Value {
 
     pub fn set_property(&self, key: impl Into<Vec<u8>>, val: &Value) -> Result<()> {
         let cstring_key = CString::new(key)?;
-        let raw = unsafe {
+        let _raw = unsafe {
             JS_DefinePropertyValueStr(
                 self.context,
                 self.value,
@@ -150,7 +150,7 @@ impl Value {
                 JS_PROP_C_W_E as i32,
             )
         };
-        Value::new(self.context, raw as u64).map(|_| ())
+        Ok(())
     }
 
     pub fn get_indexed_property(&self, index: u32) -> Result<Self> {
