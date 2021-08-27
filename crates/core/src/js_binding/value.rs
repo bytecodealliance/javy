@@ -40,7 +40,7 @@ impl Value {
             value: raw_value,
         };
 
-        if value.is_exception_value() {
+        if value.is_exception() {
             let exception = value.as_exception()?;
             Err(anyhow!("Uncaught {}", exception))
         } else {
@@ -172,7 +172,7 @@ impl Value {
         Ok(())
     }
 
-    pub fn is_exception_value(&self) -> bool {
+    pub fn is_exception(&self) -> bool {
         self.get_tag() == JS_TAG_EXCEPTION
     }
 
