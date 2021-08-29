@@ -125,6 +125,10 @@ impl Value {
         self.value
     }
 
+    pub fn inner_context(&self) -> *mut JSContext {
+        self.context
+    }
+
     pub fn is_repr_as_f64(&self) -> bool {
         unsafe { JS_IsFloat64_Ext(self.get_tag()) == 1 }
     }
