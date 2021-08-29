@@ -357,7 +357,7 @@ mod tests {
     #[test]
     fn test_allows_representing_a_value_as_f64() -> Result<()> {
         let ctx = Context::default();
-        let val = Value::from_f64(ctx.inner(), f64::MIN)?.as_f64();
+        let val = Value::from_f64(ctx.inner(), f64::MIN)?.as_f64()?;
         assert_eq!(val, f64::MIN);
         Ok(())
     }
