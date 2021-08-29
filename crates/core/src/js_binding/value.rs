@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use super::own_properties::OwnProperties;
 use anyhow::{anyhow, Result};
 use quickjs_sys::{
     ext_js_null, ext_js_undefined, size_t as JS_size_t, JSContext, JSValue,
@@ -127,6 +128,10 @@ impl Value {
 
     pub fn inner_context(&self) -> *mut JSContext {
         self.context
+    }
+
+    pub fn own_properties(&self) -> Result<OwnProperties> {
+        OwnProperties::from(self)
     }
 
     pub fn is_repr_as_f64(&self) -> bool {
