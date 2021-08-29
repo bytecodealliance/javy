@@ -49,12 +49,12 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::register_globals;
     use super::super::context::Context;
+    use super::register_globals;
+    use anyhow::Result;
     use std::cell::RefCell;
     use std::io;
     use std::rc::Rc;
-    use anyhow::Result;
 
     #[derive(Default, Clone)]
     struct SharedStream(Rc<RefCell<Vec<u8>>>);
