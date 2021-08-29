@@ -92,10 +92,15 @@ impl Value {
         Self::new(context, unsafe { ext_js_undefined })
     }
 
-    pub fn as_f64(&self) -> f64 {
-        let mut ret = 0_f64;
-        unsafe { JS_ToFloat64(self.context, &mut ret, self.value) };
-        ret
+    pub fn as_f64(&self) -> Result<f64> {
+        if self.is_repr_as_f64() || self.is_repr_as_i32() {
+            let mut ret = 0_f64;
+            unsafe { JS_ToFloat64(self.context, &mut ret, self.value) };
+            Ok(ret)
+        } else {
+            Err(anyhow!("Can't represent {:?} as f64", self.value))
+        }
+    }
     }
 
     pub fn as_str(&self) -> Result<&str> {
