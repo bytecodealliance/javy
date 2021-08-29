@@ -101,6 +101,13 @@ impl Value {
             Err(anyhow!("Can't represent {:?} as f64", self.value))
         }
     }
+
+    pub fn as_bool(&self) -> Result<bool> {
+        if self.is_bool() {
+            Ok(self.value as i32 > 0)
+        } else {
+            Err(anyhow!("Can't represent {:?} as bool", self.value))
+        }
     }
 
     pub fn as_str(&self) -> Result<&str> {
