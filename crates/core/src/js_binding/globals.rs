@@ -1,17 +1,19 @@
+use anyhow::Result;
 use quickjs_sys::*;
 use std::{io::Write, os::raw::c_int};
 
-use super::context::Context;
+use super::{context::Context, value::Value};
 
-pub fn register_globals<T>(ctx: &mut Context, log_stream: T)
+pub fn register_globals<T>(ctx: &mut Context, log_stream: T) -> Result<()>
 where
     T: Write,
 {
-    let console_log_callback = unsafe { ctx.new_callback(console_log_to(log_stream)) };
-    let global_object = ctx.global();
-    let console_object = ctx.new_object();
-    ctx.set_property(console_object, "log", console_log_callback);
-    ctx.set_property(global_object, "console", console_object);
+    let console_log_callback = unsafe { ctx.new_callback(console_log_to(log_stream))? };
+    let global_object = ctx.global_object()?;
+    let console_object = Value::object(ctx.inner())?;
+    console_object.set_property("log", &console_log_callback)?;
+    global_object.set_property("console", &console_object)?;
+    Ok(())
 }
 
 fn console_log_to<T>(
@@ -47,8 +49,9 @@ where
 
 #[cfg(test)]
 mod tests {
+    use super::super::context::Context;
     use super::register_globals;
-    use crate::context::Context;
+    use anyhow::Result;
     use std::cell::RefCell;
     use std::io;
     use std::rc::Rc;
@@ -73,18 +76,19 @@ mod tests {
     }
 
     #[test]
-    fn test_console_log() {
+    fn test_console_log() -> Result<()> {
         let mut stream = SharedStream::default();
 
         let mut ctx = Context::default();
-        register_globals(&mut ctx, stream.clone());
+        register_globals(&mut ctx, stream.clone())?;
 
-        ctx.eval(b"console.log(\"hello world\");", "main");
+        ctx.eval_global("main", "console.log(\"hello world\");")?;
         assert_eq!(b"hello world\n", stream.0.borrow().as_slice());
 
         stream.clear();
 
-        ctx.eval(b"console.log(\"bonjour\", \"le\", \"monde\")", "main");
+        ctx.eval_global("main", "console.log(\"bonjour\", \"le\", \"monde\")")?;
         assert_eq!(b"bonjour le monde\n", stream.0.borrow().as_slice());
+        Ok(())
     }
 }

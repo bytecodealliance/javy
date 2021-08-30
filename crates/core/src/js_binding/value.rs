@@ -1,12 +1,12 @@
-#![allow(dead_code)]
+use super::own_properties::OwnProperties;
 use anyhow::{anyhow, Result};
 use quickjs_sys::{
-    size_t as JS_size_t, JSContext, JSValue, JS_DefinePropertyValueStr,
-    JS_DefinePropertyValueUint32, JS_GetException, JS_GetPropertyStr, JS_GetPropertyUint32,
-    JS_IsArray, JS_IsError, JS_IsFloat64_Ext, JS_NewArray, JS_NewBool_Ext, JS_NewFloat64_Ext,
-    JS_NewInt32_Ext, JS_NewObject, JS_NewStringLen, JS_NewUint32_Ext, JS_ToCStringLen2,
-    JS_ToFloat64, JS_PROP_C_W_E, JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_OBJECT,
-    JS_TAG_STRING, JS_TAG_UNDEFINED,
+    ext_js_null, ext_js_undefined, size_t as JS_size_t, JSContext, JSValue,
+    JS_DefinePropertyValueStr, JS_DefinePropertyValueUint32, JS_GetException, JS_GetPropertyStr,
+    JS_GetPropertyUint32, JS_IsArray, JS_IsError, JS_IsFloat64_Ext, JS_NewArray, JS_NewBool_Ext,
+    JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewObject, JS_NewStringLen, JS_NewUint32_Ext,
+    JS_ToCStringLen2, JS_ToFloat64, JS_PROP_C_W_E, JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT,
+    JS_TAG_NULL, JS_TAG_OBJECT, JS_TAG_STRING, JS_TAG_UNDEFINED,
 };
 use std::fmt;
 use std::{ffi::CString, os::raw::c_char};
@@ -84,10 +84,30 @@ impl Value {
         Self::new(context, raw)
     }
 
-    pub fn as_f64(&self) -> f64 {
-        let mut ret = 0_f64;
-        unsafe { JS_ToFloat64(self.context, &mut ret, self.value) };
-        ret
+    pub fn null(context: *mut JSContext) -> Result<Self> {
+        Self::new(context, unsafe { ext_js_null })
+    }
+
+    pub fn undefined(context: *mut JSContext) -> Result<Self> {
+        Self::new(context, unsafe { ext_js_undefined })
+    }
+
+    pub fn as_f64(&self) -> Result<f64> {
+        if self.is_repr_as_f64() || self.is_repr_as_i32() {
+            let mut ret = 0_f64;
+            unsafe { JS_ToFloat64(self.context, &mut ret, self.value) };
+            Ok(ret)
+        } else {
+            Err(anyhow!("Can't represent {:?} as f64", self.value))
+        }
+    }
+
+    pub fn as_bool(&self) -> Result<bool> {
+        if self.is_bool() {
+            Ok(self.value as i32 > 0)
+        } else {
+            Err(anyhow!("Can't represent {:?} as bool", self.value))
+        }
     }
 
     pub fn as_str(&self) -> Result<&str> {
@@ -103,6 +123,14 @@ impl Value {
 
     pub fn inner(&self) -> JSValue {
         self.value
+    }
+
+    pub fn inner_context(&self) -> *mut JSContext {
+        self.context
+    }
+
+    pub fn own_properties(&self) -> Result<OwnProperties> {
+        OwnProperties::from(self)
     }
 
     pub fn is_repr_as_f64(&self) -> bool {
@@ -131,6 +159,10 @@ impl Value {
 
     pub fn is_undefined(&self) -> bool {
         self.get_tag() == JS_TAG_UNDEFINED
+    }
+
+    pub fn is_null(&self) -> bool {
+        self.get_tag() == JS_TAG_NULL
     }
 
     pub fn get_property(&self, key: impl Into<Vec<u8>>) -> Result<Self> {
@@ -180,7 +212,7 @@ impl Value {
         (self.value >> 32) as i32
     }
 
-    /// All methods in quickjs returns an exception value, not an object.
+    /// All methods in quickjs return an exception value, not an object.
     /// To actually retrieve the exception, we need to retrieve the exception object from the global state.
     fn as_exception(&self) -> Result<Exception> {
         let exception_value = unsafe { JS_GetException(self.context) };
@@ -234,7 +266,7 @@ mod tests {
     }
 
     #[test]
-    fn test_value_objects_allow_setting_a_indexed_property() -> Result<()> {
+    fn test_value_objects_allow_setting_an_indexed_property() -> Result<()> {
         let ctx = Context::default();
         let seq = Value::array(ctx.inner())?;
         seq.append_property(&Value::from_str(ctx.inner(), "value")?)?;
@@ -329,7 +361,7 @@ mod tests {
     #[test]
     fn test_allows_representing_a_value_as_f64() -> Result<()> {
         let ctx = Context::default();
-        let val = Value::from_f64(ctx.inner(), f64::MIN)?.as_f64();
+        let val = Value::from_f64(ctx.inner(), f64::MIN)?.as_f64()?;
         assert_eq!(val, f64::MIN);
         Ok(())
     }
