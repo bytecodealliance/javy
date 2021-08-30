@@ -10,8 +10,8 @@ crate-type = ["cdylib"]
 [dependencies]
 anyhow = "1.0"
 quickjs-sys = { path = "../quickjs-sys" }
-serde = { version = "1.0.123", default-features = false }
-serde-transcode = "1.1.0"
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+serde-transcode = "1.1"
 rmp-serde = "^0.15"
 wee_alloc = "0.4.5"
 serde_json = { version = "1", optional = true }
