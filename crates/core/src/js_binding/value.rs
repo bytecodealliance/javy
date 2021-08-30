@@ -216,14 +216,17 @@ mod tests {
     }
 
     #[test]
-    fn test_value_objects_allow_setting_an_indexed_property() -> Result<()> {
+    fn test_value_objects_allow_setting_an_indexed_property() {
         let ctx = Context::default();
-        let seq = ctx.array_value()?;
-        seq.append_property(&ctx.value_from_str("value")?)?;
-        let val = seq.get_indexed_property(0);
-        assert!(val.is_ok());
-        assert!(val.unwrap().is_str());
-        Ok(())
+        let seq = ctx.array_value().unwrap();
+        seq.append_property(&ctx.value_from_str("hello").unwrap()).unwrap();
+        seq.append_property(&ctx.value_from_str("world").unwrap()).unwrap();
+
+        let val = seq.get_indexed_property(0).unwrap();
+        assert_eq!("hello", val.as_str().unwrap());
+
+        let val = seq.get_indexed_property(1).unwrap();
+        assert_eq!("world", val.as_str().unwrap());
     }
 
     #[test]

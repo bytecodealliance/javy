@@ -2,6 +2,7 @@ use crate::js_binding::{properties::Properties, value::Value};
 use crate::serialize::err::{Error, Result};
 use anyhow::anyhow;
 use serde::de;
+use serde::forward_to_deserialize_any;
 
 impl de::Error for Error {
     fn custom<T: std::fmt::Display>(msg: T) -> Self {
@@ -11,65 +12,15 @@ impl de::Error for Error {
 
 pub struct Deserializer {
     value: Value,
-    properties: Option<Properties>,
-    length: isize,
-    offset: isize,
 }
 
 impl Deserializer {
     pub fn from_value(value: Value) -> Result<Self> {
-        Ok(Self {
-            value,
-            properties: None,
-            length: 0,
-            offset: 0,
-        })
+        Ok(Self { value })
     }
 
-    pub fn derive_properties(&mut self) -> Result<()> {
-        self.properties = Some(self.value.properties()?);
-        Ok(())
-    }
-
-    pub fn derive_seq_metadata(&mut self) -> Result<()> {
-        let val = self.value.get_property("length")?;
-        self.length = val.inner() as isize;
-        self.offset = 0_isize;
-        Ok(())
-    }
-
-    pub fn seed_next_element(&mut self) -> Result<bool> {
-        if self.offset >= self.length {
-            self.offset = 0;
-            self.length = 0;
-            Ok(false)
-        } else {
-            self.value = self.value.get_indexed_property(self.offset as u32)?;
-            Ok(true)
-        }
-    }
-
-    pub fn seed_next_key(&mut self) -> Result<bool> {
-        if let Some(props) = &mut self.properties {
-            if let Some(k) = props.next_key()? {
-                self.value = k;
-                return Ok(true);
-            } else {
-                self.properties = None;
-                return Ok(false);
-            }
-        }
-
-        Ok(false)
-    }
-
-    pub fn seed_next_value(&mut self) -> Result<bool> {
-        if let Some(props) = &self.properties {
-            self.value = props.next_value()?;
-            Ok(true)
-        } else {
-            Ok(false)
-        }
+    fn is_null_or_undefined(&self) -> bool {
+        self.value.is_null() | self.value.is_undefined()
     }
 }
 
@@ -81,31 +32,48 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
         V: de::Visitor<'de>,
     {
         if self.value.is_repr_as_i32() {
-            return self.deserialize_i32(visitor);
+            return visitor.visit_i32(self.value.inner() as i32);
         }
 
         if self.value.is_repr_as_f64() {
-            return self.deserialize_f64(visitor);
+            let val = self.value.as_f64()?;
+            return visitor.visit_f64(val);
         }
 
         if self.value.is_bool() {
-            return self.deserialize_bool(visitor);
+            let val = self.value.as_bool()?;
+            return visitor.visit_bool(val);
         }
 
-        if self.value.is_null() || self.value.is_undefined() {
-            return self.deserialize_unit(visitor);
+        if self.is_null_or_undefined() {
+            return visitor.visit_unit();
         }
 
         if self.value.is_str() {
-            return self.deserialize_str(visitor);
+            let val = self.value.as_str()?;
+            return visitor.visit_str(&val);
         }
 
         if self.value.is_array() {
-            return self.deserialize_seq(visitor);
+            let val = self.value.get_property("length")?;
+            let length = val.inner() as u32;
+            let seq = self.value.clone();
+            let seq_access = SeqAccess {
+                de: self,
+                length,
+                seq,
+                i: 0,
+            };
+            return visitor.visit_seq(seq_access);
         }
 
         if self.value.is_object() {
-            return self.deserialize_map(visitor);
+            let properties = self.value.properties()?;
+            let map_access = MapAccess {
+                de: self,
+                properties,
+            };
+            return visitor.visit_map(map_access);
         }
 
         Err(Error::Custom(anyhow!(
@@ -114,146 +82,19 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
         )))
     }
 
-    fn deserialize_i8<V>(self, _visitor: V) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        unimplemented!()
+    fn is_human_readable(&self) -> bool {
+        false
     }
 
-    fn deserialize_i16<V>(self, _visitor: V) -> Result<V::Value>
+    fn deserialize_option<V>(self, visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
     {
-        unimplemented!()
-    }
-
-    fn deserialize_i32<V>(self, visitor: V) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        visitor.visit_i32(self.value.inner() as i32)
-    }
-
-    fn deserialize_i64<V>(self, _visitor: V) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        unimplemented!()
-    }
-
-    fn deserialize_u8<V>(self, _visitor: V) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        unimplemented!()
-    }
-
-    fn deserialize_u16<V>(self, _visitor: V) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        unimplemented!()
-    }
-
-    fn deserialize_u32<V>(self, _visitor: V) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        unimplemented!()
-    }
-
-    fn deserialize_u64<V>(self, _visitor: V) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        unimplemented!()
-    }
-
-    fn deserialize_f32<V>(self, _visitor: V) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        unimplemented!()
-    }
-
-    fn deserialize_f64<V>(self, visitor: V) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        let val = self.value.as_f64()?;
-        visitor.visit_f64(val)
-    }
-
-    fn deserialize_bool<V>(self, visitor: V) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        visitor.visit_bool(self.value.as_bool()?)
-    }
-
-    fn deserialize_char<V>(self, _visitor: V) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        unimplemented!()
-    }
-
-    fn deserialize_string<V>(self, visitor: V) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        self.deserialize_str(visitor)
-    }
-
-    fn deserialize_str<V>(self, visitor: V) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        let string = self.value.as_str()?;
-        visitor.visit_str(&string)
-    }
-
-    fn deserialize_bytes<V>(self, _visitor: V) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        unimplemented!()
-    }
-
-    fn deserialize_byte_buf<V>(self, _visitor: V) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        unimplemented!()
-    }
-
-    fn deserialize_tuple<V>(self, _len: usize, _visitor: V) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        unimplemented!()
-    }
-
-    fn deserialize_option<V>(self, _visitor: V) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        unimplemented!()
-    }
-
-    fn deserialize_unit<V>(self, visitor: V) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        visitor.visit_unit()
-    }
-
-    fn deserialize_unit_struct<V>(self, _name: &'static str, visitor: V) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        self.deserialize_unit(visitor)
+        if self.is_null_or_undefined() {
+            visitor.visit_none()
+        } else {
+            visitor.visit_some(self)
+        }
     }
 
     fn deserialize_newtype_struct<V>(self, _name: &'static str, visitor: V) -> Result<V::Value>
@@ -261,46 +102,6 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
         V: de::Visitor<'de>,
     {
         visitor.visit_newtype_struct(self)
-    }
-
-    fn deserialize_seq<V>(self, visitor: V) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        self.derive_seq_metadata()?;
-        visitor.visit_seq(&mut *self)
-    }
-
-    fn deserialize_tuple_struct<V>(
-        self,
-        _name: &'static str,
-        _len: usize,
-        visitor: V,
-    ) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        self.deserialize_seq(visitor)
-    }
-
-    fn deserialize_map<V>(self, visitor: V) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        self.derive_properties()?;
-        visitor.visit_map(&mut *self)
-    }
-
-    fn deserialize_struct<V>(
-        self,
-        _name: &'static str,
-        _fields: &'static [&'static str],
-        visitor: V,
-    ) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        self.deserialize_map(visitor)
     }
 
     fn deserialize_enum<V>(
@@ -315,30 +116,28 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
         unimplemented!()
     }
 
-    fn deserialize_identifier<V>(self, visitor: V) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        self.deserialize_str(visitor)
-    }
-
-    fn deserialize_ignored_any<V>(self, visitor: V) -> Result<V::Value>
-    where
-        V: de::Visitor<'de>,
-    {
-        self.deserialize_any(visitor)
+    forward_to_deserialize_any! {
+        bool i8 i16 i32 i64 i128 u8 u16 u32 u64 u128 f32 f64 char str string
+        bytes byte_buf unit unit_struct seq tuple
+        tuple_struct map struct identifier ignored_any
     }
 }
 
-impl<'de> de::MapAccess<'de> for Deserializer {
+struct MapAccess<'a> {
+    de: &'a mut Deserializer,
+    properties: Properties,
+}
+
+impl<'a, 'de> de::MapAccess<'de> for MapAccess<'a> {
     type Error = Error;
 
     fn next_key_seed<K>(&mut self, seed: K) -> Result<Option<K::Value>>
     where
         K: de::DeserializeSeed<'de>,
     {
-        if self.seed_next_key()? {
-            seed.deserialize(&mut *self).map(Some)
+        if let Some(key) = self.properties.next_key()? {
+            self.de.value = key;
+            seed.deserialize(&mut *self.de).map(Some)
         } else {
             Ok(None)
         }
@@ -348,20 +147,29 @@ impl<'de> de::MapAccess<'de> for Deserializer {
     where
         V: de::DeserializeSeed<'de>,
     {
-        self.seed_next_value()?;
-        seed.deserialize(&mut *self)
+        self.de.value = self.properties.next_value()?;
+        seed.deserialize(&mut *self.de)
     }
 }
 
-impl<'de> de::SeqAccess<'de> for Deserializer {
+struct SeqAccess<'a> {
+    de: &'a mut Deserializer,
+    seq: Value,
+    length: u32,
+    i: u32,
+}
+
+impl<'a, 'de> de::SeqAccess<'de> for SeqAccess<'a> {
     type Error = Error;
 
     fn next_element_seed<T>(&mut self, seed: T) -> Result<Option<T::Value>>
     where
         T: de::DeserializeSeed<'de>,
     {
-        if self.seed_next_element()? {
-            seed.deserialize(&mut *self).map(Some)
+        if self.i < self.length {
+            self.de.value = self.seq.get_indexed_property(self.i as u32)?;
+            self.i += 1;
+            seed.deserialize(&mut *self.de).map(Some)
         } else {
             Ok(None)
         }

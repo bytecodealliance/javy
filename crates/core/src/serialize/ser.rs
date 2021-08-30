@@ -345,11 +345,13 @@ impl<'a> ser::SerializeStructVariant for &'a mut Serializer<'_> {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::BTreeMap;
+
     use super::Serializer as ValueSerializer;
     use crate::js_binding::context::Context;
     use anyhow::Result;
     use quickcheck::quickcheck;
-    use serde::Serializer;
+    use serde::{Serialize, Serializer};
 
     quickcheck! {
         fn test_i16(v: i16) -> Result<bool> {
@@ -477,7 +479,7 @@ mod tests {
     #[test]
     fn test_map() {
         let context = Context::default();
-        let mut serializer = ValueSerializer::from_context(context);
+        let mut serializer = ValueSerializer::from_context(&context).unwrap();
 
         let mut map = BTreeMap::new();
         map.insert("foo", "bar");
@@ -485,13 +487,13 @@ mod tests {
 
         map.serialize(&mut serializer).unwrap();
 
-        assert!(context.is_object(serializer.value))
+        assert!(serializer.value.is_object())
     }
 
     #[test]
     fn test_struct_into_map() {
         let context = Context::default();
-        let mut serializer = ValueSerializer::from_context(context);
+        let mut serializer = ValueSerializer::from_context(&context).unwrap();
 
         #[derive(serde::Serialize)]
         struct MyObject {
@@ -505,13 +507,13 @@ mod tests {
         };
         my_object.serialize(&mut serializer).unwrap();
 
-        assert!(context.is_object(serializer.value));
+        assert!(serializer.value.is_object());
     }
 
     #[test]
     fn test_sequence() {
         let context = Context::default();
-        let mut serializer = ValueSerializer::from_context(context);
+        let mut serializer = ValueSerializer::from_context(&context).unwrap();
 
         let mut sequence = Vec::new();
         sequence.push("hello");
@@ -519,6 +521,6 @@ mod tests {
 
         sequence.serialize(&mut serializer).unwrap();
 
-        assert!(context.is_array(serializer.value));
+        assert!(serializer.value.is_array());
     }
 }

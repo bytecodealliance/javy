@@ -9,18 +9,14 @@ mod tests {
     use crate::js_binding::context::Context;
     use anyhow::Result;
     use quickcheck::quickcheck;
-    use serde::{Deserialize, Serializer};
+    use serde::de::DeserializeOwned;
+    use serde::{Deserialize, Serialize};
+    use std::collections::BTreeMap;
 
     quickcheck! {
-        fn test_str_roundtrip(v: String) -> Result<bool> {
-            let context = Context::default();
-            let mut serializer = ValueSerializer::from_context(&context)?;
-            serializer.serialize_str(v.as_str()).unwrap();
-
-            let mut deserializer = ValueDeserializer::from_value(serializer.value)?;
-
-            let result = String::deserialize(&mut deserializer).unwrap();
-            Ok(v == result)
+        fn test_str_roundtrip(expected: String) -> Result<bool> {
+            let actual = do_roundtrip::<_, String>(&expected);
+            Ok(expected == actual)
         }
     }
 
@@ -30,11 +26,7 @@ mod tests {
         expected.insert("foo".to_string(), "bar".to_string());
         expected.insert("hello".to_string(), "world".to_string());
 
-        let context = Context::default();
-        let mut serializer = ValueSerializer::from_context(context);
-        expected.serialize(&mut serializer).unwrap();
-        let mut deserializer = ValueDeserializer::from(&context, serializer.value);
-        let actual = BTreeMap::<String, String>::deserialize(&mut deserializer).unwrap();
+        let actual = do_roundtrip::<_, BTreeMap<String, String>>(&expected);
 
         assert_eq!(expected, actual);
     }
@@ -46,13 +38,56 @@ mod tests {
             foo: String,
             bar: u32,
         }
-        let expected = MyObject { foo: "hello".to_string(), bar: 1337 };
+        let expected = MyObject {
+            foo: "hello".to_string(),
+            bar: 1337,
+        };
 
-        let context = Context::default();
-        let mut serializer = ValueSerializer::from_context(context);
-        expected.serialize(&mut serializer).unwrap();
-        let mut deserializer = ValueDeserializer::from(&context, serializer.value);
-        let actual = MyObject::deserialize(&mut deserializer).unwrap();
+        let actual = do_roundtrip::<_, MyObject>(&expected);
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_nested_maps() {
+        let mut expected = BTreeMap::<String, BTreeMap<String, String>>::new();
+        let mut a = BTreeMap::new();
+        a.insert("foo".to_string(), "bar".to_string());
+        a.insert("hello".to_string(), "world".to_string());
+        let mut b = BTreeMap::new();
+        b.insert("toto".to_string(), "titi".to_string());
+        expected.insert("aaa".to_string(), a);
+        expected.insert("bbb".to_string(), b);
+
+        let actual = do_roundtrip::<_, BTreeMap<String, BTreeMap<String, String>>>(&expected);
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_nested_structs_into_maps() {
+        #[derive(Debug, Serialize, Deserialize, PartialEq)]
+        struct MyObjectB {
+            toto: String,
+            titi: i32,
+        }
+
+        #[derive(Debug, Serialize, Deserialize, PartialEq)]
+        struct MyObjectA {
+            foo: String,
+            bar: u32,
+            b: MyObjectB,
+        }
+        let expected = MyObjectA {
+            foo: "hello".to_string(),
+            bar: 1337,
+            b: MyObjectB {
+                toto: "world".to_string(),
+                titi: -42,
+            },
+        };
+
+        let actual = do_roundtrip::<_, MyObjectA>(&expected);
 
         assert_eq!(expected, actual);
     }
@@ -68,16 +103,114 @@ mod tests {
         assert_eq!(expected, actual);
     }
 
-            fn do_roundtrip<E, A>(expected: E) -> A
-        where
-            E: Serialize,
-            A: DeserializeOwned,
-        {
-            let context = Context::default();
-            let mut serializer = ValueSerializer::from_context(context);
-            expected.serialize(&mut serializer).unwrap();
-            let mut deserializer = ValueDeserializer::from(&context, serializer.value);
-            let actual = A::deserialize(&mut deserializer).unwrap();
-            actual
+    #[test]
+    fn test_nested_sequences() {
+        let mut expected = Vec::new();
+        let mut a = Vec::new();
+        a.push("foo".to_string());
+        a.push("bar".to_string());
+        let mut b = Vec::new();
+        b.push("toto".to_string());
+        b.push("tata".to_string());
+        expected.push(a);
+        expected.push(b);
+
+        let actual = do_roundtrip::<_, Vec<Vec<String>>>(&expected);
+
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_sanity() {
+        #[derive(Debug, Serialize, Deserialize, PartialEq)]
+        struct MyObject {
+            a: u8,
+            b: u16,
+            // c: u32,
+            // d: u64,
+            e: i8,
+            f: i16,
+            // g: i32,
+            // h: i64,
+            // i: f32,
+            // j: f64,
+            k: String,
+            l: bool,
+            m: BTreeMap<String, u32>,
+            n: Vec<u32>,
+            o: BTreeMap<String, BTreeMap<String, u32>>,
+            p: Vec<Vec<u32>>,
+            bb: MyObjectB,
         }
+
+        #[derive(Debug, Serialize, Deserialize, PartialEq)]
+        struct MyObjectB {
+            a: u32,
+            cc: MyObjectC,
+        }
+
+        #[derive(Debug, Serialize, Deserialize, PartialEq)]
+        struct MyObjectC {
+            a: Vec<u32>,
+            b: BTreeMap<String, u32>,
+        }
+
+        let mut cc_b = BTreeMap::new();
+        cc_b.insert("a".to_string(), 123);
+        cc_b.insert("b".to_string(), 456);
+        let cc = MyObjectC {
+            a: vec![1337, 42],
+            b: cc_b,
+        };
+
+        let bb = MyObjectB { a: 789, cc: cc };
+
+        let mut m = BTreeMap::new();
+        m.insert("a".to_string(), 123);
+        m.insert("b".to_string(), 456);
+        m.insert("c".to_string(), 789);
+
+        let mut oo = BTreeMap::new();
+        oo.insert("e".to_string(), 123);
+
+        let mut o = BTreeMap::new();
+        o.insert("d".to_string(), oo);
+
+        let expected = MyObject {
+            a: u8::MAX,
+            b: u16::MAX,
+            // c: u32::MAX,
+            // d: u64::MAX,
+            e: i8::MAX,
+            f: i16::MAX,
+            // g: i32::MAX,
+            // h: i64::MAX,
+            // i: f32::MAX,
+            // j: f64::MAX,
+            k: "hello world".to_string(),
+            l: true,
+            m: m,
+            n: vec![1, 2, 3, 4, 5],
+            o: o,
+            p: vec![vec![1, 2], vec![3, 4, 5]],
+            bb,
+        };
+
+        let actual = do_roundtrip::<_, MyObject>(&expected);
+
+        assert_eq!(expected, actual);
+    }
+
+    fn do_roundtrip<E, A>(expected: E) -> A
+    where
+        E: Serialize,
+        A: DeserializeOwned,
+    {
+        let context = Context::default();
+        let mut serializer = ValueSerializer::from_context(&context).unwrap();
+        expected.serialize(&mut serializer).unwrap();
+        let mut deserializer = ValueDeserializer::from_value(serializer.value).unwrap();
+        let actual = A::deserialize(&mut deserializer).unwrap();
+        actual
+    }
 }
