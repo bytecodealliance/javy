@@ -56,4 +56,28 @@ mod tests {
 
         assert_eq!(expected, actual);
     }
+
+    #[test]
+    fn test_sequence() {
+        let mut expected = Vec::new();
+        expected.push("hello".to_string());
+        expected.push("world".to_string());
+
+        let actual = do_roundtrip::<_, Vec<String>>(&expected);
+
+        assert_eq!(expected, actual);
+    }
+
+            fn do_roundtrip<E, A>(expected: E) -> A
+        where
+            E: Serialize,
+            A: DeserializeOwned,
+        {
+            let context = Context::default();
+            let mut serializer = ValueSerializer::from_context(context);
+            expected.serialize(&mut serializer).unwrap();
+            let mut deserializer = ValueDeserializer::from(&context, serializer.value);
+            let actual = A::deserialize(&mut deserializer).unwrap();
+            actual
+        }
 }

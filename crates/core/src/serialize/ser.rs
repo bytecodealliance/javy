@@ -473,4 +473,52 @@ mod tests {
         assert!(serializer.value.is_repr_as_f64());
         Ok(())
     }
+
+    #[test]
+    fn test_map() {
+        let context = Context::default();
+        let mut serializer = ValueSerializer::from_context(context);
+
+        let mut map = BTreeMap::new();
+        map.insert("foo", "bar");
+        map.insert("toto", "titi");
+
+        map.serialize(&mut serializer).unwrap();
+
+        assert!(context.is_object(serializer.value))
+    }
+
+    #[test]
+    fn test_struct_into_map() {
+        let context = Context::default();
+        let mut serializer = ValueSerializer::from_context(context);
+
+        #[derive(serde::Serialize)]
+        struct MyObject {
+            foo: String,
+            bar: u32,
+        }
+
+        let my_object = MyObject {
+            foo: "hello".to_string(),
+            bar: 1337,
+        };
+        my_object.serialize(&mut serializer).unwrap();
+
+        assert!(context.is_object(serializer.value));
+    }
+
+    #[test]
+    fn test_sequence() {
+        let context = Context::default();
+        let mut serializer = ValueSerializer::from_context(context);
+
+        let mut sequence = Vec::new();
+        sequence.push("hello");
+        sequence.push("world");
+
+        sequence.serialize(&mut serializer).unwrap();
+
+        assert!(context.is_array(serializer.value));
+    }
 }
