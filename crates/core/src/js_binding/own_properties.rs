@@ -31,7 +31,7 @@ impl OwnProperties {
         };
 
         // TODO: Exception handling for non-nan-boxed values
-        if result != 1 {
+        if result == -1 {
             Err(anyhow!(
                 "Couldn't retrieve own properties from: {:?}",
                 value
@@ -69,5 +69,63 @@ impl OwnProperties {
     fn atom_to_string(&self, atom: JSAtom) -> Result<Value> {
         let raw = unsafe { JS_AtomToString(self.context, atom) };
         Value::new(self.context, raw)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{super::context::Context, super::value::Value, OwnProperties};
+    use anyhow::Result;
+
+    #[test]
+    fn test_keys() -> Result<()> {
+        let contents = "globalThis.o = {a: 1, b: 2, c: [1, 2, 3]};";
+        let context = Context::default();
+        context.eval_global("script", &contents)?;
+        let global = context.global_object()?;
+        let o = global.get_property("o")?;
+
+        let mut props = OwnProperties::from(&o)?;
+        let a = props.next_key()?.unwrap();
+        let b = props.next_key()?.unwrap();
+        let c = props.next_key()?.unwrap();
+        let d = props.next_key()?;
+
+        assert!(a.is_str());
+        assert!(b.is_str());
+        assert!(c.is_str());
+        assert!(d.is_none());
+        Ok(())
+    }
+
+    #[test]
+    fn test_values() -> Result<()> {
+        let contents = "globalThis.o = {a: 1, b: 2, c: [1, 2, 3]};";
+        let context = Context::default();
+        context.eval_global("script", &contents)?;
+        let global = context.global_object()?;
+        let o = global.get_property("o")?;
+
+        let mut props = OwnProperties::from(&o)?;
+        props.next_key()?;
+        let a = props.next_value()?;
+        props.next_key()?;
+        let b = props.next_value()?;
+        props.next_key()?;
+        let c = props.next_value()?;
+
+        assert!(a.is_repr_as_i32());
+        assert!(b.is_repr_as_i32());
+        assert!(c.is_array());
+        Ok(())
+    }
+
+    #[test]
+    fn test_invalid_access_to_own_props() -> Result<()> {
+        let context = Context::default();
+        let val = Value::from_i32(context.inner(), 1_i32)?;
+        let mut props = OwnProperties::from(&val);
+        assert!(props.is_err());
+        Ok(())
     }
 }
