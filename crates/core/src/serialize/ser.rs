@@ -75,7 +75,7 @@ impl<'a> ser::Serializer for &'a mut Serializer<'_> {
     }
 
     fn serialize_f64(self, v: f64) -> Result<()> {
-        self.value = Value::from_f64(self.context.inner(), f64::from(v))?;
+        self.value = Value::from_f64(self.context.inner(), v)?;
         Ok(())
     }
 

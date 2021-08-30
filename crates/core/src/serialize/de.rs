@@ -34,7 +34,7 @@ impl Deserializer {
     pub fn derive_seq_metadata(&mut self) -> Result<()> {
         let val = self.value.get_property("length")?;
         self.length = val.inner() as isize;
-        self.offset = 0 as isize;
+        self.offset = 0_isize;
         Ok(())
     }
 
