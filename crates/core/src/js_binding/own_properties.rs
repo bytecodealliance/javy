@@ -124,7 +124,7 @@ mod tests {
     fn test_invalid_access_to_own_props() -> Result<()> {
         let context = Context::default();
         let val = Value::from_i32(context.inner(), 1_i32)?;
-        let mut props = OwnProperties::from(&val);
+        let props = OwnProperties::from(&val);
         assert!(props.is_err());
         Ok(())
     }

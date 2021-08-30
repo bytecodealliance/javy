@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 use super::own_properties::OwnProperties;
 use anyhow::{anyhow, Result};
 use quickjs_sys::{
