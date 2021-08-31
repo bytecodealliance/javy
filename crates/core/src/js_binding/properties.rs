@@ -6,7 +6,7 @@ use quickjs_sys::{
 };
 use std::ptr;
 
-pub struct OwnProperties {
+pub struct Properties {
     value: JSValue,
     context: *mut JSContext,
     property_enum: *mut JSPropertyEnum,
@@ -15,19 +15,13 @@ pub struct OwnProperties {
     offset: isize,
 }
 
-impl OwnProperties {
-    pub fn from(value: &Value) -> Result<Self> {
+impl Properties {
+    pub fn new(context: *mut JSContext, value: JSValue) -> Result<Self> {
         let flags = (JS_GPN_STRING_MASK | JS_GPN_SYMBOL_MASK | JS_GPN_ENUM_ONLY) as i32;
         let mut property_enum: *mut JSPropertyEnum = ptr::null_mut();
         let mut length = 0;
         let result = unsafe {
-            JS_GetOwnPropertyNames(
-                value.inner_context(),
-                &mut property_enum,
-                &mut length,
-                value.inner(),
-                flags,
-            )
+            JS_GetOwnPropertyNames(context, &mut property_enum, &mut length, value, flags)
         };
 
         // TODO: Exception handling for non-nan-boxed values
@@ -38,8 +32,8 @@ impl OwnProperties {
             ))
         } else {
             Ok(Self {
-                value: value.inner(),
-                context: value.inner_context(),
+                value,
+                context,
                 property_enum,
                 length: length as isize,
                 offset: 0,
@@ -74,7 +68,7 @@ impl OwnProperties {
 
 #[cfg(test)]
 mod tests {
-    use super::{super::context::Context, OwnProperties};
+    use super::super::context::Context;
     use anyhow::Result;
 
     #[test]
@@ -85,7 +79,7 @@ mod tests {
         let global = context.global_object()?;
         let o = global.get_property("o")?;
 
-        let mut props = OwnProperties::from(&o)?;
+        let mut props = o.properties()?;
         let a = props.next_key()?.unwrap();
         let b = props.next_key()?.unwrap();
         let c = props.next_key()?.unwrap();
@@ -106,7 +100,7 @@ mod tests {
         let global = context.global_object()?;
         let o = global.get_property("o")?;
 
-        let mut props = OwnProperties::from(&o)?;
+        let mut props = o.properties()?;
         props.next_key()?;
         let a = props.next_value()?;
         props.next_key()?;
@@ -124,7 +118,7 @@ mod tests {
     fn test_invalid_access_to_own_props() -> Result<()> {
         let context = Context::default();
         let val = context.value_from_i32(1_i32)?;
-        let props = OwnProperties::from(&val);
+        let props = val.properties();
         assert!(props.is_err());
         Ok(())
     }
