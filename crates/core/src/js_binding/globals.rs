@@ -11,8 +11,8 @@ where
     let console_log_callback = unsafe { ctx.new_callback(console_log_to(log_stream))? };
     let global_object = ctx.global_object()?;
     let console_object = ctx.object_value()?;
-    console_object.set_property("log", &console_log_callback)?;
-    global_object.set_property("console", &console_object)?;
+    console_object.set_property("log", console_log_callback)?;
+    global_object.set_property("console", console_object)?;
     Ok(())
 }
 

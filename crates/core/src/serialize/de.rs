@@ -14,9 +14,9 @@ pub struct Deserializer {
     value: Value,
 }
 
-impl Deserializer {
-    pub fn from_value(value: Value) -> Result<Self> {
-        Ok(Self { value })
+impl From<Value> for Deserializer {
+    fn from(value: Value) -> Self {
+        Self { value }
     }
 }
 
@@ -183,7 +183,7 @@ mod tests {
     where
         T: DeserializeOwned,
     {
-        let mut deserializer = ValueDeserializer::from_value(v).unwrap();
+        let mut deserializer = ValueDeserializer::from(v);
         T::deserialize(&mut deserializer).unwrap()
     }
 

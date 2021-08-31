@@ -126,7 +126,7 @@ impl Value {
         Self::new(self.context, raw)
     }
 
-    pub fn set_property(&self, key: impl Into<Vec<u8>>, val: &Value) -> Result<()> {
+    pub fn set_property(&self, key: impl Into<Vec<u8>>, val: Value) -> Result<()> {
         let cstring_key = CString::new(key)?;
         let _raw = unsafe {
             JS_DefinePropertyValueStr(
@@ -145,7 +145,7 @@ impl Value {
         Self::new(self.context, raw)
     }
 
-    pub fn append_property(&self, val: &Value) -> Result<()> {
+    pub fn append_property(&self, val: Value) -> Result<()> {
         let len = self.get_property("length")?;
         unsafe {
             JS_DefinePropertyValueUint32(
@@ -212,7 +212,7 @@ mod tests {
     fn test_value_objects_allow_setting_a_str_property() -> Result<()> {
         let ctx = Context::default();
         let obj = ctx.object_value()?;
-        obj.set_property("foo", &ctx.value_from_i32(1_i32)?)?;
+        obj.set_property("foo", ctx.value_from_i32(1_i32)?)?;
         let val = obj.get_property("foo");
         assert!(val.is_ok());
         assert!(val.unwrap().is_repr_as_i32());
@@ -223,9 +223,9 @@ mod tests {
     fn test_value_objects_allow_setting_an_indexed_property() {
         let ctx = Context::default();
         let seq = ctx.array_value().unwrap();
-        seq.append_property(&ctx.value_from_str("hello").unwrap())
+        seq.append_property(ctx.value_from_str("hello").unwrap())
             .unwrap();
-        seq.append_property(&ctx.value_from_str("world").unwrap())
+        seq.append_property(ctx.value_from_str("world").unwrap())
             .unwrap();
 
         let val = seq.get_indexed_property(0).unwrap();
