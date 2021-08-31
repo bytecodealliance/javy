@@ -7,8 +7,9 @@ mod serialize;
 use js_binding::{context::Context, globals::register_globals, value::Value};
 
 use once_cell::sync::OnceCell;
-use std::env;
 use std::io;
+use std::path::PathBuf;
+use std::{env, fs};
 
 #[cfg(not(test))]
 #[global_allocator]
@@ -31,7 +32,9 @@ pub extern "C" fn init() {
         let mut context = Context::default();
         register_globals(&mut context, io::stdout()).unwrap();
 
-        let _ = context.eval_global(&script_name, &input).unwrap();
+        let contents = fs::read_to_string::<PathBuf>(input.into()).unwrap();
+
+        let _ = context.eval_global(&script_name, &contents).unwrap();
         let global = context.global_object().unwrap();
         let shopify = global.get_property("Shopify").unwrap();
         let main = shopify.get_property("main").unwrap();
