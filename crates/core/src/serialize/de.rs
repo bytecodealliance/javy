@@ -1,4 +1,4 @@
-use crate::js_binding::{own_properties::OwnProperties, value::Value};
+use crate::js_binding::{properties::Properties, value::Value};
 use crate::serialize::err::{Error, Result};
 use anyhow::anyhow;
 use serde::de;
@@ -11,7 +11,7 @@ impl de::Error for Error {
 
 pub struct Deserializer {
     value: Value,
-    own_properties: Option<OwnProperties>,
+    properties: Option<Properties>,
     length: isize,
     offset: isize,
 }
@@ -20,14 +20,14 @@ impl Deserializer {
     pub fn from_value(value: Value) -> Result<Self> {
         Ok(Self {
             value,
-            own_properties: None,
+            properties: None,
             length: 0,
             offset: 0,
         })
     }
 
-    pub fn derive_own_properties(&mut self) -> Result<()> {
-        self.own_properties = Some(self.value.own_properties()?);
+    pub fn derive_properties(&mut self) -> Result<()> {
+        self.properties = Some(self.value.properties()?);
         Ok(())
     }
 
@@ -50,12 +50,12 @@ impl Deserializer {
     }
 
     pub fn seed_next_key(&mut self) -> Result<bool> {
-        if let Some(props) = &mut self.own_properties {
+        if let Some(props) = &mut self.properties {
             if let Some(k) = props.next_key()? {
                 self.value = k;
                 return Ok(true);
             } else {
-                self.own_properties = None;
+                self.properties = None;
                 return Ok(false);
             }
         }
@@ -64,7 +64,7 @@ impl Deserializer {
     }
 
     pub fn seed_next_value(&mut self) -> Result<bool> {
-        if let Some(props) = &self.own_properties {
+        if let Some(props) = &self.properties {
             self.value = props.next_value()?;
             Ok(true)
         } else {
@@ -287,7 +287,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
     where
         V: de::Visitor<'de>,
     {
-        self.derive_own_properties()?;
+        self.derive_properties()?;
         visitor.visit_map(&mut *self)
     }
 

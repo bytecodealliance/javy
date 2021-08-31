@@ -1,4 +1,4 @@
-use super::own_properties::OwnProperties;
+use super::properties::Properties;
 use anyhow::{anyhow, Result};
 use quickjs_sys::{
     size_t as JS_size_t, JSContext, JSValue, JS_DefinePropertyValueStr,
@@ -80,12 +80,8 @@ impl Value {
         self.value
     }
 
-    pub fn inner_context(&self) -> *mut JSContext {
-        self.context
-    }
-
-    pub fn own_properties(&self) -> Result<OwnProperties> {
-        OwnProperties::from(self)
+    pub fn properties(&self) -> Result<Properties> {
+        Properties::new(self.context, self.value)
     }
 
     pub fn is_repr_as_f64(&self) -> bool {
