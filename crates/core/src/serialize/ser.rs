@@ -1,7 +1,10 @@
 use crate::js_binding::{context::Context, value::Value};
 use crate::serialize::err::{Error, Result};
 use anyhow::anyhow;
-use serde::{ser, Serialize};
+
+use serde::{ser, ser::Error as SerError, Serialize};
+
+use super::sanitize_key;
 
 pub struct Serializer<'c> {
     pub context: &'c Context,
@@ -9,7 +12,7 @@ pub struct Serializer<'c> {
     pub key: Value,
 }
 
-impl ser::Error for Error {
+impl SerError for Error {
     fn custom<T: std::fmt::Display>(msg: T) -> Self {
         Error::Custom(anyhow!(msg.to_string()))
     }
@@ -81,7 +84,6 @@ impl<'a> ser::Serializer for &'a mut Serializer<'_> {
 
     fn serialize_bool(self, b: bool) -> Result<()> {
         self.value = self.context.value_from_bool(b)?;
-
         Ok(())
     }
 
@@ -295,8 +297,8 @@ impl<'a> ser::SerializeMap for &'a mut Serializer<'_> {
     {
         let mut map_serializer = Serializer::from_context(self.context)?;
         value.serialize(&mut map_serializer)?;
-        self.value
-            .set_property(self.key.as_str()?, map_serializer.value)?;
+        let key = sanitize_key(&self.key, convert_case::Case::Camel)?;
+        self.value.set_property(key, map_serializer.value)?;
         Ok(())
     }
 
@@ -474,6 +476,44 @@ mod tests {
 
         assert!(serializer.value.is_repr_as_f64());
         Ok(())
+    }
+
+    #[test]
+    fn test_map_with_invalid_key_type() {
+        // This is technically possible since msgpack supports maps
+        // with any other valid msgpack type. However, we try to enforce
+        // using `K: String` since it allow transcoding from json<->msgpack.
+        let context = Context::default();
+        let mut serializer = ValueSerializer::from_context(&context).unwrap();
+
+        let mut map = BTreeMap::new();
+        map.insert(42, "bar");
+        map.insert(43, "titi");
+
+        let err = map.serialize(&mut serializer).unwrap_err();
+        assert_eq!("map keys must be a string".to_string(), err.to_string());
+    }
+
+    #[test]
+    fn test_map_keys_are_converted_to_camel_case() {
+        let context = Context::default();
+        let mut serializer = ValueSerializer::from_context(&context).unwrap();
+
+        let mut map = BTreeMap::new();
+        map.insert("hello_world", 1);
+        map.insert("toto", 2);
+        map.insert("fooBar", 3);
+        map.insert("Joyeux Noël", 4);
+        map.insert("kebab-case", 5);
+
+        map.serialize(&mut serializer).unwrap();
+
+        let v = serializer.value;
+        assert_eq!(1, v.get_property("helloWorld").unwrap().as_i32());
+        assert_eq!(2, v.get_property("toto").unwrap().as_i32());
+        assert_eq!(3, v.get_property("fooBar").unwrap().as_i32());
+        assert_eq!(4, v.get_property("joyeuxNoël").unwrap().as_i32());
+        assert_eq!(5, v.get_property("kebabCase").unwrap().as_i32());
     }
 
     #[test]

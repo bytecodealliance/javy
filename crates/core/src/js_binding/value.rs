@@ -57,6 +57,10 @@ impl Value {
         }
     }
 
+    pub fn as_i32(&self) -> i32 {
+        self.value as i32
+    }
+
     pub fn as_bool(&self) -> Result<bool> {
         if self.is_bool() {
             Ok(self.value as i32 > 0)

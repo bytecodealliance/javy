@@ -2,6 +2,19 @@ pub mod de;
 pub mod err;
 pub mod ser;
 
+use super::js_binding::value::Value;
+use convert_case::{Case, Casing};
+
+fn sanitize_key(v: &Value, case: Case) -> anyhow::Result<String> {
+    if v.is_str() {
+        let v = v.as_str()?;
+        let v = v.to_case(case);
+        Ok(v)
+    } else {
+        anyhow::bail!("map keys must be a string")
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::de::Deserializer as ValueDeserializer;
