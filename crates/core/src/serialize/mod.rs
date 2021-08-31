@@ -219,7 +219,7 @@ mod tests {
         let context = Context::default();
         let mut serializer = ValueSerializer::from_context(&context).unwrap();
         expected.serialize(&mut serializer).unwrap();
-        let mut deserializer = ValueDeserializer::from_value(serializer.value).unwrap();
+        let mut deserializer = ValueDeserializer::from(serializer.value);
         let actual = A::deserialize(&mut deserializer).unwrap();
         actual
     }
