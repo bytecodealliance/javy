@@ -1,15 +1,14 @@
 use super::own_properties::OwnProperties;
 use anyhow::{anyhow, Result};
 use quickjs_sys::{
-    ext_js_null, ext_js_undefined, size_t as JS_size_t, JSContext, JSValue,
-    JS_DefinePropertyValueStr, JS_DefinePropertyValueUint32, JS_GetException, JS_GetPropertyStr,
-    JS_GetPropertyUint32, JS_IsArray, JS_IsError, JS_IsFloat64_Ext, JS_NewArray, JS_NewBool_Ext,
-    JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewObject, JS_NewStringLen, JS_NewUint32_Ext,
-    JS_ToCStringLen2, JS_ToFloat64, JS_PROP_C_W_E, JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT,
-    JS_TAG_NULL, JS_TAG_OBJECT, JS_TAG_STRING, JS_TAG_UNDEFINED,
+    size_t as JS_size_t, JSContext, JSValue, JS_DefinePropertyValueStr,
+    JS_DefinePropertyValueUint32, JS_GetException, JS_GetPropertyStr, JS_GetPropertyUint32,
+    JS_IsArray, JS_IsError, JS_IsFloat64_Ext, JS_ToCStringLen2, JS_ToFloat64, JS_PROP_C_W_E,
+    JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_NULL, JS_TAG_OBJECT, JS_TAG_STRING,
+    JS_TAG_UNDEFINED,
 };
+use std::ffi::CString;
 use std::fmt;
-use std::{ffi::CString, os::raw::c_char};
 
 #[derive(Debug, Clone)]
 pub struct Value {
@@ -46,50 +45,6 @@ impl Value {
         } else {
             Ok(value)
         }
-    }
-
-    pub fn array(context: *mut JSContext) -> Result<Self> {
-        let raw = unsafe { JS_NewArray(context) };
-        Self::new(context, raw)
-    }
-
-    pub fn object(context: *mut JSContext) -> Result<Self> {
-        let raw = unsafe { JS_NewObject(context) };
-        Self::new(context, raw)
-    }
-
-    pub fn from_f64(context: *mut JSContext, val: f64) -> Result<Self> {
-        let raw = unsafe { JS_NewFloat64_Ext(context, val) };
-        Self::new(context, raw)
-    }
-
-    pub fn from_i32(context: *mut JSContext, val: i32) -> Result<Self> {
-        let raw = unsafe { JS_NewInt32_Ext(context, val) };
-        Self::new(context, raw)
-    }
-
-    pub fn from_u32(context: *mut JSContext, val: u32) -> Result<Self> {
-        let raw = unsafe { JS_NewUint32_Ext(context, val) };
-        Self::new(context, raw)
-    }
-
-    pub fn from_bool(context: *mut JSContext, val: bool) -> Result<Self> {
-        let raw = unsafe { JS_NewBool_Ext(context, i32::from(val)) };
-        Self::new(context, raw)
-    }
-
-    pub fn from_str(context: *mut JSContext, val: &str) -> Result<Self> {
-        let raw =
-            unsafe { JS_NewStringLen(context, val.as_ptr() as *const c_char, val.len() as _) };
-        Self::new(context, raw)
-    }
-
-    pub fn null(context: *mut JSContext) -> Result<Self> {
-        Self::new(context, unsafe { ext_js_null })
-    }
-
-    pub fn undefined(context: *mut JSContext) -> Result<Self> {
-        Self::new(context, unsafe { ext_js_undefined })
     }
 
     pub fn as_f64(&self) -> Result<f64> {
@@ -239,7 +194,6 @@ impl Value {
 #[cfg(test)]
 mod tests {
     use super::super::context::Context;
-    use super::Value;
     use anyhow::Result;
     const SCRIPT_NAME: &str = "value.js";
 
@@ -257,8 +211,8 @@ mod tests {
     #[test]
     fn test_value_objects_allow_setting_a_str_property() -> Result<()> {
         let ctx = Context::default();
-        let obj = Value::object(ctx.inner())?;
-        obj.set_property("foo", &Value::from_i32(ctx.inner(), 1_i32)?)?;
+        let obj = ctx.object_value()?;
+        obj.set_property("foo", &ctx.value_from_i32(1_i32)?)?;
         let val = obj.get_property("foo");
         assert!(val.is_ok());
         assert!(val.unwrap().is_repr_as_i32());
@@ -268,8 +222,8 @@ mod tests {
     #[test]
     fn test_value_objects_allow_setting_an_indexed_property() -> Result<()> {
         let ctx = Context::default();
-        let seq = Value::array(ctx.inner())?;
-        seq.append_property(&Value::from_str(ctx.inner(), "value")?)?;
+        let seq = ctx.array_value()?;
+        seq.append_property(&ctx.value_from_str("value")?)?;
         let val = seq.get_indexed_property(0);
         assert!(val.is_ok());
         assert!(val.unwrap().is_str());
@@ -291,77 +245,9 @@ mod tests {
     }
 
     #[test]
-    fn test_creates_a_value_from_f64() -> Result<()> {
-        let ctx = Context::default();
-        let val = f64::MIN;
-        let val = Value::from_f64(ctx.inner(), val);
-        assert!(val.is_ok());
-        assert!(val.unwrap().is_repr_as_f64());
-        Ok(())
-    }
-
-    #[test]
-    fn test_creates_a_value_from_i32() -> Result<()> {
-        let ctx = Context::default();
-        let val = i32::MIN;
-        let val = Value::from_i32(ctx.inner(), val);
-        assert!(val.is_ok());
-        assert!(val.unwrap().is_repr_as_i32());
-        Ok(())
-    }
-
-    #[test]
-    fn test_creates_a_value_from_u32() -> Result<()> {
-        let ctx = Context::default();
-        let val = u32::MIN;
-        let val = Value::from_u32(ctx.inner(), val);
-        assert!(val.is_ok());
-        assert!(val.unwrap().is_repr_as_i32());
-        Ok(())
-    }
-
-    #[test]
-    fn test_creates_a_value_from_bool() -> Result<()> {
-        let ctx = Context::default();
-        let val = false;
-        let val = Value::from_bool(ctx.inner(), val);
-        assert!(val.is_ok());
-        assert!(val.unwrap().is_bool());
-        Ok(())
-    }
-
-    #[test]
-    fn test_creates_a_value_from_str() -> Result<()> {
-        let ctx = Context::default();
-        let val = "script.js";
-        let val = Value::from_str(ctx.inner(), val);
-        assert!(val.is_ok());
-        assert!(val.unwrap().is_str());
-        Ok(())
-    }
-
-    #[test]
-    fn test_constructs_a_value_as_an_array() -> Result<()> {
-        let ctx = Context::default();
-        let val = Value::array(ctx.inner());
-        assert!(val.is_ok());
-        assert!(val.unwrap().is_array());
-        Ok(())
-    }
-
-    #[test]
-    fn test_constructs_a_value_as_an_object() -> Result<()> {
-        let ctx = Context::default();
-        let val = Value::object(ctx.inner());
-        assert!(val.is_ok());
-        assert!(val.unwrap().is_object());
-        Ok(())
-    }
-
-    #[test]
     fn test_allows_representing_a_value_as_f64() -> Result<()> {
         let ctx = Context::default();
-        let val = Value::from_f64(ctx.inner(), f64::MIN)?.as_f64()?;
+        let val = ctx.value_from_f64(f64::MIN)?.as_f64()?;
         assert_eq!(val, f64::MIN);
         Ok(())
     }
@@ -370,7 +256,7 @@ mod tests {
     fn test_value_as_str() {
         let s = "hello";
         let ctx = Context::default();
-        let val = Value::from_str(ctx.inner(), s).unwrap();
+        let val = ctx.value_from_str(s).unwrap();
         assert_eq!(val.as_str().unwrap(), s);
     }
 
@@ -378,7 +264,7 @@ mod tests {
     fn test_value_as_str_middle_nul_terminator() {
         let s = "hello\0world!";
         let ctx = Context::default();
-        let val = Value::from_str(ctx.inner(), s).unwrap();
+        let val = ctx.value_from_str(s).unwrap();
         assert_eq!(val.as_str().unwrap(), s);
     }
 

@@ -1,11 +1,13 @@
 use super::value::Value;
 use anyhow::Result;
 use quickjs_sys::{
-    JSCFunctionData, JSContext, JSRuntime, JSValue, JS_Call, JS_Eval, JS_GetGlobalObject,
-    JS_NewCFunctionData, JS_NewContext, JS_NewRuntime, JS_EVAL_TYPE_GLOBAL,
+    ext_js_null, ext_js_undefined, JSCFunctionData, JSContext, JSRuntime, JSValue, JS_Call,
+    JS_Eval, JS_GetGlobalObject, JS_NewArray, JS_NewBool_Ext, JS_NewCFunctionData, JS_NewContext,
+    JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewObject, JS_NewRuntime, JS_NewStringLen,
+    JS_NewUint32_Ext, JS_EVAL_TYPE_GLOBAL,
 };
 use std::ffi::CString;
-use std::os::raw::{c_int, c_void};
+use std::os::raw::{c_char, c_int, c_void};
 
 #[derive(Debug)]
 pub struct Context {
@@ -69,6 +71,50 @@ impl Context {
         };
 
         Value::new(self.inner, return_val)
+    }
+
+    pub fn array_value(&self) -> Result<Value> {
+        let raw = unsafe { JS_NewArray(self.inner) };
+        Value::new(self.inner, raw)
+    }
+
+    pub fn object_value(&self) -> Result<Value> {
+        let raw = unsafe { JS_NewObject(self.inner) };
+        Value::new(self.inner, raw)
+    }
+
+    pub fn value_from_f64(&self, val: f64) -> Result<Value> {
+        let raw = unsafe { JS_NewFloat64_Ext(self.inner, val) };
+        Value::new(self.inner, raw)
+    }
+
+    pub fn value_from_i32(&self, val: i32) -> Result<Value> {
+        let raw = unsafe { JS_NewInt32_Ext(self.inner, val) };
+        Value::new(self.inner, raw)
+    }
+
+    pub fn value_from_u32(&self, val: u32) -> Result<Value> {
+        let raw = unsafe { JS_NewUint32_Ext(self.inner, val) };
+        Value::new(self.inner, raw)
+    }
+
+    pub fn value_from_bool(&self, val: bool) -> Result<Value> {
+        let raw = unsafe { JS_NewBool_Ext(self.inner, i32::from(val)) };
+        Value::new(self.inner, raw)
+    }
+
+    pub fn value_from_str(&self, val: &str) -> Result<Value> {
+        let raw =
+            unsafe { JS_NewStringLen(self.inner, val.as_ptr() as *const c_char, val.len() as _) };
+        Value::new(self.inner, raw)
+    }
+
+    pub fn null_value(&self) -> Result<Value> {
+        Value::new(self.inner, unsafe { ext_js_null })
+    }
+
+    pub fn undefined_value(&self) -> Result<Value> {
+        Value::new(self.inner, unsafe { ext_js_undefined })
     }
 
     pub unsafe fn new_callback<F>(&self, f: F) -> Result<Value>
@@ -164,6 +210,65 @@ mod tests {
         let fun = global.get_property("foo")?;
         let result = ctx.call(&fun, &global, &[]);
         assert!(result.is_ok());
+        Ok(())
+    }
+
+    #[test]
+    fn test_creates_a_value_from_f64() -> Result<()> {
+        let ctx = Context::default();
+        let val = f64::MIN;
+        let val = ctx.value_from_f64(val)?;
+        assert!(val.is_repr_as_f64());
+        Ok(())
+    }
+
+    #[test]
+    fn test_creates_a_value_from_i32() -> Result<()> {
+        let ctx = Context::default();
+        let val = i32::MIN;
+        let val = ctx.value_from_i32(val)?;
+        assert!(val.is_repr_as_i32());
+        Ok(())
+    }
+
+    #[test]
+    fn test_creates_a_value_from_u32() -> Result<()> {
+        let ctx = Context::default();
+        let val = u32::MIN;
+        let val = ctx.value_from_u32(val)?;
+        assert!(val.is_repr_as_i32());
+        Ok(())
+    }
+
+    #[test]
+    fn test_creates_a_value_from_bool() -> Result<()> {
+        let ctx = Context::default();
+        let val = ctx.value_from_bool(false)?;
+        assert!(val.is_bool());
+        Ok(())
+    }
+
+    #[test]
+    fn test_creates_a_value_from_str() -> Result<()> {
+        let ctx = Context::default();
+        let val = "script.js";
+        let val = ctx.value_from_str(val)?;
+        assert!(val.is_str());
+        Ok(())
+    }
+
+    #[test]
+    fn test_constructs_a_value_as_an_array() -> Result<()> {
+        let ctx = Context::default();
+        let val = ctx.array_value()?;
+        assert!(val.is_array());
+        Ok(())
+    }
+
+    #[test]
+    fn test_constructs_a_value_as_an_object() -> Result<()> {
+        let val = Context::default().object_value()?;
+        assert!(val.is_object());
         Ok(())
     }
 }

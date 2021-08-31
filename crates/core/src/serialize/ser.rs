@@ -19,8 +19,8 @@ impl<'c> Serializer<'c> {
     pub fn from_context(context: &'c Context) -> Result<Self> {
         Ok(Self {
             context,
-            value: Value::undefined(context.inner())?,
-            key: Value::undefined(context.inner())?,
+            value: context.undefined_value()?,
+            key: context.undefined_value()?,
         })
     }
 }
@@ -46,7 +46,7 @@ impl<'a> ser::Serializer for &'a mut Serializer<'_> {
     }
 
     fn serialize_i32(self, v: i32) -> Result<()> {
-        self.value = Value::from_i32(self.context.inner(), v)?;
+        self.value = self.context.value_from_i32(v)?;
         Ok(())
     }
 
@@ -75,12 +75,12 @@ impl<'a> ser::Serializer for &'a mut Serializer<'_> {
     }
 
     fn serialize_f64(self, v: f64) -> Result<()> {
-        self.value = Value::from_f64(self.context.inner(), v)?;
+        self.value = self.context.value_from_f64(v)?;
         Ok(())
     }
 
     fn serialize_bool(self, b: bool) -> Result<()> {
-        self.value = Value::from_bool(self.context.inner(), b)?;
+        self.value = self.context.value_from_bool(b)?;
 
         Ok(())
     }
@@ -90,7 +90,7 @@ impl<'a> ser::Serializer for &'a mut Serializer<'_> {
     }
 
     fn serialize_str(self, v: &str) -> Result<()> {
-        self.value = Value::from_str(self.context.inner(), v)?;
+        self.value = self.context.value_from_str(v)?;
         Ok(())
     }
 
@@ -99,7 +99,7 @@ impl<'a> ser::Serializer for &'a mut Serializer<'_> {
     }
 
     fn serialize_unit(self) -> Result<()> {
-        self.value = Value::null(self.context.inner())?;
+        self.value = self.context.null_value()?;
         Ok(())
     }
 
@@ -131,7 +131,7 @@ impl<'a> ser::Serializer for &'a mut Serializer<'_> {
     }
 
     fn serialize_seq(self, _len: Option<usize>) -> Result<Self::SerializeSeq> {
-        self.value = Value::array(self.context.inner())?;
+        self.value = self.context.array_value()?;
         Ok(self)
     }
 
@@ -148,7 +148,7 @@ impl<'a> ser::Serializer for &'a mut Serializer<'_> {
     }
 
     fn serialize_map(self, _len: Option<usize>) -> Result<Self::SerializeMap> {
-        self.value = Value::object(self.context.inner())?;
+        self.value = self.context.object_value()?;
         Ok(self)
     }
 
@@ -186,7 +186,7 @@ impl<'a> ser::Serializer for &'a mut Serializer<'_> {
     where
         T: ?Sized + Serialize,
     {
-        let object = Value::object(self.context.inner())?;
+        let object = self.context.object_value()?;
         value.serialize(&mut *self)?;
         object.set_property(variant, &self.value)?;
         self.value = object;

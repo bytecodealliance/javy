@@ -371,7 +371,7 @@ impl<'de> de::SeqAccess<'de> for Deserializer {
 #[cfg(test)]
 mod tests {
     use super::Deserializer as ValueDeserializer;
-    use crate::js_binding::{context::Context, value::Value};
+    use crate::js_binding::context::Context;
     use anyhow::Result;
     use quickcheck::quickcheck;
     use serde::Deserialize;
@@ -379,7 +379,7 @@ mod tests {
     quickcheck! {
         fn test_i32(v: i32) -> Result<bool> {
             let context = Context::default();
-            let val = Value::from_i32(context.inner(), v)?;
+            let val = context.value_from_i32(v)?;
             let mut deserializer = ValueDeserializer::from_value(val)?;
 
             let result = i32::deserialize(&mut deserializer)?;
@@ -388,7 +388,7 @@ mod tests {
 
         fn test_bool(v: bool) -> Result<bool> {
             let context = Context::default();
-            let val = Value::from_bool(context.inner(), v)?;
+            let val = context.value_from_bool(v)?;
             let mut deserializer = ValueDeserializer::from_value(val)?;
 
             let result = bool::deserialize(&mut deserializer)?;
@@ -397,7 +397,7 @@ mod tests {
 
         fn test_str(v: String) -> Result<bool> {
             let context = Context::default();
-            let val = Value::from_str(context.inner(), &v)?;
+            let val = context.value_from_str(&v)?;
             let mut deserializer = ValueDeserializer::from_value(val)?;
 
             let result = String::deserialize(&mut deserializer)?;
@@ -408,7 +408,7 @@ mod tests {
     #[test]
     fn test_null() -> Result<()> {
         let context = Context::default();
-        let val = Value::null(context.inner())?;
+        let val = context.null_value()?;
         let mut deserializer = ValueDeserializer::from_value(val)?;
 
         let result = <()>::deserialize(&mut deserializer)?;
@@ -419,7 +419,7 @@ mod tests {
     #[test]
     fn test_undefined() -> Result<()> {
         let context = Context::default();
-        let val = Value::undefined(context.inner())?;
+        let val = context.undefined_value()?;
         let mut deserializer = ValueDeserializer::from_value(val)?;
 
         let result = <()>::deserialize(&mut deserializer)?;
@@ -430,7 +430,7 @@ mod tests {
     #[test]
     fn test_nan() -> Result<()> {
         let context = Context::default();
-        let val = Value::from_f64(context.inner(), f64::NAN)?;
+        let val = context.value_from_f64(f64::NAN)?;
         let mut deserializer = ValueDeserializer::from_value(val)?;
 
         let result = f64::deserialize(&mut deserializer)?;
@@ -441,7 +441,7 @@ mod tests {
     #[test]
     fn test_infinity() -> Result<()> {
         let context = Context::default();
-        let val = Value::from_f64(context.inner(), f64::INFINITY)?;
+        let val = context.value_from_f64(f64::INFINITY)?;
         let mut deserializer = ValueDeserializer::from_value(val)?;
 
         let result = f64::deserialize(&mut deserializer)?;
@@ -452,7 +452,7 @@ mod tests {
     #[test]
     fn test_negative_infinity() -> Result<()> {
         let context = Context::default();
-        let val = Value::from_f64(context.inner(), f64::NEG_INFINITY)?;
+        let val = context.value_from_f64(f64::NEG_INFINITY)?;
         let mut deserializer = ValueDeserializer::from_value(val)?;
 
         let result = f64::deserialize(&mut deserializer)?;
