@@ -188,7 +188,7 @@ impl<'a> ser::Serializer for &'a mut Serializer<'_> {
     {
         let object = self.context.object_value()?;
         value.serialize(&mut *self)?;
-        object.set_property(variant, &self.value)?;
+        object.set_property(variant, self.value.clone())?;
         self.value = object;
 
         Ok(())
@@ -209,7 +209,7 @@ impl<'a> ser::SerializeSeq for &'a mut Serializer<'_> {
     {
         let mut element_serializer = Serializer::from_context(self.context)?;
         value.serialize(&mut element_serializer)?;
-        self.value.append_property(&element_serializer.value)?;
+        self.value.append_property(element_serializer.value)?;
         Ok(())
     }
 
@@ -228,7 +228,7 @@ impl<'a> ser::SerializeTuple for &'a mut Serializer<'_> {
     {
         let mut element_serializer = Serializer::from_context(self.context)?;
         value.serialize(&mut element_serializer)?;
-        self.value.append_property(&element_serializer.value)?;
+        self.value.append_property(element_serializer.value)?;
         Ok(())
     }
 
@@ -247,7 +247,7 @@ impl<'a> ser::SerializeTupleStruct for &'a mut Serializer<'_> {
     {
         let mut field_serializer = Serializer::from_context(self.context)?;
         value.serialize(&mut field_serializer)?;
-        self.value.append_property(&field_serializer.value)?;
+        self.value.append_property(field_serializer.value)?;
         Ok(())
     }
 
@@ -266,7 +266,7 @@ impl<'a> ser::SerializeTupleVariant for &'a mut Serializer<'_> {
     {
         let mut field_serializer = Serializer::from_context(self.context)?;
         value.serialize(&mut field_serializer)?;
-        self.value.append_property(&field_serializer.value)?;
+        self.value.append_property(field_serializer.value)?;
         Ok(())
     }
 
@@ -296,7 +296,7 @@ impl<'a> ser::SerializeMap for &'a mut Serializer<'_> {
         let mut map_serializer = Serializer::from_context(self.context)?;
         value.serialize(&mut map_serializer)?;
         self.value
-            .set_property(self.key.as_str()?, &map_serializer.value)?;
+            .set_property(self.key.as_str()?, map_serializer.value)?;
         Ok(())
     }
 
@@ -315,7 +315,7 @@ impl<'a> ser::SerializeStruct for &'a mut Serializer<'_> {
     {
         let mut field_serializer = Serializer::from_context(self.context)?;
         value.serialize(&mut field_serializer)?;
-        self.value.set_property(key, &field_serializer.value)?;
+        self.value.set_property(key, field_serializer.value)?;
         Ok(())
     }
 
@@ -334,7 +334,7 @@ impl<'a> ser::SerializeStructVariant for &'a mut Serializer<'_> {
     {
         let mut field_serializer = Serializer::from_context(self.context)?;
         value.serialize(&mut field_serializer)?;
-        self.value.set_property(key, &field_serializer.value)?;
+        self.value.set_property(key, field_serializer.value)?;
         Ok(())
     }
 
