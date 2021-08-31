@@ -14,8 +14,18 @@ mod tests {
     use std::collections::BTreeMap;
 
     quickcheck! {
-        fn test_str_roundtrip(expected: String) -> Result<bool> {
+        fn test_str(expected: String) -> Result<bool> {
             let actual = do_roundtrip::<_, String>(&expected);
+            Ok(expected == actual)
+        }
+
+        fn test_i32(expected: i32) -> Result<bool> {
+            let actual = do_roundtrip::<_, i32>(&expected);
+            Ok(expected == actual)
+        }
+
+        fn test_bool(expected: bool) -> Result<bool> {
+            let actual = do_roundtrip::<_, bool>(&expected);
             Ok(expected == actual)
         }
     }

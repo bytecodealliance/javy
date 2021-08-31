@@ -116,6 +116,10 @@ impl Value {
         self.get_tag() == JS_TAG_NULL
     }
 
+    pub fn is_null_or_undefined(&self) -> bool {
+        self.is_null() | self.is_undefined()
+    }
+
     pub fn get_property(&self, key: impl Into<Vec<u8>>) -> Result<Self> {
         let cstring_key = CString::new(key)?;
         let raw = unsafe { JS_GetPropertyStr(self.context, self.value, cstring_key.as_ptr()) };
@@ -315,5 +319,18 @@ mod tests {
             .to_string();
         let expected_error = "Uncaught SyntaxError: expecting \';\'\n    at main:1\n";
         assert_eq!(expected_error, error.as_str());
+    }
+
+    #[test]
+    fn test_is_null_or_undefined() {
+        let ctx = Context::default();
+        let v = ctx.undefined_value().unwrap();
+        assert!(v.is_null_or_undefined());
+
+        let v = ctx.null_value().unwrap();
+        assert!(v.is_null_or_undefined());
+
+        let v = ctx.value_from_i32(1337).unwrap();
+        assert!(!v.is_null_or_undefined());
     }
 }

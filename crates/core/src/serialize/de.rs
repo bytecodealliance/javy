@@ -18,10 +18,6 @@ impl Deserializer {
     pub fn from_value(value: Value) -> Result<Self> {
         Ok(Self { value })
     }
-
-    fn is_null_or_undefined(&self) -> bool {
-        self.value.is_null() | self.value.is_undefined()
-    }
 }
 
 impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
@@ -45,7 +41,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
             return visitor.visit_bool(val);
         }
 
-        if self.is_null_or_undefined() {
+        if self.value.is_null_or_undefined() {
             return visitor.visit_unit();
         }
 
@@ -62,7 +58,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
                 de: self,
                 length,
                 seq,
-                i: 0,
+                index: 0,
             };
             return visitor.visit_seq(seq_access);
         }
@@ -90,7 +86,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
     where
         V: de::Visitor<'de>,
     {
-        if self.is_null_or_undefined() {
+        if self.value.is_null_or_undefined() {
             visitor.visit_none()
         } else {
             visitor.visit_some(self)
@@ -156,7 +152,7 @@ struct SeqAccess<'a> {
     de: &'a mut Deserializer,
     seq: Value,
     length: u32,
-    i: u32,
+    index: u32,
 }
 
 impl<'a, 'de> de::SeqAccess<'de> for SeqAccess<'a> {
@@ -166,9 +162,9 @@ impl<'a, 'de> de::SeqAccess<'de> for SeqAccess<'a> {
     where
         T: de::DeserializeSeed<'de>,
     {
-        if self.i < self.length {
-            self.de.value = self.seq.get_indexed_property(self.i as u32)?;
-            self.i += 1;
+        if self.index < self.length {
+            self.de.value = self.seq.get_indexed_property(self.index)?;
+            self.index += 1;
             seed.deserialize(&mut *self.de).map(Some)
         } else {
             Ok(None)
@@ -180,91 +176,53 @@ impl<'a, 'de> de::SeqAccess<'de> for SeqAccess<'a> {
 mod tests {
     use super::Deserializer as ValueDeserializer;
     use crate::js_binding::context::Context;
-    use anyhow::Result;
-    use quickcheck::quickcheck;
-    use serde::Deserialize;
+    use crate::js_binding::value::Value;
+    use serde::de::DeserializeOwned;
 
-    quickcheck! {
-        fn test_i32(v: i32) -> Result<bool> {
-            let context = Context::default();
-            let val = context.value_from_i32(v)?;
-            let mut deserializer = ValueDeserializer::from_value(val)?;
-
-            let result = i32::deserialize(&mut deserializer)?;
-            Ok(result == v)
-        }
-
-        fn test_bool(v: bool) -> Result<bool> {
-            let context = Context::default();
-            let val = context.value_from_bool(v)?;
-            let mut deserializer = ValueDeserializer::from_value(val)?;
-
-            let result = bool::deserialize(&mut deserializer)?;
-            Ok(result == v)
-        }
-
-        fn test_str(v: String) -> Result<bool> {
-            let context = Context::default();
-            let val = context.value_from_str(&v)?;
-            let mut deserializer = ValueDeserializer::from_value(val)?;
-
-            let result = String::deserialize(&mut deserializer)?;
-            Ok(result == v)
-        }
+    fn deserialize_value<T>(v: Value) -> T
+        where T: DeserializeOwned,
+    {
+        let mut deserializer = ValueDeserializer::from_value(v).unwrap();
+        T::deserialize(&mut deserializer).unwrap()
     }
 
     #[test]
-    fn test_null() -> Result<()> {
+    fn test_null() {
         let context = Context::default();
-        let val = context.null_value()?;
-        let mut deserializer = ValueDeserializer::from_value(val)?;
-
-        let result = <()>::deserialize(&mut deserializer)?;
-        assert_eq!(result, ());
-        Ok(())
+        let val = context.null_value().unwrap();
+        let actual = deserialize_value::<()>(val);
+        assert_eq!((), actual);
     }
 
     #[test]
-    fn test_undefined() -> Result<()> {
+    fn test_undefined() {
         let context = Context::default();
-        let val = context.undefined_value()?;
-        let mut deserializer = ValueDeserializer::from_value(val)?;
-
-        let result = <()>::deserialize(&mut deserializer)?;
-        assert_eq!(result, ());
-        Ok(())
+        let val = context.undefined_value().unwrap();
+        let actual = deserialize_value::<()>(val);
+        assert_eq!((), actual);
     }
 
     #[test]
-    fn test_nan() -> Result<()> {
+    fn test_nan() {
         let context = Context::default();
-        let val = context.value_from_f64(f64::NAN)?;
-        let mut deserializer = ValueDeserializer::from_value(val)?;
-
-        let result = f64::deserialize(&mut deserializer)?;
-        assert!(result.is_nan());
-        Ok(())
+        let val = context.value_from_f64(f64::NAN).unwrap();
+        let actual = deserialize_value::<f64>(val);
+        assert!(actual.is_nan());
     }
 
     #[test]
-    fn test_infinity() -> Result<()> {
+    fn test_infinity() {
         let context = Context::default();
-        let val = context.value_from_f64(f64::INFINITY)?;
-        let mut deserializer = ValueDeserializer::from_value(val)?;
-
-        let result = f64::deserialize(&mut deserializer)?;
-        assert!(result.is_infinite() && result.is_sign_positive());
-        Ok(())
+        let val = context.value_from_f64(f64::INFINITY).unwrap();
+        let actual = deserialize_value::<f64>(val);
+        assert!(actual.is_infinite() && actual.is_sign_positive());
     }
 
     #[test]
-    fn test_negative_infinity() -> Result<()> {
+    fn test_negative_infinity() {
         let context = Context::default();
-        let val = context.value_from_f64(f64::NEG_INFINITY)?;
-        let mut deserializer = ValueDeserializer::from_value(val)?;
-
-        let result = f64::deserialize(&mut deserializer)?;
-        assert!(result.is_infinite() && result.is_sign_negative());
-        Ok(())
+        let val = context.value_from_f64(f64::NEG_INFINITY).unwrap();
+        let actual = deserialize_value::<f64>(val);
+        assert!(actual.is_infinite() && actual.is_sign_negative());
     }
 }
