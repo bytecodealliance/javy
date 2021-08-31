@@ -74,7 +74,7 @@ impl OwnProperties {
 
 #[cfg(test)]
 mod tests {
-    use super::{super::context::Context, super::value::Value, OwnProperties};
+    use super::{super::context::Context, OwnProperties};
     use anyhow::Result;
 
     #[test]
@@ -123,7 +123,7 @@ mod tests {
     #[test]
     fn test_invalid_access_to_own_props() -> Result<()> {
         let context = Context::default();
-        let val = Value::from_i32(context.inner(), 1_i32)?;
+        let val = context.value_from_i32(1_i32)?;
         let props = OwnProperties::from(&val);
         assert!(props.is_err());
         Ok(())
