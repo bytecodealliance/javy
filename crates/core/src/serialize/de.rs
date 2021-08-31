@@ -180,7 +180,8 @@ mod tests {
     use serde::de::DeserializeOwned;
 
     fn deserialize_value<T>(v: Value) -> T
-        where T: DeserializeOwned,
+    where
+        T: DeserializeOwned,
     {
         let mut deserializer = ValueDeserializer::from_value(v).unwrap();
         T::deserialize(&mut deserializer).unwrap()
