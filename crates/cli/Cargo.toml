@@ -15,3 +15,10 @@ structopt = "0.3"
 anyhow = "1.0"
 tempfile = "3.2.0"
 binaries = { path = "../binaries" }
+
+[dev-dependencies]
+wasmtime = "0.29"
+wasmtime-wasi = "0.29"
+rmp-serde = "0.15"
+uuid = { version = "0.8", features = ["v4"] }
+
