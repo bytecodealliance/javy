@@ -1,11 +1,12 @@
-use super::value::Value;
-use anyhow::{anyhow, Result};
+use super::{exception::Exception, value::Value};
+use anyhow::Result;
 use quickjs_sys::{
     JSAtom, JSContext, JSPropertyEnum, JSValue, JS_AtomToString, JS_GetOwnPropertyNames,
     JS_GetPropertyInternal, JS_GPN_ENUM_ONLY, JS_GPN_STRING_MASK, JS_GPN_SYMBOL_MASK,
 };
 use std::ptr;
 
+#[derive(Debug)]
 pub struct Properties {
     value: JSValue,
     context: *mut JSContext,
@@ -20,26 +21,23 @@ impl Properties {
         let flags = (JS_GPN_STRING_MASK | JS_GPN_SYMBOL_MASK | JS_GPN_ENUM_ONLY) as i32;
         let mut property_enum: *mut JSPropertyEnum = ptr::null_mut();
         let mut length = 0;
-        let result = unsafe {
+        let ret = unsafe {
             JS_GetOwnPropertyNames(context, &mut property_enum, &mut length, value, flags)
         };
 
-        // TODO: Exception handling for non-nan-boxed values
-        if result == -1 {
-            Err(anyhow!(
-                "Couldn't retrieve own properties from: {:?}",
-                value
-            ))
-        } else {
-            Ok(Self {
-                value,
-                context,
-                property_enum,
-                length: length as isize,
-                offset: 0,
-                current_key: 0_u32,
-            })
+        if ret < 0 {
+            let exception = Exception::new(context)?;
+            return Err(exception.into_error())
         }
+
+        Ok(Self {
+            value,
+            context,
+            property_enum,
+            length: length as isize,
+            offset: 0,
+            current_key: 0_u32,
+        })
     }
 
     pub fn next_key(&mut self) -> Result<Option<Value>> {
@@ -115,11 +113,10 @@ mod tests {
     }
 
     #[test]
-    fn test_invalid_access_to_own_props() -> Result<()> {
+    fn test_invalid_access_to_own_props() {
         let context = Context::default();
-        let val = context.value_from_i32(1_i32)?;
-        let props = val.properties();
-        assert!(props.is_err());
-        Ok(())
+        let val = context.value_from_i32(1_i32).unwrap();
+        let err = val.properties().unwrap_err();
+        assert_eq!("Uncaught TypeError: not an object\n".to_string(), err.to_string());
     }
 }

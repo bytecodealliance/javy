@@ -2,13 +2,13 @@ use super::properties::Properties;
 use anyhow::{anyhow, Result};
 use quickjs_sys::{
     size_t as JS_size_t, JSContext, JSValue, JS_DefinePropertyValueStr,
-    JS_DefinePropertyValueUint32, JS_GetException, JS_GetPropertyStr, JS_GetPropertyUint32,
-    JS_IsArray, JS_IsError, JS_IsFloat64_Ext, JS_ToCStringLen2, JS_ToFloat64, JS_PROP_C_W_E,
+    JS_DefinePropertyValueUint32, JS_GetPropertyStr, JS_GetPropertyUint32,
+    JS_IsArray, JS_IsFloat64_Ext, JS_ToCStringLen2, JS_ToFloat64, JS_PROP_C_W_E,
     JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_NULL, JS_TAG_OBJECT, JS_TAG_STRING,
     JS_TAG_UNDEFINED,
 };
 use std::ffi::CString;
-use std::fmt;
+use super::exception::Exception;
 
 #[derive(Debug, Clone)]
 pub struct Value {
@@ -16,24 +16,8 @@ pub struct Value {
     value: JSValue,
 }
 
-#[derive(Debug)]
-struct Exception {
-    msg: String,
-    stack: Option<String>,
-}
-
-impl fmt::Display for Exception {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.msg)?;
-        if let Some(stack) = &self.stack {
-            write!(f, "\n{}", stack)?;
-        }
-        Ok(())
-    }
-}
-
 impl Value {
-    pub fn new(context: *mut JSContext, raw_value: JSValue) -> Result<Self> {
+    pub(super) fn new(context: *mut JSContext, raw_value: JSValue) -> Result<Self> {
         let value = Self {
             context,
             value: raw_value,
@@ -41,10 +25,14 @@ impl Value {
 
         if value.is_exception() {
             let exception = value.as_exception()?;
-            Err(anyhow!("Uncaught {}", exception))
+            Err(exception.into_error())
         } else {
             Ok(value)
         }
+    }
+
+    pub(super) fn new_unchecked(context: *mut JSContext, value: JSValue) -> Self {
+        Self { context, value }
     }
 
     pub fn as_f64(&self) -> Result<f64> {
@@ -128,7 +116,7 @@ impl Value {
 
     pub fn set_property(&self, key: impl Into<Vec<u8>>, val: Value) -> Result<()> {
         let cstring_key = CString::new(key)?;
-        let _raw = unsafe {
+        let ret = unsafe {
             JS_DefinePropertyValueStr(
                 self.context,
                 self.value,
@@ -137,6 +125,11 @@ impl Value {
                 JS_PROP_C_W_E as i32,
             )
         };
+
+        if ret < 0 {
+            let exception = self.as_exception()?;
+            return Err(exception.into_error());
+        }
         Ok(())
     }
 
@@ -147,14 +140,19 @@ impl Value {
 
     pub fn append_property(&self, val: Value) -> Result<()> {
         let len = self.get_property("length")?;
-        unsafe {
+        let ret = unsafe {
             JS_DefinePropertyValueUint32(
                 self.context,
                 self.value,
                 len.value as u32,
                 val.value,
                 JS_PROP_C_W_E as i32,
-            );
+            )
+        };
+
+        if ret < 0 {
+            let exception = self.as_exception()?;
+            return Err(exception.into_error());
         }
         Ok(())
     }
@@ -170,24 +168,7 @@ impl Value {
     /// All methods in quickjs return an exception value, not an object.
     /// To actually retrieve the exception, we need to retrieve the exception object from the global state.
     fn as_exception(&self) -> Result<Exception> {
-        let exception_value = unsafe { JS_GetException(self.context) };
-        let exception_obj = Self {
-            context: self.context,
-            value: exception_value,
-        };
-
-        let msg = exception_obj.as_str().map(ToString::to_string)?;
-        let mut stack = None;
-
-        let is_error = unsafe { JS_IsError(self.context, exception_obj.value) } != 0;
-        if is_error {
-            let stack_value = exception_obj.get_property("stack")?;
-            if !stack_value.is_undefined() {
-                stack.replace(stack_value.as_str().map(ToString::to_string)?);
-            }
-        }
-
-        Ok(Exception { msg, stack })
+        Exception::new(self.context)
     }
 }
 
@@ -233,6 +214,22 @@ mod tests {
 
         let val = seq.get_indexed_property(1).unwrap();
         assert_eq!("world", val.as_str().unwrap());
+    }
+
+    #[test]
+    fn test_value_set_property_returns_exception() {
+        let ctx = Context::default();
+        let val = ctx.value_from_i32(1337).unwrap();
+        let err = val.set_property("foo", ctx.value_from_str("hello").unwrap()).unwrap_err();
+        assert_eq!("Uncaught TypeError: not an object\n".to_string(), err.to_string());
+    }
+
+    #[test]
+    fn test_value_append_property_returns_exception() {
+        let ctx = Context::default();
+        let val = ctx.value_from_i32(1337).unwrap();
+        let err = val.append_property(ctx.value_from_str("hello").unwrap()).unwrap_err();
+        assert_eq!("Uncaught TypeError: not an object\n".to_string(), err.to_string());
     }
 
     #[test]
