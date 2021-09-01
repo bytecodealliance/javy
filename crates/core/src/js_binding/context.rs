@@ -4,10 +4,11 @@ use quickjs_sys::{
     ext_js_null, ext_js_undefined, JSCFunctionData, JSContext, JSRuntime, JSValue, JS_Call,
     JS_Eval, JS_GetGlobalObject, JS_NewArray, JS_NewBool_Ext, JS_NewCFunctionData, JS_NewContext,
     JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewObject, JS_NewRuntime, JS_NewStringLen,
-    JS_NewUint32_Ext, JS_EVAL_TYPE_GLOBAL,
+    JS_NewUint32_Ext, JS_EVAL_TYPE_GLOBAL, JS_ToCStringLen2, JS_FreeCString, ext_js_exception, size_t as JS_size_t
 };
 use std::ffi::CString;
 use std::os::raw::{c_char, c_int, c_void};
+use std::io::Write;
 
 #[derive(Debug)]
 pub struct Context {
@@ -136,6 +137,50 @@ impl Context {
         let raw = JS_NewCFunctionData(self.inner, trampoline, 0, 1, 1, data);
         Value::new(self.inner(), raw)
     }
+
+    pub fn register_globals<T>(&mut self, log_stream: T) -> Result<()>
+    where
+        T: Write,
+    {
+        let console_log_callback = unsafe { self.new_callback(console_log_to(log_stream))? };
+        let global_object = self.global_object()?;
+        let console_object = self.object_value()?;
+        console_object.set_property("log", console_log_callback)?;
+        global_object.set_property("console", console_object)?;
+        Ok(())
+    }
+}
+
+
+fn console_log_to<T>(
+    mut stream: T,
+) -> impl FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue
+where
+    T: Write,
+{
+    move |ctx: *mut JSContext, _this: JSValue, argc: c_int, argv: *mut JSValue, _magic: c_int| {
+        let mut len: JS_size_t = 0;
+        for i in 0..argc {
+            if i != 0 {
+                write!(stream, " ").unwrap();
+            }
+
+            let str_ptr = unsafe { JS_ToCStringLen2(ctx, &mut len, *argv.offset(i as isize), 0) };
+            if str_ptr.is_null() {
+                return unsafe { ext_js_exception };
+            }
+
+            let str_ptr = str_ptr as *const u8;
+            let str_len = len as usize;
+            let buffer = unsafe { std::slice::from_raw_parts(str_ptr, str_len) };
+
+            stream.write_all(buffer).unwrap();
+            unsafe { JS_FreeCString(ctx, str_ptr as *const i8) };
+        }
+
+        writeln!(stream,).unwrap();
+        unsafe { ext_js_undefined }
+    }
 }
 
 fn build_trampoline<F>(_f: &F) -> JSCFunctionData
@@ -167,6 +212,9 @@ where
 mod tests {
     use super::Context;
     use anyhow::Result;
+    use std::cell::RefCell;
+    use std::io;
+    use std::rc::Rc;
     const SCRIPT_NAME: &str = "context.js";
 
     #[test]
@@ -269,6 +317,42 @@ mod tests {
     fn test_constructs_a_value_as_an_object() -> Result<()> {
         let val = Context::default().object_value()?;
         assert!(val.is_object());
+        Ok(())
+    }
+
+    #[derive(Default, Clone)]
+    struct SharedStream(Rc<RefCell<Vec<u8>>>);
+
+    impl SharedStream {
+        fn clear(&mut self) {
+            (*self.0).borrow_mut().clear();
+        }
+    }
+
+    impl io::Write for SharedStream {
+        fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+            (*self.0).borrow_mut().write(buf)
+        }
+
+        fn flush(&mut self) -> io::Result<()> {
+            (*self.0).borrow_mut().flush()
+        }
+    }
+
+    #[test]
+    fn test_console_log() -> Result<()> {
+        let mut stream = SharedStream::default();
+
+        let mut ctx = Context::default();
+        ctx.register_globals(stream.clone())?;
+
+        ctx.eval_global("main", "console.log(\"hello world\");")?;
+        assert_eq!(b"hello world\n", stream.0.borrow().as_slice());
+
+        stream.clear();
+
+        ctx.eval_global("main", "console.log(\"bonjour\", \"le\", \"monde\")")?;
+        assert_eq!(b"bonjour le monde\n", stream.0.borrow().as_slice());
         Ok(())
     }
 }
