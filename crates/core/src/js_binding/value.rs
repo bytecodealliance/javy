@@ -2,12 +2,19 @@ use super::exception::Exception;
 use super::properties::Properties;
 use anyhow::{anyhow, Result};
 use quickjs_sys::{
-    size_t as JS_size_t, JSContext, JSValue, JS_Call, JS_DefinePropertyValueStr,
-    JS_DefinePropertyValueUint32, JS_GetPropertyStr, JS_GetPropertyUint32, JS_IsArray,
-    JS_IsFloat64_Ext, JS_ToCStringLen2, JS_ToFloat64, JS_PROP_C_W_E, JS_TAG_BOOL, JS_TAG_EXCEPTION,
-    JS_TAG_INT, JS_TAG_NULL, JS_TAG_OBJECT, JS_TAG_STRING, JS_TAG_UNDEFINED,
+    size_t as JS_size_t, JSContext, JSValue, JS_BigIntSigned, JS_BigIntToInt64, JS_BigIntToUint64,
+    JS_Call, JS_DefinePropertyValueStr, JS_DefinePropertyValueUint32, JS_GetPropertyStr,
+    JS_GetPropertyUint32, JS_IsArray, JS_IsFloat64_Ext, JS_ToCStringLen2, JS_ToFloat64,
+    JS_PROP_C_W_E, JS_TAG_BIG_INT, JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_NULL,
+    JS_TAG_OBJECT, JS_TAG_STRING, JS_TAG_UNDEFINED,
 };
 use std::ffi::CString;
+
+#[derive(Debug, PartialEq)]
+pub enum BigInt {
+    Negative(i64),
+    Positive(u64),
+}
 
 #[derive(Debug, Clone)]
 pub struct Value {
@@ -58,13 +65,55 @@ impl Value {
     }
 
     pub fn as_f64(&self) -> Result<f64> {
-        if self.is_repr_as_f64() || self.is_repr_as_i32() {
+        if self.is_number() {
             let mut ret = 0_f64;
             unsafe { JS_ToFloat64(self.context, &mut ret, self.value) };
             Ok(ret)
         } else {
             Err(anyhow!("Can't represent {:?} as f64", self.value))
         }
+    }
+
+    pub fn as_big_int_unchecked(&self) -> Result<BigInt> {
+        if self.is_signed_big_int() {
+            let v = self.bigint_as_i64()?;
+            Ok(BigInt::Negative(v))
+        } else {
+            let v = self.bigint_as_u64()?;
+            Ok(BigInt::Positive(v))
+        }
+    }
+
+    fn is_signed_big_int(&self) -> bool {
+        unsafe { JS_BigIntSigned(self.context, self.value) == 1 }
+    }
+
+    fn bigint_as_i64(&self) -> Result<i64> {
+        let mut ret = 0_i64;
+        let err = unsafe { JS_BigIntToInt64(self.context, &mut ret, self.value) };
+        if err < 0 {
+            let exception = self.as_exception()?;
+            return Err(exception.into_error());
+        }
+        Ok(ret)
+    }
+
+    fn bigint_as_u64(&self) -> Result<u64> {
+        let mut ret = 0_u64;
+        let err = unsafe { JS_BigIntToUint64(self.context, &mut ret, self.value) };
+        if err < 0 {
+            let exception = self.as_exception()?;
+            return Err(exception.into_error());
+        }
+        Ok(ret)
+    }
+
+    pub fn is_number(&self) -> bool {
+        self.is_repr_as_f64() || self.is_repr_as_i32()
+    }
+
+    pub fn is_big_int(&self) -> bool {
+        self.get_tag() == JS_TAG_BIG_INT
     }
 
     pub fn as_bool(&self) -> Result<bool> {
@@ -192,7 +241,10 @@ impl Value {
 
 #[cfg(test)]
 mod tests {
+    use crate::js_binding::constants;
+
     use super::super::context::Context;
+    use super::BigInt;
     use anyhow::Result;
     const SCRIPT_NAME: &str = "value.js";
 
@@ -357,5 +409,122 @@ mod tests {
 
         let v = ctx.value_from_i32(1337).unwrap();
         assert!(!v.is_null_or_undefined());
+    }
+
+    #[test]
+    fn test_i64() {
+        let ctx = Context::default();
+
+        let max = i64::MAX;
+        let v = ctx.value_from_i64(max).unwrap();
+        assert!(v.is_big_int());
+        assert!(!v.is_number());
+        assert_eq!(
+            BigInt::Positive(max as u64),
+            v.as_big_int_unchecked().unwrap()
+        );
+
+        let min = i64::MIN;
+        let v = ctx.value_from_i64(min).unwrap();
+        assert!(v.is_big_int());
+        assert!(!v.is_number());
+        assert_eq!(BigInt::Negative(min), v.as_big_int_unchecked().unwrap())
+    }
+
+    #[test]
+    fn test_u64() {
+        let ctx = Context::default();
+
+        let max = u64::MAX;
+        let v = ctx.value_from_u64(max).unwrap();
+        assert!(v.is_big_int());
+        assert!(!v.is_number());
+        assert_eq!(BigInt::Positive(max), v.as_big_int_unchecked().unwrap());
+
+        let min = u64::MIN;
+        let v = ctx.value_from_u64(min).unwrap();
+        assert!(v.is_big_int());
+        assert!(!v.is_number());
+        assert_eq!(BigInt::Positive(min), v.as_big_int_unchecked().unwrap())
+    }
+
+    #[test]
+    fn test_value_larger_than_u64_max_is_clamped() {
+        let ctx = Context::default();
+
+        ctx.eval_global("main", "var num = BigInt(\"18446744073709551616\");")
+            .unwrap(); // u64::MAX + 1
+        let num = ctx.global_object().unwrap().get_property("num").unwrap();
+
+        assert!(num.is_big_int());
+        assert_eq!(
+            BigInt::Positive(u64::MAX),
+            num.as_big_int_unchecked().unwrap()
+        );
+    }
+
+    #[test]
+    fn test_value_smaller_than_i64_min_is_clamped() {
+        let ctx = Context::default();
+
+        ctx.eval_global("main", "var num = BigInt(\"-9223372036854775809\");")
+            .unwrap(); // i64::MIN - 1
+        let num = ctx.global_object().unwrap().get_property("num").unwrap();
+
+        assert!(num.is_big_int());
+        assert_eq!(
+            BigInt::Negative(i64::MIN),
+            num.as_big_int_unchecked().unwrap()
+        );
+    }
+
+    #[test]
+    #[ignore]
+    fn test_u64_i_have_no_idea_what_is_going_on() {
+        let ctx = Context::default();
+
+        let expected = i64::MAX as u64 + 2;
+        let v = ctx.value_from_u64(expected).unwrap();
+
+        assert!(v.is_big_int());
+        assert_eq!(
+            BigInt::Positive(expected),
+            v.as_big_int_unchecked().unwrap()
+        );
+    }
+
+    #[test]
+    #[ignore]
+    fn test_math_mode_u64() {
+        let ctx = Context::default();
+        let val = constants::MAX_SAFE_INTEGER as u64;
+        let v = ctx.value_from_u64(val).unwrap();
+        assert!(v.is_big_int());
+        assert!(!v.is_number());
+
+        // switch to "math mode". This should never be used since not standardized!!!
+        // this test is just a sanity check to assert what QuickJS is really doing.
+        let ctx = Context::default();
+        ctx.eval_global("main", "\"use math\";").unwrap();
+        let v = ctx.value_from_u64(val).unwrap();
+        assert!(!v.is_big_int());
+        assert!(v.is_number());
+    }
+
+    #[test]
+    #[ignore]
+    fn test_math_mode_i64() {
+        let ctx = Context::default();
+        let val = constants::MAX_SAFE_INTEGER;
+        let v = ctx.value_from_i64(val).unwrap();
+        assert!(v.is_big_int());
+        assert!(!v.is_number());
+
+        // switch to "math mode". This should never be used since not standardized!!!
+        // this test is just a sanity check to assert what QuickJS is really doing.
+        ctx.eval_global("main", "\"use math\";").unwrap();
+        let v = ctx.value_from_i64(val).unwrap();
+        assert!(!v.is_big_int());
+        assert!(v.is_number());
     }
 }

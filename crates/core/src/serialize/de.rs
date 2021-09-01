@@ -1,4 +1,4 @@
-use crate::js_binding::{properties::Properties, value::Value};
+use crate::js_binding::{properties::Properties, value::BigInt, value::Value};
 use crate::serialize::err::{Error, Result};
 use anyhow::anyhow;
 use serde::de::{self, Error as SerError};
@@ -35,6 +35,14 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
     {
         if self.value.is_repr_as_i32() {
             return visitor.visit_i32(self.value.as_i32_unchecked());
+        }
+
+        if self.value.is_big_int() {
+            let v = self.value.as_big_int_unchecked()?;
+            return match v {
+                BigInt::Negative(v) => visitor.visit_i64(v),
+                BigInt::Positive(v) => visitor.visit_u64(v),
+            };
         }
 
         if self.value.is_repr_as_f64() {
@@ -289,5 +297,35 @@ mod tests {
         assert_eq!(3, *actual.get("foo_bar").unwrap());
         assert_eq!(4, *actual.get("joyeux_noël").unwrap());
         assert_eq!(5, *actual.get("kebab_case").unwrap());
+    }
+
+    #[test]
+    fn test_u64_bounds() {
+        let context = Context::default();
+
+        let max = u64::MAX;
+        let val = context.value_from_u64(max).unwrap();
+        let actual = deserialize_value::<u64>(val);
+        assert_eq!(max, actual);
+
+        let min = u64::MIN;
+        let val = context.value_from_u64(min).unwrap();
+        let actual = deserialize_value::<u64>(val);
+        assert_eq!(min, actual);
+    }
+
+    #[test]
+    fn test_i64_bounds() {
+        let context = Context::default();
+
+        let max = i64::MAX;
+        let val = context.value_from_i64(max).unwrap();
+        let actual = deserialize_value::<i64>(val);
+        assert_eq!(max, actual);
+
+        let min = i64::MIN;
+        let val = context.value_from_i64(min).unwrap();
+        let actual = deserialize_value::<i64>(val);
+        assert_eq!(min, actual);
     }
 }

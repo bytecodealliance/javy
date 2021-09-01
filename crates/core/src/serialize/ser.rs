@@ -53,8 +53,13 @@ impl<'a> ser::Serializer for &'a mut Serializer<'_> {
         Ok(())
     }
 
-    fn serialize_i64(self, _v: i64) -> Result<()> {
-        unreachable!()
+    fn serialize_i64(self, v: i64) -> Result<()> {
+        // if (MIN_SAFE_INTEGER..MAX_SAFE_INTEGER).contains(v) {
+        //     self.value = self.context.value_from_f64(f64::try_from(v).unwrap())?;
+        // } else {
+        self.value = self.context.value_from_i64(v)?;
+        // }
+        Ok(())
     }
 
     fn serialize_u8(self, v: u8) -> Result<()> {
@@ -69,8 +74,13 @@ impl<'a> ser::Serializer for &'a mut Serializer<'_> {
         self.serialize_f64(f64::from(v))
     }
 
-    fn serialize_u64(self, _v: u64) -> Result<()> {
-        unreachable!()
+    fn serialize_u64(self, v: u64) -> Result<()> {
+        // if v < MAX_SAFE_INTEGER as u64 {
+        //     self.value = self.context.value_from_f64(f64::try_from(v).unwrap());
+        // } else {
+        self.value = self.context.value_from_u64(v)?;
+        // }
+        Ok(())
     }
 
     fn serialize_f32(self, v: f32) -> Result<()> {
@@ -370,6 +380,20 @@ mod tests {
             Ok(serializer.value.is_repr_as_i32())
         }
 
+        fn test_i64(v: i64) -> Result<bool> {
+            let context = Context::default();
+            let mut serializer = ValueSerializer::from_context(&context)?;
+            serializer.serialize_i64(v)?;
+            Ok(serializer.value.is_big_int())
+        }
+
+        fn test_u64(v: u64) -> Result<bool> {
+            let context = Context::default();
+            let mut serializer = ValueSerializer::from_context(&context)?;
+            serializer.serialize_u64(v)?;
+            Ok(serializer.value.is_big_int())
+        }
+
         fn test_u16(v: u16) -> Result<bool> {
             let context = Context::default();
             let mut serializer = ValueSerializer::from_context(&context)?;
@@ -390,6 +414,34 @@ mod tests {
                 Ok(serializer.value.is_repr_as_f64())
             } else {
                 Ok(serializer.value.is_repr_as_i32())
+            }
+        }
+
+        fn test_f32(v: f32) -> Result<bool> {
+            let context = Context::default();
+            let mut serializer = ValueSerializer::from_context(&context)?;
+            serializer.serialize_f32(v)?;
+
+            if v == 0.0_f32 {
+                if v.is_sign_positive() {
+                    return  Ok(serializer.value.is_repr_as_i32());
+                }
+
+
+                if v.is_sign_negative() {
+                    return Ok(serializer.value.is_repr_as_f64());
+                }
+            }
+
+            // The same (int) optimization is happening at this point,
+            // but here we need to account for signs
+            let zero_fractional_part = v.fract() == 0.0;
+            let range = (i32::MIN as f32)..=(i32::MAX as f32);
+
+            if zero_fractional_part && range.contains(&v) {
+                Ok(serializer.value.is_repr_as_i32())
+            } else {
+                Ok(serializer.value.is_repr_as_f64())
             }
         }
 
