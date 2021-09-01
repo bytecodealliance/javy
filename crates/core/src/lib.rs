@@ -3,7 +3,7 @@ mod js_binding;
 mod serialize;
 mod transcode;
 
-use js_binding::{context::Context, globals::register_globals, value::Value};
+use js_binding::{context::Context, value::Value};
 
 use once_cell::sync::OnceCell;
 use std::io;
@@ -30,7 +30,7 @@ pub extern "C" fn init() {
     let script_name = input.clone();
     unsafe {
         let mut context = Context::default();
-        register_globals(&mut context, io::stdout()).unwrap();
+        context.register_globals(io::stdout()).unwrap();
 
         let contents = fs::read_to_string::<PathBuf>(input.into()).unwrap();
 
