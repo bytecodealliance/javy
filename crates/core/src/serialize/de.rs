@@ -28,7 +28,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
         V: de::Visitor<'de>,
     {
         if self.value.is_repr_as_i32() {
-            return visitor.visit_i32(self.value.inner() as i32);
+            return visitor.visit_i32(self.value.as_i32());
         }
 
         if self.value.is_repr_as_f64() {
@@ -52,7 +52,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
 
         if self.value.is_array() {
             let val = self.value.get_property("length")?;
-            let length = val.inner() as u32;
+            let length = val.as_u32();
             let seq = self.value.clone();
             let seq_access = SeqAccess {
                 de: self,

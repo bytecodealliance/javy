@@ -34,6 +34,29 @@ impl Value {
         Self { context, value }
     }
 
+    pub fn call(&self, receiver: &Self, args: &[Self]) -> Result<Self> {
+        let args: Vec<JSValue> = args.iter().map(|v| v.value).collect();
+        let return_val = unsafe {
+            JS_Call(
+                self.context,
+                self.value,
+                receiver.value,
+                args.len() as i32,
+                args.as_slice().as_ptr() as *mut JSValue,
+            )
+        };
+
+        Self::new(self.context, return_val)
+    }
+
+    pub fn as_i32(&self) -> i32 {
+        self.value as i32
+    }
+
+    pub fn as_u32(&self) -> u32 {
+        self.value as u32
+    }
+
     pub fn as_f64(&self) -> Result<f64> {
         if self.is_repr_as_f64() || self.is_repr_as_i32() {
             let mut ret = 0_f64;
@@ -61,10 +84,6 @@ impl Value {
             let buffer = std::slice::from_raw_parts(ptr, len);
             std::str::from_utf8(buffer).map_err(Into::into)
         }
-    }
-
-    pub fn inner(&self) -> JSValue {
-        self.value
     }
 
     pub fn properties(&self) -> Result<Properties> {

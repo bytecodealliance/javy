@@ -17,7 +17,7 @@ pub struct Properties {
 }
 
 impl Properties {
-    pub fn new(context: *mut JSContext, value: JSValue) -> Result<Self> {
+    pub(super) fn new(context: *mut JSContext, value: JSValue) -> Result<Self> {
         let flags = (JS_GPN_STRING_MASK | JS_GPN_SYMBOL_MASK | JS_GPN_ENUM_ONLY) as i32;
         let mut property_enum: *mut JSPropertyEnum = ptr::null_mut();
         let mut length = 0;
