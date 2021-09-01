@@ -1,14 +1,13 @@
+use super::exception::Exception;
 use super::properties::Properties;
 use anyhow::{anyhow, Result};
 use quickjs_sys::{
     size_t as JS_size_t, JSContext, JSValue, JS_DefinePropertyValueStr,
-    JS_DefinePropertyValueUint32, JS_GetPropertyStr, JS_GetPropertyUint32,
-    JS_IsArray, JS_IsFloat64_Ext, JS_ToCStringLen2, JS_ToFloat64, JS_PROP_C_W_E,
-    JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_NULL, JS_TAG_OBJECT, JS_TAG_STRING,
-    JS_TAG_UNDEFINED,
+    JS_DefinePropertyValueUint32, JS_GetPropertyStr, JS_GetPropertyUint32, JS_IsArray,
+    JS_IsFloat64_Ext, JS_ToCStringLen2, JS_ToFloat64, JS_PROP_C_W_E, JS_TAG_BOOL, JS_TAG_EXCEPTION,
+    JS_TAG_INT, JS_TAG_NULL, JS_TAG_OBJECT, JS_TAG_STRING, JS_TAG_UNDEFINED,
 };
 use std::ffi::CString;
-use super::exception::Exception;
 
 #[derive(Debug, Clone)]
 pub struct Value {
@@ -220,16 +219,26 @@ mod tests {
     fn test_value_set_property_returns_exception() {
         let ctx = Context::default();
         let val = ctx.value_from_i32(1337).unwrap();
-        let err = val.set_property("foo", ctx.value_from_str("hello").unwrap()).unwrap_err();
-        assert_eq!("Uncaught TypeError: not an object\n".to_string(), err.to_string());
+        let err = val
+            .set_property("foo", ctx.value_from_str("hello").unwrap())
+            .unwrap_err();
+        assert_eq!(
+            "Uncaught TypeError: not an object\n".to_string(),
+            err.to_string()
+        );
     }
 
     #[test]
     fn test_value_append_property_returns_exception() {
         let ctx = Context::default();
         let val = ctx.value_from_i32(1337).unwrap();
-        let err = val.append_property(ctx.value_from_str("hello").unwrap()).unwrap_err();
-        assert_eq!("Uncaught TypeError: not an object\n".to_string(), err.to_string());
+        let err = val
+            .append_property(ctx.value_from_str("hello").unwrap())
+            .unwrap_err();
+        assert_eq!(
+            "Uncaught TypeError: not an object\n".to_string(),
+            err.to_string()
+        );
     }
 
     #[test]

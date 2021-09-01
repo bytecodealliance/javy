@@ -27,7 +27,7 @@ impl Properties {
 
         if ret < 0 {
             let exception = Exception::new(context)?;
-            return Err(exception.into_error())
+            return Err(exception.into_error());
         }
 
         Ok(Self {
@@ -117,6 +117,9 @@ mod tests {
         let context = Context::default();
         let val = context.value_from_i32(1_i32).unwrap();
         let err = val.properties().unwrap_err();
-        assert_eq!("Uncaught TypeError: not an object\n".to_string(), err.to_string());
+        assert_eq!(
+            "Uncaught TypeError: not an object\n".to_string(),
+            err.to_string()
+        );
     }
 }

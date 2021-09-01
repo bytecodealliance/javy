@@ -1,9 +1,7 @@
-use std::fmt;
-use quickjs_sys::{
-    JSContext, JS_GetException, JS_IsError,
-};
-use anyhow::{Result, anyhow};
 use super::value::Value;
+use anyhow::{anyhow, Result};
+use quickjs_sys::{JSContext, JS_GetException, JS_IsError};
+use std::fmt;
 
 #[derive(Debug)]
 pub struct Exception {
