@@ -29,9 +29,13 @@ mod tests {
             Ok(expected == actual)
         }
 
-        fn test_f32(expected: f32) -> Result<bool> {
+        fn test_f32(expected: f32) -> quickcheck::TestResult {
+            if expected.is_nan() {
+                return quickcheck::TestResult::discard();
+            }
+
             let actual = do_roundtrip::<_, f32>(&expected);
-            Ok(expected == actual)
+            quickcheck::TestResult::from_bool(expected == actual)
         }
 
         fn test_i32(expected: i32) -> Result<bool> {
