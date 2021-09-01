@@ -1,8 +1,7 @@
 mod engine;
-mod input;
 mod js_binding;
-mod output;
 mod serialize;
+mod transcode;
 
 use js_binding::{context::Context, globals::register_globals, value::Value};
 
@@ -10,6 +9,7 @@ use once_cell::sync::OnceCell;
 use std::io;
 use std::path::PathBuf;
 use std::{env, fs};
+use transcode::{transcode_input, transcode_output};
 
 #[cfg(not(test))]
 #[global_allocator]
@@ -53,14 +53,14 @@ pub extern "C" fn run() {
         let main = ENTRYPOINT.1.get().unwrap();
         let input_bytes = engine::load().expect("Couldn't load input");
 
-        let input_value = input::prepare(&context, &input_bytes).unwrap();
+        let input_value = transcode_input(&context, &input_bytes).unwrap();
         let output_value = context.call(&main, &shopify, &[input_value]);
 
         if output_value.is_err() {
             panic!("{}", output_value.unwrap_err().to_string());
         }
 
-        let output = output::prepare(output_value.unwrap()).unwrap();
+        let output = transcode_output(output_value.unwrap()).unwrap();
         engine::store(&output).expect("Couldn't store output");
     }
 }
