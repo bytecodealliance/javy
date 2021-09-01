@@ -1,14 +1,15 @@
 use super::value::Value;
 use anyhow::Result;
 use quickjs_sys::{
-    ext_js_null, ext_js_undefined, JSCFunctionData, JSContext, JSRuntime, JSValue, JS_Call,
-    JS_Eval, JS_GetGlobalObject, JS_NewArray, JS_NewBool_Ext, JS_NewCFunctionData, JS_NewContext,
-    JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewObject, JS_NewRuntime, JS_NewStringLen,
-    JS_NewUint32_Ext, JS_EVAL_TYPE_GLOBAL, JS_ToCStringLen2, JS_FreeCString, ext_js_exception, size_t as JS_size_t
+    ext_js_exception, ext_js_null, ext_js_undefined, size_t as JS_size_t, JSCFunctionData,
+    JSContext, JSRuntime, JSValue, JS_Call, JS_Eval, JS_FreeCString, JS_GetGlobalObject,
+    JS_NewArray, JS_NewBool_Ext, JS_NewCFunctionData, JS_NewContext, JS_NewFloat64_Ext,
+    JS_NewInt32_Ext, JS_NewObject, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext,
+    JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL,
 };
 use std::ffi::CString;
-use std::os::raw::{c_char, c_int, c_void};
 use std::io::Write;
+use std::os::raw::{c_char, c_int, c_void};
 
 #[derive(Debug)]
 pub struct Context {
@@ -150,7 +151,6 @@ impl Context {
         Ok(())
     }
 }
-
 
 fn console_log_to<T>(
     mut stream: T,
