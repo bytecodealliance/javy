@@ -19,6 +19,25 @@ mod tests {
             Ok(expected == actual)
         }
 
+        fn test_u8(expected: u8) -> Result<bool> {
+            let actual = do_roundtrip::<_, u8>(&expected);
+            Ok(expected == actual)
+        }
+
+        fn test_u16(expected: u16) -> Result<bool> {
+            let actual = do_roundtrip::<_, u16>(&expected);
+            Ok(expected == actual)
+        }
+
+        fn test_f32(expected: f32) -> quickcheck::TestResult {
+            if expected.is_nan() {
+                return quickcheck::TestResult::discard();
+            }
+
+            let actual = do_roundtrip::<_, f32>(&expected);
+            quickcheck::TestResult::from_bool(expected == actual)
+        }
+
         fn test_i32(expected: i32) -> Result<bool> {
             let actual = do_roundtrip::<_, i32>(&expected);
             Ok(expected == actual)
