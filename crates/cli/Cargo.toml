@@ -21,4 +21,5 @@ wasmtime = "0.29"
 wasmtime-wasi = "0.29"
 rmp-serde = "0.15"
 uuid = { version = "0.8", features = ["v4"] }
+lazy_static = "1.4"
 

@@ -1038,6 +1038,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "binaries",
+ "lazy_static",
  "rmp-serde",
  "structopt",
  "tempfile",

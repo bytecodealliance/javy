@@ -38,7 +38,6 @@ impl Default for Runner {
 
 impl Runner {
     pub fn new(js_file: impl AsRef<Path>) -> Self {
-        // generate a random file name to be able to run the tests concurrently.
         let wasm_file_name = format!("{}.wasm", uuid::Uuid::new_v4());
 
         let root = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
