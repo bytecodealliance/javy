@@ -1,10 +1,12 @@
 use crate::js_binding::{properties::Properties, value::Value};
 use crate::serialize::err::{Error, Result};
 use anyhow::anyhow;
-use serde::de;
+use serde::de::{self, Error as SerError};
 use serde::forward_to_deserialize_any;
 
-impl de::Error for Error {
+use super::sanitize_key;
+
+impl SerError for Error {
     fn custom<T: std::fmt::Display>(msg: T) -> Self {
         Error::Custom(anyhow!(msg.to_string()))
     }
@@ -12,11 +14,15 @@ impl de::Error for Error {
 
 pub struct Deserializer {
     value: Value,
+    map_key: bool,
 }
 
 impl From<Value> for Deserializer {
     fn from(value: Value) -> Self {
-        Self { value }
+        Self {
+            value,
+            map_key: false,
+        }
     }
 }
 
@@ -28,7 +34,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
         V: de::Visitor<'de>,
     {
         if self.value.is_repr_as_i32() {
-            return visitor.visit_i32(self.value.inner() as i32);
+            return visitor.visit_i32(self.value.as_i32_unchecked());
         }
 
         if self.value.is_repr_as_f64() {
@@ -46,8 +52,14 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
         }
 
         if self.value.is_str() {
-            let val = self.value.as_str()?;
-            return visitor.visit_str(&val);
+            if self.map_key {
+                self.map_key = false;
+                let key = sanitize_key(&self.value, convert_case::Case::Snake)?;
+                return visitor.visit_str(key.as_str());
+            } else {
+                let val = self.value.as_str()?;
+                return visitor.visit_str(&val);
+            }
         }
 
         if self.value.is_array() {
@@ -133,6 +145,7 @@ impl<'a, 'de> de::MapAccess<'de> for MapAccess<'a> {
     {
         if let Some(key) = self.properties.next_key()? {
             self.de.value = key;
+            self.de.map_key = true;
             seed.deserialize(&mut *self.de).map(Some)
         } else {
             Ok(None)
@@ -174,6 +187,8 @@ impl<'a, 'de> de::SeqAccess<'de> for SeqAccess<'a> {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::BTreeMap;
+
     use super::Deserializer as ValueDeserializer;
     use crate::js_binding::context::Context;
     use crate::js_binding::value::Value;
@@ -225,5 +240,54 @@ mod tests {
         let val = context.value_from_f64(f64::NEG_INFINITY).unwrap();
         let actual = deserialize_value::<f64>(val);
         assert!(actual.is_infinite() && actual.is_sign_negative());
+    }
+
+    #[test]
+    fn test_map_always_converts_keys_to_string() {
+        // Sanity check to make sure the quickjs VM always store object
+        // object keys as a string an not a numerical value.
+        let context = Context::default();
+        context.eval_global("main", "var a = {1337: 42};").unwrap();
+        let val = context.global_object().unwrap().get_property("a").unwrap();
+
+        let actual = deserialize_value::<BTreeMap<String, i32>>(val);
+
+        assert_eq!(42, *actual.get("1337").unwrap())
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_map_does_not_support_non_string_keys() {
+        // Sanity check to make sure it's not possible to deserialize
+        // to a map where keys are not strings (e.g. numerical value).
+        let context = Context::default();
+        context.eval_global("main", "var a = {1337: 42};").unwrap();
+        let val = context.global_object().unwrap().get_property("a").unwrap();
+
+        deserialize_value::<BTreeMap<i32, i32>>(val);
+    }
+
+    #[test]
+    fn test_map_keys_are_converted_to_snake_case() {
+        let context = Context::default();
+        let val = context.object_value().unwrap();
+        val.set_property("hello_wold", context.value_from_i32(1).unwrap())
+            .unwrap();
+        val.set_property("toto", context.value_from_i32(2).unwrap())
+            .unwrap();
+        val.set_property("fooBar", context.value_from_i32(3).unwrap())
+            .unwrap();
+        val.set_property("Joyeux Noël", context.value_from_i32(4).unwrap())
+            .unwrap();
+        val.set_property("kebab-case", context.value_from_i32(5).unwrap())
+            .unwrap();
+
+        let actual = deserialize_value::<BTreeMap<String, i32>>(val);
+
+        assert_eq!(1, *actual.get("hello_wold").unwrap());
+        assert_eq!(2, *actual.get("toto").unwrap());
+        assert_eq!(3, *actual.get("foo_bar").unwrap());
+        assert_eq!(4, *actual.get("joyeux_noël").unwrap());
+        assert_eq!(5, *actual.get("kebab_case").unwrap());
     }
 }
