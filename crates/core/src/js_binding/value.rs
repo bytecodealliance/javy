@@ -2,7 +2,7 @@ use super::exception::Exception;
 use super::properties::Properties;
 use anyhow::{anyhow, Result};
 use quickjs_sys::{
-    size_t as JS_size_t, JSContext, JSValue, JS_DefinePropertyValueStr,
+    size_t as JS_size_t, JSContext, JSValue, JS_Call, JS_DefinePropertyValueStr,
     JS_DefinePropertyValueUint32, JS_GetPropertyStr, JS_GetPropertyUint32, JS_IsArray,
     JS_IsFloat64_Ext, JS_ToCStringLen2, JS_ToFloat64, JS_PROP_C_W_E, JS_TAG_BOOL, JS_TAG_EXCEPTION,
     JS_TAG_INT, JS_TAG_NULL, JS_TAG_OBJECT, JS_TAG_STRING, JS_TAG_UNDEFINED,
@@ -49,11 +49,11 @@ impl Value {
         Self::new(self.context, return_val)
     }
 
-    pub fn as_i32(&self) -> i32 {
+    pub fn as_i32_unchecked(&self) -> i32 {
         self.value as i32
     }
 
-    pub fn as_u32(&self) -> u32 {
+    pub fn as_u32_unchecked(&self) -> u32 {
         self.value as u32
     }
 
