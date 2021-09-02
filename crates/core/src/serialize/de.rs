@@ -12,19 +12,17 @@ impl SerError for Error {
     }
 }
 
-enum DeserializerValue {
-    Value(Value),
-    MapKey(String),
-}
-
 pub struct Deserializer {
-    value: DeserializerValue,
+    value: Value,
+    map_key: bool,
 }
 
 impl From<Value> for Deserializer {
     fn from(value: Value) -> Self {
-        let value = DeserializerValue::Value(value);
-        Self { value }
+        Self {
+            value,
+            map_key: false,
+        }
     }
 }
 
@@ -35,60 +33,61 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
     where
         V: de::Visitor<'de>,
     {
-        match &self.value {
-            DeserializerValue::MapKey(key) => visitor.visit_str(key.as_str()),
-            DeserializerValue::Value(value) => {
-                if value.is_repr_as_i32() {
-                    return visitor.visit_i32(value.as_i32());
-                }
+        if self.value.is_repr_as_i32() {
+            return visitor.visit_i32(self.value.as_i32_unchecked());
+        }
 
-                if value.is_repr_as_f64() {
-                    let val = value.as_f64()?;
-                    return visitor.visit_f64(val);
-                }
+        if self.value.is_repr_as_f64() {
+            let val = self.value.as_f64()?;
+            return visitor.visit_f64(val);
+        }
 
-                if value.is_bool() {
-                    let val = value.as_bool()?;
-                    return visitor.visit_bool(val);
-                }
+        if self.value.is_bool() {
+            let val = self.value.as_bool()?;
+            return visitor.visit_bool(val);
+        }
 
-                if value.is_null_or_undefined() {
-                    return visitor.visit_unit();
-                }
+        if self.value.is_null_or_undefined() {
+            return visitor.visit_unit();
+        }
 
-                if value.is_str() {
-                    let val = value.as_str()?;
-                    return visitor.visit_str(&val);
-                }
-
-                if value.is_array() {
-                    let val = value.get_property("length")?;
-                    let length = val.inner() as u32;
-                    let seq = value.clone();
-                    let seq_access = SeqAccess {
-                        de: self,
-                        length,
-                        seq,
-                        index: 0,
-                    };
-                    return visitor.visit_seq(seq_access);
-                }
-
-                if value.is_object() {
-                    let properties = value.properties()?;
-                    let map_access = MapAccess {
-                        de: self,
-                        properties,
-                    };
-                    return visitor.visit_map(map_access);
-                }
-
-                Err(Error::Custom(anyhow!(
-                    "Couldn't deserialize value: {:?}",
-                    value
-                )))
+        if self.value.is_str() {
+            if self.map_key {
+                self.map_key = false;
+                let key = sanitize_key(&self.value, convert_case::Case::Snake)?;
+                return visitor.visit_str(key.as_str());
+            } else {
+                let val = self.value.as_str()?;
+                return visitor.visit_str(&val);
             }
         }
+
+        if self.value.is_array() {
+            let val = self.value.get_property("length")?;
+            let length = val.inner() as u32;
+            let seq = self.value.clone();
+            let seq_access = SeqAccess {
+                de: self,
+                length,
+                seq,
+                index: 0,
+            };
+            return visitor.visit_seq(seq_access);
+        }
+
+        if self.value.is_object() {
+            let properties = self.value.properties()?;
+            let map_access = MapAccess {
+                de: self,
+                properties,
+            };
+            return visitor.visit_map(map_access);
+        }
+
+        Err(Error::Custom(anyhow!(
+            "Couldn't deserialize value: {:?}",
+            self.value
+        )))
     }
 
     fn is_human_readable(&self) -> bool {
@@ -99,17 +98,10 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
     where
         V: de::Visitor<'de>,
     {
-        match &self.value {
-            DeserializerValue::MapKey(_key) => {
-                unreachable!()
-            }
-            DeserializerValue::Value(value) => {
-                if value.is_null_or_undefined() {
-                    visitor.visit_none()
-                } else {
-                    visitor.visit_some(self)
-                }
-            }
+        if self.value.is_null_or_undefined() {
+            visitor.visit_none()
+        } else {
+            visitor.visit_some(self)
         }
     }
 
@@ -152,8 +144,8 @@ impl<'a, 'de> de::MapAccess<'de> for MapAccess<'a> {
         K: de::DeserializeSeed<'de>,
     {
         if let Some(key) = self.properties.next_key()? {
-            let key = sanitize_key(&key, convert_case::Case::Snake)?;
-            self.de.value = DeserializerValue::MapKey(key);
+            self.de.value = key;
+            self.de.map_key = true;
             seed.deserialize(&mut *self.de).map(Some)
         } else {
             Ok(None)
@@ -164,7 +156,7 @@ impl<'a, 'de> de::MapAccess<'de> for MapAccess<'a> {
     where
         V: de::DeserializeSeed<'de>,
     {
-        self.de.value = DeserializerValue::Value(self.properties.next_value()?);
+        self.de.value = self.properties.next_value()?;
         seed.deserialize(&mut *self.de)
     }
 }
@@ -184,7 +176,7 @@ impl<'a, 'de> de::SeqAccess<'de> for SeqAccess<'a> {
         T: de::DeserializeSeed<'de>,
     {
         if self.index < self.length {
-            self.de.value = DeserializerValue::Value(self.seq.get_indexed_property(self.index)?);
+            self.de.value = self.seq.get_indexed_property(self.index)?;
             self.index += 1;
             seed.deserialize(&mut *self.de).map(Some)
         } else {

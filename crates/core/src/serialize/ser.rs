@@ -509,11 +509,11 @@ mod tests {
         map.serialize(&mut serializer).unwrap();
 
         let v = serializer.value;
-        assert_eq!(1, v.get_property("helloWorld").unwrap().as_i32());
-        assert_eq!(2, v.get_property("toto").unwrap().as_i32());
-        assert_eq!(3, v.get_property("fooBar").unwrap().as_i32());
-        assert_eq!(4, v.get_property("joyeuxNoël").unwrap().as_i32());
-        assert_eq!(5, v.get_property("kebabCase").unwrap().as_i32());
+        assert_eq!(1, v.get_property("helloWorld").unwrap().as_i32_unchecked());
+        assert_eq!(2, v.get_property("toto").unwrap().as_i32_unchecked());
+        assert_eq!(3, v.get_property("fooBar").unwrap().as_i32_unchecked());
+        assert_eq!(4, v.get_property("joyeuxNoël").unwrap().as_i32_unchecked());
+        assert_eq!(5, v.get_property("kebabCase").unwrap().as_i32_unchecked());
     }
 
     #[test]

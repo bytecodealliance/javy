@@ -57,7 +57,7 @@ impl Value {
         }
     }
 
-    pub fn as_i32(&self) -> i32 {
+    pub fn as_i32_unchecked(&self) -> i32 {
         self.value as i32
     }
 
