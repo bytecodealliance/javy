@@ -19,7 +19,14 @@ test-core:
 				&& cargo wasi test --features standalone-wasi -- --nocapture \
 				&& cd -
 
-tests: check-benchmarks test-core
+# Test in release mode to skip some debug assertions
+# Note: to make this faster, the engine should be optimized beforehand (wasm-strip + wasm-opt).
+test-cli: core
+		cd crates/cli \
+				&& cargo test --release \
+				&& cd -
+
+tests: check-benchmarks test-core test-cli
 
 fmt: fmt-quickjs-sys fmt-core fmt-cli
 

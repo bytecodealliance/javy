@@ -9,15 +9,13 @@ containers:
 
 steps:
   - label: Tests
-    timeout: 20m
+    timeout: 45m
     cache:
     - $HOME/.cargo
     - target/
     env:
       PROPTEST_TIMEOUT: "180000" # 3mins
     run:
-    - clang --version
-    - clang -print-targets
     - make tests
 
   - label: Fmt
