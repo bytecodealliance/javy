@@ -2,10 +2,10 @@ use super::value::Value;
 use anyhow::Result;
 use quickjs_sys::{
     ext_js_exception, ext_js_null, ext_js_undefined, size_t as JS_size_t, JSCFunctionData,
-    JSContext, JSRuntime, JSValue, JS_Call, JS_Eval, JS_FreeCString, JS_GetGlobalObject,
-    JS_NewArray, JS_NewBool_Ext, JS_NewCFunctionData, JS_NewContext, JS_NewFloat64_Ext,
-    JS_NewInt32_Ext, JS_NewObject, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext,
-    JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL,
+    JSContext, JSRuntime, JSValue, JS_Eval, JS_FreeCString, JS_GetGlobalObject, JS_NewArray,
+    JS_NewBool_Ext, JS_NewCFunctionData, JS_NewContext, JS_NewFloat64_Ext, JS_NewInt32_Ext,
+    JS_NewObject, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext, JS_ToCStringLen2,
+    JS_EVAL_TYPE_GLOBAL,
 };
 use std::ffi::CString;
 use std::io::Write;
@@ -51,28 +51,9 @@ impl Context {
         Value::new(self.inner, raw)
     }
 
-    pub fn inner(&self) -> *mut JSContext {
-        self.inner
-    }
-
     pub fn global_object(&self) -> Result<Value> {
         let raw = unsafe { JS_GetGlobalObject(self.inner) };
         Value::new(self.inner, raw)
-    }
-
-    pub fn call(&self, fun: &Value, receiver: &Value, args: &[Value]) -> Result<Value> {
-        let inner_args: Vec<JSValue> = args.iter().map(|v| v.inner()).collect();
-        let return_val = unsafe {
-            JS_Call(
-                self.inner,
-                fun.inner(),
-                receiver.inner(),
-                args.len() as i32,
-                inner_args.as_slice().as_ptr() as *mut JSValue,
-            )
-        };
-
-        Value::new(self.inner, return_val)
     }
 
     pub fn array_value(&self) -> Result<Value> {
@@ -136,7 +117,7 @@ impl Context {
         let data = &f as *const _ as *mut c_void as *mut JSValue;
 
         let raw = JS_NewCFunctionData(self.inner, trampoline, 0, 1, 1, data);
-        Value::new(self.inner(), raw)
+        Value::new(self.inner, raw)
     }
 
     pub fn register_globals<T>(&mut self, log_stream: T) -> Result<()>
@@ -256,7 +237,7 @@ mod tests {
         let _ = ctx.eval_global(SCRIPT_NAME, contents)?;
         let global = ctx.global_object()?;
         let fun = global.get_property("foo")?;
-        let result = ctx.call(&fun, &global, &[]);
+        let result = fun.call(&global, &[]);
         assert!(result.is_ok());
         Ok(())
     }

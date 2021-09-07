@@ -64,7 +64,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
 
         if self.value.is_array() {
             let val = self.value.get_property("length")?;
-            let length = val.inner() as u32;
+            let length = val.as_u32_unchecked();
             let seq = self.value.clone();
             let seq_access = SeqAccess {
                 de: self,

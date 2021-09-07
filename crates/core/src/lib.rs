@@ -54,7 +54,7 @@ pub extern "C" fn run() {
         let input_bytes = engine::load().expect("Couldn't load input");
 
         let input_value = transcode_input(&context, &input_bytes).unwrap();
-        let output_value = context.call(&main, &shopify, &[input_value]);
+        let output_value = main.call(&shopify, &[input_value]);
 
         if output_value.is_err() {
             panic!("{}", output_value.unwrap_err().to_string());
