@@ -236,6 +236,8 @@ impl Value {
 #[cfg(test)]
 mod tests {
     use crate::js_binding::constants;
+    use crate::js_binding::constants::MAX_SAFE_INTEGER;
+    use crate::js_binding::constants::MIN_SAFE_INTEGER;
 
     use super::super::context::Context;
     use super::BigInt;
@@ -409,37 +411,93 @@ mod tests {
     fn test_i64() {
         let ctx = Context::default();
 
-        let max = i64::MAX;
-        let v = ctx.value_from_i64(max).unwrap();
+        // max
+        let val = i64::MAX;
+        let v = ctx.value_from_i64(val).unwrap();
         assert!(v.is_big_int());
         assert!(!v.is_number());
         assert_eq!(
-            BigInt::Positive(max as u64),
+            BigInt::Positive(val as u64),
             v.as_big_int_unchecked().unwrap()
         );
 
-        let min = i64::MIN;
-        let v = ctx.value_from_i64(min).unwrap();
+        // min
+        let val = i64::MIN;
+        let v = ctx.value_from_i64(val).unwrap();
         assert!(v.is_big_int());
         assert!(!v.is_number());
-        assert_eq!(BigInt::Negative(min), v.as_big_int_unchecked().unwrap())
+        assert_eq!(BigInt::Negative(val), v.as_big_int_unchecked().unwrap());
+
+        // zero
+        let val = 0;
+        let v = ctx.value_from_i64(val).unwrap();
+        assert!(!v.is_big_int());
+        assert!(v.is_number());
+        assert_eq!(val, v.as_i32_unchecked() as i64);
+
+        // MAX_SAFE_INTEGER
+        let val = MAX_SAFE_INTEGER;
+        let v = ctx.value_from_i64(val).unwrap();
+        assert!(!v.is_big_int());
+        assert!(v.is_number());
+        assert_eq!(val, v.as_f64_unchecked() as i64);
+
+        // MAX_SAFE_INTGER + 1
+        let val = MAX_SAFE_INTEGER + 1;
+        let v = ctx.value_from_i64(val).unwrap();
+        assert!(v.is_big_int());
+        assert!(!v.is_number());
+        assert_eq!(
+            BigInt::Positive(val as u64),
+            v.as_big_int_unchecked().unwrap()
+        );
+
+        // MIN_SAFE_INTEGER
+        let val = MIN_SAFE_INTEGER;
+        let v = ctx.value_from_i64(val).unwrap();
+        assert!(!v.is_big_int());
+        assert!(v.is_number());
+        assert_eq!(val, v.as_f64_unchecked() as i64);
+
+        // MIN_SAFE_INTEGER - 1
+        let val = MIN_SAFE_INTEGER - 1;
+        let v = ctx.value_from_i64(val).unwrap();
+        assert!(v.is_big_int());
+        assert!(!v.is_number());
+        assert_eq!(BigInt::Negative(val), v.as_big_int_unchecked().unwrap());
     }
 
     #[test]
     fn test_u64() {
         let ctx = Context::default();
 
-        let max = u64::MAX;
-        let v = ctx.value_from_u64(max).unwrap();
+        // max
+        let val = u64::MAX;
+        let v = ctx.value_from_u64(val).unwrap();
         assert!(v.is_big_int());
         assert!(!v.is_number());
-        assert_eq!(BigInt::Positive(max), v.as_big_int_unchecked().unwrap());
+        assert_eq!(BigInt::Positive(val), v.as_big_int_unchecked().unwrap());
 
-        let min = u64::MIN;
-        let v = ctx.value_from_u64(min).unwrap();
+        // min == 0
+        let val = u64::MIN;
+        let v = ctx.value_from_u64(val).unwrap();
+        assert!(!v.is_big_int());
+        assert!(v.is_number());
+        assert_eq!(val, v.as_i32_unchecked() as u64);
+
+        // MAX_SAFE_INTEGER
+        let val = MAX_SAFE_INTEGER as u64;
+        let v = ctx.value_from_u64(val).unwrap();
+        assert!(!v.is_big_int());
+        assert!(v.is_number());
+        assert_eq!(val, v.as_f64_unchecked() as u64);
+
+        // MAX_SAFE_INTEGER + 1
+        let val = (MAX_SAFE_INTEGER + 1) as u64;
+        let v = ctx.value_from_u64(val).unwrap();
         assert!(v.is_big_int());
         assert!(!v.is_number());
-        assert_eq!(BigInt::Positive(min), v.as_big_int_unchecked().unwrap())
+        assert_eq!(BigInt::Positive(val), v.as_big_int_unchecked().unwrap());
     }
 
     #[test]

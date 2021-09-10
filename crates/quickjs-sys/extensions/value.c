@@ -13,6 +13,10 @@ JSValue JS_NewUint32_Ext(JSContext *ctx, uint32_t val) {
   return JS_NewUint32(ctx, val);
 }
 
+JSValue JS_NewInt64_Ext(JSContext *ctx, int64_t val) {
+  return JS_NewInt64(ctx, val);
+}
+
 JSValue JS_NewFloat64_Ext(JSContext *ctx, double d) {
   return JS_NewFloat64(ctx, d);
 }

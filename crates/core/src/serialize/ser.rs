@@ -356,7 +356,10 @@ mod tests {
     use std::collections::BTreeMap;
 
     use super::Serializer as ValueSerializer;
-    use crate::js_binding::context::Context;
+    use crate::js_binding::{
+        constants::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER},
+        context::Context,
+    };
     use anyhow::Result;
     use quickcheck::quickcheck;
     use serde::{Serialize, Serializer};
@@ -380,14 +383,23 @@ mod tests {
             let context = Context::default();
             let mut serializer = ValueSerializer::from_context(&context)?;
             serializer.serialize_i64(v)?;
-            Ok(serializer.value.is_big_int())
+            if (MIN_SAFE_INTEGER..=MAX_SAFE_INTEGER).contains(&v) {
+                Ok(serializer.value.is_number())
+            } else {
+                Ok(serializer.value.is_big_int())
+            }
         }
 
         fn test_u64(v: u64) -> Result<bool> {
             let context = Context::default();
             let mut serializer = ValueSerializer::from_context(&context)?;
             serializer.serialize_u64(v)?;
-            Ok(serializer.value.is_big_int())
+
+            if v <= MAX_SAFE_INTEGER as u64 {
+                Ok(serializer.value.is_number())
+            } else {
+                Ok(serializer.value.is_big_int())
+            }
         }
 
         fn test_u16(v: u16) -> Result<bool> {
