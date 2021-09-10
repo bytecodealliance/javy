@@ -93,4 +93,9 @@ interface Input {
 # notes
 
 - rmp_serde serializes i64 that are [larger than an i32 as a u64](https://github.com/3Hren/msgpack-rust/blob/aa3c4a77b2b901fe73a555c615b92773b40905fc/rmp/src/encode/sint.rs#L170).
-- TODO: We currently convert from msgpack -> js value numbers that can potentially be nan-boxed instead of converting them to BigInt.
+- rmp_serde serializes to i64 only when values are < i32::MIN.
+- rmp_serde always tries to serializes to the smallest format. See previous section...
+- QuickJS optimises u32 values < i32::MAX and [store them as integer instead of floats](https://github.com/shopify/javy/blob/e00c5efad4abe2a4288517017d46db24ff862e7e/crates/quickjs-sys/quickjs/quickjs.h#L531-L540)
+- QuickJS also optimizes f32, and f64
+- We do not use QuickJS [NewInt64](https://github.com/shopify/javy/blob/e00c5efad4abe2a4288517017d46db24ff862e7e/crates/quickjs-sys/quickjs/quickjs.h#L520-L529), we instead directly create a BigInt value.
+- BigInts are not clamped to MIN/MAX, they instead return an error when they overflow/underflow.

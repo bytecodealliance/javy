@@ -67,8 +67,7 @@ impl<'a> ser::Serializer for &'a mut Serializer<'_> {
     }
 
     fn serialize_u32(self, v: u32) -> Result<()> {
-        // NOTE: this will create number values that will be stored as u32
-        // for values that are greater than i32::MAX.
+        // NOTE: See optimization note in serialize_f64.
         self.serialize_f64(f64::from(v))
     }
 
@@ -78,10 +77,13 @@ impl<'a> ser::Serializer for &'a mut Serializer<'_> {
     }
 
     fn serialize_f32(self, v: f32) -> Result<()> {
+        // NOTE: See optimization note in serialize_f64.
         self.serialize_f64(f64::from(v))
     }
 
     fn serialize_f64(self, v: f64) -> Result<()> {
+        // NOTE: QuickJS will create a number value backed by an i32 when the value is within
+        // the i32::MIN..=i32::MAX as an optimization. Otherwise the value will be backed by a f64.
         self.value = self.context.value_from_f64(v)?;
         Ok(())
     }
