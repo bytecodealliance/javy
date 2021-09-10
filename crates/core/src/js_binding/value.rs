@@ -64,14 +64,10 @@ impl Value {
         self.value as u32
     }
 
-    pub fn as_f64(&self) -> Result<f64> {
-        if self.is_number() {
-            let mut ret = 0_f64;
-            unsafe { JS_ToFloat64(self.context, &mut ret, self.value) };
-            Ok(ret)
-        } else {
-            Err(anyhow!("Can't represent {:?} as f64", self.value))
-        }
+    pub fn as_f64_unchecked(&self) -> f64 {
+        let mut ret = 0_f64;
+        unsafe { JS_ToFloat64(self.context, &mut ret, self.value) };
+        ret
     }
 
     pub fn as_big_int_unchecked(&self) -> Result<BigInt> {
@@ -327,7 +323,7 @@ mod tests {
     #[test]
     fn test_allows_representing_a_value_as_f64() -> Result<()> {
         let ctx = Context::default();
-        let val = ctx.value_from_f64(f64::MIN)?.as_f64()?;
+        let val = ctx.value_from_f64(f64::MIN)?.as_f64_unchecked();
         assert_eq!(val, f64::MIN);
         Ok(())
     }

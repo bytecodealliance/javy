@@ -26,6 +26,22 @@ impl From<Value> for Deserializer {
     }
 }
 
+impl Deserializer {
+    fn deserialize_number<'de, V>(&mut self, visitor: V) -> Result<V::Value>
+    where
+        V: de::Visitor<'de>,
+    {
+        if self.value.is_repr_as_i32() {
+            visitor.visit_i32(self.value.as_i32_unchecked())
+        } else if self.value.is_repr_as_f64() {
+            // TODO: potentially convert back to integer when possible.
+            visitor.visit_f64(self.value.as_f64_unchecked())
+        } else {
+            unreachable!()
+        }
+    }
+}
+
 impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
     type Error = Error;
 
@@ -33,8 +49,8 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
     where
         V: de::Visitor<'de>,
     {
-        if self.value.is_repr_as_i32() {
-            return visitor.visit_i32(self.value.as_i32_unchecked());
+        if self.value.is_number() {
+            return self.deserialize_number(visitor);
         }
 
         if self.value.is_big_int() {
@@ -43,11 +59,6 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
                 BigInt::Negative(v) => visitor.visit_i64(v),
                 BigInt::Positive(v) => visitor.visit_u64(v),
             };
-        }
-
-        if self.value.is_repr_as_f64() {
-            let val = self.value.as_f64()?;
-            return visitor.visit_f64(val);
         }
 
         if self.value.is_bool() {

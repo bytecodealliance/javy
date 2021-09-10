@@ -67,6 +67,8 @@ impl<'a> ser::Serializer for &'a mut Serializer<'_> {
     }
 
     fn serialize_u32(self, v: u32) -> Result<()> {
+        // NOTE: this will create number values that will be stored as u32
+        // for values that are greater than i32::MAX.
         self.serialize_f64(f64::from(v))
     }
 
