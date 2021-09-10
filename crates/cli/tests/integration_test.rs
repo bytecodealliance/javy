@@ -1,10 +1,10 @@
 mod runner;
 
-use runner::Runner;
 use lazy_static::lazy_static;
-use std::sync::Mutex;
+use runner::Runner;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+use std::sync::Mutex;
 
 lazy_static! {
     // We avoid running the tests concurrently since the CLI writes on disk at very specific
@@ -70,8 +70,9 @@ fn test_big_ints() {
 }
 
 fn run<I, O>(r: &mut Runner, i: &I) -> O
-    where I: Serialize,
-          O: DeserializeOwned,
+where
+    I: Serialize,
+    O: DeserializeOwned,
 {
     let input = rmp_serde::to_vec(i).unwrap();
     let output = r.exec(input).unwrap();
