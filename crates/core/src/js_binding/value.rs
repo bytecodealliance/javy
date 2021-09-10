@@ -92,8 +92,7 @@ impl Value {
         let mut ret = 0_i64;
         let err = unsafe { JS_BigIntToInt64(self.context, &mut ret, self.value) };
         if err < 0 {
-            let exception = self.as_exception()?;
-            return Err(exception.into_error());
+            anyhow::bail!("big int underflow, value does not fit in i64");
         }
         Ok(ret)
     }
@@ -102,8 +101,7 @@ impl Value {
         let mut ret = 0_u64;
         let err = unsafe { JS_BigIntToUint64(self.context, &mut ret, self.value) };
         if err < 0 {
-            let exception = self.as_exception()?;
-            return Err(exception.into_error());
+            anyhow::bail!("big int overflow, value does not fit in u64");
         }
         Ok(ret)
     }
@@ -449,7 +447,7 @@ mod tests {
     }
 
     #[test]
-    fn test_value_larger_than_u64_max_is_clamped() {
+    fn test_value_larger_than_u64_max_returns_overflow_error() {
         let ctx = Context::default();
 
         ctx.eval_global("main", "var num = BigInt(\"18446744073709551616\");")
@@ -458,13 +456,13 @@ mod tests {
 
         assert!(num.is_big_int());
         assert_eq!(
-            BigInt::Positive(u64::MAX),
-            num.as_big_int_unchecked().unwrap()
+            "big int overflow, value does not fit in u64",
+            num.as_big_int_unchecked().unwrap_err().to_string()
         );
     }
 
     #[test]
-    fn test_value_smaller_than_i64_min_is_clamped() {
+    fn test_value_smaller_than_i64_min_returns_underflow_error() {
         let ctx = Context::default();
 
         ctx.eval_global("main", "var num = BigInt(\"-9223372036854775809\");")
@@ -473,8 +471,8 @@ mod tests {
 
         assert!(num.is_big_int());
         assert_eq!(
-            BigInt::Negative(i64::MIN),
-            num.as_big_int_unchecked().unwrap()
+            "big int underflow, value does not fit in i64",
+            num.as_big_int_unchecked().unwrap_err().to_string()
         );
     }
 
@@ -515,7 +513,7 @@ mod tests {
     #[ignore]
     fn test_math_mode_i64() {
         let ctx = Context::default();
-        let val = constants::MAX_SAFE_INTEGER;
+        let val = constants::MIN_SAFE_INTEGER;
         let v = ctx.value_from_i64(val).unwrap();
         assert!(v.is_big_int());
         assert!(!v.is_number());

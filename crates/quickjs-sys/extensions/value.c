@@ -34,7 +34,11 @@ JS_BOOL JS_BigIntSigned(JSContext *ctx, JSValue val) {
 // creates a copy of the value and returns it as an int64_t
 static int JS_BigIntToInt64Free(JSContext *ctx, int64_t *pres, JSValue val) {
   JSBigFloat *p = JS_VALUE_GET_PTR(val);
-  bf_get_int64(pres, &p->num, 0);
+  if (bf_get_int64(pres, &p->num, 0) != 0) {
+    JS_FreeValue(ctx, val);
+    return -1;
+  }
+
   JS_FreeValue(ctx, val);
   return 0;
 }
@@ -46,7 +50,11 @@ int JS_BigIntToInt64(JSContext *ctx, int64_t *pres, JSValueConst val) {
 // creates a copy of the value and returns it as an uint64_t
 static int JS_BigIntToUint64Free(JSContext *ctx, uint64_t *pres, JSValue val) {
   JSBigFloat *p = JS_VALUE_GET_PTR(val);
-  bf_get_uint64(pres, &p->num);
+  if (bf_get_uint64(pres, &p->num) != 0) {
+    JS_FreeValue(ctx, val);
+    return -1;
+  }
+
   JS_FreeValue(ctx, val);
   return 0;
 }
