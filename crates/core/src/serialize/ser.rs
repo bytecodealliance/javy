@@ -54,11 +54,7 @@ impl<'a> ser::Serializer for &'a mut Serializer<'_> {
     }
 
     fn serialize_i64(self, v: i64) -> Result<()> {
-        // if (MIN_SAFE_INTEGER..MAX_SAFE_INTEGER).contains(v) {
-        //     self.value = self.context.value_from_f64(f64::try_from(v).unwrap())?;
-        // } else {
         self.value = self.context.value_from_i64(v)?;
-        // }
         Ok(())
     }
 
@@ -75,11 +71,7 @@ impl<'a> ser::Serializer for &'a mut Serializer<'_> {
     }
 
     fn serialize_u64(self, v: u64) -> Result<()> {
-        // if v < MAX_SAFE_INTEGER as u64 {
-        //     self.value = self.context.value_from_f64(f64::try_from(v).unwrap());
-        // } else {
         self.value = self.context.value_from_u64(v)?;
-        // }
         Ok(())
     }
 
