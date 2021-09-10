@@ -75,13 +75,8 @@ mod tests {
         // it has a few shortcomings when it comes to serialization: it is no longer possible to assume that it's safe
         // to serialize it an an integer anymore.
         fn test_u32(expected: u32) -> Result<bool> {
-            if expected > i32::MAX as u32 {
-                let actual = do_roundtrip::<_, f64>(&expected);
-                Ok(f64::from(expected) == actual)
-            } else {
-                let actual = do_roundtrip::<_, u32>(&expected);
-                Ok(expected == actual)
-            }
+            let actual = do_roundtrip::<_, u32>(&expected);
+            Ok(expected == actual)
         }
 
         // This test currently does not work. No idea why :/

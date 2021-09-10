@@ -1,3 +1,4 @@
+use crate::js_binding::constants::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER};
 use crate::js_binding::{properties::Properties, value::BigInt, value::Value};
 use crate::serialize::err::{Error, Result};
 use anyhow::anyhow;
@@ -34,8 +35,13 @@ impl Deserializer {
         if self.value.is_repr_as_i32() {
             visitor.visit_i32(self.value.as_i32_unchecked())
         } else if self.value.is_repr_as_f64() {
-            // TODO: potentially convert back to integer when possible.
-            visitor.visit_f64(self.value.as_f64_unchecked())
+            let v = self.value.as_f64_unchecked();
+            let range = (MIN_SAFE_INTEGER as f64)..=(MAX_SAFE_INTEGER as f64);
+            if v.fract() == 0.0 && range.contains(&v) {
+                visitor.visit_i64(v as i64)
+            } else {
+                visitor.visit_f64(self.value.as_f64_unchecked())
+            }
         } else {
             unreachable!()
         }
@@ -209,6 +215,7 @@ mod tests {
     use std::collections::BTreeMap;
 
     use super::Deserializer as ValueDeserializer;
+    use crate::js_binding::constants::MAX_SAFE_INTEGER;
     use crate::js_binding::context::Context;
     use crate::js_binding::value::Value;
     use serde::de::DeserializeOwned;
@@ -338,5 +345,20 @@ mod tests {
         let val = context.value_from_i64(min).unwrap();
         let actual = deserialize_value::<i64>(val);
         assert_eq!(min, actual);
+    }
+
+    #[test]
+    fn test_float_to_integer_conversion() {
+        let context = Context::default();
+
+        let expected = MAX_SAFE_INTEGER - 1;
+        let val = context.value_from_f64(expected as _).unwrap();
+        let actual = deserialize_value::<i64>(val);
+        assert_eq!(expected, actual);
+
+        let expected = MAX_SAFE_INTEGER + 1;
+        let val = context.value_from_f64(expected as _).unwrap();
+        let actual = deserialize_value::<f64>(val);
+        assert_eq!(expected as f64, actual);
     }
 }
