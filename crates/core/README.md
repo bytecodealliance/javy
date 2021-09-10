@@ -15,15 +15,15 @@ Here's a table that maps the [msgpack specification](https://github.com/msgpack/
 |bin 16|not supported|
 |bin 32|not supported|
 |float 32|number|
-|float 64|not supported|
+|float 64|number|
 |uint 8|number|
 |uint 16|number|
 |uint 32|number|
-|uint 64|bigint|
+|uint 64|number/bigint|
 |int 8|number|
 |int 16|number|
 |int 32|number|
-|int 64|bigint|
+|int 64|number/bigint|
 |str 8|js string|
 |str 16|js string|
 |str 32|js string|
