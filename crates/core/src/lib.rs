@@ -18,6 +18,10 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 static mut JS_CONTEXT: OnceCell<Context> = OnceCell::new();
 static mut ENTRYPOINT: (OnceCell<Value>, OnceCell<Value>) = (OnceCell::new(), OnceCell::new());
 
+#[cfg(not(test))]
+#[no_mangle]
+pub unsafe extern "C" fn _start() {}
+
 // TODO
 //
 // AOT validations:
