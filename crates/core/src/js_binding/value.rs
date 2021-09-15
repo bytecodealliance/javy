@@ -2,12 +2,19 @@ use super::exception::Exception;
 use super::properties::Properties;
 use anyhow::{anyhow, Result};
 use quickjs_sys::{
-    size_t as JS_size_t, JSContext, JSValue, JS_Call, JS_DefinePropertyValueStr,
-    JS_DefinePropertyValueUint32, JS_GetPropertyStr, JS_GetPropertyUint32, JS_IsArray,
-    JS_IsFloat64_Ext, JS_ToCStringLen2, JS_ToFloat64, JS_PROP_C_W_E, JS_TAG_BOOL, JS_TAG_EXCEPTION,
-    JS_TAG_INT, JS_TAG_NULL, JS_TAG_OBJECT, JS_TAG_STRING, JS_TAG_UNDEFINED,
+    size_t as JS_size_t, JSContext, JSValue, JS_BigIntSigned, JS_BigIntToInt64, JS_BigIntToUint64,
+    JS_Call, JS_DefinePropertyValueStr, JS_DefinePropertyValueUint32, JS_GetPropertyStr,
+    JS_GetPropertyUint32, JS_IsArray, JS_IsFloat64_Ext, JS_ToCStringLen2, JS_ToFloat64,
+    JS_PROP_C_W_E, JS_TAG_BIG_INT, JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_NULL,
+    JS_TAG_OBJECT, JS_TAG_STRING, JS_TAG_UNDEFINED,
 };
 use std::ffi::CString;
+
+#[derive(Debug, PartialEq)]
+pub enum BigInt {
+    Signed(i64),
+    Unsigned(u64),
+}
 
 #[derive(Debug, Clone)]
 pub struct Value {
@@ -57,14 +64,50 @@ impl Value {
         self.value as u32
     }
 
-    pub fn as_f64(&self) -> Result<f64> {
-        if self.is_repr_as_f64() || self.is_repr_as_i32() {
-            let mut ret = 0_f64;
-            unsafe { JS_ToFloat64(self.context, &mut ret, self.value) };
-            Ok(ret)
+    pub fn as_f64_unchecked(&self) -> f64 {
+        let mut ret = 0_f64;
+        unsafe { JS_ToFloat64(self.context, &mut ret, self.value) };
+        ret
+    }
+
+    pub fn as_big_int_unchecked(&self) -> Result<BigInt> {
+        if self.is_signed_big_int() {
+            let v = self.bigint_as_i64()?;
+            Ok(BigInt::Signed(v))
         } else {
-            Err(anyhow!("Can't represent {:?} as f64", self.value))
+            let v = self.bigint_as_u64()?;
+            Ok(BigInt::Unsigned(v))
         }
+    }
+
+    fn is_signed_big_int(&self) -> bool {
+        unsafe { JS_BigIntSigned(self.context, self.value) == 1 }
+    }
+
+    fn bigint_as_i64(&self) -> Result<i64> {
+        let mut ret = 0_i64;
+        let err = unsafe { JS_BigIntToInt64(self.context, &mut ret, self.value) };
+        if err < 0 {
+            anyhow::bail!("big int underflow, value does not fit in i64");
+        }
+        Ok(ret)
+    }
+
+    fn bigint_as_u64(&self) -> Result<u64> {
+        let mut ret = 0_u64;
+        let err = unsafe { JS_BigIntToUint64(self.context, &mut ret, self.value) };
+        if err < 0 {
+            anyhow::bail!("big int overflow, value does not fit in u64");
+        }
+        Ok(ret)
+    }
+
+    pub fn is_number(&self) -> bool {
+        self.is_repr_as_f64() || self.is_repr_as_i32()
+    }
+
+    pub fn is_big_int(&self) -> bool {
+        self.get_tag() == JS_TAG_BIG_INT
     }
 
     pub fn as_bool(&self) -> Result<bool> {
@@ -192,7 +235,11 @@ impl Value {
 
 #[cfg(test)]
 mod tests {
+    use crate::js_binding::constants::MAX_SAFE_INTEGER;
+    use crate::js_binding::constants::MIN_SAFE_INTEGER;
+
     use super::super::context::Context;
+    use super::BigInt;
     use anyhow::Result;
     const SCRIPT_NAME: &str = "value.js";
 
@@ -277,7 +324,7 @@ mod tests {
     #[test]
     fn test_allows_representing_a_value_as_f64() -> Result<()> {
         let ctx = Context::default();
-        let val = ctx.value_from_f64(f64::MIN)?.as_f64()?;
+        let val = ctx.value_from_f64(f64::MIN)?.as_f64_unchecked();
         assert_eq!(val, f64::MIN);
         Ok(())
     }
@@ -357,5 +404,142 @@ mod tests {
 
         let v = ctx.value_from_i32(1337).unwrap();
         assert!(!v.is_null_or_undefined());
+    }
+
+    #[test]
+    fn test_i64() {
+        let ctx = Context::default();
+
+        // max
+        let val = i64::MAX;
+        let v = ctx.value_from_i64(val).unwrap();
+        assert!(v.is_big_int());
+        assert!(!v.is_number());
+        assert_eq!(
+            BigInt::Unsigned(val as u64),
+            v.as_big_int_unchecked().unwrap()
+        );
+
+        // min
+        let val = i64::MIN;
+        let v = ctx.value_from_i64(val).unwrap();
+        assert!(v.is_big_int());
+        assert!(!v.is_number());
+        assert_eq!(BigInt::Signed(val), v.as_big_int_unchecked().unwrap());
+
+        // zero
+        let val = 0;
+        let v = ctx.value_from_i64(val).unwrap();
+        assert!(!v.is_big_int());
+        assert!(v.is_number());
+        assert_eq!(val, v.as_i32_unchecked() as i64);
+
+        // MAX_SAFE_INTEGER
+        let val = MAX_SAFE_INTEGER;
+        let v = ctx.value_from_i64(val).unwrap();
+        assert!(!v.is_big_int());
+        assert!(v.is_number());
+        assert_eq!(val, v.as_f64_unchecked() as i64);
+
+        // MAX_SAFE_INTGER + 1
+        let val = MAX_SAFE_INTEGER + 1;
+        let v = ctx.value_from_i64(val).unwrap();
+        assert!(v.is_big_int());
+        assert!(!v.is_number());
+        assert_eq!(
+            BigInt::Unsigned(val as u64),
+            v.as_big_int_unchecked().unwrap()
+        );
+
+        // MIN_SAFE_INTEGER
+        let val = MIN_SAFE_INTEGER;
+        let v = ctx.value_from_i64(val).unwrap();
+        assert!(!v.is_big_int());
+        assert!(v.is_number());
+        assert_eq!(val, v.as_f64_unchecked() as i64);
+
+        // MIN_SAFE_INTEGER - 1
+        let val = MIN_SAFE_INTEGER - 1;
+        let v = ctx.value_from_i64(val).unwrap();
+        assert!(v.is_big_int());
+        assert!(!v.is_number());
+        assert_eq!(BigInt::Signed(val), v.as_big_int_unchecked().unwrap());
+    }
+
+    #[test]
+    fn test_u64() {
+        let ctx = Context::default();
+
+        // max
+        let val = u64::MAX;
+        let v = ctx.value_from_u64(val).unwrap();
+        assert!(v.is_big_int());
+        assert!(!v.is_number());
+        assert_eq!(BigInt::Unsigned(val), v.as_big_int_unchecked().unwrap());
+
+        // min == 0
+        let val = u64::MIN;
+        let v = ctx.value_from_u64(val).unwrap();
+        assert!(!v.is_big_int());
+        assert!(v.is_number());
+        assert_eq!(val, v.as_i32_unchecked() as u64);
+
+        // MAX_SAFE_INTEGER
+        let val = MAX_SAFE_INTEGER as u64;
+        let v = ctx.value_from_u64(val).unwrap();
+        assert!(!v.is_big_int());
+        assert!(v.is_number());
+        assert_eq!(val, v.as_f64_unchecked() as u64);
+
+        // MAX_SAFE_INTEGER + 1
+        let val = (MAX_SAFE_INTEGER + 1) as u64;
+        let v = ctx.value_from_u64(val).unwrap();
+        assert!(v.is_big_int());
+        assert!(!v.is_number());
+        assert_eq!(BigInt::Unsigned(val), v.as_big_int_unchecked().unwrap());
+    }
+
+    #[test]
+    fn test_value_larger_than_u64_max_returns_overflow_error() {
+        let ctx = Context::default();
+
+        ctx.eval_global("main", "var num = BigInt(\"18446744073709551616\");")
+            .unwrap(); // u64::MAX + 1
+        let num = ctx.global_object().unwrap().get_property("num").unwrap();
+
+        assert!(num.is_big_int());
+        assert_eq!(
+            "big int overflow, value does not fit in u64",
+            num.as_big_int_unchecked().unwrap_err().to_string()
+        );
+    }
+
+    #[test]
+    fn test_value_smaller_than_i64_min_returns_underflow_error() {
+        let ctx = Context::default();
+
+        ctx.eval_global("main", "var num = BigInt(\"-9223372036854775809\");")
+            .unwrap(); // i64::MIN - 1
+        let num = ctx.global_object().unwrap().get_property("num").unwrap();
+
+        assert!(num.is_big_int());
+        assert_eq!(
+            "big int underflow, value does not fit in i64",
+            num.as_big_int_unchecked().unwrap_err().to_string()
+        );
+    }
+
+    #[test]
+    fn test_u64_creates_an_unsigned_bigint() {
+        let ctx = Context::default();
+
+        let expected = i64::MAX as u64 + 2;
+        let v = ctx.value_from_u64(expected).unwrap();
+
+        assert!(v.is_big_int());
+        assert_eq!(
+            BigInt::Unsigned(expected),
+            v.as_big_int_unchecked().unwrap()
+        );
     }
 }

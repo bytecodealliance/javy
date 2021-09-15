@@ -1,11 +1,12 @@
+use super::constants::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER};
 use super::value::Value;
 use anyhow::Result;
 use quickjs_sys::{
     ext_js_exception, ext_js_null, ext_js_undefined, size_t as JS_size_t, JSCFunctionData,
     JSContext, JSRuntime, JSValue, JS_Eval, JS_FreeCString, JS_GetGlobalObject, JS_NewArray,
-    JS_NewBool_Ext, JS_NewCFunctionData, JS_NewContext, JS_NewFloat64_Ext, JS_NewInt32_Ext,
-    JS_NewObject, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext, JS_ToCStringLen2,
-    JS_EVAL_TYPE_GLOBAL,
+    JS_NewBigInt64, JS_NewBool_Ext, JS_NewCFunctionData, JS_NewContext, JS_NewFloat64_Ext,
+    JS_NewInt32_Ext, JS_NewInt64_Ext, JS_NewObject, JS_NewRuntime, JS_NewStringLen,
+    JS_NewUint32_Ext, JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL,
 };
 use std::ffi::CString;
 use std::io::Write;
@@ -74,6 +75,26 @@ impl Context {
     pub fn value_from_i32(&self, val: i32) -> Result<Value> {
         let raw = unsafe { JS_NewInt32_Ext(self.inner, val) };
         Value::new(self.inner, raw)
+    }
+
+    pub fn value_from_i64(&self, val: i64) -> Result<Value> {
+        let raw = if (MIN_SAFE_INTEGER..=MAX_SAFE_INTEGER).contains(&val) {
+            unsafe { JS_NewInt64_Ext(self.inner, val) }
+        } else {
+            unsafe { JS_NewBigInt64(self.inner, val) }
+        };
+        Value::new(self.inner, raw)
+    }
+
+    pub fn value_from_u64(&self, val: u64) -> Result<Value> {
+        if val <= MAX_SAFE_INTEGER as u64 {
+            let raw = unsafe { JS_NewInt64_Ext(self.inner, val as i64) };
+            Value::new(self.inner, raw)
+        } else {
+            let value = self.value_from_str(&val.to_string())?;
+            let bigint = self.global_object()?.get_property("BigInt")?;
+            bigint.call(&bigint, &[value])
+        }
     }
 
     pub fn value_from_u32(&self, val: u32) -> Result<Value> {

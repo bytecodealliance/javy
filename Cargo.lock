@@ -1046,6 +1046,7 @@ dependencies = [
  "binaries",
  "lazy_static",
  "rmp-serde",
+ "serde",
  "structopt",
  "tempfile",
  "uuid",

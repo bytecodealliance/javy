@@ -53,8 +53,9 @@ impl<'a> ser::Serializer for &'a mut Serializer<'_> {
         Ok(())
     }
 
-    fn serialize_i64(self, _v: i64) -> Result<()> {
-        unreachable!()
+    fn serialize_i64(self, v: i64) -> Result<()> {
+        self.value = self.context.value_from_i64(v)?;
+        Ok(())
     }
 
     fn serialize_u8(self, v: u8) -> Result<()> {
@@ -66,18 +67,23 @@ impl<'a> ser::Serializer for &'a mut Serializer<'_> {
     }
 
     fn serialize_u32(self, v: u32) -> Result<()> {
+        // NOTE: See optimization note in serialize_f64.
         self.serialize_f64(f64::from(v))
     }
 
-    fn serialize_u64(self, _v: u64) -> Result<()> {
-        unreachable!()
+    fn serialize_u64(self, v: u64) -> Result<()> {
+        self.value = self.context.value_from_u64(v)?;
+        Ok(())
     }
 
     fn serialize_f32(self, v: f32) -> Result<()> {
+        // NOTE: See optimization note in serialize_f64.
         self.serialize_f64(f64::from(v))
     }
 
     fn serialize_f64(self, v: f64) -> Result<()> {
+        // NOTE: QuickJS will create a number value backed by an i32 when the value is within
+        // the i32::MIN..=i32::MAX as an optimization. Otherwise the value will be backed by a f64.
         self.value = self.context.value_from_f64(v)?;
         Ok(())
     }
@@ -350,7 +356,10 @@ mod tests {
     use std::collections::BTreeMap;
 
     use super::Serializer as ValueSerializer;
-    use crate::js_binding::context::Context;
+    use crate::js_binding::{
+        constants::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER},
+        context::Context,
+    };
     use anyhow::Result;
     use quickcheck::quickcheck;
     use serde::{Serialize, Serializer};
@@ -368,6 +377,29 @@ mod tests {
             let mut serializer = ValueSerializer::from_context(&context)?;
             serializer.serialize_i32(v)?;
             Ok(serializer.value.is_repr_as_i32())
+        }
+
+        fn test_i64(v: i64) -> Result<bool> {
+            let context = Context::default();
+            let mut serializer = ValueSerializer::from_context(&context)?;
+            serializer.serialize_i64(v)?;
+            if (MIN_SAFE_INTEGER..=MAX_SAFE_INTEGER).contains(&v) {
+                Ok(serializer.value.is_number())
+            } else {
+                Ok(serializer.value.is_big_int())
+            }
+        }
+
+        fn test_u64(v: u64) -> Result<bool> {
+            let context = Context::default();
+            let mut serializer = ValueSerializer::from_context(&context)?;
+            serializer.serialize_u64(v)?;
+
+            if v <= MAX_SAFE_INTEGER as u64 {
+                Ok(serializer.value.is_number())
+            } else {
+                Ok(serializer.value.is_big_int())
+            }
         }
 
         fn test_u16(v: u16) -> Result<bool> {
@@ -390,6 +422,34 @@ mod tests {
                 Ok(serializer.value.is_repr_as_f64())
             } else {
                 Ok(serializer.value.is_repr_as_i32())
+            }
+        }
+
+        fn test_f32(v: f32) -> Result<bool> {
+            let context = Context::default();
+            let mut serializer = ValueSerializer::from_context(&context)?;
+            serializer.serialize_f32(v)?;
+
+            if v == 0.0_f32 {
+                if v.is_sign_positive() {
+                    return  Ok(serializer.value.is_repr_as_i32());
+                }
+
+
+                if v.is_sign_negative() {
+                    return Ok(serializer.value.is_repr_as_f64());
+                }
+            }
+
+            // The same (int) optimization is happening at this point,
+            // but here we need to account for signs
+            let zero_fractional_part = v.fract() == 0.0;
+            let range = (i32::MIN as f32)..=(i32::MAX as f32);
+
+            if zero_fractional_part && range.contains(&v) {
+                Ok(serializer.value.is_repr_as_i32())
+            } else {
+                Ok(serializer.value.is_repr_as_f64())
             }
         }
 

@@ -65,6 +65,7 @@ fn main() {
         .generate()
         .unwrap();
 
+    println!("cargo:rerun-if-changed=src/extensions/value.c");
     println!("cargo:rerun-if-changed=wrapper.h");
 
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
