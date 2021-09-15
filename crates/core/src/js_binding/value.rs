@@ -531,7 +531,7 @@ mod tests {
     }
 
     #[test]
-    fn test_u64_i_have_no_idea_what_is_going_on() {
+    fn test_u64_creates_an_unsigned_bigint() {
         let ctx = Context::default();
 
         let expected = i64::MAX as u64 + 2;
@@ -542,38 +542,5 @@ mod tests {
             BigInt::Unsigned(expected),
             v.as_big_int_unchecked().unwrap()
         );
-    }
-
-    #[test]
-    fn test_math_mode_u64() {
-        let ctx = Context::default();
-        let val = constants::MAX_SAFE_INTEGER as u64;
-        let v = ctx.value_from_u64(val).unwrap();
-        assert!(!v.is_big_int());
-        assert!(v.is_number());
-
-        // switch to "math mode". This should never be used since not standardized!!!
-        // this test is just a sanity check to assert what QuickJS is really doing.
-        let ctx = Context::default();
-        ctx.eval_global("main", "\"use math\";").unwrap();
-        let v = ctx.value_from_u64(val).unwrap();
-        assert!(!v.is_big_int());
-        assert!(v.is_number());
-    }
-
-    #[test]
-    fn test_math_mode_i64() {
-        let ctx = Context::default();
-        let val = constants::MIN_SAFE_INTEGER;
-        let v = ctx.value_from_i64(val).unwrap();
-        assert!(!v.is_big_int());
-        assert!(v.is_number());
-
-        // switch to "math mode". This should never be used since not standardized!!!
-        // this test is just a sanity check to assert what QuickJS is really doing.
-        ctx.eval_global("main", "\"use math\";").unwrap();
-        let v = ctx.value_from_i64(val).unwrap();
-        assert!(!v.is_big_int());
-        assert!(v.is_number());
     }
 }
