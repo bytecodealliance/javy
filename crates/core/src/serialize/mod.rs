@@ -57,41 +57,33 @@ mod tests {
         }
 
         // This test is not representative of what is happening in the real world. Since we are transcoding
-        // from msgpack, only values smaller than i32::MIN would be serialized as `BigInt`. Any other values would
+        // from msgpack, only values greather than or equal to u32::MAX would be serialized as `BigInt`. Any other values would
         // be serialized as a `number`.
         //
         // See https://github.com/3Hren/msgpack-rust/blob/aa3c4a77b2b901fe73a555c615b92773b40905fc/rmp/src/encode/sint.rs#L170.
         //
-        // This test works here since we are explicitely calling serialize_i64 and deserialize_i64.
+        // This test works here since we are explicitly calling serialize_i64 and deserialize_i64.
         fn test_i64(expected: i64) -> Result<bool> {
             let actual = do_roundtrip::<_, i64>(&expected);
             Ok(expected == actual)
         }
 
-        // u32 roundtrips are not stable. Values greater than i32::MAX are actually stored as
-        // a double precision IEEE 754 floating point.
-        //
-        // Since `number`s in Javascript are stored as a f64, it is a safe conversion to do. However,
-        // it has a few shortcomings when it comes to serialization: it is no longer possible to assume that it's safe
-        // to serialize it an an integer anymore.
         fn test_u32(expected: u32) -> Result<bool> {
             let actual = do_roundtrip::<_, u32>(&expected);
             Ok(expected == actual)
         }
 
-        // This test currently does not work. No idea why :/
-        //
         // This test is not representative of what is happening in the real world. Since we are transcoding
-        // from msgpack, only values larger than i32::MAX would be serialized as BigInt. Any other values would
+        // from msgpack, only values larger than i64::MAX would be serialized as BigInt. Any other values would
         // be serialized as a number.
         //
         // See https://github.com/3Hren/msgpack-rust/blob/aa3c4a77b2b901fe73a555c615b92773b40905fc/rmp/src/encode/sint.rs#L170.
         //
-        // This test works here since we are explicitely calling serialize_u64 and deserialize_u64.
-        // fn test_u64(expected: u64) -> Result<bool> {
-        //     let actual = do_roundtrip::<_, u64>(&expected);
-        //     Ok(expected == actual)
-        // }
+        // This test works here since we are explicitly calling serialize_u64 and deserialize_u64.
+        fn test_u64(expected: u64) -> Result<bool> {
+            let actual = do_roundtrip::<_, u64>(&expected);
+            Ok(expected == actual)
+        }
 
         fn test_bool(expected: bool) -> Result<bool> {
             let actual = do_roundtrip::<_, bool>(&expected);
@@ -205,8 +197,8 @@ mod tests {
         struct MyObject {
             a: u8,
             b: u16,
-            // c: u32,
-            // d: u64,
+            c: u32,
+            d: u64,
             e: i8,
             f: i16,
             g: i32,
@@ -242,7 +234,7 @@ mod tests {
             b: cc_b,
         };
 
-        let bb = MyObjectB { a: 789, cc: cc };
+        let bb = MyObjectB { a: 789, cc };
 
         let mut m = BTreeMap::new();
         m.insert("a".to_string(), 123);
@@ -258,8 +250,8 @@ mod tests {
         let expected = MyObject {
             a: u8::MAX,
             b: u16::MAX,
-            // c: u32::MAX, // is not stable, value is converted to float.
-            // d: u64::MAX, // is not stable, value is converted to float.
+            c: u32::MAX,
+            d: u64::MAX,
             e: i8::MAX,
             f: i16::MAX,
             g: i32::MAX,
@@ -268,9 +260,9 @@ mod tests {
             j: f64::MAX,
             k: "hello world".to_string(),
             l: true,
-            m: m,
+            m,
             n: vec![1, 2, 3, 4, 5],
-            o: o,
+            o,
             p: vec![vec![1, 2], vec![3, 4, 5]],
             bb,
         };
