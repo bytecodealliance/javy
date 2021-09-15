@@ -78,25 +78,24 @@ impl Context {
     }
 
     pub fn value_from_i64(&self, val: i64) -> Result<Value> {
-        // Create a JS `number` when within an integer range, otherwise create a bigint
         let raw = if (MIN_SAFE_INTEGER..=MAX_SAFE_INTEGER).contains(&val) {
             unsafe { JS_NewInt64_Ext(self.inner, val) }
         } else {
-            // Note: QuickJS math mode does the exact same conversion.
             unsafe { JS_NewBigInt64(self.inner, val) }
         };
         Value::new(self.inner, raw)
     }
 
     pub fn value_from_u64(&self, val: u64) -> Result<Value> {
-        // Create a JS `number` when within an integer range, otherwise create a `bigint`
-        let raw = if val <= MAX_SAFE_INTEGER as u64 {
-            unsafe { JS_NewInt64_Ext(self.inner, val as i64) }
+        if val <= MAX_SAFE_INTEGER as u64 {
+            let raw = unsafe { JS_NewInt64_Ext(self.inner, val as i64) };
+            Value::new(self.inner, raw)
         } else {
-            // Note: QuickJS math mode does the exact same conversion.
-            unsafe { JS_NewBigUint64(self.inner, val) }
-        };
-        Value::new(self.inner, raw)
+            let value = self.value_from_str(&val.to_string())?;
+            let bigint = self.global_object()?
+                .get_property("BigInt")?;
+            bigint.call(&bigint, &[value])
+        }
     }
 
     pub fn value_from_u32(&self, val: u32) -> Result<Value> {
