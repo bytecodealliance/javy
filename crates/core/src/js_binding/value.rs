@@ -12,8 +12,8 @@ use std::ffi::CString;
 
 #[derive(Debug, PartialEq)]
 pub enum BigInt {
-    Negative(i64),
-    Positive(u64),
+    Signed(i64),
+    Unsigned(u64),
 }
 
 #[derive(Debug, Clone)]
@@ -73,10 +73,10 @@ impl Value {
     pub fn as_big_int_unchecked(&self) -> Result<BigInt> {
         if self.is_signed_big_int() {
             let v = self.bigint_as_i64()?;
-            Ok(BigInt::Negative(v))
+            Ok(BigInt::Signed(v))
         } else {
             let v = self.bigint_as_u64()?;
-            Ok(BigInt::Positive(v))
+            Ok(BigInt::Unsigned(v))
         }
     }
 
@@ -417,7 +417,7 @@ mod tests {
         assert!(v.is_big_int());
         assert!(!v.is_number());
         assert_eq!(
-            BigInt::Positive(val as u64),
+            BigInt::Unsigned(val as u64),
             v.as_big_int_unchecked().unwrap()
         );
 
@@ -426,7 +426,7 @@ mod tests {
         let v = ctx.value_from_i64(val).unwrap();
         assert!(v.is_big_int());
         assert!(!v.is_number());
-        assert_eq!(BigInt::Negative(val), v.as_big_int_unchecked().unwrap());
+        assert_eq!(BigInt::Signed(val), v.as_big_int_unchecked().unwrap());
 
         // zero
         let val = 0;
@@ -448,7 +448,7 @@ mod tests {
         assert!(v.is_big_int());
         assert!(!v.is_number());
         assert_eq!(
-            BigInt::Positive(val as u64),
+            BigInt::Unsigned(val as u64),
             v.as_big_int_unchecked().unwrap()
         );
 
@@ -464,7 +464,7 @@ mod tests {
         let v = ctx.value_from_i64(val).unwrap();
         assert!(v.is_big_int());
         assert!(!v.is_number());
-        assert_eq!(BigInt::Negative(val), v.as_big_int_unchecked().unwrap());
+        assert_eq!(BigInt::Signed(val), v.as_big_int_unchecked().unwrap());
     }
 
     #[test]
@@ -476,7 +476,7 @@ mod tests {
         let v = ctx.value_from_u64(val).unwrap();
         assert!(v.is_big_int());
         assert!(!v.is_number());
-        assert_eq!(BigInt::Positive(val), v.as_big_int_unchecked().unwrap());
+        assert_eq!(BigInt::Unsigned(val), v.as_big_int_unchecked().unwrap());
 
         // min == 0
         let val = u64::MIN;
@@ -497,7 +497,7 @@ mod tests {
         let v = ctx.value_from_u64(val).unwrap();
         assert!(v.is_big_int());
         assert!(!v.is_number());
-        assert_eq!(BigInt::Positive(val), v.as_big_int_unchecked().unwrap());
+        assert_eq!(BigInt::Unsigned(val), v.as_big_int_unchecked().unwrap());
     }
 
     #[test]
@@ -531,7 +531,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_u64_i_have_no_idea_what_is_going_on() {
         let ctx = Context::default();
 
@@ -540,19 +539,18 @@ mod tests {
 
         assert!(v.is_big_int());
         assert_eq!(
-            BigInt::Positive(expected),
+            BigInt::Unsigned(expected),
             v.as_big_int_unchecked().unwrap()
         );
     }
 
     #[test]
-    #[ignore]
     fn test_math_mode_u64() {
         let ctx = Context::default();
         let val = constants::MAX_SAFE_INTEGER as u64;
         let v = ctx.value_from_u64(val).unwrap();
-        assert!(v.is_big_int());
-        assert!(!v.is_number());
+        assert!(!v.is_big_int());
+        assert!(v.is_number());
 
         // switch to "math mode". This should never be used since not standardized!!!
         // this test is just a sanity check to assert what QuickJS is really doing.
@@ -564,13 +562,12 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_math_mode_i64() {
         let ctx = Context::default();
         let val = constants::MIN_SAFE_INTEGER;
         let v = ctx.value_from_i64(val).unwrap();
-        assert!(v.is_big_int());
-        assert!(!v.is_number());
+        assert!(!v.is_big_int());
+        assert!(v.is_number());
 
         // switch to "math mode". This should never be used since not standardized!!!
         // this test is just a sanity check to assert what QuickJS is really doing.

@@ -62,8 +62,8 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
         if self.value.is_big_int() {
             let v = self.value.as_big_int_unchecked()?;
             return match v {
-                BigInt::Negative(v) => visitor.visit_i64(v),
-                BigInt::Positive(v) => visitor.visit_u64(v),
+                BigInt::Signed(v) => visitor.visit_i64(v),
+                BigInt::Unsigned(v) => visitor.visit_u64(v),
             };
         }
 
