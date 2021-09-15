@@ -4,9 +4,9 @@ use anyhow::Result;
 use quickjs_sys::{
     ext_js_exception, ext_js_null, ext_js_undefined, size_t as JS_size_t, JSCFunctionData,
     JSContext, JSRuntime, JSValue, JS_Eval, JS_FreeCString, JS_GetGlobalObject, JS_NewArray,
-    JS_NewBigInt64, JS_NewBigUint64, JS_NewBool_Ext, JS_NewCFunctionData, JS_NewContext,
-    JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewInt64_Ext, JS_NewObject, JS_NewRuntime,
-    JS_NewStringLen, JS_NewUint32_Ext, JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL,
+    JS_NewBigInt64, JS_NewBool_Ext, JS_NewCFunctionData, JS_NewContext, JS_NewFloat64_Ext,
+    JS_NewInt32_Ext, JS_NewInt64_Ext, JS_NewObject, JS_NewRuntime, JS_NewStringLen,
+    JS_NewUint32_Ext, JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL,
 };
 use std::ffi::CString;
 use std::io::Write;
@@ -92,8 +92,7 @@ impl Context {
             Value::new(self.inner, raw)
         } else {
             let value = self.value_from_str(&val.to_string())?;
-            let bigint = self.global_object()?
-                .get_property("BigInt")?;
+            let bigint = self.global_object()?.get_property("BigInt")?;
             bigint.call(&bigint, &[value])
         }
     }
