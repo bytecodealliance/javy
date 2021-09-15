@@ -33,18 +33,26 @@ impl Deserializer {
         V: de::Visitor<'de>,
     {
         if self.value.is_repr_as_i32() {
-            visitor.visit_i32(self.value.as_i32_unchecked())
-        } else if self.value.is_repr_as_f64() {
-            let v = self.value.as_f64_unchecked();
-            let range = (MIN_SAFE_INTEGER as f64)..=(MAX_SAFE_INTEGER as f64);
-            if v.fract() == 0.0 && range.contains(&v) {
-                visitor.visit_i64(v as i64)
-            } else {
-                visitor.visit_f64(self.value.as_f64_unchecked())
-            }
-        } else {
-            unreachable!()
+            return visitor.visit_i32(self.value.as_i32_unchecked());
         }
+
+        if self.value.is_repr_as_f64() {
+            let f64_representation = self.value.as_f64_unchecked();
+            let is_positive = f64_representation.is_sign_positive();
+            let safe_integer_range = (MIN_SAFE_INTEGER as f64)..=(MAX_SAFE_INTEGER as f64);
+            let whole = f64_representation.fract() == 0.0;
+
+            if whole && is_positive && f64_representation <= u32::MAX as f64 {
+                return visitor.visit_u32(f64_representation as u32);
+            }
+
+            if whole && safe_integer_range.contains(&f64_representation) {
+                return visitor.visit_i64(f64_representation as i64);
+            }
+
+            return visitor.visit_f64(f64_representation);
+        }
+        unreachable!()
     }
 }
 
@@ -360,5 +368,23 @@ mod tests {
         let val = context.value_from_f64(expected as _).unwrap();
         let actual = deserialize_value::<f64>(val);
         assert_eq!(expected as f64, actual);
+    }
+
+    #[test]
+    fn test_u32_upper_bound() {
+        let context = Context::default();
+        let expected = u32::MAX;
+        let val = context.value_from_u32(expected).unwrap();
+        let actual = deserialize_value::<u32>(val);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_u32_lower_bound() {
+        let context = Context::default();
+        let expected = i32::MAX as u32 + 1;
+        let val = context.value_from_u32(expected).unwrap();
+        let actual = deserialize_value::<u32>(val);
+        assert_eq!(expected, actual);
     }
 }
