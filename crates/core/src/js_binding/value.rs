@@ -235,7 +235,6 @@ impl Value {
 
 #[cfg(test)]
 mod tests {
-    use crate::js_binding::constants;
     use crate::js_binding::constants::MAX_SAFE_INTEGER;
     use crate::js_binding::constants::MIN_SAFE_INTEGER;
 
