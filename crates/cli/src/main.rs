@@ -17,7 +17,6 @@ fn main() -> Result<()> {
     let wasm: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/engine.wasm"));
 
     opt::Optimizer::new(wasm, canonical)
-        .strip(true)
         .optimize(true)
         .write_optimized_wasm(opts.output)?;
 

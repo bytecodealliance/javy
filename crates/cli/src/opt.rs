@@ -1,10 +1,9 @@
 use anyhow::{bail, Context, Error, Result};
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use wizer::Wizer;
+use binaryen::{Module, CodegenConfig};
 
 pub(crate) struct Optimizer<'a> {
-    strip: bool,
     optimize: bool,
     script: PathBuf,
     wasm: &'a [u8],
@@ -15,13 +14,8 @@ impl<'a> Optimizer<'a> {
         Self {
             wasm,
             script,
-            strip: false,
             optimize: false,
         }
-    }
-
-    pub fn strip(self, strip: bool) -> Self {
-        Self { strip, ..self }
     }
 
     pub fn optimize(self, optimize: bool) -> Self {
@@ -35,37 +29,27 @@ impl<'a> Optimizer<'a> {
             .filter(|p| p.is_dir())
             .context("input script is not a file")?;
 
-        let wasm = Wizer::new()
+        let mut wasm = Wizer::new()
             .allow_wasi(true)
             .inherit_env(true)
             .dir(dir)
             .run(self.wasm)?;
 
-        std::fs::write(dest.as_ref(), wasm)?;
-
-        if self.strip {
-            let output = Command::new(binaries::wasm_strip()?)
-                .arg(dest.as_ref())
-                .output()?;
-
-            if !output.status.success() {
-                bail!(format!("Couldn't apply wasm-strip: {:?}", output.stderr));
-            }
-        }
 
         if self.optimize {
-            let output = Command::new(binaries::wasm_opt()?)
-                .arg(dest.as_ref())
-                .arg("-O3")
-                .arg("--dce")
-                .arg("-o")
-                .arg(dest.as_ref())
-                .output()?;
-
-            if !output.status.success() {
-                bail!(format!("Couldn't apply wasm-opt: {:?}", output.stderr));
+            if let Ok(mut module) = Module::read(&wasm) {
+                module.optimize(&CodegenConfig {
+                    shrink_level: 2,
+                    optimization_level: 3,
+                    debug_info: false
+                });
+                wasm = module.write();
+            } else  {
+                bail!("Unable to read wasm binary for wasm-opt optimizations");
             }
         }
+
+        std::fs::write(dest.as_ref(), wasm)?;
 
         Ok(())
     }
