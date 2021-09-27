@@ -135,6 +135,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "binaryen"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1a9b407f52d0b918c6ea41d7a328321496b315f61da99a309b375dfbbd04bc9a"
+dependencies = [
+ "binaryen-sys",
+]
+
+[[package]]
+name = "binaryen-sys"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "86e9636d01b92f2df45dce29c35a9e3724687c1055bb4472fb4b829cc4a5a561"
+dependencies = [
+ "cc",
+ "cmake",
+ "heck",
+ "regex",
+]
+
+[[package]]
 name = "bincode"
 version = "1.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -403,6 +424,15 @@ dependencies = [
  "textwrap",
  "unicode-width",
  "vec_map",
+]
+
+[[package]]
+name = "cmake"
+version = "0.1.45"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eb6210b637171dfba4cda12e579ac6dc73f5165ad56133e5d72ef3131f320855"
+dependencies = [
+ "cc",
 ]
 
 [[package]]
@@ -1044,6 +1074,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "binaries",
+ "binaryen",
  "lazy_static",
  "rmp-serde",
  "serde",
