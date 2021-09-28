@@ -22,11 +22,6 @@ impl Default for Data {
     }
 }
 
-fn assemblyscript_input() -> Vec<u8> {
-    let json: serde_json::Value = serde_json::from_str(include_str!("./as_input.json")).unwrap();
-    rmp_serde::to_vec(&json).unwrap()
-}
-
 fn javascript_input() -> Vec<u8> {
     let json: serde_json::Value = serde_json::from_str(include_str!("./js_input.json")).unwrap();
     rmp_serde::to_vec(&json).unwrap()
@@ -47,7 +42,7 @@ fn make_linker(store: &mut Store<Data>) -> Linker<Data> {
         .func_wrap(
             "shopify_v1",
             "input_len",
-            move |mut caller: Caller<'_, Data>, offset: i32| {
+            move |mut caller: Caller<'_, Data>, offset: u32| -> u32 {
                 let memory = caller
                     .get_export("memory")
                     .and_then(|slot| slot.into_memory())
@@ -58,6 +53,7 @@ fn make_linker(store: &mut Store<Data>) -> Linker<Data> {
                 memory
                     .write(caller.as_context_mut(), offset as usize, &len.to_ne_bytes())
                     .expect("Couldn't write input length");
+                0
             },
         )
         .expect("Could not define input_len import");
@@ -66,7 +62,7 @@ fn make_linker(store: &mut Store<Data>) -> Linker<Data> {
         .func_wrap(
             "shopify_v1",
             "input_copy",
-            move |mut caller: Caller<'_, Data>, offset: i32| {
+            move |mut caller: Caller<'_, Data>, offset: u32| -> u32 {
                 let memory = caller
                     .get_export("memory")
                     .and_then(|slot| slot.into_memory())
@@ -78,6 +74,7 @@ fn make_linker(store: &mut Store<Data>) -> Linker<Data> {
                     .get_mut(offset..offset + data.input.len())
                     .expect("Couldn't allocate memory space to copy input");
                 slot.copy_from_slice(&data.input);
+                0
             },
         )
         .expect("Could not define input_copy import");
@@ -86,7 +83,7 @@ fn make_linker(store: &mut Store<Data>) -> Linker<Data> {
         .func_wrap(
             "shopify_v1",
             "output_copy",
-            move |mut caller: Caller<'_, Data>, offset: i32, len: i32| {
+            move |mut caller: Caller<'_, Data>, offset: u32, len: u32| -> u32 {
                 let mem = caller
                     .get_export("memory")
                     .and_then(|slot| slot.into_memory())
@@ -96,6 +93,7 @@ fn make_linker(store: &mut Store<Data>) -> Linker<Data> {
                 mem.read(caller.as_context_mut(), offset as usize, buf.as_mut_slice())
                     .expect("Couldn't read output from module memory");
                 assert!(buf.len() > 0);
+                0
             },
         )
         .expect("Could not define output_copy import");
@@ -121,18 +119,6 @@ fn js(c: &mut Criterion) {
         let mut store = make_store(data);
         let linker = make_linker(&mut store);
         let bytes = &include_bytes!("js.wasm");
-        let module = Module::from_binary(store.engine(), *bytes).unwrap();
-
-        b.iter(|| exec(&mut store, &linker, &module))
-    });
-
-    group.bench_function("as", |b| {
-        let mut data = Data::default();
-        data.set_input(assemblyscript_input());
-
-        let mut store = make_store(data);
-        let linker = make_linker(&mut store);
-        let bytes = &include_bytes!("as.wasm");
         let module = Module::from_binary(store.engine(), *bytes).unwrap();
 
         b.iter(|| exec(&mut store, &linker, &module))
