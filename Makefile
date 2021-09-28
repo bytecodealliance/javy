@@ -1,6 +1,9 @@
 .PHONY: cli core test fmt clean
 .DEFAULT_GOAL := cli
 
+install:
+	cargo install --path crates/cli
+
 cli: core
 		cd crates/cli && cargo build && cd -
 
