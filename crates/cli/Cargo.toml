@@ -14,7 +14,7 @@ which = "4.2"
 structopt = "0.3"
 anyhow = "1.0"
 tempfile = "3.2.0"
-binaries = { path = "../binaries" }
+binaryen = "0.12.0"
 
 [dev-dependencies]
 wasmtime = "0.29"
