@@ -23,6 +23,8 @@ steps:
     cache:
     - $HOME/.cargo
     - target/
+    env:
+      SHOPIFY_BUILD_MEMORY_LIMIT: 10g
     run:
     - make fmt
 
