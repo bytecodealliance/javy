@@ -1,7 +1,7 @@
 use anyhow::{bail, Context, Error, Result};
+use binaryen::{CodegenConfig, Module};
 use std::path::{Path, PathBuf};
 use wizer::Wizer;
-use binaryen::{Module, CodegenConfig};
 
 pub(crate) struct Optimizer<'a> {
     optimize: bool,
@@ -35,16 +35,17 @@ impl<'a> Optimizer<'a> {
             .dir(dir)
             .run(self.wasm)?;
 
-
         if self.optimize {
             if let Ok(mut module) = Module::read(&wasm) {
                 module.optimize(&CodegenConfig {
-                    shrink_level: 2,
+                    // No code size optimizations that the expense of speed
+                    shrink_level: 0,
+                    //  Optimize aggresively for speed
                     optimization_level: 3,
-                    debug_info: false
+                    debug_info: false,
                 });
                 wasm = module.write();
-            } else  {
+            } else {
                 bail!("Unable to read wasm binary for wasm-opt optimizations");
             }
         }
