@@ -23,12 +23,19 @@ fn stub_engine_for_clippy() {
 
 // Copy the engine binary build from the `core` crate
 fn copy_engine_binary() {
-    let mut engine_path = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
-    engine_path.pop();
-    engine_path.pop();
-    let engine_path = engine_path.join("target/wasm32-wasi/release/javy_core.wasm");
+    let override_engine_path = env::var("JAVY_ENGINE_PATH");
+    let is_override = override_engine_path.is_ok();
+    let mut engine_path =
+        PathBuf::from(override_engine_path.unwrap_or(env::var("CARGO_MANIFEST_DIR").unwrap()));
+
+    if !is_override {
+        engine_path.pop();
+        engine_path.pop();
+        engine_path = engine_path.join("target/wasm32-wasi/release/javy_core.wasm");
+    }
 
     println!("cargo:rerun-if-changed={:?}", engine_path);
+    println!("cargo:rerun-if-changed=build.rs");
 
     if engine_path.exists() {
         let copied_engine_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("engine.wasm");
