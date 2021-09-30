@@ -1,6 +1,8 @@
 name: Publish
 
-on: push
+on: release
+  types: 
+    - created
 
 jobs:
   compile_core: 
@@ -36,15 +38,11 @@ jobs:
           - name: linux
             os: ubuntu-latest
             path: target/release/javy
-            asset_name: javy-x86_64-linux # TODO: append version
+            asset_name: javy-x86_64-linux-${{github.event.release.tag_name}}
           - name: macos
             os: macos-latest
             path: target/release/javy
-            asset_name: javy-x86_64-macos # TODO: append version
-          - name: windows
-            os: windows-latest
-            path: target\release\javy.exe
-            asset_name: javy-x86_64-windows # TODO: append version
+            asset_name: javy-x86_64-macos-${{github.event.release.tag_name}}
 
     steps:
       - uses: actions/checkout@v1
@@ -65,15 +63,21 @@ jobs:
           toolchain: 1.53.0
           default: true
 
-          
-      - name: Build CLI
+      - name: Build CLI ${{ matrix.os }}
         env:
           JAVY_ENGINE_PATH: javy_core.wasm
         run: cargo build --release --package javy
 
-      - name: Upload CLI binary to artifacts
-        uses: actions/upload-artifact@v2
-        with: 
-          name: ${{ matrix.asset_name }}
-          path: ${{ matrix.path }} 
+      - name: Archive assets
+        uses: thedoctor0/zip-release@master
+        with:
+          type: 'zip'
+          filename: ${{ matrix.asset_name }}.zip
+          path: ${{ matrix.path }}
 
+      - name: Upload assets to release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./${{ matrix.asset_name }}.zip
+          asset_name: ${{ matrix.asset_name }}.zip

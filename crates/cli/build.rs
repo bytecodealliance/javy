@@ -25,8 +25,9 @@ fn stub_engine_for_clippy() {
 fn copy_engine_binary() {
     let override_engine_path = env::var("JAVY_ENGINE_PATH");
     let is_override = override_engine_path.is_ok();
-    let mut engine_path =
-        PathBuf::from(override_engine_path.unwrap_or(env::var("CARGO_MANIFEST_DIR").unwrap()));
+    let mut engine_path = PathBuf::from(
+        override_engine_path.unwrap_or_else(|_| env::var("CARGO_MANIFEST_DIR").unwrap()),
+    );
 
     if !is_override {
         engine_path.pop();
