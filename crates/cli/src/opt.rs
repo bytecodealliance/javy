@@ -36,14 +36,17 @@ impl<'a> Optimizer<'a> {
             .run(self.wasm)?;
 
         if self.optimize {
+            let codegen_cfg = CodegenConfig {
+                optimization_level: 3, // Aggressively optimize for speed.
+                shrink_level: 0,       // Don't optimize for size at the expense of performance.
+                debug_info: false,
+            };
+
             if let Ok(mut module) = Module::read(&wasm) {
-                module.optimize(&CodegenConfig {
-                    // No code size optimizations that the expense of speed
-                    shrink_level: 0,
-                    //  Optimize aggresively for speed
-                    optimization_level: 3,
-                    debug_info: false,
-                });
+                module.optimize(&codegen_cfg);
+                module
+                    .run_optimization_passes(vec!["strip"], &codegen_cfg)
+                    .unwrap();
                 wasm = module.write();
             } else {
                 bail!("Unable to read wasm binary for wasm-opt optimizations");
