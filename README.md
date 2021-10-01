@@ -1,6 +1,6 @@
 # Javy: A _Jav_ aScript to WebAssembl _y_  toolchain
 
-[![Build status](https://badge.buildkite.com/7f78e611f58950fa1d3f26b3486c941bc9a104f593ccf57fa8.svg)](https://buildkite.com/shopify/javy)
+[![Build status](https://badge.buildkite.com/7f78e611f58950fa1d3f26b3486c941bc9a104f593ccf57fa8.svg)](https://buildkite.com/shopify/javy?branch=main&theme=solarized)
 
 [About this repo](#about-this-repo) | [How to use this repo](#how-to-use-this-repo)
 
