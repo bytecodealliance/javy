@@ -54,7 +54,7 @@ fn main() {
         .flag_if_supported("-Wno-cast-function-type")
         .flag_if_supported("-Wno-implicit-fallthrough")
         .flag_if_supported("-Wno-enum-conversion")
-        .opt_level(2)
+        .opt_level(3)
         .compile("quickjs");
 
     // Generate bindings for quickjs
