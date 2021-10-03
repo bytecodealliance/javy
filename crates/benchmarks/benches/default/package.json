@@ -1,0 +1,34 @@
+{
+  "name": "test-opt-script",
+  "description": "",
+  "version": "1.0.0",
+  "dependencies": {
+    "@shopify/scripts-checkout-apis-ts": "file:shopify-scripts-checkout-apis-ts-0.1.0.tgz"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.15.4",
+    "@babel/preset-typescript": "^7.15.0",
+    "@types/jest": "^26.0.23",
+    "@types/node": "^15.12.1",
+    "@typescript-eslint/eslint-plugin": "^4.26.0",
+    "@typescript-eslint/parser": "^4.26.0",
+    "babel-jest": "^27.1.0",
+    "eslint": "^7.28.0",
+    "jest": "^27.0.4",
+    "ts-loader": "^9.2.3",
+    "ts-node": "^10.0.0",
+    "typescript": "^4.3.5",
+    "webpack": "^5.38.1",
+    "webpack-cli": "^4.7.2"
+  },
+  "scripts": {
+    "compile": "tsc",
+    "prebuild": "webpack",
+    "build": "../../../../target/release/javy build/index.js -o build/index.wasm",
+    "gen-metadata": "get-api-metadata payment-methods build/metadata.json",
+    "test": "tsc --noEmit && jest"
+  },
+  "engines": {
+    "node": "^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0"
+  }
+}
