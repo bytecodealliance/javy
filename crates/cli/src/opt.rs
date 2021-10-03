@@ -37,8 +37,8 @@ impl<'a> Optimizer<'a> {
 
         if self.optimize {
             let codegen_cfg = CodegenConfig {
-                optimization_level: 3, // Aggressively optimize for speed.
-                shrink_level: 0,       // Don't optimize for size at the expense of performance.
+                optimization_level: 4, // Aggressively optimize for speed.
+                shrink_level: 2, 
                 debug_info: false,
             };
 
