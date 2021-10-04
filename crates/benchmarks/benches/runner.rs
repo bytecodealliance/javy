@@ -4,16 +4,11 @@ use wasmtime_wasi::{sync, WasiCtx, WasiCtxBuilder};
 struct Context {
     wasi: WasiCtx,
     input: Vec<u8>,
-    output: Vec<u8>,
 }
 
 impl Context {
     pub fn set_input(&mut self, input: Vec<u8>) {
         self.input = input;
-    }
-
-    pub fn set_output(&mut self, output: Vec<u8>) {
-        self.output = output;
     }
 }
 
@@ -22,7 +17,6 @@ impl Default for Context {
         Self {
             wasi: WasiCtxBuilder::new().inherit_stdio().build(),
             input: vec![],
-            output: vec![]
         }
     }
 }
