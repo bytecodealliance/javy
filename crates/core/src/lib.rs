@@ -6,9 +6,7 @@ mod transcode;
 use js_binding::{context::Context, value::Value};
 
 use once_cell::sync::OnceCell;
-use std::io;
-use std::path::PathBuf;
-use std::{env, fs};
+use std::io::{self, Read};
 use transcode::{transcode_input, transcode_output};
 
 #[cfg(not(test))]
@@ -17,6 +15,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 static mut JS_CONTEXT: OnceCell<Context> = OnceCell::new();
 static mut ENTRYPOINT: (OnceCell<Value>, OnceCell<Value>) = (OnceCell::new(), OnceCell::new());
+static SCRIPT_NAME: &str = "script.js";
 
 // TODO
 //
@@ -26,15 +25,14 @@ static mut ENTRYPOINT: (OnceCell<Value>, OnceCell<Value>) = (OnceCell::new(), On
 
 #[export_name = "wizer.initialize"]
 pub extern "C" fn init() {
-    let input = env::var("JAVY_INPUT").expect("Couldn't read JAVY_INPUT env var");
-    let script_name = input.clone();
     unsafe {
         let mut context = Context::default();
         context.register_globals(io::stdout()).unwrap();
 
-        let contents = fs::read_to_string::<PathBuf>(input.into()).unwrap();
+        let mut contents = String::new();
+        io::stdin().read_to_string(&mut contents).unwrap();
 
-        let _ = context.eval_global(&script_name, &contents).unwrap();
+        let _ = context.eval_global(SCRIPT_NAME, &contents).unwrap();
         let global = context.global_object().unwrap();
         let shopify = global.get_property("Shopify").unwrap();
         let main = shopify.get_property("main").unwrap();

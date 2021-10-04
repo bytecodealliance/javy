@@ -1,19 +1,17 @@
-use anyhow::{bail, Context, Error, Result};
+use anyhow::{bail, Error, Result};
 use binaryen::{CodegenConfig, Module};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use wizer::Wizer;
 
 pub(crate) struct Optimizer<'a> {
     optimize: bool,
-    script: PathBuf,
     wasm: &'a [u8],
 }
 
 impl<'a> Optimizer<'a> {
-    pub fn new(wasm: &'a [u8], script: PathBuf) -> Self {
+    pub fn new(wasm: &'a [u8]) -> Self {
         Self {
             wasm,
-            script,
             optimize: false,
         }
     }
@@ -23,16 +21,9 @@ impl<'a> Optimizer<'a> {
     }
 
     pub fn write_optimized_wasm(self, dest: impl AsRef<Path>) -> Result<(), Error> {
-        let dir = self
-            .script
-            .parent()
-            .filter(|p| p.is_dir())
-            .context("input script is not a file")?;
-
         let mut wasm = Wizer::new()
             .allow_wasi(true)
-            .inherit_env(true)
-            .dir(dir)
+            .inherit_stdio(true)
             .run(self.wasm)?;
 
         if self.optimize {

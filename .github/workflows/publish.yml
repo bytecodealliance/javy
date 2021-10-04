@@ -38,11 +38,15 @@ jobs:
           - name: linux
             os: ubuntu-latest
             path: target/release/javy
-            asset_name: javy-x86_64-linux-${{github.event.release.tag_name}}
+            asset_name: javy-x86_64-linux-${{ github.event.release.tag_name }}
           - name: macos
             os: macos-latest
             path: target/release/javy
-            asset_name: javy-x86_64-macos-${{github.event.release.tag_name}}
+            asset_name: javy-x86_64-macos-${{ github.event.release.tag_name }}
+          - name: windows
+            os: windows-latest
+            path: target\release\javy.exe
+            asset_name: javy-x86_64-windows-${{ github.event.release.tag_name }}
 
     steps:
       - uses: actions/checkout@v1
