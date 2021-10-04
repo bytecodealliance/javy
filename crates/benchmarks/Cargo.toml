@@ -12,5 +12,5 @@ serde_json = "1.0"
 rmp-serde = "^0.15"
 
 [[bench]]
-name = "default"
+name = "baseline"
 harness = false

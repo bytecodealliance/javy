@@ -23,7 +23,7 @@ impl Default for Context {
 
 pub struct Runner {
     linker: Linker<Context>,
-    store: Store<Context>
+    store: Store<Context>,
 }
 
 impl Default for Runner {
@@ -130,4 +130,3 @@ fn create_linker(store: &mut Store<Context>) -> Linker<Context> {
 
     linker
 }
-

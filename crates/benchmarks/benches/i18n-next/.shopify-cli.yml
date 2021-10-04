@@ -1,0 +1,6 @@
+---
+project_type: :script
+organization_id: 0
+extension_point_type: payment_methods
+script_name: i18n-next
+language: typescript

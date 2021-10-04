@@ -1,9 +1,10 @@
 {
-  "name": "test-opt-script",
+  "name": "i18n-next-script",
   "description": "",
   "version": "1.0.0",
   "dependencies": {
-    "@shopify/scripts-checkout-apis-ts": "file:shopify-scripts-checkout-apis-ts-0.1.0.tgz"
+    "@shopify/scripts-checkout-apis-ts": "file:shopify-scripts-checkout-apis-ts-0.1.0.tgz",
+    "i18next": "^21.2.4"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.15.4",
