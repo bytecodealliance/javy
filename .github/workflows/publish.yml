@@ -1,0 +1,83 @@
+name: Publish
+
+on: release
+  types: 
+    - created
+
+jobs:
+  compile_core: 
+    name: Compile Core
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - name : Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: default
+          toolchain: 1.53.0
+          target: wasm32-wasi
+          default: true
+
+      - name: Make core
+        run: make core
+
+      - name: Upload core binary to artifacts
+        uses: actions/upload-artifact@v2
+        with: 
+          name: engine
+          path: target/wasm32-wasi/release/javy_core.wasm
+
+  compile_cli:
+    name: Compile CLI
+    needs:  compile_core
+    runs-on: ${{ matrix.os }}
+    strategy: 
+      matrix:
+        include:
+          - name: linux
+            os: ubuntu-latest
+            path: target/release/javy
+            asset_name: javy-x86_64-linux-${{github.event.release.tag_name}}
+          - name: macos
+            os: macos-latest
+            path: target/release/javy
+            asset_name: javy-x86_64-macos-${{github.event.release.tag_name}}
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: engine
+          path: crates/cli/
+
+      - name: ls
+        run: ls -R 
+        working-directory: crates/cli/
+
+      - name : Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: default
+          toolchain: 1.53.0
+          default: true
+
+      - name: Build CLI ${{ matrix.os }}
+        env:
+          JAVY_ENGINE_PATH: javy_core.wasm
+        run: cargo build --release --package javy
+
+      - name: Archive assets
+        uses: thedoctor0/zip-release@master
+        with:
+          type: 'zip'
+          filename: ${{ matrix.asset_name }}.zip
+          path: ${{ matrix.path }}
+
+      - name: Upload assets to release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./${{ matrix.asset_name }}.zip
+          asset_name: ${{ matrix.asset_name }}.zip

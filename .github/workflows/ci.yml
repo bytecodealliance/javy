@@ -1,0 +1,55 @@
+name: CI
+
+on: 
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  checks:
+    name: Tests + Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+       
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: default
+          toolchain: 1.53.0
+          default: true
+          components: clippy, rustfmt
+
+      - name: Cargo Cache
+        uses: actions/cache@v1
+        with:
+          path: ~/.cargo
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
+            ${{ runner.os }}-cargo
+
+      - name: Cargo Target Cache
+        uses: actions/cache@v1
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
+            ${{ runner.os }}-cargo-target
+
+      - name: Install wasmtime-cli
+        run: cargo install wasmtime-cli
+
+      - name: Install cargo-wasi
+        run: cargo install cargo-wasi
+
+      - name: Tests
+        run: make tests
+
+      - name: Lint
+        run: make fmt
+
+
+  
