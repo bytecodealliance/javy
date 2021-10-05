@@ -1,0 +1,116 @@
+{
+  "input": {
+    "purchaseProposal": {
+      "merchandiseLines": [
+        {
+          "id": "0",
+          "variant": {
+            "id": 1,
+            "product": {
+              "id": 2,
+              "title": "oranges",
+              "tags": ["tagA", "tagB"],
+              "giftCard": true
+            }
+          },
+          "quantity": 4,
+          "title": "oranges",
+          "properties": [
+            { "key": "k1", "value": "v1" },
+            { "key": "k2", "value": "v2" }
+          ],
+          "price": {
+            "subunits": 1000,
+            "currency": "CAD"
+          }
+        }
+      ],
+      "deliveryLines": [{
+        "destination": {
+          "firstName": "Ordinary",
+          "lastName": "Joe",
+          "company": "Shopify",
+          "address1": "123 Fake Street",
+          "address2": "",
+          "address3": "",
+          "phone": "1111111111",
+          "city": "Waterloo",
+          "zip": "N2L0B6",
+          "provinceCode": "ON",
+          "countryCode": "CA",
+          "poBox": false
+        },
+        "merchandiseLines": [
+          {
+            "id": "0",
+            "variant": {
+              "id": 1,
+              "product": {
+                "id": 2,
+                "title": "oranges",
+                "tags": ["tagA", "tagB"],
+                "giftCard": true,
+                "vendor": "Lionel LLC",
+                "type": "Jewlery"
+              },
+              "sku": "my-oranges",
+              "compareAtPrice": null
+            },
+            "quantity": 4,
+            "title": "oranges",
+            "properties": [
+              { "key": "k1", "value": "v1" },
+              { "key": "k2", "value": "v2" }
+            ],
+            "price": {
+              "subunits": 1000,
+              "currency": "CAD"
+            }
+          }
+        ],
+        "strategy": {
+          "id": 1,
+          "name": "name",
+          "code": "code",
+          "source": "source",
+          "phoneRequired": true
+        },
+        "amount": {
+          "subunits": 1000,
+          "currency": "CAD"
+        }
+      }],
+      "locale": "en",
+      "buyerIdentity": {
+        "customer": {
+          "id": 1,
+          "email": "joe@ordinary.com",
+          "tags": ["vip"],
+          "orderCount": 3,
+          "totalSpent": {
+            "subunits": 1000,
+            "currency": "CAD"
+          },
+          "acceptsMarketing": true
+        },
+        "email": "joe@ordinary.com"
+      }
+    },
+    "paymentMethods": [
+      {"id": 123456789, "name": "Shopify payments", "cards": ["Visa", "Mastercard", "Discover"]},
+      {"id": 987654321, "name": "Auth.net", "cards": ["Visa", "Amex"]}
+    ]
+  },
+  "configuration": {
+    "entries": [
+        {
+        "key": "name",
+        "value": "Extension Discount"
+      },
+      {
+        "key": "amount",
+        "value": "1"
+      }
+    ]
+  }
+}

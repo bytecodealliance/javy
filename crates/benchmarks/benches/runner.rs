@@ -1,19 +1,18 @@
-use criterion::{criterion_group, criterion_main, Criterion};
 use wasmtime::*;
 use wasmtime_wasi::{sync, WasiCtx, WasiCtxBuilder};
 
-struct Data {
+struct Context {
     wasi: WasiCtx,
     input: Vec<u8>,
 }
 
-impl Data {
+impl Context {
     pub fn set_input(&mut self, input: Vec<u8>) {
         self.input = input;
     }
 }
 
-impl Default for Data {
+impl Default for Context {
     fn default() -> Self {
         Self {
             wasi: WasiCtxBuilder::new().inherit_stdio().build(),
@@ -22,27 +21,55 @@ impl Default for Data {
     }
 }
 
-fn javascript_input() -> Vec<u8> {
-    let json: serde_json::Value = serde_json::from_str(include_str!("./js_input.json")).unwrap();
-    rmp_serde::to_vec(&json).unwrap()
+pub struct Runner {
+    linker: Linker<Context>,
+    store: Store<Context>,
 }
 
-fn make_store(data: Data) -> Store<Data> {
+impl Default for Runner {
+    fn default() -> Self {
+        let context = Context::default();
+        let mut store = create_store(context);
+        let linker = create_linker(&mut store);
+
+        Self { linker, store }
+    }
+}
+
+impl Runner {
+    pub fn build_module(&mut self, wasm: &[u8]) -> Module {
+        Module::from_binary(self.linker.engine(), wasm).unwrap()
+    }
+
+    pub fn set_input(&mut self, input: &[u8]) {
+        self.store.data_mut().set_input(input.into());
+    }
+
+    pub fn exec(&mut self, module: &Module) {
+        let instance = self.linker.instantiate(&mut self.store, module).unwrap();
+        let main = instance
+            .get_typed_func::<(), (), _>(&mut self.store, "shopify_main")
+            .unwrap();
+        main.call(&mut self.store, ()).unwrap();
+    }
+}
+
+fn create_store(data: Context) -> Store<Context> {
     let mut config = Config::new();
     config.cranelift_opt_level(OptLevel::SpeedAndSize);
 
     Store::new(&Engine::new(&config).unwrap(), data)
 }
 
-fn make_linker(store: &mut Store<Data>) -> Linker<Data> {
+fn create_linker(store: &mut Store<Context>) -> Linker<Context> {
     let mut linker = Linker::new(store.engine());
-    sync::add_to_linker(&mut linker, |d: &mut Data| &mut d.wasi).unwrap();
+    sync::add_to_linker(&mut linker, |d: &mut Context| &mut d.wasi).unwrap();
 
     linker
         .func_wrap(
             "shopify_v1",
             "input_len",
-            move |mut caller: Caller<'_, Data>, offset: u32| -> u32 {
+            move |mut caller: Caller<'_, Context>, offset: u32| -> u32 {
                 let memory = caller
                     .get_export("memory")
                     .and_then(|slot| slot.into_memory())
@@ -53,6 +80,7 @@ fn make_linker(store: &mut Store<Data>) -> Linker<Data> {
                 memory
                     .write(caller.as_context_mut(), offset as usize, &len.to_ne_bytes())
                     .expect("Couldn't write input length");
+
                 0
             },
         )
@@ -62,7 +90,7 @@ fn make_linker(store: &mut Store<Data>) -> Linker<Data> {
         .func_wrap(
             "shopify_v1",
             "input_copy",
-            move |mut caller: Caller<'_, Data>, offset: u32| -> u32 {
+            move |mut caller: Caller<'_, Context>, offset: u32| -> u32 {
                 let memory = caller
                     .get_export("memory")
                     .and_then(|slot| slot.into_memory())
@@ -74,6 +102,7 @@ fn make_linker(store: &mut Store<Data>) -> Linker<Data> {
                     .get_mut(offset..offset + data.input.len())
                     .expect("Couldn't allocate memory space to copy input");
                 slot.copy_from_slice(&data.input);
+
                 0
             },
         )
@@ -83,7 +112,7 @@ fn make_linker(store: &mut Store<Data>) -> Linker<Data> {
         .func_wrap(
             "shopify_v1",
             "output_copy",
-            move |mut caller: Caller<'_, Data>, offset: u32, len: u32| -> u32 {
+            move |mut caller: Caller<'_, Context>, offset: u32, len: u32| -> u32 {
                 let mem = caller
                     .get_export("memory")
                     .and_then(|slot| slot.into_memory())
@@ -93,6 +122,7 @@ fn make_linker(store: &mut Store<Data>) -> Linker<Data> {
                 mem.read(caller.as_context_mut(), offset as usize, buf.as_mut_slice())
                     .expect("Couldn't read output from module memory");
                 assert!(buf.len() > 0);
+
                 0
             },
         )
@@ -100,32 +130,3 @@ fn make_linker(store: &mut Store<Data>) -> Linker<Data> {
 
     linker
 }
-
-fn exec(store: &mut Store<Data>, linker: &Linker<Data>, module: &Module) {
-    let instance = linker.instantiate(&mut *store, &module).unwrap();
-    let run = instance
-        .get_typed_func::<(), (), _>(&mut *store, "shopify_main")
-        .unwrap();
-    run.call(&mut *store, ()).unwrap();
-}
-
-fn js(c: &mut Criterion) {
-    let mut group = c.benchmark_group("wasmtime");
-
-    group.bench_function("js", |b| {
-        let mut data = Data::default();
-        data.set_input(javascript_input());
-
-        let mut store = make_store(data);
-        let linker = make_linker(&mut store);
-        let bytes = &include_bytes!("js.wasm");
-        let module = Module::from_binary(store.engine(), *bytes).unwrap();
-
-        b.iter(|| exec(&mut store, &linker, &module))
-    });
-
-    group.finish();
-}
-
-criterion_group!(benches, js);
-criterion_main!(benches);
