@@ -25,8 +25,8 @@ fn baseline(c: &mut Criterion) {
 // With Lisan, the bundled JavaScript is only 3KB
 // With i18next, the bundled JavaScript is 47KB
 //
-//  The difference in size is mostly due to the fact that
-//  with Lisan, most of work is done AOT, resulting in
+// The difference in size is mostly due to the fact that
+// with Lisan, most of work is done AOT, resulting in
 // translations being plain function calls
 fn i18n_lisan(c: &mut Criterion) {
     let mut group = c.benchmark_group("i18n-lisan");
