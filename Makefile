@@ -5,7 +5,7 @@ install:
 	cargo install --path crates/cli
 
 cli: core
-		cd crates/cli && cargo build && cd -
+		cd crates/cli && cargo build --release && cd -
 
 check-benchmarks:
 		cd crates/benchmarks \
