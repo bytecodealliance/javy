@@ -1,8 +1,9 @@
 name: Publish
 
-on: release
-  types: 
-    - created
+on:
+  release:
+    types:
+      - created
 
 jobs:
   compile_core: 
