@@ -41,6 +41,11 @@ impl Runner {
         Module::from_binary(self.linker.engine(), wasm).unwrap()
     }
 
+    pub fn precompile_module(&mut self, wasm: &[u8]) -> Module {
+        let compiled = self.store.engine().precompile_module(wasm).unwrap();
+        unsafe { Module::deserialize(self.store.engine(), compiled).unwrap() }
+    }
+
     pub fn set_input(&mut self, input: &[u8]) {
         self.store.data_mut().set_input(input.into());
     }
