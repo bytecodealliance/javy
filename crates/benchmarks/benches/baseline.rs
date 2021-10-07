@@ -12,8 +12,10 @@ fn baseline(c: &mut Criterion) {
             serde_json::from_str(include_str!("./default/src/input.json")).unwrap();
         runner.set_input(&rmp_serde::to_vec(&json).unwrap());
         let wasm = include_bytes!("./default/build/bench.wasm");
-        let module = runner.build_module(wasm);
-        b.iter(|| runner.exec(&module));
+        b.iter(|| {
+            let module = runner.build_module(wasm);
+            runner.exec(&module)
+        });
     });
 
     group.bench_function("baseline precompiled", |b| {
@@ -23,7 +25,9 @@ fn baseline(c: &mut Criterion) {
         runner.set_input(&rmp_serde::to_vec(&json).unwrap());
         let wasm = include_bytes!("./default/build/bench.wasm");
         let module = runner.precompile_module(wasm);
-        b.iter(|| runner.exec(&module));
+        b.iter(|| {
+            runner.exec(&module)
+        });
     });
 
     group.finish();
