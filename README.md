@@ -10,13 +10,6 @@
 **Introduction**: Run your JavaScript on WebAssembly. Javy takes your
 JavaScript code, and executes it in a WebAssebmly embedded JavaScript runtime.
 
-|                |                                                                   |
-|----------------|------------------------------------------------------------------:|
-| Current status |                                                           Ongoing |
-| Owner          |                                                  @Shopify/scripts |
-| Help           | [#scripts](https://shopify.slack.com/archives/CE5ENTT7W) on Slack |
-
-
 ## How to use this repo
 
 #### Requirements
