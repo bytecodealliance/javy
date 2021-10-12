@@ -19,7 +19,7 @@ pub enum BigInt {
 #[derive(Debug, Clone)]
 pub struct Value {
     context: *mut JSContext,
-    value: JSValue,
+    pub value: JSValue,
 }
 
 impl Value {

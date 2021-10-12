@@ -11,6 +11,8 @@ use quickjs_sys::{
 use std::ffi::CString;
 use std::io::Write;
 use std::os::raw::{c_char, c_int, c_void};
+use super::super::transcode::{transcode_input, transcode_output};
+use super::super::engine;
 
 #[derive(Debug)]
 pub struct Context {
@@ -34,6 +36,19 @@ impl Default for Context {
     }
 }
 
+#[derive(Debug)]
+pub struct Compiled {
+    ctx: *mut JSContext,
+    value: JSValue,
+}
+
+impl Compiled {
+    pub fn eval(&self) -> Result<Value> {
+        let raw = unsafe { quickjs_sys::JS_EvalFunction(self.ctx, self.value) };
+        Value::new(self.ctx, raw)
+    }
+}
+
 impl Context {
     pub fn eval_global(&self, name: &str, contents: &str) -> Result<Value> {
         let input = CString::new(contents)?;
@@ -50,6 +65,38 @@ impl Context {
         };
 
         Value::new(self.inner, raw)
+    }
+
+    pub fn compile(&self, name: &str, contents: &str) -> Result<Compiled> {
+        let input = CString::new(contents)?;
+        let script_name = CString::new(name)?;
+        let len = contents.len() - 1;
+        let value = unsafe {
+            JS_Eval(
+                self.inner,
+                input.as_ptr(),
+                len as _,
+                script_name.as_ptr(),
+                quickjs_sys::JS_EVAL_FLAG_COMPILE_ONLY as i32,
+            )
+        };
+
+        Ok(Compiled { ctx: self.inner, value })
+
+
+
+    // if ((eval_flags & JS_EVAL_TYPE_MASK) == JS_EVAL_TYPE_MODULE) {
+    //     /* for the modules, we compile then run to be able to set
+    //        import.meta */
+    //     val = JS_Eval(ctx, buf, buf_len, filename,
+    //                   eval_flags | JS_EVAL_FLAG_COMPILE_ONLY);
+    //     if (!JS_IsException(val)) {
+    //         js_module_set_import_meta(ctx, val, TRUE, TRUE);
+    //         val = JS_EvalFunction(ctx, val);
+    //     }
+    // }
+
+
     }
 
     pub fn global_object(&self) -> Result<Value> {
@@ -150,6 +197,41 @@ impl Context {
         let console_object = self.object_value()?;
         console_object.set_property("log", console_log_callback)?;
         global_object.set_property("console", console_object)?;
+
+        let get_input_callback = unsafe {
+            self.new_callback(|ctx, this, argc, argv, magic| {
+
+                let runtime = unsafe { quickjs_sys::JS_GetRuntime(ctx) };
+                let context = Context { runtime, inner: ctx };
+                let input = engine::load()
+                    .expect("failed to load input");
+
+                let value = transcode_input(&context, &input)
+                    .expect("failed to transcode input");
+
+                value.value
+            })?
+        };
+
+        let set_output_callback = unsafe {
+            self.new_callback(|ctx, this, argc, argv, magic| {
+                if argc != 1 {
+                    panic!("lol");
+                }
+
+                let output_value = Value::new(ctx, *argv.offset(0)).unwrap();
+                let output = transcode_output(output_value)
+                    .expect("failed to transcode output");
+
+                engine::store(&output)
+                    .expect("failed to store output");
+
+                unsafe { ext_js_undefined }
+            })?
+        };
+
+        global_object.set_property("getInput", get_input_callback);
+        global_object.set_property("setOutput", set_output_callback);
         Ok(())
     }
 }

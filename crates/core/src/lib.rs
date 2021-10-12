@@ -3,7 +3,7 @@ mod js_binding;
 mod serialize;
 mod transcode;
 
-use js_binding::{context::Context, value::Value};
+use js_binding::{context::{Compiled, Context}, value::Value};
 
 use once_cell::sync::OnceCell;
 use std::io::{self, Read};
@@ -13,8 +13,9 @@ use transcode::{transcode_input, transcode_output};
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-static mut JS_CONTEXT: OnceCell<Context> = OnceCell::new();
-static mut ENTRYPOINT: (OnceCell<Value>, OnceCell<Value>) = (OnceCell::new(), OnceCell::new());
+// static mut JS_CONTEXT: OnceCell<Compiled> = OnceCell::new();
+static mut COMPILED: OnceCell<Compiled> = OnceCell::new();
+// static mut ENTRYPOINT: (OnceCell<Value>, OnceCell<Value>) = (OnceCell::new(), OnceCell::new());
 static SCRIPT_NAME: &str = "script.js";
 
 // TODO
@@ -32,33 +33,42 @@ pub extern "C" fn init() {
         let mut contents = String::new();
         io::stdin().read_to_string(&mut contents).unwrap();
 
-        let _ = context.eval_global(SCRIPT_NAME, &contents).unwrap();
-        let global = context.global_object().unwrap();
-        let shopify = global.get_property("Shopify").unwrap();
-        let main = shopify.get_property("main").unwrap();
 
-        JS_CONTEXT.set(context).unwrap();
-        ENTRYPOINT.0.set(shopify).unwrap();
-        ENTRYPOINT.1.set(main).unwrap();
+        let compiled = context.compile(SCRIPT_NAME, &contents).unwrap();
+
+        COMPILED.set(compiled).unwrap();
+
+
+        // let _ = context.eval_global(SCRIPT_NAME, &contents).unwrap();
+        // let global = context.global_object().unwrap();
+        // let shopify = global.get_property("Shopify").unwrap();
+        // let main = shopify.get_property("main").unwrap();
+
+        // JS_CONTEXT.set(context).unwrap();
+        // ENTRYPOINT.0.set(shopify).unwrap();
+        // ENTRYPOINT.1.set(main).unwrap();
     }
 }
 
 #[export_name = "shopify_main"]
 pub extern "C" fn run() {
     unsafe {
-        let context = JS_CONTEXT.get().unwrap();
-        let shopify = ENTRYPOINT.0.get().unwrap();
-        let main = ENTRYPOINT.1.get().unwrap();
-        let input_bytes = engine::load().expect("Couldn't load input");
+        let compiled = COMPILED.get().unwrap();
+        compiled.eval();
+        // let context = JS_CONTEXT.get().unwrap();
+        // let shopify = ENTRYPOINT.0.get().unwrap();
+        // let main = ENTRYPOINT.1.get().unwrap();
+        // let input_bytes = engine::load().expect("Couldn't load input");
 
-        let input_value = transcode_input(&context, &input_bytes).unwrap();
-        let output_value = main.call(&shopify, &[input_value]);
+        // let input_value = transcode_input(&context, &input_bytes).unwrap();
+        // let output_value = main.call(&shopify, &[input_value]);
 
-        if output_value.is_err() {
-            panic!("{}", output_value.unwrap_err().to_string());
-        }
+        // if output_value.is_err() {
+        //     panic!("{}", output_value.unwrap_err().to_string());
+        // }
 
-        let output = transcode_output(output_value.unwrap()).unwrap();
-        engine::store(&output).expect("Couldn't store output");
+        // let output = transcode_output(output_value.unwrap()).unwrap();
+        // engine::store(&output).expect("Couldn't store output");
     }
 }
+
