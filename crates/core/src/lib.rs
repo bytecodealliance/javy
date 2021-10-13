@@ -53,8 +53,20 @@ pub extern "C" fn init() {
 #[export_name = "shopify_main"]
 pub extern "C" fn run() {
     unsafe {
+
         let compiled = COMPILED.get().unwrap();
-        compiled.eval();
+        compiled.eval().unwrap();
+        compiled.std_loop();
+
+        // loop {
+        //     if !compiled.execute_pending_job() {
+        //         break;
+        //     }
+        // }
+
+        // compiled.enqueue
+        // let compiled = COMPILED.get().unwrap();
+        // compiled.eval();
         // let context = JS_CONTEXT.get().unwrap();
         // let shopify = ENTRYPOINT.0.get().unwrap();
         // let main = ENTRYPOINT.1.get().unwrap();

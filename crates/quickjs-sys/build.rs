@@ -33,11 +33,14 @@ fn main() {
             "quickjs/libregexp.c",
             "quickjs/libunicode.c",
             "quickjs/quickjs.c",
+            "quickjs/quickjs-libc.c",
             "extensions/value.c",
         ])
         .define("_GNU_SOURCE", None)
         .define("CONFIG_VERSION", "\"2021-03-27\"")
         .define("CONFIG_BIGNUM", None)
+        .define("_WASI", None)
+        .define("_WASI_EMULATED_SIGNAL", None)
         .cargo_metadata(true)
         // The below flags are used by the official Makefile.
         .flag_if_supported("-Wchar-subscripts")
@@ -54,6 +57,7 @@ fn main() {
         .flag_if_supported("-Wno-cast-function-type")
         .flag_if_supported("-Wno-implicit-fallthrough")
         .flag_if_supported("-Wno-enum-conversion")
+        .flag_if_supported("-lwasi-emulated-signal")
         .opt_level(2)
         .compile("quickjs");
 

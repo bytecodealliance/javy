@@ -42,10 +42,14 @@
 #include <conio.h>
 #include <utime.h>
 #else
+
+#if !defined(_WASI)
 #include <dlfcn.h>
 #include <termios.h>
-#include <sys/ioctl.h>
 #include <sys/wait.h>
+#endif
+
+#include <sys/ioctl.h>
 
 #if defined(__APPLE__)
 typedef sig_t sighandler_t;
@@ -57,7 +61,7 @@ typedef sig_t sighandler_t;
 
 #endif
 
-#if !defined(_WIN32)
+#if !defined(_WIN32) && !defined(_WASI)
 /* enable the os.Worker API. IT relies on POSIX threads */
 #define USE_WORKER
 #endif
@@ -453,7 +457,7 @@ typedef JSModuleDef *(JSInitModuleFunc)(JSContext *ctx,
                                         const char *module_name);
 
 
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(_WASI)
 static JSModuleDef *js_module_loader_so(JSContext *ctx,
                                         const char *module_name)
 {
@@ -530,7 +534,7 @@ int js_module_set_import_meta(JSContext *ctx, JSValueConst func_val,
         return -1;
     if (!strchr(module_name, ':')) {
         strcpy(buf, "file://");
-#if !defined(_WIN32)
+#if !defined(_WIN32) && !defined(_WASI)
         /* realpath() cannot be used with modules compiled with qjsc
            because the corresponding module source code is not
            necessarily present */
@@ -1710,6 +1714,20 @@ static JSValue js_os_ttySetRaw(JSContext *ctx, JSValueConst this_val,
     }
     return JS_UNDEFINED;
 }
+#elif defined(_WASI)
+
+static JSValue js_os_ttyGetWinSize(JSContext *ctx, JSValueConst this_val,
+                                   int argc, JSValueConst *argv)
+{
+    return JS_ThrowReferenceError(ctx, "TTY not supported");
+}
+
+static JSValue js_os_ttySetRaw(JSContext *ctx, JSValueConst this_val,
+                               int argc, JSValueConst *argv)
+{
+    return JS_ThrowReferenceError(ctx, "TTY not supported");
+}
+
 #else
 static JSValue js_os_ttyGetWinSize(JSContext *ctx, JSValueConst this_val,
                                    int argc, JSValueConst *argv)
@@ -2601,7 +2619,7 @@ static JSValue js_os_utimes(JSContext *ctx, JSValueConst this_val,
         struct timeval times[2];
         ms_to_timeval(&times[0], atime);
         ms_to_timeval(&times[1], mtime);
-        ret = js_get_errno(utimes(path, times));
+        // ret = js_get_errno(utimes(path, times));
     }
 #endif
     JS_FreeCString(ctx, path);
@@ -3601,7 +3619,9 @@ static const JSCFunctionListEntry js_os_funcs[] = {
     JS_CFUNC_DEF("rename", 2, js_os_rename ),
     JS_CFUNC_MAGIC_DEF("setReadHandler", 2, js_os_setReadHandler, 0 ),
     JS_CFUNC_MAGIC_DEF("setWriteHandler", 2, js_os_setReadHandler, 1 ),
+#if !defined(_WASI)
     JS_CFUNC_DEF("signal", 2, js_os_signal ),
+#endif
     OS_FLAG(SIGINT),
     OS_FLAG(SIGABRT),
     OS_FLAG(SIGFPE),
@@ -3642,20 +3662,22 @@ static const JSCFunctionListEntry js_os_funcs[] = {
     OS_FLAG(S_ISUID),
 #endif
     JS_CFUNC_MAGIC_DEF("stat", 1, js_os_stat, 0 ),
-    JS_CFUNC_DEF("utimes", 3, js_os_utimes ),
+    // JS_CFUNC_DEF("utimes", 3, js_os_utimes ),
     JS_CFUNC_DEF("sleep", 1, js_os_sleep ),
-    JS_CFUNC_DEF("realpath", 1, js_os_realpath ),
+    // JS_CFUNC_DEF("realpath", 1, js_os_realpath ),
 #if !defined(_WIN32)
-    JS_CFUNC_MAGIC_DEF("lstat", 1, js_os_stat, 1 ),
-    JS_CFUNC_DEF("symlink", 2, js_os_symlink ),
-    JS_CFUNC_DEF("readlink", 1, js_os_readlink ),
-    JS_CFUNC_DEF("exec", 1, js_os_exec ),
-    JS_CFUNC_DEF("waitpid", 2, js_os_waitpid ),
+    // JS_CFUNC_MAGIC_DEF("lstat", 1, js_os_stat, 1 ),
+    // JS_CFUNC_DEF("symlink", 2, js_os_symlink ),
+    // JS_CFUNC_DEF("readlink", 1, js_os_readlink ),
+    // JS_CFUNC_DEF("exec", 1, js_os_exec ),
+    // JS_CFUNC_DEF("waitpid", 2, js_os_waitpid ),
+#if !defined(_WASI)
     OS_FLAG(WNOHANG),
-    JS_CFUNC_DEF("pipe", 0, js_os_pipe ),
-    JS_CFUNC_DEF("kill", 2, js_os_kill ),
-    JS_CFUNC_DEF("dup", 1, js_os_dup ),
-    JS_CFUNC_DEF("dup2", 2, js_os_dup2 ),
+#endif
+    // JS_CFUNC_DEF("pipe", 0, js_os_pipe ),
+    // JS_CFUNC_DEF("kill", 2, js_os_kill ),
+    // JS_CFUNC_DEF("dup", 1, js_os_dup ),
+    // JS_CFUNC_DEF("dup2", 2, js_os_dup2 ),
 #endif
 };
 

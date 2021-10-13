@@ -8,7 +8,7 @@ use quickjs_sys::{
     JS_NewInt32_Ext, JS_NewInt64_Ext, JS_NewObject, JS_NewRuntime, JS_NewStringLen,
     JS_NewUint32_Ext, JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL,
 };
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 use std::io::Write;
 use std::os::raw::{c_char, c_int, c_void};
 use super::super::transcode::{transcode_input, transcode_output};
@@ -32,6 +32,9 @@ impl Default for Context {
             panic!("Couldn't create JavaScript context");
         }
 
+        let s = CString::new("os").unwrap();
+        unsafe { quickjs_sys::js_init_module_os(inner, s.as_ptr()); }
+
         Self { runtime, inner }
     }
 }
@@ -46,6 +49,22 @@ impl Compiled {
     pub fn eval(&self) -> Result<Value> {
         let raw = unsafe { quickjs_sys::JS_EvalFunction(self.ctx, self.value) };
         Value::new(self.ctx, raw)
+    }
+
+    pub fn std_loop(&self) {
+        unsafe { quickjs_sys::js_std_loop(self.ctx) };
+
+        // let mut foo = std::ptr::null_mut();
+        // let runtime = unsafe { quickjs_sys::JS_GetRuntime(self.ctx) };
+        // let success = unsafe { quickjs_sys::JS_ExecutePendingJob(runtime, &mut foo) };
+
+        // if success < 0 {
+        //     panic!("job failed");
+        // } else if success == 0 {
+        //     false
+        // } else {
+        //     true
+        // }
     }
 }
 
@@ -201,7 +220,7 @@ impl Context {
         let get_input_callback = unsafe {
             self.new_callback(|ctx, this, argc, argv, magic| {
 
-                let runtime = unsafe { quickjs_sys::JS_GetRuntime(ctx) };
+                let runtime = quickjs_sys::JS_GetRuntime(ctx);
                 let context = Context { runtime, inner: ctx };
                 let input = engine::load()
                     .expect("failed to load input");
@@ -226,12 +245,12 @@ impl Context {
                 engine::store(&output)
                     .expect("failed to store output");
 
-                unsafe { ext_js_undefined }
+                ext_js_undefined
             })?
         };
 
-        global_object.set_property("getInput", get_input_callback);
-        global_object.set_property("setOutput", set_output_callback);
+        global_object.set_property("getInput", get_input_callback).unwrap();
+        global_object.set_property("setOutput", set_output_callback).unwrap();
         Ok(())
     }
 }

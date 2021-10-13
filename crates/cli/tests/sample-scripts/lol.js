@@ -1,18 +1,12 @@
-// var Shopify = {
-//   main: (i) => {
-//     setTimeout(() => console.log('inside'), 1000);
-//     //
-//     console.log('outside')
-//   }
-// }
+// import * as os from "os";
 
-// (function() {
-//   'use strict';
+console.log("hello world");
 
-  console.log("hello world");
+os.setTimeout(() => {
+  console.log("will it blend?");
+}, 1);
 
-  let call = (i) => { return i; };
+let call = (i) => { return i; };
 
-  let input = getInput();
-  setOutput(call(input));
-// })();
+let input = getInput();
+setOutput(call(input));
