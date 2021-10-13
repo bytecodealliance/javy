@@ -21,12 +21,12 @@ lazy_static! {
 //     assert_eq!(42, output);
 // }
 
-#[test]
-fn test_fib() {
+#[tokio::test(flavor = "multi_thread")]
+async fn test_fib() {
     let _guard = EXCLUSIVE_TEST.lock();
     let mut runner = Runner::new("lol.js");
 
-    let output = run::<_, u32>(&mut runner, &5);
+    let output = run::<_, u32>(&mut runner, &5).await;
     assert_eq!(8, output);
 }
 
@@ -69,13 +69,13 @@ fn test_fib() {
 //     assert_eq!("e", output.as_str());
 // }
 
-fn run<I, O>(r: &mut Runner, i: &I) -> O
+async fn run<I, O>(r: &mut Runner, i: &I) -> O
 where
     I: Serialize,
     O: DeserializeOwned,
 {
     let input = rmp_serde::to_vec(i).unwrap();
-    let output = r.exec(input).unwrap();
+    let output = r.exec(input).await.unwrap();
     let output = rmp_serde::from_slice::<O>(&output).unwrap();
     output
 }

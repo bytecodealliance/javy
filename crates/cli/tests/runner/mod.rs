@@ -6,6 +6,30 @@ use std::process::Command;
 use wasmtime::{Caller, Config, Engine, Linker, Module, OptLevel, Store};
 use wasmtime_wasi::sync::WasiCtxBuilder;
 use wasmtime_wasi::WasiCtx;
+use wasi_common::sched::WasiSched;
+use wasi_common::Poll;
+
+struct CustomScheduler;
+
+// #[async_trait::async_trait]
+// impl WasiSched for CustomScheduler {
+//     async fn poll_oneoff<'a>(&self, poll: &mut Poll<'a>) -> anyhow::Result<()> {
+//         println!("==> poll_oneoff");
+//         wasmtime_wasi::tokio::sched::poll_oneoff(poll).await
+//     }
+
+//     async fn sched_yield(&self) -> anyhow::Result<()> {
+//         println!("==> yield");
+//         tokio::task::yield_now().await;
+//         Ok(())
+//     }
+
+//     async fn sleep(&self, duration: std::time::Duration) -> anyhow::Result<()> {
+//         println!("==> sleep");
+//         tokio::time::sleep(duration).await;
+//         Ok(())
+//     }
+// }
 
 pub struct Runner {
     wasm: Vec<u8>,
@@ -20,7 +44,14 @@ struct StoreContext {
 
 impl Default for StoreContext {
     fn default() -> Self {
-        let wasi = WasiCtxBuilder::new().inherit_stdio().build();
+        let random = wasmtime_wasi::tokio::random_ctx();
+        let clocks = wasmtime_wasi::tokio::clocks_ctx();
+        let sched = wasmtime_wasi::tokio::sched::sched_ctx();//CustomScheduler;
+        let table = wasi_common::table::Table::new();
+
+        let stdout = wasmtime_wasi::tokio::stdio::stdout();
+        let mut wasi = WasiCtx::new(random, clocks, sched, table);
+        wasi.set_stdout(Box::new(stdout));
 
         Self {
             wasi,
@@ -67,15 +98,16 @@ impl Runner {
         Self { wasm, linker }
     }
 
-    pub fn exec(&mut self, input: Vec<u8>) -> Result<Vec<u8>> {
+    pub async fn exec(&mut self, input: Vec<u8>) -> Result<Vec<u8>> {
         let mut store = Store::new(self.linker.engine(), StoreContext::new(input));
+        store.out_of_fuel_async_yield(u64::MAX, 10000);
 
         let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
 
-        let instance = self.linker.instantiate(&mut store, &module)?;
+        let instance = self.linker.instantiate_async(&mut store, &module).await?;
         let run = instance.get_typed_func::<(), (), _>(&mut store, "shopify_main")?;
 
-        run.call(&mut store, ())?;
+        run.call_async(&mut store, ()).await?;
 
         Ok(store.into_data().output)
     }
@@ -93,13 +125,16 @@ impl StoreContext {
 fn setup_engine() -> Engine {
     let mut config = Config::new();
     config.cranelift_opt_level(OptLevel::SpeedAndSize);
+    config.async_support(true);
+    config.consume_fuel(true);
+
     Engine::new(&config).expect("failed to create engine")
 }
 
 fn setup_linker(engine: &Engine) -> Linker<StoreContext> {
     let mut linker = Linker::new(engine);
 
-    wasmtime_wasi::sync::add_to_linker(&mut linker, |ctx: &mut StoreContext| &mut ctx.wasi)
+     wasmtime_wasi::tokio::add_to_linker(&mut linker, |ctx: &mut StoreContext| &mut ctx.wasi)
         .expect("failed to add wasi context");
 
     linker
@@ -149,6 +184,43 @@ fn setup_linker(engine: &Engine) -> Linker<StoreContext> {
             },
         )
         .expect("failed to define output_copy");
+
+    // linker
+    //     .func_wrap(
+    //         "shopify_v1",
+    //         "sock_connect",
+    //         |mut caller: Caller<'_, StoreContext>| -> Result<(i32, i32)> {
+    //             Ok((0, 0))
+    //         },
+    //     ).expect("failed to define sock_connect");
+
+    // linker
+    //     .func_wrap(
+    //         "shopify_v1",
+    //         "sock_recv",
+    //         |mut caller: Caller<'_, StoreContext>, fd: i32, ri_data: i32, ri_flags: i32| -> Result<(i32, i32)> {
+    //             Ok((0, 0))
+    //         },
+    //     ).expect("failed to define sock_recv");
+
+    //  linker
+    //     .func_wrap(
+    //         "shopify_v1",
+    //         "sock_send",
+    //         |mut caller: Caller<'_, StoreContext>, fd: i32, si_data: i32, si_flags: i32| -> Result<i32> {
+    //             Ok((0, 0))
+    //         },
+    //     ).expect("failed to define sock_send");
+
+    // linker
+    //     .func_wrap(
+    //         "shopify_v1",
+    //         "sock_shutdown",
+    //         |mut caller: Caller<'_, StoreContext>, fd: i32, how: i32| -> Result<()> {
+    //             Ok((0, 0))
+    //         }
+    //     ).expect("failed to define sock_shutdown");
+
 
     linker
 }

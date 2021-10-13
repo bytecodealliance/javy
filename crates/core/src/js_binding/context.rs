@@ -112,21 +112,6 @@ impl Context {
         };
 
         Ok(Compiled { ctx: self.inner, value })
-
-
-
-    // if ((eval_flags & JS_EVAL_TYPE_MASK) == JS_EVAL_TYPE_MODULE) {
-    //     /* for the modules, we compile then run to be able to set
-    //        import.meta */
-    //     val = JS_Eval(ctx, buf, buf_len, filename,
-    //                   eval_flags | JS_EVAL_FLAG_COMPILE_ONLY);
-    //     if (!JS_IsException(val)) {
-    //         js_module_set_import_meta(ctx, val, TRUE, TRUE);
-    //         val = JS_EvalFunction(ctx, val);
-    //     }
-    // }
-
-
     }
 
     pub fn global_object(&self) -> Result<Value> {
