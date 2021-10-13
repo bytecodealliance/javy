@@ -32,8 +32,18 @@ impl Default for Context {
             panic!("Couldn't create JavaScript context");
         }
 
-        let s = CString::new("os").unwrap();
-        unsafe { quickjs_sys::js_init_module_os(inner, s.as_ptr()); }
+        // let std = CString::new("std").unwrap();
+        let os = CString::new("os").unwrap();
+        unsafe {
+
+
+
+
+            quickjs_sys::js_std_init_handlers(runtime);
+            // quickjs_sys::js_init_module_std(inner, std.as_ptr());
+            quickjs_sys::js_init_module_os(inner, os.as_ptr());
+            quickjs_sys::JS_SetModuleLoaderFunc(runtime, None, Some(quickjs_sys::js_module_loader), std::ptr::null_mut());
+        }
 
         Self { runtime, inner }
     }
@@ -47,6 +57,7 @@ pub struct Compiled {
 
 impl Compiled {
     pub fn eval(&self) -> Result<Value> {
+        unsafe { quickjs_sys::js_module_set_import_meta(self.ctx, self.value, 1, 1); }
         let raw = unsafe { quickjs_sys::JS_EvalFunction(self.ctx, self.value) };
         Value::new(self.ctx, raw)
     }
@@ -96,7 +107,7 @@ impl Context {
                 input.as_ptr(),
                 len as _,
                 script_name.as_ptr(),
-                quickjs_sys::JS_EVAL_FLAG_COMPILE_ONLY as i32,
+                quickjs_sys::JS_EVAL_TYPE_MODULE as i32 | quickjs_sys::JS_EVAL_FLAG_COMPILE_ONLY as i32,
             )
         };
 

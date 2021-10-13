@@ -1,4 +1,7 @@
-// import * as os from "os";
+// import * as std from 'std';
+import * as os from 'os';
+// globalThis.std = std;
+globalThis.os = os;
 
 console.log("hello world");
 
