@@ -74,11 +74,13 @@ jobs:
         run: cargo build --release --package javy
 
       - name: Archive assets
-        uses: thedoctor0/zip-release@master
-        with:
-          type: 'zip'
-          filename: ${{ matrix.asset_name }}.zip
-          path: ${{ matrix.path }}
+        run: gzip -c ${{ matrix.path }} > ${{ matrix.asset_name }}.gz
+
+      - name: Upload assets to artifacts
+        uses: actions/upload-artifact@v2
+        with: 
+          name: ${{ matrix.asset_name }}.gz
+          path: ${{ matrix.asset_name }}.gz
 
       - name: Upload assets to release
         uses: actions/upload-release-asset@v1
@@ -86,6 +88,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./${{ matrix.asset_name }}.zip
-          asset_name: ${{ matrix.asset_name }}.zip
+          asset_path: ./${{ matrix.asset_name }}.gz
+          asset_name: ${{ matrix.asset_name }}.gz
           asset_content_type: application/gzip
