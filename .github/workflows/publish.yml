@@ -40,15 +40,15 @@ jobs:
           - name: linux
             os: ubuntu-latest
             path: target/release/javy
-            asset_name: javy-x86_64-linux-${{ github.event.release.tag_name }}
+            asset_name: javy-x86_64-linux-v0.1.0
           - name: macos
             os: macos-latest
             path: target/release/javy
-            asset_name: javy-x86_64-macos-${{ github.event.release.tag_name }}
+            asset_name: javy-x86_64-macos-v0.1.0
           - name: windows
             os: windows-latest
             path: target\release\javy.exe
-            asset_name: javy-x86_64-windows-${{ github.event.release.tag_name }}
+            asset_name: javy-x86_64-windows-v0.1.0
 
     steps:
       - uses: actions/checkout@v1
@@ -83,12 +83,12 @@ jobs:
           name: ${{ matrix.asset_name }}.gz
           path: ${{ matrix.asset_name }}.gz
 
-      # - name: Upload assets to release
-      #   uses: actions/upload-release-asset@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     upload_url: ${{ github.event.release.upload_url }}
-      #     asset_path: ./${{ matrix.asset_name }}.gz
-      #     asset_name: ${{ matrix.asset_name }}.gz
-      #     asset_content_type: application/gzip
+      - name: Upload assets to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: https://uploads.github.com/repos/Shopify/javy/releases/50927396/assets{?name,label}
+          asset_path: ./${{ matrix.asset_name }}.gz
+          asset_name: ${{ matrix.asset_name }}.gz
+          asset_content_type: application/gzip
