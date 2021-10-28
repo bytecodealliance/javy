@@ -75,7 +75,7 @@ jobs:
         run: cargo build --release --package javy
 
       - name: Archive assets
-        run: gzip -c ${{ matrix.path }} > ${{ matrix.asset_name }}.gz
+        run: gzip -k -f ${{ matrix.path }} && mv ${{ matrix.path }}.gz ${{ matrix.asset_name }}.gz
 
       - name: Upload assets to artifacts
         uses: actions/upload-artifact@v2
