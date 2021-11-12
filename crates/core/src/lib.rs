@@ -3,10 +3,9 @@ mod js_binding;
 mod serialize;
 mod transcode;
 
-use js_binding::{context::Context, value::Value};
-
+use js_binding::context::Context;
 use once_cell::sync::OnceCell;
-use std::io::{self, Read};
+use std::io;
 use transcode::{transcode_input, transcode_output};
 
 #[cfg(not(test))]
@@ -14,7 +13,6 @@ use transcode::{transcode_input, transcode_output};
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 static mut JS_CONTEXT: OnceCell<Context> = OnceCell::new();
-static mut ENTRYPOINT: (OnceCell<Value>, OnceCell<Value>) = (OnceCell::new(), OnceCell::new());
 static SCRIPT_NAME: &str = "script.js";
 
 // TODO
@@ -28,37 +26,38 @@ pub extern "C" fn init() {
     unsafe {
         let mut context = Context::default();
         context.register_globals(io::stdout()).unwrap();
-
-        let mut contents = String::new();
-        io::stdin().read_to_string(&mut contents).unwrap();
-
-        let _ = context.eval_global(SCRIPT_NAME, &contents).unwrap();
-        let global = context.global_object().unwrap();
-        let shopify = global.get_property("Shopify").unwrap();
-        let main = shopify.get_property("main").unwrap();
-
         JS_CONTEXT.set(context).unwrap();
-        ENTRYPOINT.0.set(shopify).unwrap();
-        ENTRYPOINT.1.set(main).unwrap();
     }
 }
 
-#[export_name = "shopify_main"]
-pub extern "C" fn run() {
-    unsafe {
-        let context = JS_CONTEXT.get().unwrap();
-        let shopify = ENTRYPOINT.0.get().unwrap();
-        let main = ENTRYPOINT.1.get().unwrap();
-        let input_bytes = engine::load().expect("Couldn't load input");
+#[export_name = "core_malloc"]
+pub extern "C" fn exported_malloc(size: usize) -> *mut std::ffi::c_void {
+    // Leak the vec<u8>, transfering ownership to the caller.
+    // TODO: Consider not zeroing memory (with_capacity & set_len before into_raw_parts).
+    Box::into_raw(vec![0u8; size].into_boxed_slice()) as _
+}
 
-        let input_value = transcode_input(&context, &input_bytes).unwrap();
-        let output_value = main.call(&shopify, &[input_value]);
+#[export_name = "run_js_script"]
+pub extern "C" fn run(ptr: *const u8, len: usize) {
+    let (context, js_str) = unsafe {
+        let js_str: &[u8] = std::slice::from_raw_parts(ptr as *const u8, len);
+        let js_str = std::str::from_utf8_unchecked(js_str);
 
-        if output_value.is_err() {
-            panic!("{}", output_value.unwrap_err().to_string());
-        }
+        (JS_CONTEXT.get().unwrap(), js_str)
+    };
+    let _ = context.eval_global(SCRIPT_NAME, js_str).unwrap();
+    let global = context.global_object().unwrap();
+    let shopify = global.get_property("Shopify").unwrap();
+    let main = shopify.get_property("main").unwrap();
 
-        let output = transcode_output(output_value.unwrap()).unwrap();
-        engine::store(&output).expect("Couldn't store output");
+    let input_bytes = engine::load().expect("Couldn't load input");
+    let input_value = transcode_input(context, &input_bytes).unwrap();
+    let output_value = main.call(&shopify, &[input_value]);
+
+    if output_value.is_err() {
+        panic!("{}", output_value.unwrap_err().to_string());
     }
+
+    let output = transcode_output(output_value.unwrap()).unwrap();
+    engine::store(&output).expect("Couldn't store output");
 }

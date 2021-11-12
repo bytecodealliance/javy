@@ -1,10 +1,13 @@
-.PHONY: cli core test fmt clean
+.PHONY: cli core test fmt clean core-wasi cli-wasi
 .DEFAULT_GOAL := cli
 
 install:
 	cargo install --path crates/cli
 
 cli: core
+		cd crates/cli && cargo build --release && cd -
+
+cli-wasi: core-wasi
 		cd crates/cli && cargo build --release && cd -
 
 check-benchmarks:
@@ -16,6 +19,14 @@ core:
 		cd crates/core \
 				&& cargo build --release --target=wasm32-wasi \
 				&& cd -
+
+core-wasi:
+		cd crates/core \
+			&& cargo build --release --target=wasm32-wasi --features standalone-wasi \
+			&& cd -
+
+wizen-core:
+	wizer target/wasm32-wasi/release/javy_core.wasm -o crates/cli/javy_core.wizened.wasm 
 
 test-core:
 		cd crates/core \
