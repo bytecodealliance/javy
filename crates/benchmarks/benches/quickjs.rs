@@ -17,35 +17,19 @@ fn startup(c: &mut Criterion) {
     group.finish();
 }
 
-// 7.6us - 8.1us
 // This is the simplest script that we can ever have:
 // ```
 // var Shopify = {
 //   main: function() {
 //   }
 // };
+//
+// 7.6us - 8.1us
 fn eval_noop(c: &mut Criterion) {
     let mut group = c.benchmark_group("quickjs");
     group.bench_function("eval noop", |b| {
         let mut runner = Runner::default();
         let script = include_str!("./js-scripts/noop.js");
-        let wasm = include_bytes!("./quickjs-eval/quickjs_eval.wasm");
-        let wizened = wizen(wasm, script);
-        let module = runner.build_module(&wizened);
-        let instance = runner.instantiate(&module);
-        b.iter(|| runner.exec_instance(&instance));
-    });
-    group.finish();
-}
-
-// 672us - 694us
-// This is a more involved script. Contains the lisan (i18n framework)
-// as a dependency
-fn eval_lisan(c: &mut Criterion) {
-    let mut group = c.benchmark_group("quickjs");
-    group.bench_function("eval lisan", |b| {
-        let mut runner = Runner::default();
-        let script = include_str!("./js-scripts/lisan.js");
         let wasm = include_bytes!("./quickjs-eval/quickjs_eval.wasm");
         let wizened = wizen(wasm, script);
         let module = runner.build_module(&wizened);
@@ -61,6 +45,24 @@ fn compile_noop(c: &mut Criterion) {
     group.bench_function("compile noop", |b| {
         let mut runner = Runner::default();
         let script = include_str!("./js-scripts/noop.js");
+        let wasm = include_bytes!("./quickjs-compile/quickjs_compile.wasm");
+        let wizened = wizen(wasm, script);
+        let module = runner.build_module(&wizened);
+        let instance = runner.instantiate(&module);
+        b.iter(|| runner.exec_instance(&instance));
+    });
+    group.finish();
+}
+
+// This is a more involved script. Contains the lisan (i18n framework)
+// as a dependency
+//
+// 672us - 694us
+fn eval_lisan(c: &mut Criterion) {
+    let mut group = c.benchmark_group("quickjs");
+    group.bench_function("eval lisan", |b| {
+        let mut runner = Runner::default();
+        let script = include_str!("./js-scripts/lisan.js");
         let wasm = include_bytes!("./quickjs-eval/quickjs_eval.wasm");
         let wizened = wizen(wasm, script);
         let module = runner.build_module(&wizened);
@@ -76,7 +78,27 @@ fn compile_lisan(c: &mut Criterion) {
     group.bench_function("compile lisan", |b| {
         let mut runner = Runner::default();
         let script = include_str!("./js-scripts/lisan.js");
-        let wasm = include_bytes!("./quickjs-eval/quickjs_eval.wasm");
+        let wasm = include_bytes!("./quickjs-compile/quickjs_compile.wasm");
+        let wizened = wizen(wasm, script);
+        let module = runner.build_module(&wizened);
+        let instance = runner.instantiate(&module);
+        b.iter(|| runner.exec_instance(&instance));
+    });
+    group.finish();
+}
+
+
+// This is a more involved script, related to the *_lisan benches;
+// but instead of using lisan it uses i18n as a dependency; there's a fundamental 
+// difference on how i18n-next and Lisan work, for i18n-next's case the final JavaScript code is 55kb
+//
+// ~12us
+fn compile_i18n_next(c: &mut Criterion) {
+    let mut group = c.benchmark_group("quickjs");
+    group.bench_function("compile i18n-next", |b| {
+        let mut runner = Runner::default();
+        let script = include_str!("./js-scripts/i18n-next.js");
+        let wasm = include_bytes!("./quickjs-compile/quickjs_compile.wasm");
         let wizened = wizen(wasm, script);
         let module = runner.build_module(&wizened);
         let instance = runner.instantiate(&module);
@@ -98,6 +120,5 @@ fn wizen(wasm: &[u8], script: &str) -> Vec<u8> {
     result
 }
 
-// criterion_group!(benches, startup, eval_noop, eval_lisan, compile_noop, compile_lisan);
-criterion_group!(benches, compile_noop, compile_lisan);
+criterion_group!(benches, startup, eval_noop, eval_lisan, compile_noop, compile_lisan, compile_i18n_next);
 criterion_main!(benches);
