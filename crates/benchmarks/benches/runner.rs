@@ -45,7 +45,20 @@ impl Runner {
         self.store.data_mut().set_input(input.into());
     }
 
-    pub fn exec(&mut self, module: &Module) {
+    pub fn instantiate(&mut self, module: &Module) -> Instance {
+        self.linker.instantiate(&mut self.store, module).unwrap()
+    }
+
+    // Executes an instance
+    pub fn exec_instance(&mut self, instance: &Instance) {
+        let main = instance
+            .get_typed_func::<(), (), _>(&mut self.store, "shopify_main")
+            .unwrap();
+        main.call(&mut self.store, ()).unwrap();
+    }
+
+    // Instantiates and executes a module
+    pub fn exec_module(&mut self, module: &Module) {
         let instance = self.linker.instantiate(&mut self.store, module).unwrap();
         let main = instance
             .get_typed_func::<(), (), _>(&mut self.store, "shopify_main")

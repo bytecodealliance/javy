@@ -1,0 +1,4 @@
+var Shopify = {
+  main: function() {
+  }
+};

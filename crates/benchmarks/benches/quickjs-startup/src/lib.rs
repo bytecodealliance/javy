@@ -1,0 +1,14 @@
+use quickjs_sys::{JS_NewRuntime, JS_NewContext};
+
+#[no_mangle] 
+pub extern "C" fn shopify_main() {
+    let runtime = unsafe { JS_NewRuntime() } ;
+    if runtime.is_null() {
+        panic!("Couldn't create JavaScript runtime");
+    }
+
+    let inner = unsafe { JS_NewContext(runtime) };
+    if inner.is_null() {
+        panic!("Couldn't create JavaScript context");
+    }
+}

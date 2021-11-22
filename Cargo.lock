@@ -105,6 +105,7 @@ dependencies = [
  "serde_json",
  "wasmtime",
  "wasmtime-wasi",
+ "wizer",
 ]
 
 [[package]]
