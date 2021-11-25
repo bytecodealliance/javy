@@ -40,17 +40,17 @@ jobs:
           - name: linux
             os: ubuntu-latest
             path: target/release/javy
-            asset_name: javy-x86_64-linux-${{ github.event.release.tag_name }}
+            asset_name: javy-x86_64-linux-v0.1.0
             shasum_cmd: sha256sum
           - name: macos
             os: macos-latest
             path: target/release/javy
-            asset_name: javy-x86_64-macos-${{ github.event.release.tag_name }}
+            asset_name: javy-x86_64-macos-v0.1.0
             shasum_cmd: shasum -a 256
           - name: windows
             os: windows-latest
             path: target\release\javy.exe
-            asset_name: javy-x86_64-windows-${{ github.event.release.tag_name }}
+            asset_name: javy-x86_64-windows-v0.1.0
             shasum_cmd: sha256sum
 
     steps:
