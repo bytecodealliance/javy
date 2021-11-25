@@ -100,13 +100,13 @@ jobs:
       #     asset_content_type: application/gzip
 
       - name: Generate asset hash
-        run: ${{ matrix.shasum_cmd }} ${{ matrix.asset_name }} > ${{ matrix.asset_name }}.sha256
+        run: ${{ matrix.shasum_cmd }} ${{ matrix.asset_name }}.gz | awk '{ print $1 }' > ${{ matrix.asset_name }}.gz.sha256
 
       - name: Upload asset hash to artifacts
         uses: actions/upload-artifact@v2
         with: 
-          name: ${{ matrix.asset_name }}.sha256
-          path: ${{ matrix.asset_name }}.sha256
+          name: ${{ matrix.asset_name }}.gz.sha256
+          path: ${{ matrix.asset_name }}.gz.sha256
 
       # - name: Upload assets to release
       #   uses: actions/upload-release-asset@v1
