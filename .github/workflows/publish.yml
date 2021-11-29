@@ -40,14 +40,17 @@ jobs:
             os: ubuntu-latest
             path: target/release/javy
             asset_name: javy-x86_64-linux-${{ github.event.release.tag_name }}
+            shasum_cmd: sha256sum
           - name: macos
             os: macos-latest
             path: target/release/javy
             asset_name: javy-x86_64-macos-${{ github.event.release.tag_name }}
+            shasum_cmd: shasum -a 256
           - name: windows
             os: windows-latest
             path: target\release\javy.exe
             asset_name: javy-x86_64-windows-${{ github.event.release.tag_name }}
+            shasum_cmd: sha256sum
 
     steps:
       - uses: actions/checkout@v1
@@ -91,3 +94,22 @@ jobs:
           asset_path: ./${{ matrix.asset_name }}.gz
           asset_name: ${{ matrix.asset_name }}.gz
           asset_content_type: application/gzip
+
+      - name: Generate asset hash
+        run: ${{ matrix.shasum_cmd }} ${{ matrix.asset_name }}.gz | awk '{ print $1 }' > ${{ matrix.asset_name }}.gz.sha256
+
+      - name: Upload asset hash to artifacts
+        uses: actions/upload-artifact@v2
+        with: 
+          name: ${{ matrix.asset_name }}.gz.sha256
+          path: ${{ matrix.asset_name }}.gz.sha256
+
+      - name: Upload asset hash to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./${{ matrix.asset_name }}.gz.sha256
+          asset_name: ${{ matrix.asset_name }}.gz.sha256
+          asset_content_type: plain/text
