@@ -2,8 +2,6 @@
 
 ![Build status](https://github.com/Shopify/javy/actions/workflows/ci.yml/badge.svg?branch=main)
 
-[About this repo](#about-this-repo) | [How to use this repo](#how-to-use-this-repo)
-
 ## About this repo
 
 **Introduction**: Run your JavaScript on WebAssembly. Javy takes your JavaScript code, and executes it in a WebAssebmly embedded JavaScript runtime.
