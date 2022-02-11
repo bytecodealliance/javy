@@ -3,6 +3,11 @@ name = "quickjs-sys"
 version = "0.1.0"
 authors = ["Saúl Cabrera <saulecabrera@gmail.com>"]
 edition = "2018"
+license = "Apache-2.0"
+description = "Rust bindings for QuickJS"
+homepage = "https://github.com/Shopify/javy/tree/main/crates/quickjs-sys"
+repository = "https://github.com/Shopify/javy/tree/main/crates/quickjs-sys"
+categories = ["external-ffi-bindings"]
 
 [dependencies]
 
