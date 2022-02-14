@@ -925,7 +925,7 @@ dependencies = [
  "convert_case",
  "once_cell",
  "quickcheck",
- "quickjs-sys",
+ "quickjs-wasm-sys",
  "rmp-serde",
  "serde",
  "serde-transcode",
@@ -1265,7 +1265,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "quickjs-sys"
+name = "quickjs-wasm-sys"
 version = "0.1.0"
 dependencies = [
  "bindgen",

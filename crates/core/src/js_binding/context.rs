@@ -1,7 +1,7 @@
 use super::constants::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER};
 use super::value::Value;
 use anyhow::Result;
-use quickjs_sys::{
+use quickjs_wasm_sys::{
     ext_js_exception, ext_js_null, ext_js_undefined, size_t as JS_size_t, JSCFunctionData,
     JSContext, JSRuntime, JSValue, JS_Eval, JS_FreeCString, JS_GetGlobalObject, JS_NewArray,
     JS_NewBigInt64, JS_NewBool_Ext, JS_NewCFunctionData, JS_NewContext, JS_NewFloat64_Ext,
