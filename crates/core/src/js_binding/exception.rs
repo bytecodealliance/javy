@@ -1,6 +1,6 @@
 use super::value::Value;
 use anyhow::{anyhow, Result};
-use quickjs_sys::{JSContext, JS_GetException, JS_IsError};
+use quickjs_wasm_sys::{JSContext, JS_GetException, JS_IsError};
 use std::fmt;
 
 #[derive(Debug)]

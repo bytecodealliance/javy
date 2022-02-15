@@ -1,7 +1,7 @@
 use super::exception::Exception;
 use super::properties::Properties;
 use anyhow::{anyhow, Result};
-use quickjs_sys::{
+use quickjs_wasm_sys::{
     size_t as JS_size_t, JSContext, JSValue, JS_BigIntSigned, JS_BigIntToInt64, JS_BigIntToUint64,
     JS_Call, JS_DefinePropertyValueStr, JS_DefinePropertyValueUint32, JS_GetPropertyStr,
     JS_GetPropertyUint32, JS_IsArray, JS_IsFloat64_Ext, JS_ToCStringLen2, JS_ToFloat64,

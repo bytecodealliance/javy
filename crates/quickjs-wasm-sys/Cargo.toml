@@ -1,5 +1,5 @@
 [package]
-name = "quickjs-sys"
+name = "quickjs-wasm-sys"
 version = "0.1.0"
 authors = ["Saúl Cabrera <saulecabrera@gmail.com>"]
 edition = "2018"

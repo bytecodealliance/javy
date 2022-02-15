@@ -31,10 +31,10 @@ test-cli: core
 
 tests: check-benchmarks test-core test-cli
 
-fmt: fmt-quickjs-sys fmt-core fmt-cli
+fmt: fmt-quickjs-wasm-sys fmt-core fmt-cli
 
-fmt-quickjs-sys:
-		cd crates/quickjs-sys/ \
+fmt-quickjs-wasm-sys:
+		cd crates/quickjs-wasm-sys/ \
 				&& cargo fmt -- --check \
 				&& cargo clippy --target=wasm32-wasi -- -D warnings \
 				&& cd -

@@ -1,4 +1,4 @@
-use quickjs_sys::{JS_NewRuntime, JS_NewContext};
+use quickjs_wasm_sys::{JS_NewRuntime, JS_NewContext};
 
 #[no_mangle] 
 pub extern "C" fn shopify_main() {

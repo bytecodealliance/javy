@@ -1,4 +1,4 @@
-use quickjs_sys::{JS_NewRuntime, JS_NewContext, JSContext, JS_Eval, JS_EVAL_TYPE_GLOBAL, JS_TAG_EXCEPTION};
+use quickjs_wasm_sys::{JS_NewRuntime, JS_NewContext, JSContext, JS_Eval, JS_EVAL_TYPE_GLOBAL, JS_TAG_EXCEPTION};
 use std::{ffi::CString, convert::TryInto};
 use once_cell::sync::OnceCell;
 
