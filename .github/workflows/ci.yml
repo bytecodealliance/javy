@@ -45,6 +45,9 @@ jobs:
       - name: Install cargo-wasi
         run: cargo install cargo-wasi
 
+      - name: Install wasi-sdk
+        run: ./install-wasi-sdk.sh
+
       - name: Tests
         run: make tests
 
