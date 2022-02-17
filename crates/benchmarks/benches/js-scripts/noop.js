@@ -1,4 +1,0 @@
-var Shopify = {
-  main: function() {
-  }
-};
