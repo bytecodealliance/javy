@@ -1,7 +1,7 @@
 use quickjs_wasm_sys::{JS_NewRuntime, JS_NewContext};
 
 #[no_mangle] 
-pub extern "C" fn shopify_main() {
+fn main() {
     let runtime = unsafe { JS_NewRuntime() } ;
     if runtime.is_null() {
         panic!("Couldn't create JavaScript runtime");

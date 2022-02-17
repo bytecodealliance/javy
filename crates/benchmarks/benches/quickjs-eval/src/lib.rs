@@ -33,7 +33,7 @@ pub extern "C" fn init() {
 }
 
 #[no_mangle]
-pub extern fn shopify_main() {
+fn main() {
     unsafe {
         let contents = SCRIPT.get().unwrap();
         let name = SCRIPT_NAME.get().unwrap();
@@ -55,5 +55,3 @@ pub extern fn shopify_main() {
         }
     }
 }
-
-

@@ -22,7 +22,7 @@ core:
 
 test-core:
 		cd crates/core \
-				&& cargo wasi test --features standalone-wasi -- --nocapture \
+				&& cargo wasi test --features json-io -- --nocapture \
 				&& cd -
 
 # Test in release mode to skip some debug assertions

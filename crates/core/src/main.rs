@@ -43,8 +43,7 @@ pub extern "C" fn init() {
     }
 }
 
-#[export_name = "shopify_main"]
-pub extern "C" fn run() {
+fn main() {
     unsafe {
         let context = JS_CONTEXT.get().unwrap();
         let shopify = ENTRYPOINT.0.get().unwrap();

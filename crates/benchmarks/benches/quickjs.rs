@@ -87,9 +87,8 @@ fn compile_lisan(c: &mut Criterion) {
     group.finish();
 }
 
-
 // This is a more involved script, related to the *_lisan benches;
-// but instead of using lisan it uses i18n as a dependency; there's a fundamental 
+// but instead of using lisan it uses i18n as a dependency; there's a fundamental
 // difference on how i18n-next and Lisan work, for i18n-next's case the final JavaScript code is 55kb
 //
 // ~12us
@@ -107,7 +106,6 @@ fn compile_i18n_next(c: &mut Criterion) {
     group.finish();
 }
 
-
 fn wizen(wasm: &[u8], script: &str) -> Vec<u8> {
     std::env::set_var("SCRIPT", script);
     let result = Wizer::new()
@@ -120,5 +118,13 @@ fn wizen(wasm: &[u8], script: &str) -> Vec<u8> {
     result
 }
 
-criterion_group!(benches, startup, eval_noop, eval_lisan, compile_noop, compile_lisan, compile_i18n_next);
+criterion_group!(
+    benches,
+    startup,
+    eval_noop,
+    eval_lisan,
+    compile_noop,
+    compile_lisan,
+    compile_i18n_next
+);
 criterion_main!(benches);

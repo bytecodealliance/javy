@@ -32,8 +32,7 @@ pub extern "C" fn init() {
     }
 }
 
-#[no_mangle]
-pub extern fn shopify_main() {
+fn main() {
     let mut flags = JS_EVAL_FLAG_COMPILE_ONLY;
     unsafe {
         let contents = SCRIPT.get().unwrap();

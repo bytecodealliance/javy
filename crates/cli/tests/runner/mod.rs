@@ -73,7 +73,7 @@ impl Runner {
         let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
 
         let instance = self.linker.instantiate(&mut store, &module)?;
-        let run = instance.get_typed_func::<(), (), _>(&mut store, "shopify_main")?;
+        let run = instance.get_typed_func::<(), (), _>(&mut store, "_start")?;
 
         run.call(&mut store, ())?;
 
@@ -101,54 +101,6 @@ fn setup_linker(engine: &Engine) -> Linker<StoreContext> {
 
     wasmtime_wasi::sync::add_to_linker(&mut linker, |ctx: &mut StoreContext| &mut ctx.wasi)
         .expect("failed to add wasi context");
-
-    linker
-        .func_wrap(
-            "shopify_v1",
-            "input_len",
-            |mut caller: Caller<'_, StoreContext>, offset: i32| -> i32 {
-                let len = caller.data().input.len();
-                let mem = caller.get_export("memory").unwrap().into_memory().unwrap();
-                mem.write(caller, offset as usize, &len.to_ne_bytes())
-                    .unwrap();
-
-                0
-            },
-        )
-        .expect("failed to define input_len");
-
-    linker
-        .func_wrap(
-            "shopify_v1",
-            "input_copy",
-            |mut caller: Caller<'_, StoreContext>, offset: i32| -> i32 {
-                let input = caller.data().input.clone(); // TODO: avoid this copy
-                let mem = caller.get_export("memory").unwrap().into_memory().unwrap();
-                mem.write(caller, offset as usize, input.as_slice())
-                    .unwrap();
-
-                0
-            },
-        )
-        .expect("failed to define input_copy");
-
-    linker
-        .func_wrap(
-            "shopify_v1",
-            "output_copy",
-            |mut caller: Caller<'_, StoreContext>, offset: i32, len: i32| -> i32 {
-                let mem = caller.get_export("memory").unwrap().into_memory().unwrap();
-                let mut buf = vec![0; len as usize];
-                mem.read(&mut caller, offset as usize, buf.as_mut_slice())
-                    .unwrap();
-
-                caller.data_mut().output.resize(buf.len(), 0);
-                caller.data_mut().output.copy_from_slice(buf.as_slice());
-
-                0
-            },
-        )
-        .expect("failed to define output_copy");
 
     linker
 }
