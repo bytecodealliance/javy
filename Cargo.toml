@@ -3,5 +3,4 @@ members = [
   "crates/quickjs-wasm-sys",
   "crates/core",
   "crates/cli",
-  "crates/benchmarks",
 ]
