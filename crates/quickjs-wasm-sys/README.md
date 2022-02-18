@@ -4,8 +4,6 @@ FFI bindings for a Wasm build of the QuickJS Javascript engine.
 
 ## Building this crate
 
-Run `./install-wasi-sdk.sh` OR
-
 - Install the [wasi-sdk](https://github.com/WebAssembly/wasi-sdk#install) for your platform
 - Set the `QUICKJS_WASM_SYS_WASI_SDK_PATH` environment variable to the absolute path where you installed the `wasi-sdk`
 
