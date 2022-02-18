@@ -1,12 +1,12 @@
 use anyhow::Result;
 use std::fs;
-use std::io::{self, Write, Cursor};
+use std::io::{self, Cursor, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use wasi_common::pipe::{ReadPipe, WritePipe};
 use wasmtime::{Config, Engine, Linker, Module, OptLevel, Store};
 use wasmtime_wasi::sync::WasiCtxBuilder;
 use wasmtime_wasi::WasiCtx;
-use wasi_common::pipe::{WritePipe, ReadPipe};
 
 pub struct Runner {
     wasm: Vec<u8>,
@@ -23,10 +23,7 @@ impl Default for StoreContext {
         let wasi_output = WritePipe::new_in_memory();
         let mut wasi = WasiCtxBuilder::new().inherit_stdio().build();
         wasi.set_stdout(Box::new(wasi_output.clone()));
-        Self {
-            wasi,
-            wasi_output,
-        }
+        Self { wasi, wasi_output }
     }
 }
 
@@ -92,10 +89,11 @@ impl Runner {
         run.call(&mut store, ())?;
         let store_context = store.into_data();
         drop(store_context.wasi);
-        Ok(store_context.wasi_output
-        .try_into_inner()
-        .expect("Output stream reference still exists")
-        .into_inner())
+        Ok(store_context
+            .wasi_output
+            .try_into_inner()
+            .expect("Output stream reference still exists")
+            .into_inner())
     }
 }
 

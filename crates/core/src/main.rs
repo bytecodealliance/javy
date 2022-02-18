@@ -50,8 +50,8 @@ fn main() {
         let main = ENTRYPOINT.1.get().unwrap();
         let input_bytes = engine::load().expect("Couldn't load input");
 
-        let input_value = transcode_input(&context, &input_bytes).unwrap();
-        let output_value = main.call(&shopify, &[input_value]);
+        let input_value = transcode_input(context, &input_bytes).unwrap();
+        let output_value = main.call(shopify, &[input_value]);
 
         if output_value.is_err() {
             panic!("{}", output_value.unwrap_err().to_string());
