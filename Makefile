@@ -15,12 +15,12 @@ check-benchmarks:
 				&& cargo check --benches --release \
 				&& cd -
 
-core: download-wasi-sdk
+core:
 		cd crates/core \
 				&& cargo build --release --target=wasm32-wasi \
 				&& cd -
 
-test-core: download-wasi-sdk
+test-core:
 		cd crates/core \
 				&& cargo wasi test --features standalone-wasi -- --nocapture \
 				&& cd -
