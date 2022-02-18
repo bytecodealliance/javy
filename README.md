@@ -22,6 +22,7 @@ Javy is a beta project and will be under major development. We welcome feedback,
   install cmake`
 - Rosetta 2 if running MacOS on Apple Silicon, can be installed via
   `softwareupdate --install-rosetta`
+- Install the `wasi-sdk` by running `make download-wasi-sdk`
 
 ## Development
 

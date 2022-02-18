@@ -2,27 +2,18 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-    let host_platform = match std::env::consts::OS {
-        v @ "linux" => v,
-        v @ "macos" => v,
-        not_supported => panic!("{} is not supported.", not_supported),
-    };
-    let sysroot = format!(
-        "--sysroot=vendor/{}/wasi-sdk/share/wasi-sysroot",
-        host_platform
-    );
-
-    // Use a custom version of clang/ar with WASI support.
-    // They are both vendored within the WASI sdk for both OSX and linux.
-    let clang = format!("vendor/{}/wasi-sdk/bin/clang", host_platform);
-    env::set_var("CC_wasm32_wasi", &clang);
-    env::set_var("CC", &clang);
-
-    let ar = format!("vendor/{}/wasi-sdk/bin/ar", host_platform);
-    env::set_var("AR_wasm32_wasi", &ar);
-    env::set_var("AR", &ar);
-
-    // Tell clang we need to use the wasi-sysroot instead of the host platform.
+    let this_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
+    let wasi_sdk_path =
+        env::var("QUICKJS_WASM_SYS_WASI_SDK_PATH").unwrap_or(format!("{}/wasi-sdk", this_dir));
+    if !std::path::Path::exists(std::path::Path::new(&wasi_sdk_path)) {
+        panic!(
+            "wasi-sdk not installed in specified path of {}",
+            &wasi_sdk_path
+        );
+    }
+    env::set_var("CC", format!("{}/bin/clang", &wasi_sdk_path));
+    env::set_var("AR", format!("{}/bin/ar", &wasi_sdk_path));
+    let sysroot = format!("--sysroot={}/share/wasi-sysroot", &wasi_sdk_path);
     env::set_var("CFLAGS", &sysroot);
 
     // Build quickjs as a static library.

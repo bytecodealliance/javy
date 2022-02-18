@@ -1,6 +1,9 @@
 .PHONY: cli core test fmt clean
 .DEFAULT_GOAL := cli
 
+download-wasi-sdk:
+	./install-wasi-sdk.sh
+
 install:
 	cargo install --path crates/cli
 
@@ -57,5 +60,10 @@ fmt-binaries:
 				&& cargo clippy -- -D warnings \
 				&& cd -
 
-clean:
+clean: clean-wasi-sdk clean-cargo
+
+clean-cargo:
 		cargo clean
+
+clean-wasi-sdk:
+		rm -r crates/quickjs-wasm-sys/wasi-sdk 2> /dev/null || true
