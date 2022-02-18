@@ -1,11 +1,12 @@
 use anyhow::Result;
 use std::fs;
-use std::io::{self, Write};
+use std::io::{self, Write, Cursor};
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use wasmtime::{Caller, Config, Engine, Linker, Module, OptLevel, Store};
+use wasmtime::{Config, Engine, Linker, Module, OptLevel, Store};
 use wasmtime_wasi::sync::WasiCtxBuilder;
 use wasmtime_wasi::WasiCtx;
+use wasi_common::pipe::{WritePipe, ReadPipe};
 
 pub struct Runner {
     wasm: Vec<u8>,
@@ -13,19 +14,32 @@ pub struct Runner {
 }
 
 struct StoreContext {
-    input: Vec<u8>,
-    output: Vec<u8>,
+    wasi_output: WritePipe<Cursor<Vec<u8>>>,
     wasi: WasiCtx,
 }
 
 impl Default for StoreContext {
     fn default() -> Self {
-        let wasi = WasiCtxBuilder::new().inherit_stdio().build();
-
+        let wasi_output = WritePipe::new_in_memory();
+        let mut wasi = WasiCtxBuilder::new().inherit_stdio().build();
+        wasi.set_stdout(Box::new(wasi_output.clone()));
         Self {
             wasi,
-            input: Vec::default(),
-            output: Vec::default(),
+            wasi_output,
+        }
+    }
+}
+
+impl StoreContext {
+    fn new(input: Vec<u8>) -> Self {
+        let mut wasi = WasiCtxBuilder::new().inherit_stdio().build();
+        let wasi_output = WritePipe::new_in_memory();
+        wasi.set_stdout(Box::new(wasi_output.clone()));
+        wasi.set_stdin(Box::new(ReadPipe::from(input.clone())));
+        Self {
+            wasi,
+            wasi_output,
+            ..Default::default()
         }
     }
 }
@@ -76,17 +90,12 @@ impl Runner {
         let run = instance.get_typed_func::<(), (), _>(&mut store, "_start")?;
 
         run.call(&mut store, ())?;
-
-        Ok(store.into_data().output)
-    }
-}
-
-impl StoreContext {
-    fn new(input: Vec<u8>) -> Self {
-        Self {
-            input,
-            ..Default::default()
-        }
+        let store_context = store.into_data();
+        drop(store_context.wasi);
+        Ok(store_context.wasi_output
+        .try_into_inner()
+        .expect("Output stream reference still exists")
+        .into_inner())
     }
 }
 
