@@ -1,13 +1,9 @@
 mod engine;
-mod js_binding;
-mod serialize;
-mod transcode;
 
-use js_binding::{context::Context, value::Value};
+use quickjs_wasm_rs::{messagepack, Context, Value};
 
 use once_cell::sync::OnceCell;
 use std::io::{self, Read};
-use transcode::{transcode_input, transcode_output};
 
 #[cfg(not(test))]
 #[global_allocator]
@@ -51,14 +47,14 @@ pub extern "C" fn run() {
         let main = ENTRYPOINT.1.get().unwrap();
         let input_bytes = engine::load().expect("Couldn't load input");
 
-        let input_value = transcode_input(&context, &input_bytes).unwrap();
+        let input_value = messagepack::transcode_input(&context, &input_bytes).unwrap();
         let output_value = main.call(&shopify, &[input_value]);
 
         if output_value.is_err() {
             panic!("{}", output_value.unwrap_err().to_string());
         }
 
-        let output = transcode_output(output_value.unwrap()).unwrap();
+        let output = messagepack::transcode_output(output_value.unwrap()).unwrap();
         engine::store(&output).expect("Couldn't store output");
     }
 }

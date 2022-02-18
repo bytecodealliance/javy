@@ -922,13 +922,9 @@ name = "javy-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "convert_case",
  "once_cell",
- "quickcheck",
- "quickjs-wasm-sys",
+ "quickjs-wasm-rs",
  "rmp-serde",
- "serde",
- "serde-transcode",
  "serde_json",
  "wee_alloc",
 ]
@@ -1265,6 +1261,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "quickjs-wasm-rs"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "convert_case",
+ "quickcheck",
+ "quickjs-wasm-sys",
+ "rmp-serde",
+ "serde",
+ "serde-transcode",
+]
+
+[[package]]
 name = "quickjs-wasm-sys"
 version = "0.1.0"
 dependencies = [
@@ -1554,9 +1563,9 @@ dependencies = [
 
 [[package]]
 name = "serde-transcode"
-version = "1.1.0"
+version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97528f0dfcf8ce2d51d995cb513a103b9cd301dc3f387a9cae5ef974381d4e1c"
+checksum = "590c0e25c2a5bb6e85bf5c1bce768ceb86b316e7a01bdf07d2cb4ec2271990e2"
 dependencies = [
  "serde",
 ]
