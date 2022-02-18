@@ -20,6 +20,9 @@ Javy is a beta project and will be under major development. We welcome feedback,
 - cmake, depending on your operating system and architecture, it might not be
   installed by default. On Mac it can be installed with `homebrew` via `brew
   install cmake`
+- Rosetta 2 if running MacOS on Apple Silicon, can be installed via
+  `softwareupdate --install-rosetta`
+- Install the `wasi-sdk` by running `make download-wasi-sdk`
 
 ## Development
 

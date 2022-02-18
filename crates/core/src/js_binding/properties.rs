@@ -1,6 +1,6 @@
 use super::{exception::Exception, value::Value};
 use anyhow::Result;
-use quickjs_sys::{
+use quickjs_wasm_sys::{
     JSAtom, JSContext, JSPropertyEnum, JSValue, JS_AtomToString, JS_GetOwnPropertyNames,
     JS_GetPropertyInternal, JS_GPN_ENUM_ONLY, JS_GPN_STRING_MASK, JS_GPN_SYMBOL_MASK,
 };

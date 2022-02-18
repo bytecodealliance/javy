@@ -20,3 +20,5 @@ run_module.sh
 tests/target/*.wasm
 
 .idea
+
+crates/quickjs-wasm-sys/wasi-sdk
