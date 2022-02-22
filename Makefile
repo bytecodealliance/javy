@@ -33,19 +33,19 @@ fmt: fmt-quickjs-wasm-sys fmt-core fmt-cli
 
 fmt-quickjs-wasm-sys:
 		cd crates/quickjs-wasm-sys/ \
-				&& cargo fmt \
+				&& cargo fmt -- --check \
 				&& cargo clippy --target=wasm32-wasi -- -D warnings \
 				&& cd -
 
 fmt-core:
 		cd crates/core/ \
-				&& cargo fmt \
+				&& cargo fmt -- --check \
 				&& cargo clippy --target=wasm32-wasi -- -D warnings \
 				&& cd -
 
 fmt-cli:
 		cd crates/cli/ \
-				&& cargo fmt \
+				&& cargo fmt -- --check \
 				&& cargo clippy -- -D warnings \
 				&& cd -
 
