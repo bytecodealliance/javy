@@ -7,13 +7,13 @@ edition = "2018"
 [dependencies]
 anyhow = "1.0"
 quickjs-wasm-sys = { path = "../quickjs-wasm-sys" }
-rmp-serde = "^0.15"
+rmp-serde = { version = "^0.15", optional = true }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
-serde-transcode = "1.1"
+serde-transcode = { version = "1.1", optional = true }
 convert_case = "0.4"
 
 [dev-dependencies]
 quickcheck = "1"
 
 [features]
-messagepack = []
+messagepack = ["rmp-serde", "serde-transcode"]
