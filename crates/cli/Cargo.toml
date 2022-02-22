@@ -17,9 +17,9 @@ tempfile = "3.2.0"
 binaryen = "0.12.0"
 
 [dev-dependencies]
-wasmtime = "0.33"
-wasmtime-wasi = "0.33"
-wasi-common = "0.33"
+wasmtime = "0.34.1"
+wasmtime-wasi = "0.34.1"
+wasi-common = "0.34.1"
 rmp-serde = "0.15"
 uuid = { version = "0.8", features = ["v4"] }
 lazy_static = "1.4"
