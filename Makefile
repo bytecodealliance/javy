@@ -54,12 +54,6 @@ fmt-cli:
 				&& cargo clippy -- -D warnings \
 				&& cd -
 
-fmt-binaries:
-		cd crates/binaries/ \
-				&& cargo fmt -- --check \
-				&& cargo clippy -- -D warnings \
-				&& cd -
-
 clean: clean-wasi-sdk clean-cargo
 
 clean-cargo:
