@@ -4,24 +4,30 @@ use std::io::{copy, stdin, stdout, Write};
 pub fn load() -> Result<Vec<u8>> {
     let mut reader = stdin();
     let mut output: Vec<u8> = vec![];
-    copy(&mut reader, &mut output)?;
 
     #[cfg(not(feature = "json-io"))]
     {
+        copy(&mut reader, &mut output)?;
         Ok(output)
     }
     #[cfg(feature = "json-io")]
     {
-        let output: serde_json::Value = serde_json::from_slice(&output)?;
-        rmp_serde::to_vec(&output).map_err(Into::into)
+        let mut input: Vec<u8> = vec![];
+        copy(&mut reader, &mut input)?;
+        let mut deserializer = serde_json::Deserializer::from_slice(&input);
+        let mut serializer = rmp_serde::Serializer::new(&mut output);
+        serde_transcode::transcode(&mut deserializer, &mut serializer)?;
+        Ok(output)
     }
 }
-
 pub fn store(bytes: &[u8]) -> Result<()> {
     #[cfg(feature = "json-io")]
     let bytes = &{
-        let value: serde_json::Value = rmp_serde::from_read_ref(bytes)?;
-        serde_json::to_string(&value)?.into_bytes()
+        let mut output = Vec::new();
+        let mut deserializer = rmp_serde::Deserializer::from_read_ref(bytes);
+        let mut serializer = serde_json::Serializer::new(&mut output);
+        serde_transcode::transcode(&mut deserializer, &mut serializer)?;
+        output
     };
 
     let mut handle = stdout();
