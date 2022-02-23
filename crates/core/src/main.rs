@@ -39,16 +39,15 @@ pub extern "C" fn init() {
     }
 }
 
-#[export_name = "shopify_main"]
-pub extern "C" fn run() {
+fn main() {
     unsafe {
         let context = JS_CONTEXT.get().unwrap();
         let shopify = ENTRYPOINT.0.get().unwrap();
         let main = ENTRYPOINT.1.get().unwrap();
         let input_bytes = engine::load().expect("Couldn't load input");
 
-        let input_value = messagepack::transcode_input(&context, &input_bytes).unwrap();
-        let output_value = main.call(&shopify, &[input_value]);
+        let input_value = messagepack::transcode_input(context, &input_bytes).unwrap();
+        let output_value = main.call(shopify, &[input_value]);
 
         if output_value.is_err() {
             panic!("{}", output_value.unwrap_err().to_string());

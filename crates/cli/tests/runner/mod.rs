@@ -1,9 +1,10 @@
 use anyhow::Result;
 use std::fs;
-use std::io::{self, Write};
+use std::io::{self, Cursor, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use wasmtime::{Caller, Config, Engine, Linker, Module, OptLevel, Store};
+use wasi_common::pipe::{ReadPipe, WritePipe};
+use wasmtime::{Config, Engine, Linker, Module, OptLevel, Store};
 use wasmtime_wasi::sync::WasiCtxBuilder;
 use wasmtime_wasi::WasiCtx;
 
@@ -13,19 +14,29 @@ pub struct Runner {
 }
 
 struct StoreContext {
-    input: Vec<u8>,
-    output: Vec<u8>,
+    wasi_output: WritePipe<Cursor<Vec<u8>>>,
     wasi: WasiCtx,
 }
 
 impl Default for StoreContext {
     fn default() -> Self {
-        let wasi = WasiCtxBuilder::new().inherit_stdio().build();
+        let wasi_output = WritePipe::new_in_memory();
+        let mut wasi = WasiCtxBuilder::new().inherit_stdio().build();
+        wasi.set_stdout(Box::new(wasi_output.clone()));
+        Self { wasi, wasi_output }
+    }
+}
 
+impl StoreContext {
+    fn new(input: Vec<u8>) -> Self {
+        let mut wasi = WasiCtxBuilder::new().inherit_stdio().build();
+        let wasi_output = WritePipe::new_in_memory();
+        wasi.set_stdout(Box::new(wasi_output.clone()));
+        wasi.set_stdin(Box::new(ReadPipe::from(input.clone())));
         Self {
             wasi,
-            input: Vec::default(),
-            output: Vec::default(),
+            wasi_output,
+            ..Default::default()
         }
     }
 }
@@ -73,20 +84,16 @@ impl Runner {
         let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
 
         let instance = self.linker.instantiate(&mut store, &module)?;
-        let run = instance.get_typed_func::<(), (), _>(&mut store, "shopify_main")?;
+        let run = instance.get_typed_func::<(), (), _>(&mut store, "_start")?;
 
         run.call(&mut store, ())?;
-
-        Ok(store.into_data().output)
-    }
-}
-
-impl StoreContext {
-    fn new(input: Vec<u8>) -> Self {
-        Self {
-            input,
-            ..Default::default()
-        }
+        let store_context = store.into_data();
+        drop(store_context.wasi);
+        Ok(store_context
+            .wasi_output
+            .try_into_inner()
+            .expect("Output stream reference still exists")
+            .into_inner())
     }
 }
 
@@ -101,54 +108,6 @@ fn setup_linker(engine: &Engine) -> Linker<StoreContext> {
 
     wasmtime_wasi::sync::add_to_linker(&mut linker, |ctx: &mut StoreContext| &mut ctx.wasi)
         .expect("failed to add wasi context");
-
-    linker
-        .func_wrap(
-            "shopify_v1",
-            "input_len",
-            |mut caller: Caller<'_, StoreContext>, offset: i32| -> i32 {
-                let len = caller.data().input.len();
-                let mem = caller.get_export("memory").unwrap().into_memory().unwrap();
-                mem.write(caller, offset as usize, &len.to_ne_bytes())
-                    .unwrap();
-
-                0
-            },
-        )
-        .expect("failed to define input_len");
-
-    linker
-        .func_wrap(
-            "shopify_v1",
-            "input_copy",
-            |mut caller: Caller<'_, StoreContext>, offset: i32| -> i32 {
-                let input = caller.data().input.clone(); // TODO: avoid this copy
-                let mem = caller.get_export("memory").unwrap().into_memory().unwrap();
-                mem.write(caller, offset as usize, input.as_slice())
-                    .unwrap();
-
-                0
-            },
-        )
-        .expect("failed to define input_copy");
-
-    linker
-        .func_wrap(
-            "shopify_v1",
-            "output_copy",
-            |mut caller: Caller<'_, StoreContext>, offset: i32, len: i32| -> i32 {
-                let mem = caller.get_export("memory").unwrap().into_memory().unwrap();
-                let mut buf = vec![0; len as usize];
-                mem.read(&mut caller, offset as usize, buf.as_mut_slice())
-                    .unwrap();
-
-                caller.data_mut().output.resize(buf.len(), 0);
-                caller.data_mut().output.copy_from_slice(buf.as_slice());
-
-                0
-            },
-        )
-        .expect("failed to define output_copy");
 
     linker
 }

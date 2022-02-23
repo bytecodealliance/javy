@@ -4,8 +4,9 @@ version = "0.1.0"
 authors = ["Saúl Cabrera <saulecabrera@gmail.com>"]
 edition = "2018"
 
-[lib]
-crate-type = ["cdylib"]
+[[bin]]
+name = "javy_core"
+path = "src/main.rs"
 
 [dependencies]
 anyhow = "1.0"
@@ -20,4 +21,4 @@ lto = true
 opt-level = 3
 
 [features]
-standalone-wasi = ["serde_json"]
+json-io = ["serde_json"]

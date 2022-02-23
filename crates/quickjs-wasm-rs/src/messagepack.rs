@@ -3,7 +3,7 @@ use anyhow::Result;
 
 pub fn transcode_input(context: &Context, bytes: &[u8]) -> Result<Value> {
     let mut deserializer = rmp_serde::Deserializer::from_read_ref(bytes);
-    let mut serializer = Serializer::from_context(&context)?;
+    let mut serializer = Serializer::from_context(context)?;
     serde_transcode::transcode(&mut deserializer, &mut serializer)?;
     Ok(serializer.value)
 }
