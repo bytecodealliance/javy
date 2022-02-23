@@ -8,7 +8,7 @@ edition = "2018"
 anyhow = "1.0"
 quickjs-wasm-sys = { path = "../quickjs-wasm-sys" }
 rmp-serde = { version = "^0.15", optional = true }
-serde = { version = "1.0", default-features = false, features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
 serde-transcode = { version = "1.1", optional = true }
 convert_case = "0.4"
 

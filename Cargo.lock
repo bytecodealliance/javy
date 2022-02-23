@@ -842,6 +842,7 @@ dependencies = [
  "once_cell",
  "quickjs-wasm-rs",
  "rmp-serde",
+ "serde-transcode",
  "serde_json",
  "wee_alloc",
 ]
