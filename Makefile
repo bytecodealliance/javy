@@ -15,6 +15,11 @@ core:
 				&& cargo build --release --target=wasm32-wasi \
 				&& cd -
 
+docs:
+		cd crates/core \
+				&& cargo doc --open --target=wasm32-wasi \
+				&& cd -
+
 test-core:
 		cd crates/core \
 				&& cargo wasi test --features json-io -- --nocapture \
