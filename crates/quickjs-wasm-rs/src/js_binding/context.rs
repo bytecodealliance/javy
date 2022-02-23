@@ -120,6 +120,18 @@ impl Context {
         Value::new(self.inner, unsafe { ext_js_undefined })
     }
 
+    /// # Safety
+    ///
+    /// The lifetime of values used in `f` are not respected so you need to
+    /// manually ensure any referenced variables live at least as long as this
+    /// context.
+    ///
+    /// The following example will result in undefined behavior:
+    ///
+    /// ```rs
+    /// let bar = "bar".to_string();
+    /// self.create_callback(|_, _, _, _, _| println!("foo: {}", &bar));
+    /// ```
     pub unsafe fn new_callback<F>(&self, f: F) -> Result<Value>
     where
         F: FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue,
