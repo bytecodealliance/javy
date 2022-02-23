@@ -91,7 +91,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
                 return visitor.visit_str(key.as_str());
             } else {
                 let val = self.value.as_str()?;
-                return visitor.visit_str(&val);
+                return visitor.visit_str(val);
             }
         }
 

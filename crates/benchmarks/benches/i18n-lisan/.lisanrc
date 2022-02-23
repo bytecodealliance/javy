@@ -1,6 +1,0 @@
-{
-  "compile": {
-    "inputDir": "src/translations",
-    "outputDir": "src/.lisan_out/dictionaries"
-  }
-}

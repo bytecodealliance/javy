@@ -10,11 +10,6 @@ install:
 cli: core
 		cd crates/cli && cargo build --release && cd -
 
-check-benchmarks:
-		cd crates/benchmarks \
-				&& cargo check --benches --release \
-				&& cd -
-
 core:
 		cd crates/core \
 				&& cargo build --release --target=wasm32-wasi \
@@ -22,7 +17,7 @@ core:
 
 test-core:
 		cd crates/core \
-				&& cargo wasi test --features standalone-wasi -- --nocapture \
+				&& cargo wasi test --features json-io -- --nocapture \
 				&& cd -
 
 # Test in release mode to skip some debug assertions
@@ -32,7 +27,7 @@ test-cli: core
 				&& cargo test --release \
 				&& cd -
 
-tests: check-benchmarks test-core test-cli
+tests: test-core test-cli
 
 fmt: fmt-quickjs-wasm-sys fmt-core fmt-cli
 
