@@ -3,6 +3,11 @@ name = "quickjs-wasm-rs"
 version = "0.1.0"
 authors = ["Saúl Cabrera <saulecabrera@gmail.com>"]
 edition = "2018"
+license = "MIT"
+description = "High-level bindings and serializers for a Wasm build of QuickJS"
+homepage = "https://github.com/Shopify/javy/tree/main/crates/quickjs-wasm-rs"
+repository = "https://github.com/Shopify/javy/tree/main/crates/quickjs-wasm-rs"
+categories = ["api-bindings"]
 
 [dependencies]
 anyhow = "1.0"
