@@ -19,6 +19,9 @@ jobs:
           toolchain: 1.53.0
           target: wasm32-wasi
           default: true
+      
+      - name: Install wasi-sdk
+        run: make download-wasi-sdk
 
       - name: Make core
         run: make core
