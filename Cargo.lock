@@ -839,12 +839,9 @@ name = "javy-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "convert_case",
  "once_cell",
- "quickcheck",
- "quickjs-wasm-sys",
+ "quickjs-wasm-rs",
  "rmp-serde",
- "serde",
  "serde-transcode",
  "serde_json",
  "wee_alloc",
@@ -1100,6 +1097,19 @@ dependencies = [
  "env_logger 0.8.4",
  "log",
  "rand",
+]
+
+[[package]]
+name = "quickjs-wasm-rs"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "convert_case",
+ "quickcheck",
+ "quickjs-wasm-sys",
+ "rmp-serde",
+ "serde",
+ "serde-transcode",
 ]
 
 [[package]]
