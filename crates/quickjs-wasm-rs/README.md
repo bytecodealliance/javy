@@ -1,6 +1,6 @@
 # quickjs-wasm-rs
 
-Bindings and serializers for a Wasm build of QuickJS.
+High-level bindings and serializers for a Wasm build of QuickJS.
 
 ## Bindings
 
