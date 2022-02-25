@@ -68,4 +68,4 @@ gzip -k -f target/release/javy && mv target/release/javy.gz javy-arm-macos-v0.2.
 ```
 shasum -a 256 javy-arm-macos-v0.2.0.gz | awk '{ print $1 }' > javy-arm-macos-v0.2.0.gz.sha256
 ```
-6. Upload both files to the new release downloads.
+6.  Attach both files to the new release page
