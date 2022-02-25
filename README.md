@@ -53,7 +53,7 @@ For more information on the commands you can run `javy --help`
 
 1. Create a tag for the new version like `v0.2.0`
 ```
-git tag tag v0.2.0
+git tag v0.2.0
 git push origin --tags
 ```
 2. Create a new release from the new tag in github [here](https://github.com/Shopify/javy/releases/new)

@@ -4,9 +4,8 @@ version = "0.1.0"
 authors = ["Saúl Cabrera <saulecabrera@gmail.com>"]
 edition = "2018"
 
-[[bin]]
-name = "javy_core"
-path = "src/main.rs"
+[lib]
+crate-type = ["cdylib"]
 
 [dependencies]
 anyhow = "1.0"

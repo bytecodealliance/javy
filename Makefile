@@ -20,24 +20,23 @@ docs:
 				&& cargo doc --open --target=wasm32-wasi \
 				&& cd -
 
+wizen-core: core
+		wizer --allow-wasi -f init_engine target/wasm32-wasi/release/javy_core.wasm -o javy_core.init_engine_wizened.wasm
+
 test-quickjs-wasm-rs:
 		cd crates/quickjs-wasm-rs \
 				&& cargo wasi test --features json \
 				&& cd -
 
-test-core:
-		cd crates/core \
-				&& cargo wasi test -- --nocapture \
-				&& cd -
-
 # Test in release mode to skip some debug assertions
 # Note: to make this faster, the engine should be optimized beforehand (wasm-strip + wasm-opt).
-test-cli: core
+test-cli: wizen-core
+		cp javy_core.init_engine_wizened.wasm crates/cli/tests/runner/
 		cd crates/cli \
 				&& cargo test --release \
 				&& cd -
 
-tests: test-quickjs-wasm-rs test-core test-cli
+tests: test-quickjs-wasm-rs test-cli
 
 fmt: fmt-quickjs-wasm-sys fmt-quickjs-wasm-rs fmt-core fmt-cli
 

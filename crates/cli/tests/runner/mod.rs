@@ -11,6 +11,7 @@ use wasmtime_wasi::WasiCtx;
 pub struct Runner {
     wasm: Vec<u8>,
     linker: Linker<StoreContext>,
+    js_runtime_module: Module,
 }
 
 struct StoreContext {
@@ -85,15 +86,26 @@ impl Runner {
         let engine = setup_engine();
         let linker = setup_linker(&engine);
 
-        Self { wasm, linker }
+        let js_runtime_wasm = include_bytes!("javy_core.init_engine_wizened.wasm");
+        let js_runtime_module = Module::from_binary(&engine, js_runtime_wasm)
+            .expect("failed to load js runtime module");
+
+        Self {
+            wasm,
+            linker,
+            js_runtime_module,
+        }
     }
 
     pub fn exec(&mut self, input: Vec<u8>) -> Result<(Vec<u8>, Vec<u8>)> {
         let mut store = Store::new(self.linker.engine(), StoreContext::new(input));
+        let mut linker = self.linker.clone();
+        let js_runtime_instance = linker.instantiate(&mut store, &self.js_runtime_module)?;
+        linker.instance(&mut store, "shopify_std_runtime_js_v1", js_runtime_instance)?;
 
-        let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
+        let module = Module::from_binary(linker.engine(), &self.wasm)?;
 
-        let instance = self.linker.instantiate(&mut store, &module)?;
+        let instance = linker.instantiate(&mut store, &module)?;
         let run = instance.get_typed_func::<(), (), _>(&mut store, "_start")?;
 
         run.call(&mut store, ())?;
@@ -116,6 +128,8 @@ impl Runner {
 fn setup_engine() -> Engine {
     let mut config = Config::new();
     config.cranelift_opt_level(OptLevel::SpeedAndSize);
+    config.wasm_multi_memory(true);
+    config.wasm_module_linking(true);
     Engine::new(&config).expect("failed to create engine")
 }
 
