@@ -102,7 +102,7 @@ impl Runner {
         let logs = store_context
             .log_stream
             .try_into_inner()
-            .expect("Output stream reference still exists")
+            .expect("log stream reference still exists")
             .into_inner();
         let output = store_context
             .wasi_output
