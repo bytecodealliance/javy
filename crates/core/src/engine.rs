@@ -32,6 +32,7 @@ pub fn store(bytes: &[u8]) -> Result<()> {
 
     let mut handle = stdout();
     handle.write_all(bytes)?;
+    handle.flush()?;
 
     Ok(())
 }
