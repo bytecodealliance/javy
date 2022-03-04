@@ -143,14 +143,16 @@ impl Context {
         Value::new(self.inner, raw)
     }
 
-    pub fn register_globals<T>(&mut self, log_stream: T) -> Result<()>
+    pub fn register_globals<T>(&mut self, log_stream: T, error_stream: T) -> Result<()>
     where
         T: Write,
     {
         let console_log_callback = unsafe { self.new_callback(console_log_to(log_stream))? };
+        let console_error_callback = unsafe { self.new_callback(console_log_to(error_stream))? };
         let global_object = self.global_object()?;
         let console_object = self.object_value()?;
         console_object.set_property("log", console_log_callback)?;
+        console_object.set_property("error", console_error_callback)?;
         global_object.set_property("console", console_object)?;
         Ok(())
     }
@@ -348,7 +350,7 @@ mod tests {
         let mut stream = SharedStream::default();
 
         let mut ctx = Context::default();
-        ctx.register_globals(stream.clone())?;
+        ctx.register_globals(stream.clone(), stream.clone())?;
 
         ctx.eval_global("main", "console.log(\"hello world\");")?;
         assert_eq!(b"hello world\n", stream.0.borrow().as_slice());
@@ -356,6 +358,23 @@ mod tests {
         stream.clear();
 
         ctx.eval_global("main", "console.log(\"bonjour\", \"le\", \"monde\")")?;
+        assert_eq!(b"bonjour le monde\n", stream.0.borrow().as_slice());
+        Ok(())
+    }
+
+    #[test]
+    fn test_console_error() -> Result<()> {
+        let mut stream = SharedStream::default();
+
+        let mut ctx = Context::default();
+        ctx.register_globals(stream.clone(), stream.clone())?;
+
+        ctx.eval_global("main", "console.error(\"hello world\");")?;
+        assert_eq!(b"hello world\n", stream.0.borrow().as_slice());
+
+        stream.clear();
+
+        ctx.eval_global("main", "console.error(\"bonjour\", \"le\", \"monde\")")?;
         assert_eq!(b"bonjour le monde\n", stream.0.borrow().as_slice());
         Ok(())
     }
