@@ -20,6 +20,11 @@ docs:
 				&& cargo doc --open --target=wasm32-wasi \
 				&& cd -
 
+test-quickjs-wasm-rs:
+		cd crates/quickjs-wasm-rs \
+				&& cargo wasi test --features messagepack \
+				&& cd -
+
 test-core:
 		cd crates/core \
 				&& cargo wasi test --features json-io -- --nocapture \
@@ -32,7 +37,7 @@ test-cli: core
 				&& cargo test --release \
 				&& cd -
 
-tests: test-core test-cli
+tests: test-quickjs-wasm-rs test-core test-cli
 
 fmt: fmt-quickjs-wasm-sys fmt-quickjs-wasm-rs fmt-core fmt-cli
 
