@@ -17,7 +17,7 @@ fn test_identity() {
     let _guard = EXCLUSIVE_TEST.lock();
     let mut runner = Runner::default();
 
-    let output = run::<_, u32>(&mut runner, &42);
+    let (output, _) = run::<_, u32>(&mut runner, &42);
     assert_eq!(42, output);
 }
 
@@ -26,7 +26,7 @@ fn test_fib() {
     let _guard = EXCLUSIVE_TEST.lock();
     let mut runner = Runner::new("fib.js");
 
-    let output = run::<_, u32>(&mut runner, &5);
+    let (output, _) = run::<_, u32>(&mut runner, &5);
     assert_eq!(8, output);
 }
 
@@ -35,7 +35,7 @@ fn test_recursive_fib() {
     let _guard = EXCLUSIVE_TEST.lock();
     let mut runner = Runner::new("recursive-fib.js");
 
-    let output = run::<_, u32>(&mut runner, &5);
+    let (output, _) = run::<_, u32>(&mut runner, &5);
     assert_eq!(8, output);
 }
 
@@ -44,7 +44,7 @@ fn test_str() {
     let _guard = EXCLUSIVE_TEST.lock();
     let mut runner = Runner::new("str.js");
 
-    let output = run::<_, String>(&mut runner, &"hello".to_string());
+    let (output, _) = run::<_, String>(&mut runner, &"hello".to_string());
     assert_eq!("world", output.as_str());
 }
 
@@ -53,29 +53,43 @@ fn test_big_ints() {
     let _guard = EXCLUSIVE_TEST.lock();
     let mut runner = Runner::new("big-ints.js");
 
-    let output = run::<_, String>(&mut runner, &42);
+    let (output, _) = run::<_, String>(&mut runner, &42);
     assert_eq!("a", output.as_str());
 
-    let output = run::<_, String>(&mut runner, &i64::MAX);
+    let (output, _) = run::<_, String>(&mut runner, &i64::MAX);
     assert_eq!("b", output.as_str());
 
-    let output = run::<_, String>(&mut runner, &i64::MIN);
+    let (output, _) = run::<_, String>(&mut runner, &i64::MIN);
     assert_eq!("c", output.as_str());
 
-    let output = run::<_, String>(&mut runner, &u64::MAX);
+    let (output, _) = run::<_, String>(&mut runner, &u64::MAX);
     assert_eq!("d", output.as_str());
 
-    let output = run::<_, String>(&mut runner, &u64::MIN);
+    let (output, _) = run::<_, String>(&mut runner, &u64::MIN);
     assert_eq!("e", output.as_str());
 }
 
-fn run<I, O>(r: &mut Runner, i: &I) -> O
+#[test]
+fn test_logging() {
+    let _guard = EXCLUSIVE_TEST.lock();
+    let mut runner = Runner::new("logging.js");
+
+    let (output, logs) = run::<_, u32>(&mut runner, &42);
+    assert_eq!(42, output);
+    assert_eq!(
+        "hello world from console.log\nhello world from console.error\n",
+        logs.as_str(),
+    );
+}
+
+fn run<I, O>(r: &mut Runner, i: &I) -> (O, String)
 where
     I: Serialize,
     O: DeserializeOwned,
 {
     let input = rmp_serde::to_vec(i).unwrap();
-    let output = r.exec(input).unwrap();
+    let (output, logs) = r.exec(input).unwrap();
     let output = rmp_serde::from_slice::<O>(&output).unwrap();
-    output
+    let logs = String::from_utf8(logs).unwrap();
+    (output, logs)
 }

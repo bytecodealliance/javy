@@ -16,14 +16,21 @@ pub struct Runner {
 struct StoreContext {
     wasi_output: WritePipe<Cursor<Vec<u8>>>,
     wasi: WasiCtx,
+    log_stream: WritePipe<Cursor<Vec<u8>>>,
 }
 
 impl Default for StoreContext {
     fn default() -> Self {
         let wasi_output = WritePipe::new_in_memory();
+        let log_stream = WritePipe::new_in_memory();
         let mut wasi = WasiCtxBuilder::new().inherit_stdio().build();
         wasi.set_stdout(Box::new(wasi_output.clone()));
-        Self { wasi, wasi_output }
+        wasi.set_stderr(Box::new(log_stream.clone()));
+        Self {
+            wasi,
+            wasi_output,
+            log_stream,
+        }
     }
 }
 
@@ -31,11 +38,14 @@ impl StoreContext {
     fn new(input: Vec<u8>) -> Self {
         let mut wasi = WasiCtxBuilder::new().inherit_stdio().build();
         let wasi_output = WritePipe::new_in_memory();
+        let log_stream = WritePipe::new_in_memory();
         wasi.set_stdout(Box::new(wasi_output.clone()));
         wasi.set_stdin(Box::new(ReadPipe::from(input.clone())));
+        wasi.set_stderr(Box::new(log_stream.clone()));
         Self {
             wasi,
             wasi_output,
+            log_stream,
             ..Default::default()
         }
     }
@@ -78,7 +88,7 @@ impl Runner {
         Self { wasm, linker }
     }
 
-    pub fn exec(&mut self, input: Vec<u8>) -> Result<Vec<u8>> {
+    pub fn exec(&mut self, input: Vec<u8>) -> Result<(Vec<u8>, Vec<u8>)> {
         let mut store = Store::new(self.linker.engine(), StoreContext::new(input));
 
         let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
@@ -89,11 +99,17 @@ impl Runner {
         run.call(&mut store, ())?;
         let store_context = store.into_data();
         drop(store_context.wasi);
-        Ok(store_context
+        let logs = store_context
+            .log_stream
+            .try_into_inner()
+            .expect("log stream reference still exists")
+            .into_inner();
+        let output = store_context
             .wasi_output
             .try_into_inner()
             .expect("Output stream reference still exists")
-            .into_inner())
+            .into_inner();
+        Ok((output, logs))
     }
 }
 

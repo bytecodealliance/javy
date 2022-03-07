@@ -23,7 +23,9 @@ static SCRIPT_NAME: &str = "script.js";
 pub extern "C" fn init() {
     unsafe {
         let mut context = Context::default();
-        context.register_globals(io::stdout()).unwrap();
+        context
+            .register_globals(io::stderr(), io::stderr())
+            .unwrap();
 
         let mut contents = String::new();
         io::stdin().read_to_string(&mut contents).unwrap();
