@@ -51,21 +51,22 @@ For more information on the commands you can run `javy --help`
 
 ## Releasing
 
-1. Create a tag for the new version like `v0.2.0`
+1. Bump the version number in the Cargo.tomls that make sense
+2. Create a tag for the new version like `v0.2.0`
 ```
 git tag v0.2.0
 git push origin --tags
 ```
-2. Create a new release from the new tag in github [here](https://github.com/Shopify/javy/releases/new)
-3. Github action will trigger for `publish.yml` and create the artifacts for downloading. However this does not currently support `arm-macos`, ie. M1 Macs.
-4. Manually build this on a m1 mac 
+3. Create a new release from the new tag in github [here](https://github.com/Shopify/javy/releases/new)
+4. Github action will trigger for `publish.yml` and create the artifacts for downloading. However this does not currently support `arm-macos`, ie. M1 Macs.
+5. Manually build this on a m1 mac 
 
 ```
 gzip -k -f target/release/javy && mv target/release/javy.gz javy-arm-macos-v0.2.0.gz
 
 ```
-5. Manually create the shasum file
+6. Manually create the shasum file
 ```
 shasum -a 256 javy-arm-macos-v0.2.0.gz | awk '{ print $1 }' > javy-arm-macos-v0.2.0.gz.sha256
 ```
-6.  Attach both files to the new release page
+7.  Attach both files to the new release page

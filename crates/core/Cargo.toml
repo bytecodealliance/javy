@@ -1,6 +1,6 @@
 [package]
 name = "javy-core"
-version = "0.1.0"
+version = "0.3.0"
 authors = ["Saúl Cabrera <saulecabrera@gmail.com>"]
 edition = "2018"
 
