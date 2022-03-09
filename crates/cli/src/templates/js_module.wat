@@ -5,7 +5,7 @@
   (import "shopify_std_runtime_js_v1" "memory" (memory $shopify_std_runtime_js_v1 1)) ;; 0
   (memory $js_code_memory 1) ;; 1
 
-  (func (export "_start")
+  (func $shopify_init
     (local $malloc_result i32)
     (local $js_string_length_bytes i32)
 
@@ -30,6 +30,11 @@
     local.get $malloc_result
     local.get $js_string_length_bytes
     call $js_init_src
+  )
+
+  (func (export "_start")
+    ;; call shopify_init
+    call $shopify_init
 
     ;; start execute arguments
     ;; We are not providing the optional function name

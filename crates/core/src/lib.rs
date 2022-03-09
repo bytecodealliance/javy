@@ -40,7 +40,6 @@ pub unsafe extern "C" fn init_src(js_str_ptr: *mut u8, js_str_len: usize) {
     let _ = context.eval_global(SCRIPT_NAME, &js).unwrap();
 }
 
-
 #[export_name = "execute"]
 pub unsafe extern "C" fn execute(
     func_obj_path_is_some: u32,
