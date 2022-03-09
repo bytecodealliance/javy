@@ -21,17 +21,25 @@ static SCRIPT_NAME: &str = "script.js";
 // non-zero to indicate success.
 const ZERO_SIZE_ALLOCATION_PTR: *mut u8 = 1 as _;
 
+/// Sets up the JS context for the engine to be used to run JS code
+///
+/// # Safety
+///
+/// TODO: When can this be called safely?
 #[export_name = "init_engine"]
-pub extern "C" fn init_engine() {
-    unsafe {
-        let mut context = Context::default();
-        context
-            .register_globals(io::stderr(), io::stderr())
-            .unwrap();
-        JS_CONTEXT.set(context).unwrap();
-    }
+pub unsafe extern "C" fn init_engine() {
+    let mut context = Context::default();
+    context
+        .register_globals(io::stderr(), io::stderr())
+        .unwrap();
+    JS_CONTEXT.set(context).unwrap();
 }
 
+/// Evaluates the JS source code
+///
+/// # Safety
+///
+/// TODO: When can this be called safely?
 #[export_name = "init_src"]
 pub unsafe extern "C" fn init_src(js_str_ptr: *mut u8, js_str_len: usize) {
     // TODO: Who is supposed to own this pointer? Is it the caller who allocated, or this module?
@@ -40,6 +48,12 @@ pub unsafe extern "C" fn init_src(js_str_ptr: *mut u8, js_str_len: usize) {
     let _ = context.eval_global(SCRIPT_NAME, &js).unwrap();
 }
 
+/// Executes the JS code.
+/// func_obj_path is expected to be a dot spearate path to the main function.
+///
+/// # Safety
+///
+/// TODO: When can this be called safely?
 #[export_name = "execute"]
 pub unsafe extern "C" fn execute(
     func_obj_path_is_some: u32,
@@ -56,7 +70,7 @@ pub unsafe extern "C" fn execute(
         .unwrap(),
     };
 
-    assert!(func_obj_path != "");
+    assert!(!func_obj_path.is_empty());
 
     let context = JS_CONTEXT.get().unwrap();
     let (this, func) = func_obj_path.split('.').fold(
@@ -71,7 +85,7 @@ pub unsafe extern "C" fn execute(
     );
 
     let input_bytes = engine::load().expect("Couldn't load input");
-    let input_value = transcode_input(&context, &input_bytes).unwrap();
+    let input_value = transcode_input(context, &input_bytes).unwrap();
     let output_value = func.call(&this, &[input_value]);
 
     if output_value.is_err() {
@@ -81,6 +95,17 @@ pub unsafe extern "C" fn execute(
     engine::store(&output).expect("Couldn't store output");
 }
 
+/// 1. Allocate memory of new_size with alignment.
+/// 2. If original_ptr != 0
+///   a. copy min(new_size, original_size) bytes from original_ptr to new memory
+///    b. de-allocate original_ptr
+/// 3. return new memory ptr
+/// https://doc.rust-lang.org/std/alloc/struct.Layout.html
+/// https://doc.rust-lang.org/std/alloc/fn.alloc.html
+///
+/// # Safety
+///
+/// TODO: When can this be called safely?
 #[export_name = "canonical_abi_realloc"]
 pub unsafe extern "C" fn canonical_abi_realloc(
     original_ptr: *mut u8,
@@ -88,14 +113,6 @@ pub unsafe extern "C" fn canonical_abi_realloc(
     alignment: usize,
     new_size: usize,
 ) -> *mut std::ffi::c_void {
-    // 1. Allocate memory of new_size with alignment.
-    // 2. If original_ptr != 0
-    //    a. copy min(new_size, original_size) bytes from original_ptr to new memory
-    //    b. de-allocate original_ptr
-    // 3. return new memory ptr
-
-    // https://doc.rust-lang.org/std/alloc/struct.Layout.html
-    // https://doc.rust-lang.org/std/alloc/fn.alloc.html
     assert!(new_size >= original_size);
 
     let new_mem = match new_size {
@@ -109,7 +126,11 @@ pub unsafe extern "C" fn canonical_abi_realloc(
     }
     new_mem as _
 }
-
+/// Frees memory
+///
+/// # Safety
+///
+/// TODO: When can this be called safely?
 #[export_name = "canonical_abi_free"]
 pub unsafe extern "C" fn canonical_abi_free(ptr: *mut u8, size: usize, alignment: usize) {
     if size > 0 {
