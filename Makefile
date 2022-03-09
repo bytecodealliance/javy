@@ -30,8 +30,7 @@ test-quickjs-wasm-rs:
 
 # Test in release mode to skip some debug assertions
 # Note: to make this faster, the engine should be optimized beforehand (wasm-strip + wasm-opt).
-test-cli: wizen-core
-		cp javy_core.init_engine_wizened.wasm crates/cli/tests/runner/
+test-cli: core
 		cd crates/cli \
 				&& cargo test --release \
 				&& cd -

@@ -1,7 +1,6 @@
 target/
 javy.wat
 javy.wasm
-javy_core.init_engine_wizened.wasm
 index.js
 index.wasm
 

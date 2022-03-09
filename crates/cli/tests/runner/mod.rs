@@ -1,8 +1,8 @@
 use anyhow::Result;
-use std::fs;
 use std::io::{self, Cursor, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::{env, fs};
 use wasi_common::pipe::{ReadPipe, WritePipe};
 use wasmtime::{Config, Engine, Linker, Module, OptLevel, Store};
 use wasmtime_wasi::sync::WasiCtxBuilder;
@@ -86,7 +86,7 @@ impl Runner {
         let engine = setup_engine();
         let linker = setup_linker(&engine);
 
-        let js_runtime_wasm = include_bytes!("javy_core.init_engine_wizened.wasm");
+        let js_runtime_wasm = include_bytes!(concat!(env!("OUT_DIR"), "/engine.wasm"));
         let js_runtime_module = Module::from_binary(&engine, js_runtime_wasm)
             .expect("failed to load js runtime module");
 
