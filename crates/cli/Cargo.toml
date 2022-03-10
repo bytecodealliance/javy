@@ -3,7 +3,7 @@ name = "javy"
 version = "0.3.0"
 authors = ["Saúl Cabrera <saulecabrera@gmail.com>"]
 edition = "2018"
-build = "src/build.rs"
+build = "build.rs"
 
 [[bin]]
 name = "javy"
