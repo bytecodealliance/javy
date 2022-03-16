@@ -40,10 +40,4 @@ export QUICKJS_WASM_SYS_WASI_SDK_PATH=/opt/wasi-sdk
 
 ## Publishing to crates.io
 
-To publish this crate to crates.io, you will need to ensure the `QUICKJS_WASM_SYS_WASI_SDK_PATH` is set to a value pointing to the absolute path where you installed the `wasi-sdk`. The `--target` parameter will also need to be set to `wasm32-wasi`.
-
-E.g.,
-
-```
-QUICKJS_WASM_SYS_WASI_SDK_PATH=/opt/wasi-sdk cargo publish --target=wasm32-wasi
-```
+To publish this crate to crates.io, run `./publish.sh`.
