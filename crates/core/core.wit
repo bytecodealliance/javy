@@ -1,0 +1,3 @@
+init-engine: function()
+init-src: function(js-str: string)
+execute: function(func-obj-path: option<string>)

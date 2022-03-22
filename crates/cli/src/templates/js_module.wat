@@ -1,6 +1,6 @@
 (module
   (import "shopify_std_runtime_js_v1" "canonical_abi_realloc" (func $js_canonical_abi_realloc (param i32 i32 i32 i32) (result i32)))
-  (import "shopify_std_runtime_js_v1" "init_src" (func $js_init_src (param i32 i32)))
+  (import "shopify_std_runtime_js_v1" "init-src" (func $js_init_src (param i32 i32)))
   (import "shopify_std_runtime_js_v1" "execute" (func $js_execute (param i32 i32 i32)))
   (import "shopify_std_runtime_js_v1" "memory" (memory $shopify_std_runtime_js_v1 1)) ;; 0
   (memory $js_code_memory 1) ;; 1

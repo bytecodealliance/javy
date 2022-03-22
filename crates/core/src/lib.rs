@@ -26,7 +26,7 @@ const ZERO_SIZE_ALLOCATION_PTR: *mut u8 = 1 as _;
 /// # Safety
 ///
 /// A OnceCell value is set in this function so this function must be called only once.
-#[export_name = "init_engine"]
+#[export_name = "init-engine"]
 pub unsafe extern "C" fn init_engine() {
     let mut context = Context::default();
     context
@@ -40,7 +40,7 @@ pub unsafe extern "C" fn init_engine() {
 /// # Safety
 ///
 /// See safety for https://doc.rust-lang.org/std/vec/struct.Vec.html#method.from_raw_parts
-#[export_name = "init_src"]
+#[export_name = "init-src"]
 pub unsafe extern "C" fn init_src(js_str_ptr: *mut u8, js_str_len: usize) {
     let js = String::from_utf8(Vec::from_raw_parts(js_str_ptr, js_str_len, js_str_len)).unwrap();
     let context = JS_CONTEXT.get().unwrap();

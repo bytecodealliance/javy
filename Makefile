@@ -21,7 +21,7 @@ docs:
 				&& cd -
 
 wizen-core: core
-		wizer --allow-wasi -f init_engine target/wasm32-wasi/release/javy_core.wasm -o javy_core.init_engine_wizened.wasm
+		wizer --allow-wasi -f init-engine target/wasm32-wasi/release/javy_core.wasm -o javy_core.init_engine_wizened.wasm
 
 test-quickjs-wasm-rs:
 		cd crates/quickjs-wasm-rs \

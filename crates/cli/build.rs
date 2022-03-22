@@ -100,7 +100,7 @@ fn copy_engine_binary() {
         let engine_wasm = fs::read(&engine_path).expect("failed to read wasm module");
         Optimizer::new(engine_wasm.as_slice())
             .optimize(true)
-            .write_optimized_wasm(&copied_engine_path, "init_engine".to_owned())
+            .write_optimized_wasm(&copied_engine_path, "init-engine".to_owned())
             .expect("failed to write optimized wasm");
     }
 }
