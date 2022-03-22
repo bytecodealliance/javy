@@ -25,7 +25,7 @@ const ZERO_SIZE_ALLOCATION_PTR: *mut u8 = 1 as _;
 ///
 /// # Safety
 ///
-/// TODO: When can this be called safely?
+/// A OnceCell value is set in this function so this function must be called only once.
 #[export_name = "init_engine"]
 pub unsafe extern "C" fn init_engine() {
     let mut context = Context::default();
@@ -39,10 +39,9 @@ pub unsafe extern "C" fn init_engine() {
 ///
 /// # Safety
 ///
-/// TODO: When can this be called safely?
+/// See safety for https://doc.rust-lang.org/std/vec/struct.Vec.html#method.from_raw_parts
 #[export_name = "init_src"]
 pub unsafe extern "C" fn init_src(js_str_ptr: *mut u8, js_str_len: usize) {
-    // TODO: Who is supposed to own this pointer? Is it the caller who allocated, or this module?
     let js = String::from_utf8(Vec::from_raw_parts(js_str_ptr, js_str_len, js_str_len)).unwrap();
     let context = JS_CONTEXT.get().unwrap();
     let _ = context.eval_global(SCRIPT_NAME, &js).unwrap();
@@ -53,7 +52,7 @@ pub unsafe extern "C" fn init_src(js_str_ptr: *mut u8, js_str_len: usize) {
 ///
 /// # Safety
 ///
-/// TODO: When can this be called safely?
+/// See safety for https://doc.rust-lang.org/std/vec/struct.Vec.html#method.from_raw_parts
 #[export_name = "execute"]
 pub unsafe extern "C" fn execute(
     func_obj_path_is_some: u32,
@@ -105,7 +104,11 @@ pub unsafe extern "C" fn execute(
 ///
 /// # Safety
 ///
-/// TODO: When can this be called safely?
+/// See the following APIs for safety
+///
+/// * https://doc.rust-lang.org/std/alloc/fn.alloc.html
+/// * https://doc.rust-lang.org/core/intrinsics/fn.copy_nonoverlapping.html
+/// * https://doc.rust-lang.org/std/alloc/fn.dealloc.html
 #[export_name = "canonical_abi_realloc"]
 pub unsafe extern "C" fn canonical_abi_realloc(
     original_ptr: *mut u8,
@@ -130,7 +133,7 @@ pub unsafe extern "C" fn canonical_abi_realloc(
 ///
 /// # Safety
 ///
-/// TODO: When can this be called safely?
+/// See https://doc.rust-lang.org/std/alloc/fn.dealloc.html
 #[export_name = "canonical_abi_free"]
 pub unsafe extern "C" fn canonical_abi_free(ptr: *mut u8, size: usize, alignment: usize) {
     if size > 0 {
