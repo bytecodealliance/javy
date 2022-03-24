@@ -24,11 +24,7 @@ impl<'a> Optimizer<'a> {
         Self { optimize, ..self }
     }
 
-    pub fn write_optimized_wasm(
-        self,
-        dest: impl AsRef<Path>,
-        init_func: String,
-    ) -> Result<(), Error> {
+    pub fn write_wasm(self, dest: impl AsRef<Path>, init_func: String) -> Result<(), Error> {
         let mut wasm = Wizer::new()
             .allow_wasi(true)
             .inherit_stdio(true)
@@ -100,7 +96,7 @@ fn copy_engine_binary() {
         let engine_wasm = fs::read(&engine_path).expect("failed to read wasm module");
         Optimizer::new(engine_wasm.as_slice())
             .optimize(true)
-            .write_optimized_wasm(&copied_engine_path, "init-engine".to_owned())
+            .write_wasm(&copied_engine_path, "init-engine".to_owned())
             .expect("failed to write optimized wasm");
     }
 }
