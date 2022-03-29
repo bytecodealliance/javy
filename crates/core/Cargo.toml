@@ -17,9 +17,5 @@ wee_alloc = "0.4.5"
 serde_json = { version = "1", optional = true }
 once_cell = "1.4.0"
 
-[profile.release]
-lto = true
-opt-level = 3
-
 [features]
 json-io = ["serde_json"]
