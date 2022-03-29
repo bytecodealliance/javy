@@ -165,12 +165,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "byteorder"
-version = "1.4.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14c189c53d098945499cdfa7ecc63567cf3886b3332b312a5b4585d8d3a6a610"
-
-[[package]]
 name = "cap-fs-ext"
 version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -822,8 +816,8 @@ dependencies = [
  "anyhow",
  "binaryen",
  "lazy_static",
- "rmp-serde",
  "serde",
+ "serde_json",
  "structopt",
  "tempfile",
  "uuid",
@@ -841,7 +835,6 @@ dependencies = [
  "anyhow",
  "once_cell",
  "quickjs-wasm-rs",
- "rmp-serde",
  "serde-transcode",
  "serde_json",
  "wee_alloc",
@@ -981,15 +974,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "num-traits"
-version = "0.2.14"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a64b1ec5cda2586e284722486d802acf1f7dbdc623e2bfc57e65ca1cd099290"
-dependencies = [
- "autocfg",
-]
-
-[[package]]
 name = "num_cpus"
 version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1107,9 +1091,9 @@ dependencies = [
  "convert_case",
  "quickcheck",
  "quickjs-wasm-sys",
- "rmp-serde",
  "serde",
  "serde-transcode",
+ "serde_json",
 ]
 
 [[package]]
@@ -1250,27 +1234,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3acd125665422973a33ac9d3dd2df85edad0f4ae9b00dafb1a05e43a9f5ef8e7"
 dependencies = [
  "winapi",
-]
-
-[[package]]
-name = "rmp"
-version = "0.8.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f55e5fa1446c4d5dd1f5daeed2a4fe193071771a2636274d0d7a3b082aa7ad6"
-dependencies = [
- "byteorder",
- "num-traits",
-]
-
-[[package]]
-name = "rmp-serde"
-version = "0.15.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "723ecff9ad04f4ad92fe1c8ca6c20d2196d9286e9c60727c4cb5511629260e9d"
-dependencies = [
- "byteorder",
- "rmp",
- "serde",
 ]
 
 [[package]]

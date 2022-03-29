@@ -22,12 +22,12 @@ docs:
 
 test-quickjs-wasm-rs:
 		cd crates/quickjs-wasm-rs \
-				&& cargo wasi test --features messagepack \
+				&& cargo wasi test \
 				&& cd -
 
 test-core:
 		cd crates/core \
-				&& cargo wasi test --features json-io -- --nocapture \
+				&& cargo wasi test -- --nocapture \
 				&& cd -
 
 # Test in release mode to skip some debug assertions

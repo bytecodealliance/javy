@@ -4,5 +4,4 @@ mod serialize;
 pub use crate::js_binding::context::Context;
 pub use crate::js_binding::value::Value;
 
-#[cfg(feature = "messagepack")]
-pub mod messagepack;
+pub mod transcoder;

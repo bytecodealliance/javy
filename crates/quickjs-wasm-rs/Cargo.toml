@@ -12,13 +12,10 @@ categories = ["api-bindings"]
 [dependencies]
 anyhow = "1.0"
 quickjs-wasm-sys = { version = "0.1.0", path = "../quickjs-wasm-sys" }
-rmp-serde = { version = "^0.15", optional = true }
+serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-serde-transcode = { version = "1.1", optional = true }
+serde-transcode = "1.1"
 convert_case = "0.4"
 
 [dev-dependencies]
 quickcheck = "1"
-
-[features]
-messagepack = ["rmp-serde", "serde-transcode"]
