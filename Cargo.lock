@@ -822,8 +822,8 @@ dependencies = [
  "anyhow",
  "binaryen",
  "lazy_static",
- "rmp-serde",
  "serde",
+ "serde_json",
  "structopt",
  "tempfile",
  "uuid",
@@ -841,9 +841,6 @@ dependencies = [
  "anyhow",
  "once_cell",
  "quickjs-wasm-rs",
- "rmp-serde",
- "serde-transcode",
- "serde_json",
  "wee_alloc",
 ]
 
@@ -1101,7 +1098,7 @@ dependencies = [
 
 [[package]]
 name = "quickjs-wasm-rs"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "convert_case",
@@ -1110,6 +1107,7 @@ dependencies = [
  "rmp-serde",
  "serde",
  "serde-transcode",
+ "serde_json",
 ]
 
 [[package]]
