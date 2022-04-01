@@ -87,9 +87,9 @@ where
     I: Serialize,
     O: DeserializeOwned,
 {
-    let input = rmp_serde::to_vec(i).unwrap();
+    let input = serde_json::to_vec(i).unwrap();
     let (output, logs) = r.exec(input).unwrap();
-    let output = rmp_serde::from_slice::<O>(&output).unwrap();
+    let output = serde_json::from_slice::<O>(&output).unwrap();
     let logs = String::from_utf8(logs).unwrap();
     (output, logs)
 }

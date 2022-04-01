@@ -1,6 +1,6 @@
 mod engine;
 
-use quickjs_wasm_rs::{messagepack, Context, Value};
+use quickjs_wasm_rs::{json, Context, Value};
 
 use once_cell::sync::OnceCell;
 use std::io::{self, Read};
@@ -48,14 +48,14 @@ fn main() {
         let main = ENTRYPOINT.1.get().unwrap();
         let input_bytes = engine::load().expect("Couldn't load input");
 
-        let input_value = messagepack::transcode_input(context, &input_bytes).unwrap();
+        let input_value = json::transcode_input(context, &input_bytes).unwrap();
         let output_value = main.call(shopify, &[input_value]);
 
         if output_value.is_err() {
             panic!("{}", output_value.unwrap_err().to_string());
         }
 
-        let output = messagepack::transcode_output(output_value.unwrap()).unwrap();
+        let output = json::transcode_output(output_value.unwrap()).unwrap();
         engine::store(&output).expect("Couldn't store output");
     }
 }

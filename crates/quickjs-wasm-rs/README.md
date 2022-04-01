@@ -16,7 +16,12 @@ will create a new context.
 
 ## Serializers
 
-Enabling the `messagepack` feature allows importing functions to serialize a messagepack byte array to a `Value` and deserialize from a `Value` to a messagepack byte array.
+This crate provides optional transcoding features for converting between
+serialization formats and `Value`:
+- `messagepack` provides `quickjs_wasm_rs::messagepack` for msgpack, using `rmp_serde`.
+- `json` provides `quickjs_wasm_rs::json` for JSON, using `serde_json`.
+
+msgpack example:
 
 ```rust
 use quickjs_wasm_rs::{messagepack, Context, Value};

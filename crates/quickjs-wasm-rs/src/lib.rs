@@ -6,3 +6,6 @@ pub use crate::js_binding::value::Value;
 
 #[cfg(feature = "messagepack")]
 pub mod messagepack;
+
+#[cfg(feature = "json")]
+pub mod json;
