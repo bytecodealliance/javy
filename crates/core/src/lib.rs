@@ -1,8 +1,8 @@
 mod engine;
 
-use quickjs_wasm_rs::{messagepack, Context};
+use quickjs_wasm_rs::{json, Context};
 
-use messagepack::{transcode_input, transcode_output};
+use json::{transcode_input, transcode_output};
 use once_cell::sync::OnceCell;
 use std::alloc::{alloc, dealloc, Layout};
 use std::io::{self};

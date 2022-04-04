@@ -51,7 +51,7 @@ For more information on the commands you can run `javy --help`
 
 ## Releasing
 
-1. Bump the version number in the Cargo.tomls that make sense
+1. Bump the version number in the cli/Cargo.toml
 2. Create a tag for the new version like `v0.2.0`
 ```
 git tag v0.2.0
