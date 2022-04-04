@@ -57,7 +57,8 @@ fn main() {
         // let input_bytes = engine::load().expect("Couldn't load input");
 
         // let input_value = messagepack::transcode_input(context, &input_bytes).unwrap();
-        main.call(shopify, &[]);
+        let res = main.call(shopify, &[]).unwrap();
+        println!("{:?}", res.as_str().unwrap());
 
         // if output_value.is_err() {
         //     panic!("{}", output_value.unwrap_err().to_string());
