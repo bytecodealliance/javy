@@ -4,10 +4,10 @@ use std::os::raw::{c_char, c_int};
 use super::super::{value::Value, context::Context};
 
 pub fn add_to_context(context: &Context) -> Result<()> {
-    let f = unsafe { context.new_callback(sha1())? };
+    let f = unsafe { context.new_callback(sha2())? };
     let hashing = context.object_value()?;
     let global = context.global_object()?;
-    hashing.set_property("sha1", f)?;
+    hashing.set_property("sha2", f)?;
 
     global.set_property("hashing", hashing)?;
 
@@ -16,15 +16,15 @@ pub fn add_to_context(context: &Context) -> Result<()> {
 
 static mut RET_AREA: [i64; 2] = [0; 2];
 
-fn sha1() -> impl FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue
+fn sha2() -> impl FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue
 {
 
     move |ctx: *mut JSContext, _this: JSValue, argc: c_int, argv: *mut JSValue, _magic: c_int| {
 
         #[link(wasm_import_module = "hashing")]
         extern "C"  {
-            #[cfg_attr(target_arch = "wasm32", link_name = "sha1")]
-            #[cfg_attr(not(target_arch = "wasm32"), link_name = "hash_sha1")]
+            #[cfg_attr(target_arch = "wasm32", link_name = "sha2")]
+            #[cfg_attr(not(target_arch = "wasm32"), link_name = "hash_sha2")]
             fn wit_import(_: i32, _:i32, _:i32);
         }
 
