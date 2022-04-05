@@ -4,27 +4,27 @@ use std::os::raw::{c_char, c_int};
 use super::super::{value::Value, context::Context};
 
 pub fn add_to_context(context: &Context) -> Result<()> {
-    let f = unsafe { context.new_callback(sha2())? };
+    let f = unsafe { context.new_callback(base64())? };
     let hashing = context.object_value()?;
     let global = context.global_object()?;
-    hashing.set_property("sha2", f)?;
+    hashing.set_property("encode", f)?;
 
-    global.set_property("hashing", hashing)?;
+    global.set_property("base64", hashing)?;
 
     Ok(())
 }
 
 static mut RET_AREA: [i64; 2] = [0; 2];
 
-fn sha2() -> impl FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue
+fn base64() -> impl FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue
 {
 
     move |ctx: *mut JSContext, _this: JSValue, argc: c_int, argv: *mut JSValue, _magic: c_int| {
 
-        #[link(wasm_import_module = "hashing")]
+        #[link(wasm_import_module = "base64")]
         extern "C"  {
-            #[cfg_attr(target_arch = "wasm32", link_name = "sha2")]
-            #[cfg_attr(not(target_arch = "wasm32"), link_name = "hash_sha2")]
+            #[cfg_attr(target_arch = "wasm32", link_name = "encode")]
+            #[cfg_attr(not(target_arch = "wasm32"), link_name = "base64_encode")]
             fn wit_import(_: i32, _:i32, _:i32);
         }
 

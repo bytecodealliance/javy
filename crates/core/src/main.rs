@@ -1,6 +1,6 @@
 mod engine;
 
-use quickjs_wasm_rs::{messagepack, Context, Value, imports::hashing};
+use quickjs_wasm_rs::{messagepack, Context, Value, imports::base64};
 
 use once_cell::sync::OnceCell;
 use std::io::{self, Read};
@@ -32,7 +32,7 @@ pub extern "C" fn init() {
             .register_globals(io::stderr(), io::stderr())
             .unwrap();
 
-        hashing::add_to_context(&context).unwrap();
+        base64::add_to_context(&context).unwrap();
 
 
         let mut contents = String::new();
