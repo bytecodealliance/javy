@@ -5,11 +5,11 @@ use super::super::{value::Value, context::Context};
 
 pub fn add_to_context(context: &Context) -> Result<()> {
     let f = unsafe { context.new_callback(base64())? };
-    let hashing = context.object_value()?;
+    let base64_object = context.object_value()?;
     let global = context.global_object()?;
-    hashing.set_property("encode", f)?;
+    base64_object.set_property("encode", f)?;
 
-    global.set_property("base64", hashing)?;
+    global.set_property("base64", base64_object)?;
 
     Ok(())
 }
