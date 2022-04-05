@@ -46,16 +46,17 @@ fn main() {
         let context = JS_CONTEXT.get().unwrap();
         let shopify = ENTRYPOINT.0.get().unwrap();
         let main = ENTRYPOINT.1.get().unwrap();
-        let input_bytes = engine::load().expect("Couldn't load input");
+        // let input_bytes = engine::load().expect("Couldn't load input");
 
-        let input_value = messagepack::transcode_input(context, &input_bytes).unwrap();
-        let output_value = main.call(shopify, &[input_value]);
+        // let input_value = messagepack::transcode_input(context, &input_bytes).unwrap();
+        let res = main.call(shopify, &[]);
+        println!("{:?}", res.as_str().unwrap());
 
-        if output_value.is_err() {
-            panic!("{}", output_value.unwrap_err().to_string());
-        }
+        // if output_value.is_err() {
+        //     panic!("{}", output_value.unwrap_err().to_string());
+        // }
 
-        let output = messagepack::transcode_output(output_value.unwrap()).unwrap();
-        engine::store(&output).expect("Couldn't store output");
+        // let output = messagepack::transcode_output(output_value.unwrap()).unwrap();
+        // engine::store(&output).expect("Couldn't store output");
     }
 }
