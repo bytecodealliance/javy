@@ -6,20 +6,20 @@ on:
       - created
 
 jobs:
-  compile_core: 
+  compile_core:
     name: Compile Core
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v1
 
-      - name : Install Rust
+      - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
           profile: default
           toolchain: 1.53.0
           target: wasm32-wasi
           default: true
-      
+
       - name: Install wasi-sdk
         run: make download-wasi-sdk
 
@@ -28,15 +28,15 @@ jobs:
 
       - name: Upload core binary to artifacts
         uses: actions/upload-artifact@v2
-        with: 
+        with:
           name: engine
           path: target/wasm32-wasi/release/javy_core.wasm
 
   compile_cli:
     name: Compile CLI
-    needs:  compile_core
+    needs: compile_core
     runs-on: ${{ matrix.os }}
-    strategy: 
+    strategy:
       matrix:
         include:
           - name: linux
@@ -64,10 +64,10 @@ jobs:
           path: crates/cli/
 
       - name: ls
-        run: ls -R 
+        run: ls -R
         working-directory: crates/cli/
 
-      - name : Install Rust
+      - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
           profile: default
@@ -84,7 +84,7 @@ jobs:
 
       - name: Upload assets to artifacts
         uses: actions/upload-artifact@v2
-        with: 
+        with:
           name: ${{ matrix.asset_name }}.gz
           path: ${{ matrix.asset_name }}.gz
 
@@ -103,7 +103,7 @@ jobs:
 
       - name: Upload asset hash to artifacts
         uses: actions/upload-artifact@v2
-        with: 
+        with:
           name: ${{ matrix.asset_name }}.gz.sha256
           path: ${{ matrix.asset_name }}.gz.sha256
 
