@@ -1,4 +1,4 @@
-# Javy: A _JavaScript to WebAssembly_  toolchain
+# Javy: A *Jav*aScript to WebAssembl*y* toolchain
 
 ![Build status](https://github.com/Shopify/javy/actions/workflows/ci.yml/badge.svg?branch=main)
 
