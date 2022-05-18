@@ -1,6 +1,6 @@
 mod engine;
 
-use quickjs_wasm_rs::{messagepack, Context, Value, imports::base64};
+use quickjs_wasm_rs::{messagepack, Context, Value, imports::date};
 
 use once_cell::sync::OnceCell;
 use std::io::{self, Read};
@@ -32,7 +32,8 @@ pub extern "C" fn init() {
             .register_globals(io::stderr(), io::stderr())
             .unwrap();
 
-        base64::add_to_context(&context).unwrap();
+        #[cfg(feature = "date-import")]
+        date::add_to_context(&context).unwrap();
 
 
         let mut contents = String::new();

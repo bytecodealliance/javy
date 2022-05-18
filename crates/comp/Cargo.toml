@@ -1,0 +1,16 @@
+[package]
+name = "comp"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+wit-bindgen-rust = { git = "https://github.com/bytecodealliance/wit-bindgen", default_features = false }
+
+[lib]
+crate-type = ["cdylib"]
+
+[package.metadata.component.dependencies]
+interface = { path = "../interface.wit", export = true }
+z = { path = "../interface.wit", version = "0" }

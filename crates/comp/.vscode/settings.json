@@ -1,0 +1,3 @@
+{
+    "rust-analyzer.server.extraEnv": { "CARGO": "cargo-component" }
+}
