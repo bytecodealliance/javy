@@ -41,13 +41,32 @@ executable.
 
 ## Compiling to WebAssembly
 
-You can create a WebAssembly binary from JavaScript by:
+Define your JavaScript like:
+
+```javascript
+function foo(input) {
+    return { foo: input.n + 1, newBar: input.bar + "!" };
+}
+
+Shopify = {
+    main: foo,
+};
+```
+
+Create a WebAssembly binary from your JavaScript by:
 
 ```bash
 javy index.js -o destination/index.wasm
 ```
 
 For more information on the commands you can run `javy --help`
+
+You can then execute your WebAssembly binary using a WebAssembly engine:
+
+```bash
+$ echo '{ "n": 2, "bar": "baz" }' | wasmtime index.wasm
+{"foo":3,"new_bar":"baz!"}%   
+```
 
 ## Releasing
 
