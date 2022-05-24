@@ -68,6 +68,10 @@ $ echo '{ "n": 2, "bar": "baz" }' | wasmtime index.wasm
 {"foo":3,"new_bar":"baz!"}%   
 ```
 
+## Using quickjs-wasm-rs to build your own toolchain
+
+The `quickjs-wasm-rs` crate that is part of this project can be used as part of a Rust crate targeting Wasm to customize how that Rust crate interacts with QuickJS. This may be useful when trying to use JavaScript inside a Wasm module and Javy does not fit your needs as `quickjs-wasm-rs` contains serializers that make it easier to send structured data (for example, strings or objects) between host code and Wasm code.
+
 ## Releasing
 
 1. Create a tag for the new version like `v0.2.0`
