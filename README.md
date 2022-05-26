@@ -68,6 +68,14 @@ $ echo '{ "n": 2, "bar": "baz" }' | wasmtime index.wasm
 {"foo":3,"new_bar":"baz!"}%   
 ```
 
+### Invoking Javy-generated modules programatically
+
+Javy-generated modules are by design WASI only and follow the [command pattern](https://github.com/WebAssembly/WASI/blob/snapshot-01/design/application-abi.md#current-unstable-abi). Any input must be passed via `stdin` and any output will be placed in `stdout`. This is especially important when invoking Javy modules from a custom embedding. 
+
+In a runtime like Wasmtime, [wasmtime-wasi](
+https://docs.rs/wasmtime-wasi/latest/wasmtime_wasi/struct.WasiCtx.html#method.set_stdin)
+can be used to set the input and retrieve the output.
+
 ## Using quickjs-wasm-rs to build your own toolchain
 
 The `quickjs-wasm-rs` crate that is part of this project can be used as part of a Rust crate targeting Wasm to customize how that Rust crate interacts with QuickJS. This may be useful when trying to use JavaScript inside a Wasm module and Javy does not fit your needs as `quickjs-wasm-rs` contains serializers that make it easier to send structured data (for example, strings or objects) between host code and Wasm code.
