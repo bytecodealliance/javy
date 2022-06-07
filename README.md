@@ -14,8 +14,8 @@ Javy is a beta project and will be under major development. We welcome feedback,
 
 ## Build
 
-- Rust v1.53.0
 - [rustup](https://rustup.rs/)
+- Stable Rust (`rustup install stable && rustup default stable`)
 - wasm32-wasi, can be installed via `rustup target add wasm32-wasi`
 - cmake, depending on your operating system and architecture, it might not be
   installed by default. On Mac it can be installed with `homebrew` via `brew

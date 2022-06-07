@@ -17,7 +17,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: default
-          toolchain: 1.53.0
+          toolchain: stable
           default: true
           components: clippy, rustfmt
 
