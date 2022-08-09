@@ -143,9 +143,10 @@ impl Context {
         Value::new(self.inner, raw)
     }
 
-    pub fn register_globals<T>(&mut self, log_stream: T, error_stream: T) -> Result<()>
+    pub fn register_globals<T1, T2>(&mut self, log_stream: T1, error_stream: T2) -> Result<()>
     where
-        T: Write,
+        T1: Write,
+        T2: Write,
     {
         let console_log_callback = unsafe { self.new_callback(console_log_to(log_stream))? };
         let console_error_callback = unsafe { self.new_callback(console_log_to(error_stream))? };
