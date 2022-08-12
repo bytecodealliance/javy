@@ -3,18 +3,27 @@ use std::path::PathBuf;
 
 fn main() {
     let this_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
-    let wasi_sdk_path =
-        env::var("QUICKJS_WASM_SYS_WASI_SDK_PATH").unwrap_or(format!("{}/wasi-sdk", this_dir));
-    if !std::path::Path::exists(std::path::Path::new(&wasi_sdk_path)) {
-        panic!(
-            "wasi-sdk not installed in specified path of {}",
-            &wasi_sdk_path
-        );
+
+    let clang_args;
+    let sysroot;
+    if env::var("QUICKJS_WASM_SYS_BUILD_NATIVE").is_ok() {
+        env::set_var("CC", "clang");
+        clang_args = vec!["-fvisibility=default"];
+    } else {
+        let wasi_sdk_path =
+            env::var("QUICKJS_WASM_SYS_WASI_SDK_PATH").unwrap_or(format!("{}/wasi-sdk", this_dir));
+        if !std::path::Path::exists(std::path::Path::new(&wasi_sdk_path)) {
+            panic!(
+                "wasi-sdk not installed in specified path of {}",
+                &wasi_sdk_path
+            );
+        }
+        env::set_var("CC", format!("{}/bin/clang", &wasi_sdk_path));
+        env::set_var("AR", format!("{}/bin/ar", &wasi_sdk_path));
+        sysroot = format!("--sysroot={}/share/wasi-sysroot", &wasi_sdk_path);
+        env::set_var("CFLAGS", &sysroot);
+        clang_args = vec!["-fvisibility=default", "--target=wasm32-wasi", &sysroot];
     }
-    env::set_var("CC", format!("{}/bin/clang", &wasi_sdk_path));
-    env::set_var("AR", format!("{}/bin/ar", &wasi_sdk_path));
-    let sysroot = format!("--sysroot={}/share/wasi-sysroot", &wasi_sdk_path);
-    env::set_var("CFLAGS", &sysroot);
 
     // Build quickjs as a static library.
     cc::Build::new()
@@ -45,14 +54,15 @@ fn main() {
         .flag_if_supported("-Wno-cast-function-type")
         .flag_if_supported("-Wno-implicit-fallthrough")
         .flag_if_supported("-Wno-enum-conversion")
-        .opt_level(2)
+        .opt_level(0)
+        .debug(true)
         .compile("quickjs");
 
     // Generate bindings for quickjs
     let bindings = bindgen::Builder::default()
         .header("wrapper.h")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
-        .clang_args(&["-fvisibility=default", "--target=wasm32-wasi", &sysroot])
+        .clang_args(&clang_args)
         .generate()
         .unwrap();
 
