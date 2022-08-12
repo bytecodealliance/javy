@@ -5,9 +5,10 @@ use quickjs_wasm_sys::{
     ext_js_exception, ext_js_null, ext_js_undefined, size_t as JS_size_t, JSCFunctionData,
     JSContext, JSValue, JS_Eval, JS_FreeCString, JS_GetGlobalObject, JS_NewArray, JS_NewBigInt64,
     JS_NewBool_Ext, JS_NewCFunctionData, JS_NewContext, JS_NewFloat64_Ext, JS_NewInt32_Ext,
-    JS_NewInt64_Ext, JS_NewObject, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext,
-    JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL,
+    JS_NewInt64_Ext, JS_NewObject, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext, JS_ReadObject,
+    JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL, JS_READ_OBJ_BYTECODE,
 };
+use std::convert::TryInto;
 use std::ffi::CString;
 use std::io::Write;
 use std::os::raw::{c_char, c_int, c_void};
@@ -49,6 +50,18 @@ impl Context {
         };
 
         Value::new(self.inner, raw)
+    }
+
+    pub fn eval_binary(&self, contents: &[u8]) -> Result<Value> {
+        Value::new(self.inner, unsafe {
+            JS_ReadObject(
+                self.inner,
+                contents.as_ptr(),
+                contents.len().try_into()?,
+                JS_READ_OBJ_BYTECODE.try_into()?,
+            )
+        })?
+        .eval_function(self.inner)
     }
 
     pub fn global_object(&self) -> Result<Value> {
