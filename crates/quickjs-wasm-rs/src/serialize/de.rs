@@ -109,12 +109,16 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
         }
 
         if self.value.is_object() {
-            let properties = self.value.properties()?;
-            let map_access = MapAccess {
-                de: self,
-                properties,
-            };
-            return visitor.visit_map(map_access);
+            if self.value.is_array_buffer() {
+                return visitor.visit_bytes(self.value.as_bytes()?);
+            } else {
+                let properties = self.value.properties()?;
+                let map_access = MapAccess {
+                    de: self,
+                    properties,
+                };
+                return visitor.visit_map(map_access);
+            }
         }
 
         Err(Error::Custom(anyhow!(

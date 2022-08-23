@@ -202,8 +202,10 @@ impl<'a> ser::Serializer for &'a mut Serializer<'_> {
         Ok(())
     }
 
-    fn serialize_bytes(self, _v: &[u8]) -> Result<()> {
-        unimplemented!()
+    fn serialize_bytes(self, bytes: &[u8]) -> Result<()> {
+        self.value = self.context.array_buffer_value(bytes)?;
+
+        Ok(())
     }
 }
 

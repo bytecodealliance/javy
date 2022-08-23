@@ -5,9 +5,10 @@ use anyhow::Result;
 use quickjs_wasm_sys::{
     ext_js_exception, ext_js_null, ext_js_undefined, size_t as JS_size_t, JSCFunctionData,
     JSContext, JSValue, JS_Eval, JS_ExecutePendingJob, JS_FreeCString, JS_GetGlobalObject,
-    JS_GetRuntime, JS_NewArray, JS_NewBigInt64, JS_NewBool_Ext, JS_NewCFunctionData, JS_NewContext,
-    JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewInt64_Ext, JS_NewObject, JS_NewRuntime,
-    JS_NewStringLen, JS_NewUint32_Ext, JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL,
+    JS_GetRuntime, JS_NewArray, JS_NewArrayBufferCopy, JS_NewBigInt64, JS_NewBool_Ext,
+    JS_NewCFunctionData, JS_NewContext, JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewInt64_Ext,
+    JS_NewObject, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext, JS_ThrowInternalError,
+    JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL,
 };
 use std::ffi::CString;
 use std::io::Write;
@@ -76,6 +77,12 @@ impl Context {
         Value::new(self.inner, raw)
     }
 
+    pub fn array_buffer_value(&self, bytes: &[u8]) -> Result<Value> {
+        Value::new(self.inner, unsafe {
+            JS_NewArrayBufferCopy(self.inner, bytes.as_ptr(), bytes.len() as _)
+        })
+    }
+
     pub fn object_value(&self) -> Result<Value> {
         let raw = unsafe { JS_NewObject(self.inner) };
         Value::new(self.inner, raw)
@@ -133,6 +140,31 @@ impl Context {
 
     pub fn undefined_value(&self) -> Result<Value> {
         Value::new(self.inner, unsafe { ext_js_undefined })
+    }
+
+    pub fn wrap_callback<F>(&self, mut f: F) -> Result<Value>
+    where
+        F: (FnMut(&Self, &Value, &[Value]) -> Result<Value>) + 'static,
+    {
+        let wrapped = move |inner, this, argc, argv: *mut JSValue, _| match f(
+            &Self { inner },
+            &Value::new_unchecked(inner, this),
+            &(0..argc)
+                .map(|offset| Value::new_unchecked(inner, unsafe { *argv.offset(offset as isize) }))
+                .collect::<Box<[_]>>(),
+        ) {
+            Ok(value) => value.value,
+            Err(error) => {
+                if let Ok(message) = CString::new(format!("{error:?}")) {
+                    let format = CString::new("%s").unwrap();
+                    unsafe { JS_ThrowInternalError(inner, format.as_ptr(), message.as_ptr()) }
+                } else {
+                    unsafe { ext_js_exception }
+                }
+            }
+        };
+
+        unsafe { self.new_callback(wrapped) }
     }
 
     /// # Safety
