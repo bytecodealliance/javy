@@ -22,3 +22,4 @@ tests/target/*.wasm
 .idea
 
 crates/quickjs-wasm-sys/wasi-sdk
+javy_core.init_engine_wizened.wasm

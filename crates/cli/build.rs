@@ -26,7 +26,7 @@ impl<'a> Optimizer<'a> {
 
     pub fn write_wasm(self, dest: impl AsRef<Path>, init_func: String) -> Result<(), Error> {
         let mut wasm = Wizer::new()
-            .allow_wasi(true)
+            .allow_wasi(true)?
             .inherit_stdio(true)
             .init_func(init_func)
             .run(self.wasm)?;

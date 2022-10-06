@@ -17,7 +17,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: default
-          toolchain: 1.53.0
+          toolchain: stable
           default: true
           components: clippy, rustfmt
 
@@ -40,7 +40,13 @@ jobs:
             ${{ runner.os }}-cargo-target
 
       - name: Install wasmtime-cli
-        run: cargo install wasmtime-cli
+        env:
+          WASMTIME_VERSION: 0.34.1
+        run: |
+          wget -nv 'https://github.com/bytecodealliance/wasmtime/releases/download/v${{ env.WASMTIME_VERSION }}/wasmtime-v${{ env.WASMTIME_VERSION }}-x86_64-linux.tar.xz' -O /tmp/wasmtime.tar.xz
+          mkdir /tmp/wasmtime
+          tar xvf /tmp/wasmtime.tar.xz --strip-components=1 -C /tmp/wasmtime
+          echo "/tmp/wasmtime" >> $GITHUB_PATH
 
       - name: Install cargo-wasi
         run: cargo install cargo-wasi
