@@ -6,7 +6,8 @@ use quickjs_wasm_sys::{
     JSContext, JSValue, JS_Eval, JS_FreeCString, JS_GetGlobalObject, JS_NewArray, JS_NewBigInt64,
     JS_NewBool_Ext, JS_NewCFunctionData, JS_NewContext, JS_NewFloat64_Ext, JS_NewInt32_Ext,
     JS_NewInt64_Ext, JS_NewObject, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext, JS_ReadObject,
-    JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL, JS_READ_OBJ_BYTECODE,
+    JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL, JS_READ_OBJ_BYTECODE, JS_EVAL_FLAG_COMPILE_ONLY, 
+    JS_WRITE_OBJ_BYTECODE, JS_WriteObject
 };
 use std::convert::TryInto;
 use std::ffi::CString;
@@ -50,6 +51,32 @@ impl Context {
         };
 
         Value::new(self.inner, raw)
+    }
+
+    pub fn compile_global(&self, name: &str, contents: &str) -> Result<&[u8]> {
+        let input = CString::new(contents)?;
+        let script_name = CString::new(name)?;
+        let len = contents.len() - 1;
+        let raw = unsafe {
+            JS_Eval(
+                self.inner,
+                input.as_ptr(),
+                len as _,
+                script_name.as_ptr(),
+                JS_EVAL_FLAG_COMPILE_ONLY as i32,
+            )
+        };
+
+        let output_size = 0;
+        unsafe {
+            let output_buffer = JS_WriteObject(
+                self.inner,
+                output_size as *mut u32,
+                raw,
+                JS_WRITE_OBJ_BYTECODE as i32,
+            );
+            Ok(std::slice::from_raw_parts(output_buffer as *const u8, output_size))
+        }
     }
 
     pub fn eval_binary(&self, contents: &[u8]) -> Result<Value> {

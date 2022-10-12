@@ -34945,6 +34945,7 @@ static int bc_idx_to_atom(BCReaderState *s, JSAtom *patom, uint32_t idx)
     } else {
         idx -= s->first_atom;
         if (idx >= s->idx_to_atom_count) {
+            fprintf(stderr, "idx = %d, s->idx_to_atom_count = %d, s->first_atom = %d\n", idx, s->idx_to_atom_count, s->first_atom);
             JS_ThrowSyntaxError(s->ctx, "invalid atom index (pos=%u)",
                                 (unsigned int)(s->ptr - s->buf_start));
             *patom = JS_ATOM_NULL;
@@ -35047,6 +35048,7 @@ static int JS_ReadFunctionBytecode(BCReaderState *s, JSFunctionBytecode *b,
                 /* just increment the reference count of the atom */
                 JS_DupAtom(s->ctx, (JSAtom)idx);
             } else {
+                fprintf(stderr, "In JS_ReadFunctionBytecode, s->idx_to_atom_count = %d, idx = %d\n", s->idx_to_atom_count, idx);
                 if (bc_idx_to_atom(s, &atom, idx)) {
                     /* Note: the atoms will be freed up to this position */
                     b->byte_code_len = pos;

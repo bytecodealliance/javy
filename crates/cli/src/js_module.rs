@@ -1,11 +1,11 @@
 pub struct JsModule {
-    js_src: String,
+    js_bytecode: Vec<u8>,
 }
 
 impl JsModule {
-    pub fn new(js_src: &str) -> JsModule {
+    pub fn new(js_bytecode: Vec<u8>) -> JsModule {
         Self {
-            js_src: js_src.to_string(),
+            js_bytecode
         }
     }
 
@@ -17,11 +17,10 @@ impl JsModule {
         )
         .unwrap();
 
-        let js_bytes = self.js_src.as_bytes();
-        let js_bytes_escaped: String = js_bytes.iter().map(|b| format!("\\{:02X?}", b)).collect();
+        let js_bytes_escaped: String = self.js_bytecode.iter().map(|b| format!("\\{:02X?}", b)).collect();
 
         let mut context = tera::Context::new();
-        context.insert("js_string_length_bytes", &js_bytes.len());
+        context.insert("js_string_length_bytes", &self.js_bytecode.len());
         context.insert("js_string_bytes", &js_bytes_escaped);
         tera.render("js_module.wat", &context).unwrap()
     }

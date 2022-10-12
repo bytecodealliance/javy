@@ -35,6 +35,23 @@ pub unsafe extern "C" fn init_engine() {
     JS_CONTEXT.set(context).unwrap();
 }
 
+#[export_name = "compile-bytecode"]
+pub unsafe extern "C" fn compile_bytecode(contents_ptr: *mut u8, contents_len: *mut u32, bytecode_len: *mut u32) -> *mut u8 {
+    let context = Context::default();
+    let contents_slice = std::slice::from_raw_parts_mut(contents_ptr, contents_len as usize);
+    let contents = std::str::from_utf8_unchecked(contents_slice);
+    let bytecode = context.compile_global("index.js", contents).unwrap();
+    *bytecode_len = bytecode.len() as u32;
+
+    let mut vec = vec![];
+    vec.extend_from_slice(bytecode);
+    let bytecode = Box::new(vec);
+
+    // let bytecode = Box::new(context.compile_global("index.js", contents).unwrap() as *mut &[u8]);
+    // *bytecode_ptr = 
+    Box::into_raw(bytecode) as *mut u8
+}
+
 /// Evaluates the JS source code
 ///
 /// # Safety
@@ -42,9 +59,9 @@ pub unsafe extern "C" fn init_engine() {
 /// See safety for https://doc.rust-lang.org/std/vec/struct.Vec.html#method.from_raw_parts
 #[export_name = "init-src"]
 pub unsafe extern "C" fn init_src(js_str_ptr: *mut u8, js_str_len: usize) {
-    let js = String::from_utf8(Vec::from_raw_parts(js_str_ptr, js_str_len, js_str_len)).unwrap();
+    let bytecode = Vec::from_raw_parts(js_str_ptr, js_str_len, js_str_len);
     let context = JS_CONTEXT.get().unwrap();
-    let _ = context.eval_global(SCRIPT_NAME, &js).unwrap();
+    let _ = context.eval_binary(&bytecode).unwrap();
 }
 
 /// Executes the JS code.

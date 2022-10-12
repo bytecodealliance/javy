@@ -15,9 +15,9 @@ anyhow = "1.0"
 tempfile = "3.2.0"
 tera = "1.15"
 wat = "1.0.36"
+wasmtime = "0.34.2"
 
 [dev-dependencies]
-wasmtime = "0.34.2"
 wasmtime-wasi = "0.34.2"
 wasi-common = "0.34.2"
 serde_json = "1.0"
