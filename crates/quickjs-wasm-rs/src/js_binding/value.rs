@@ -233,6 +233,12 @@ impl Value {
     }
 }
 
+impl Into<JSValue> for Value {
+    fn into(self) -> JSValue {
+        self.value
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::js_binding::constants::MAX_SAFE_INTEGER;

@@ -3,15 +3,14 @@ mod engine;
 use quickjs_wasm_rs::{json, Context, Value};
 
 use once_cell::sync::OnceCell;
-use std::io::{self, Read};
+use std::io::{self, Read, Write};
 
 #[cfg(not(test))]
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-static mut JS_CONTEXT: OnceCell<Context> = OnceCell::new();
-static mut ENTRYPOINT: (OnceCell<Value>, OnceCell<Value>) = (OnceCell::new(), OnceCell::new());
-static SCRIPT_NAME: &str = "script.js";
+static mut CONTEXT: OnceCell<Context> = OnceCell::new();
+static mut CODE: OnceCell<String> = OnceCell::new();
 
 // TODO
 //
@@ -21,41 +20,55 @@ static SCRIPT_NAME: &str = "script.js";
 
 #[export_name = "wizer.initialize"]
 pub extern "C" fn init() {
+    let mut context = Context::default();
+    context
+        .register_globals(io::stderr(), io::stderr())
+        .unwrap();
+
+    context
+        .eval_global(
+            "prelude.js",
+            r#"
+            "#,
+        )
+        .unwrap();
+
+    let mut contents = String::new();
+    io::stdin().read_to_string(&mut contents).unwrap();
+
     unsafe {
-        let mut context = Context::default();
-        context
-            .register_globals(io::stderr(), io::stderr())
-            .unwrap();
-
-        let mut contents = String::new();
-        io::stdin().read_to_string(&mut contents).unwrap();
-
-        let _ = context.eval_global(SCRIPT_NAME, &contents).unwrap();
-        let global = context.global_object().unwrap();
-        let shopify = global.get_property("Shopify").unwrap();
-        let main = shopify.get_property("main").unwrap();
-
-        JS_CONTEXT.set(context).unwrap();
-        ENTRYPOINT.0.set(shopify).unwrap();
-        ENTRYPOINT.1.set(main).unwrap();
+        CONTEXT.set(context).unwrap();
+        CODE.set(contents).unwrap();
     }
 }
 
-fn main() {
+fn create_wasi_global(context: &Context) -> Value {
+    let wasi_global = context.object_value().unwrap();
+
     unsafe {
-        let context = JS_CONTEXT.get().unwrap();
-        let shopify = ENTRYPOINT.0.get().unwrap();
-        let main = ENTRYPOINT.1.get().unwrap();
-        let input_bytes = engine::load().expect("Couldn't load input");
-
-        let input_value = json::transcode_input(context, &input_bytes).unwrap();
-        let output_value = main.call(shopify, &[input_value]);
-
-        if output_value.is_err() {
-            panic!("{}", output_value.unwrap_err().to_string());
-        }
-
-        let output = json::transcode_output(output_value.unwrap()).unwrap();
-        engine::store(&output).expect("Couldn't store output");
+        wasi_global.set_property(
+            "writeStdout",
+            context
+                .new_callback(|_ctx, _this, _argc, _argv, _magic| {
+                    io::stdout().write_all("hello".as_bytes()).unwrap();
+                    context.null_value().unwrap().into()
+                })
+                .unwrap(),
+        );
     }
+
+    wasi_global
+}
+
+fn main() {
+    let code = unsafe { CODE.take().unwrap() };
+    let context = unsafe { CONTEXT.take().unwrap() };
+
+    let global = context.global_object().unwrap();
+    global.set_property("WASI", create_wasi_global(&context));
+
+    context.eval_global("function.mjs", &code).unwrap();
+
+    // let output = json::transcode_output(output_value.unwrap()).unwrap();
+    // engine::store(&output).expect("Couldn't store output");
 }
