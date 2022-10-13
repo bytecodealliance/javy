@@ -49,9 +49,31 @@ fn create_wasi_global(context: &Context) -> Value {
         wasi_global.set_property(
             "writeStdout",
             context
-                .new_callback(|_ctx, _this, _argc, _argv, _magic| {
-                    io::stdout().write_all("hello".as_bytes()).unwrap();
-                    context.null_value().unwrap().into()
+                .new_callback(|_ctx, _this, argc, argv, _magic| {
+                    if argc != 1 {
+                        return context.exception_value().unwrap().into();
+                    }
+                    let param = unsafe { context.value_from_ptr(*argv.offset(0)).unwrap() };
+                    let str = param.as_str().unwrap();
+                    io::stdout().write_all(str.as_bytes()).unwrap();
+                    context.undefined_value().unwrap().into()
+                })
+                .unwrap(),
+        );
+
+        wasi_global.set_property(
+            "readStdin",
+            context
+                .new_callback(|_ctx, _this, argc, _argv, _magic| {
+                    if argc != 0 {
+                        return context.exception_value().unwrap().into();
+                    }
+
+                    let mut buffer: String = String::new();
+                    io::stdin().read_to_string(&mut buffer).unwrap();
+
+                    let val = context.value_from_str(&buffer).unwrap();
+                    val.into()
                 })
                 .unwrap(),
         );

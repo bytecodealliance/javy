@@ -120,6 +120,14 @@ impl Context {
         Value::new(self.inner, unsafe { ext_js_undefined })
     }
 
+    pub fn exception_value(&self) -> Result<Value> {
+        Value::new(self.inner, unsafe { ext_js_exception })
+    }
+
+    pub fn value_from_ptr(&self, val: JSValue) -> Result<Value> {
+        Value::new(self.inner, val)
+    }
+
     /// # Safety
     ///
     /// The lifetime of values used in `f` are not respected so you need to
