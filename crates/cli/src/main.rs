@@ -16,13 +16,14 @@ fn main() -> Result<()> {
         .with_context(|| format!("Failed to open input file {}", opts.input.display()))?;
     let mut buffer = vec![];
     contents.read_to_end(&mut buffer)?;
+    unsafe { println!("Contents = {}", std::str::from_utf8_unchecked(&buffer)); }
 
     let core_wasm_module = "target/wasm32-wasi/release/javy_core.wasm";
     let engine = wasmtime::Engine::default();
     let mut linker = wasmtime::Linker::new(&engine);
     wasmtime_wasi::add_to_linker(&mut linker, |s| s)?;
     let module = wasmtime::Module::from_file(&engine, core_wasm_module)?;
-    let wasi = WasiCtxBuilder::new().build();
+    let wasi = WasiCtxBuilder::new().inherit_stdio().build();
     let mut store = wasmtime::Store::new(&engine, wasi);
     let instance = linker.instantiate(&mut store, &module)?;
     let memory = instance.get_memory(&mut store, "memory").unwrap();
@@ -33,15 +34,24 @@ fn main() -> Result<()> {
 
     let contents_alignment = 1;
     let contents_size = buffer.len();
-    let contents_ptr = realloc.call(&mut store, (orig_ptr, existing_len, contents_alignment, contents_size.try_into().unwrap()))?;
+    let contents_ptr = realloc.call(&mut store, (orig_ptr, existing_len, contents_alignment, contents_size.try_into()?))?;
 
     let bytecode_len_ptr_alignment = 4;
     let bytecode_len_ptr_size = 1;
     let bytecode_len_ptr = realloc.call(&mut store, (orig_ptr, existing_len, bytecode_len_ptr_alignment, bytecode_len_ptr_size))?;
 
+    println!("contents_ptr = {}, contents_len = {}, bytecode_len_ptr = {}", contents_ptr, contents_size, bytecode_len_ptr);
+
     memory.write(&mut store, contents_ptr.try_into()?, &mut buffer)?;
     // FIXME this has a memory trap
+    println!("before compile-bytecode");
+    // eprintln!("contents_ptr = {}, contents_len = {}", contents_ptr, contents_size);
+    let mut buffer = vec![0; contents_size];
+    memory.read(&mut store, contents_ptr.try_into()?, &mut buffer)?;
+    // println!("buffer = {:?}", buffer);
+    // unsafe { println!("Contents = {}", std::str::from_utf8_unchecked(&buffer)); }
     let bytecode_ptr = instance.get_typed_func::<(u32, u32, u32), u32, _>(&mut store, "compile-bytecode")?.call(&mut store, (contents_ptr, contents_size.try_into()?, bytecode_len_ptr))?;
+    println!("after compile-bytecode");
 
     let mut buffer = [0; 4];
     memory.read(&mut store, bytecode_len_ptr.try_into()?, &mut buffer)?;

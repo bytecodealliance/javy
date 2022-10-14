@@ -54,9 +54,15 @@ impl Context {
     }
 
     pub fn compile_global(&self, name: &str, contents: &str) -> Result<&[u8]> {
+        eprintln!("In compile_global");
+        eprintln!("contents: {}", contents);
+        // FIXME this casuess an out of bounds memory access trap
         let input = CString::new(contents)?;
+        eprintln!("Before script_name");
         let script_name = CString::new(name)?;
+        eprintln!("After script_name");
         let len = contents.len() - 1;
+        eprintln!("before JS_EVAL");
         let raw = unsafe {
             JS_Eval(
                 self.inner,
@@ -68,6 +74,7 @@ impl Context {
         };
 
         let output_size = 0;
+        eprintln!("before JS_WriteObject");
         unsafe {
             let output_buffer = JS_WriteObject(
                 self.inner,
@@ -75,6 +82,7 @@ impl Context {
                 raw,
                 JS_WRITE_OBJ_BYTECODE as i32,
             );
+            eprintln!("before from_raw_parts");
             Ok(std::slice::from_raw_parts(output_buffer as *const u8, output_size))
         }
     }

@@ -38,12 +38,18 @@ pub unsafe extern "C" fn init_engine() {
 #[export_name = "compile-bytecode"]
 pub unsafe extern "C" fn compile_bytecode(contents_ptr: *mut u8, contents_len: *mut u32, bytecode_len: *mut u32) -> *mut u8 {
     let context = Context::default();
+    // FIXME buffer appears to be getting corrupted
+    // eprintln!("contents_ptr = {}, contents_len = {}", contents_ptr as usize, contents_len as usize);
     let contents_slice = std::slice::from_raw_parts_mut(contents_ptr, contents_len as usize);
+    // eprintln!("buffer = {:?}", contents_slice);
     let contents = std::str::from_utf8_unchecked(contents_slice);
+    eprintln!("before compile_global");
     let bytecode = context.compile_global("index.js", contents).unwrap();
+    eprintln!("after compile_global");
     *bytecode_len = bytecode.len() as u32;
 
     let mut vec = vec![];
+    eprintln!("before extend_from_slice");
     vec.extend_from_slice(bytecode);
     let bytecode = Box::new(vec);
 
