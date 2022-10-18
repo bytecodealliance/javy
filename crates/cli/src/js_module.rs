@@ -17,10 +17,11 @@ impl JsModule {
         )
         .unwrap();
 
-        let js_bytes_escaped: String = self.js_bytecode.iter().map(|b| format!("\\{:02X?}", b)).collect();
+        let js_bytes_escaped = base64::encode(&self.js_bytecode);
+        // let js_bytes_escaped: String = self.js_bytecode.iter().map(|b| format!("\\{:02X?}", b)).collect();
 
         let mut context = tera::Context::new();
-        context.insert("js_string_length_bytes", &self.js_bytecode.len());
+        context.insert("js_string_length_bytes", &js_bytes_escaped.len());
         context.insert("js_string_bytes", &js_bytes_escaped);
         tera.render("js_module.wat", &context).unwrap()
     }

@@ -7,10 +7,11 @@ use once_cell::sync::OnceCell;
 use std::alloc::{alloc, dealloc, Layout};
 use std::io::{self};
 use std::ptr::copy_nonoverlapping;
+use std::slice;
 
-#[cfg(not(test))]
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+// #[cfg(not(test))]
+// #[global_allocator]
+// static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 static mut JS_CONTEXT: OnceCell<Context> = OnceCell::new();
 static SCRIPT_NAME: &str = "script.js";
@@ -36,26 +37,26 @@ pub unsafe extern "C" fn init_engine() {
 }
 
 #[export_name = "compile-bytecode"]
-pub unsafe extern "C" fn compile_bytecode(contents_ptr: *mut u8, contents_len: *mut u32, bytecode_len: *mut u32) -> *mut u8 {
-    let context = Context::default();
-    // FIXME buffer appears to be getting corrupted
-    // eprintln!("contents_ptr = {}, contents_len = {}", contents_ptr as usize, contents_len as usize);
+pub unsafe extern "C" fn compile_bytecode(contents_ptr: *mut u8, contents_len: *mut u32, bytecode_len: *mut u32) -> u32 {
     let contents_slice = std::slice::from_raw_parts_mut(contents_ptr, contents_len as usize);
-    // eprintln!("buffer = {:?}", contents_slice);
     let contents = std::str::from_utf8_unchecked(contents_slice);
-    eprintln!("before compile_global");
-    let bytecode = context.compile_global("index.js", contents).unwrap();
-    eprintln!("after compile_global");
+    let context = Context::default();
+    let bytecode = context.compile_global(SCRIPT_NAME, contents).unwrap();
     *bytecode_len = bytecode.len() as u32;
 
-    let mut vec = vec![];
-    eprintln!("before extend_from_slice");
-    vec.extend_from_slice(bytecode);
-    let bytecode = Box::new(vec);
+    // let mut vec = vec![];
+    // vec.extend_from_slice(bytecode);
+    let vec = bytecode;
+    eprintln!("In compile-bytecode: vec = {:?}", vec);
+    let ret = vec.as_ptr() as u32;
+    std::mem::forget(vec);
 
     // let bytecode = Box::new(context.compile_global("index.js", contents).unwrap() as *mut &[u8]);
     // *bytecode_ptr = 
-    Box::into_raw(bytecode) as *mut u8
+    // let ret = Box::into_raw(bytecode) as u32;
+    // std::mem::forget(ret);
+    eprintln!("In compile-bytecode: ret = {:?}, len = {}", ret, *bytecode_len);
+    ret
 }
 
 /// Evaluates the JS source code
@@ -65,7 +66,10 @@ pub unsafe extern "C" fn compile_bytecode(contents_ptr: *mut u8, contents_len: *
 /// See safety for https://doc.rust-lang.org/std/vec/struct.Vec.html#method.from_raw_parts
 #[export_name = "init-src"]
 pub unsafe extern "C" fn init_src(js_str_ptr: *mut u8, js_str_len: usize) {
-    let bytecode = Vec::from_raw_parts(js_str_ptr, js_str_len, js_str_len);
+    let base64_bytecode = std::str::from_utf8_unchecked(slice::from_raw_parts(js_str_ptr, js_str_len));
+    let bytecode = base64::decode(base64_bytecode).unwrap();
+    eprintln!("bytecode = {:?}", bytecode);
+    eprintln!("foo");
     let context = JS_CONTEXT.get().unwrap();
     let _ = context.eval_binary(&bytecode).unwrap();
 }

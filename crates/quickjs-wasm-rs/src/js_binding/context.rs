@@ -53,16 +53,10 @@ impl Context {
         Value::new(self.inner, raw)
     }
 
-    pub fn compile_global(&self, name: &str, contents: &str) -> Result<&[u8]> {
-        eprintln!("In compile_global");
-        eprintln!("contents: {}", contents);
-        // FIXME this casuess an out of bounds memory access trap
+    pub fn compile_global(&self, name: &str, contents: &str) -> Result<Vec<u8>> {
         let input = CString::new(contents)?;
-        eprintln!("Before script_name");
         let script_name = CString::new(name)?;
-        eprintln!("After script_name");
         let len = contents.len() - 1;
-        eprintln!("before JS_EVAL");
         let raw = unsafe {
             JS_Eval(
                 self.inner,
@@ -73,17 +67,17 @@ impl Context {
             )
         };
 
-        let output_size = 0;
-        eprintln!("before JS_WriteObject");
+        let mut output_size = 0;
         unsafe {
             let output_buffer = JS_WriteObject(
                 self.inner,
-                output_size as *mut u32,
+                &mut output_size,
                 raw,
                 JS_WRITE_OBJ_BYTECODE as i32,
             );
-            eprintln!("before from_raw_parts");
-            Ok(std::slice::from_raw_parts(output_buffer as *const u8, output_size))
+            dbg!(output_size);
+            Ok(Vec::from_raw_parts(output_buffer as *mut u8, output_size.try_into()?, output_size.try_into()?))
+            // Ok(std::slice::from_raw_parts(output_buffer as *const u8, output_size.try_into()?))
         }
     }
 

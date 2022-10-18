@@ -17,6 +17,7 @@ tera = "1.15"
 wat = "1.0.36"
 wasmtime = "0.34.2"
 wasmtime-wasi = "0.34.2"
+base64 = "0.13.0"
 
 [dev-dependencies]
 wasi-common = "0.34.2"

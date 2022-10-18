@@ -9,6 +9,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 anyhow = "1.0"
+base64 = "0.13.0"
 quickjs-wasm-rs = { path = "../quickjs-wasm-rs", features = ["json"] }
 wee_alloc = "0.4.5"
 once_cell = "1.4.0"
