@@ -84,7 +84,7 @@ function platarch() {
 	switch (process.arch.toLowerCase()) {
 		case "arm":
 		case "arm64": arch = "arm"; break;
-		case "x64": arch = "x64_64"; break;
+		case "x64": arch = "x86_64"; break;
 		default: throw Error(`Unsupported architecture ${process.arch}`);
 	}
 	const result = `${arch}-${platform}`;
