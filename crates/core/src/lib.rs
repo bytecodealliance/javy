@@ -44,18 +44,9 @@ pub unsafe extern "C" fn compile_bytecode(contents_ptr: *mut u8, contents_len: *
     let bytecode = context.compile_global(SCRIPT_NAME, contents).unwrap();
     *bytecode_len = bytecode.len() as u32;
 
-    // let mut vec = vec![];
-    // vec.extend_from_slice(bytecode);
     let vec = bytecode;
-    eprintln!("In compile-bytecode: vec = {:?}", vec);
     let ret = vec.as_ptr() as u32;
     std::mem::forget(vec);
-
-    // let bytecode = Box::new(context.compile_global("index.js", contents).unwrap() as *mut &[u8]);
-    // *bytecode_ptr = 
-    // let ret = Box::into_raw(bytecode) as u32;
-    // std::mem::forget(ret);
-    eprintln!("In compile-bytecode: ret = {:?}, len = {}", ret, *bytecode_len);
     ret
 }
 
@@ -68,8 +59,6 @@ pub unsafe extern "C" fn compile_bytecode(contents_ptr: *mut u8, contents_len: *
 pub unsafe extern "C" fn init_src(js_str_ptr: *mut u8, js_str_len: usize) {
     let base64_bytecode = std::str::from_utf8_unchecked(slice::from_raw_parts(js_str_ptr, js_str_len));
     let bytecode = base64::decode(base64_bytecode).unwrap();
-    eprintln!("bytecode = {:?}", bytecode);
-    eprintln!("foo");
     let context = JS_CONTEXT.get().unwrap();
     let _ = context.eval_binary(&bytecode).unwrap();
 }

@@ -75,9 +75,7 @@ impl Context {
                 raw,
                 JS_WRITE_OBJ_BYTECODE as i32,
             );
-            dbg!(output_size);
             Ok(Vec::from_raw_parts(output_buffer as *mut u8, output_size.try_into()?, output_size.try_into()?))
-            // Ok(std::slice::from_raw_parts(output_buffer as *const u8, output_size.try_into()?))
         }
     }
 

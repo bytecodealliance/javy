@@ -42,15 +42,12 @@ fn main() -> Result<()> {
     memory.write(&mut store, contents_ptr.try_into()?, &mut buffer)?;
     let bytecode_ptr = instance.get_typed_func::<(u32, u32, u32), u32, _>(&mut store, "compile-bytecode")?.call(&mut store, (contents_ptr, contents_size.try_into()?, bytecode_len_ptr))?;
 
-    // let mut buffer = [0; 4];
-    // memory.read(&mut store, bytecode_len_ptr.try_into()?, &mut buffer)?;
-    // let bytecode_len = u32::from_le_bytes(buffer);
-    let bytecode_len = 122; // FIXME
+    let mut buffer = [0; 4];
+    memory.read(&mut store, bytecode_len_ptr.try_into()?, &mut buffer)?;
+    let bytecode_len = u32::from_le_bytes(buffer);
 
-    println!("in CLI: bytecode_ptr = {}, len = {}", bytecode_ptr, bytecode_len);
     let mut bytecode = vec![0; bytecode_len.try_into()?];
     memory.read(&store, bytecode_ptr.try_into()?, &mut bytecode)?;
-    println!("in CLI: bytecode = {:?}", bytecode);
 
     let module = js_module::JsModule::new(bytecode);
     let js_wat = module.to_wat();
