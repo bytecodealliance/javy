@@ -68,16 +68,30 @@ async function downloadJavy() {
 
 function binaryUrl() {
 	// https://github.com/Shopify/javy/releases/download/v0.3.0/javy-x86_64-linux-v0.3.0.gz
-	return `${JAVY_URL}/download/v${JAVY_VERSION}/javy-x86_64-${platform()}-v${JAVY_VERSION}.gz`;
+	return `${JAVY_URL}/download/v${JAVY_VERSION}/javy-${platarch()}-v${JAVY_VERSION}.gz`;
 }
 
-function platform() {
+const SUPPORTED_TARGETS = ["arm-macos", "x64_64-macos", "x64_64-windows", "x64_64-linux"];
+
+function platarch() {
+	let platform, arch;
 	switch (process.platform.toLowerCase()) {
-		case "darwin": return "macos";
-		case "linux": return "linux";
-		case "windows": return "windows";
-		default: throw Error(`Unknown platform ${process.platform}`);
+		case "darwin": platform = "macos"; break;
+		case "linux": platform = "linux"; break;
+		case "win32": platform = "windows"; break;
+		default: throw Error(`Unsupported platform ${process.platform}`);
 	}
+	switch (process.arch.toLowerCase()) {
+		case "arm":
+		case "arm64": arch = "arm"; break;
+		case "x64": arch = "x64_64"; break;
+		default: throw Error(`Unsupported architecture ${process.arch}`);
+	}
+	const result = `${arch}-${platform}`;
+	if (!SUPPORTED_TARGETS.includes(result)) {
+		throw Error(`Unsupported platform/architecture combination ${platform}/${arch}`);
+	}
+	return result;
 }
 
 function getArgs() {
