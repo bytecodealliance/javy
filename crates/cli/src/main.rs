@@ -3,11 +3,11 @@ mod options;
 
 use crate::options::Options;
 use anyhow::{Context, Result};
-use wasmtime_wasi::WasiCtxBuilder;
 use std::convert::TryInto;
 use std::fs;
 use std::io::Read;
 use structopt::StructOpt;
+use wasmtime_wasi::WasiCtxBuilder;
 
 fn main() -> Result<()> {
     let opts = Options::from_args();
@@ -27,20 +27,42 @@ fn main() -> Result<()> {
     let instance = linker.instantiate(&mut store, &module)?;
     let memory = instance.get_memory(&mut store, "memory").unwrap();
 
-    let realloc = instance.get_typed_func::<(u32, u32, u32, u32), u32, _>(&mut store, "canonical_abi_realloc")?;
+    let realloc = instance
+        .get_typed_func::<(u32, u32, u32, u32), u32, _>(&mut store, "canonical_abi_realloc")?;
     let orig_ptr = 0;
     let existing_len = 0;
 
     let contents_alignment = 1;
     let contents_size = buffer.len();
-    let contents_ptr = realloc.call(&mut store, (orig_ptr, existing_len, contents_alignment, contents_size.try_into()?))?;
+    let contents_ptr = realloc.call(
+        &mut store,
+        (
+            orig_ptr,
+            existing_len,
+            contents_alignment,
+            contents_size.try_into()?,
+        ),
+    )?;
 
     let bytecode_len_ptr_alignment = 4;
     let bytecode_len_ptr_size = 1;
-    let bytecode_len_ptr = realloc.call(&mut store, (orig_ptr, existing_len, bytecode_len_ptr_alignment, bytecode_len_ptr_size))?;
-  
+    let bytecode_len_ptr = realloc.call(
+        &mut store,
+        (
+            orig_ptr,
+            existing_len,
+            bytecode_len_ptr_alignment,
+            bytecode_len_ptr_size,
+        ),
+    )?;
+
     memory.write(&mut store, contents_ptr.try_into()?, &mut buffer)?;
-    let bytecode_ptr = instance.get_typed_func::<(u32, u32, u32), u32, _>(&mut store, "compile-bytecode")?.call(&mut store, (contents_ptr, contents_size.try_into()?, bytecode_len_ptr))?;
+    let bytecode_ptr = instance
+        .get_typed_func::<(u32, u32, u32), u32, _>(&mut store, "compile-bytecode")?
+        .call(
+            &mut store,
+            (contents_ptr, contents_size.try_into()?, bytecode_len_ptr),
+        )?;
 
     let mut buffer = [0; 4];
     memory.read(&mut store, bytecode_len_ptr.try_into()?, &mut buffer)?;

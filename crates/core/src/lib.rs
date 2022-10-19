@@ -37,7 +37,11 @@ pub unsafe extern "C" fn init_engine() {
 }
 
 #[export_name = "compile-bytecode"]
-pub unsafe extern "C" fn compile_bytecode(contents_ptr: *mut u8, contents_len: *mut u32, bytecode_len: *mut u32) -> u32 {
+pub unsafe extern "C" fn compile_bytecode(
+    contents_ptr: *mut u8,
+    contents_len: *mut u32,
+    bytecode_len: *mut u32,
+) -> u32 {
     let contents_slice = std::slice::from_raw_parts_mut(contents_ptr, contents_len as usize);
     let contents = std::str::from_utf8_unchecked(contents_slice);
     let context = Context::default();
@@ -57,7 +61,8 @@ pub unsafe extern "C" fn compile_bytecode(contents_ptr: *mut u8, contents_len: *
 /// See safety for https://doc.rust-lang.org/std/vec/struct.Vec.html#method.from_raw_parts
 #[export_name = "init-src"]
 pub unsafe extern "C" fn init_src(js_str_ptr: *mut u8, js_str_len: usize) {
-    let base64_bytecode = std::str::from_utf8_unchecked(slice::from_raw_parts(js_str_ptr, js_str_len));
+    let base64_bytecode =
+        std::str::from_utf8_unchecked(slice::from_raw_parts(js_str_ptr, js_str_len));
     let bytecode = base64::decode(base64_bytecode).unwrap();
     let context = JS_CONTEXT.get().unwrap();
     let _ = context.eval_binary(&bytecode).unwrap();

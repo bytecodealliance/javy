@@ -4,9 +4,7 @@ pub struct JsModule {
 
 impl JsModule {
     pub fn new(js_bytecode: Vec<u8>) -> JsModule {
-        Self {
-            js_bytecode
-        }
+        Self { js_bytecode }
     }
 
     pub fn to_wat(&self) -> String {

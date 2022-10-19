@@ -6,8 +6,8 @@ use quickjs_wasm_sys::{
     JSContext, JSValue, JS_Eval, JS_FreeCString, JS_GetGlobalObject, JS_NewArray, JS_NewBigInt64,
     JS_NewBool_Ext, JS_NewCFunctionData, JS_NewContext, JS_NewFloat64_Ext, JS_NewInt32_Ext,
     JS_NewInt64_Ext, JS_NewObject, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext, JS_ReadObject,
-    JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL, JS_READ_OBJ_BYTECODE, JS_EVAL_FLAG_COMPILE_ONLY, 
-    JS_WRITE_OBJ_BYTECODE, JS_WriteObject
+    JS_ToCStringLen2, JS_WriteObject, JS_EVAL_FLAG_COMPILE_ONLY, JS_EVAL_TYPE_GLOBAL,
+    JS_READ_OBJ_BYTECODE, JS_WRITE_OBJ_BYTECODE,
 };
 use std::convert::TryInto;
 use std::ffi::CString;
@@ -75,7 +75,11 @@ impl Context {
                 raw,
                 JS_WRITE_OBJ_BYTECODE as i32,
             );
-            Ok(Vec::from_raw_parts(output_buffer as *mut u8, output_size.try_into()?, output_size.try_into()?))
+            Ok(Vec::from_raw_parts(
+                output_buffer as *mut u8,
+                output_size.try_into()?,
+                output_size.try_into()?,
+            ))
         }
     }
 
