@@ -10,7 +10,7 @@ use quickjs_wasm_sys::{
 };
 use std::ffi::CString;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum BigInt {
     Signed(i64),
     Unsigned(u64),
