@@ -22,3 +22,5 @@ tests/target/*.wasm
 .idea
 
 crates/quickjs-wasm-sys/wasi-sdk
+
+!npm/index.js
