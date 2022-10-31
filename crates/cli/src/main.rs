@@ -55,10 +55,20 @@ fn main() -> Result<()> {
 fn add_custom_section<P: AsRef<Path>>(file: P, section: String, contents: Vec<u8>) -> Result<()> {
     use parity_wasm::elements::*;
 
+    let mut compressed: Vec<u8> = vec![];
+    brotli::enc::BrotliCompress(
+        &mut std::io::Cursor::new(contents),
+        &mut compressed,
+        &brotli::enc::BrotliEncoderParams {
+            quality: 11,
+            ..Default::default()
+        },
+    )?;
+
     let mut module = parity_wasm::deserialize_file(&file)?;
     module
         .sections_mut()
-        .push(Section::Custom(CustomSection::new(section, contents)));
+        .push(Section::Custom(CustomSection::new(section, compressed)));
     parity_wasm::serialize_to_file(&file, module)?;
 
     Ok(())
