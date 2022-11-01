@@ -142,6 +142,11 @@ impl Context {
         Value::new(self.inner, unsafe { ext_js_undefined })
     }
 
+    /// Wrap the specified function in a JS function.
+    ///
+    /// Unlike `new_callback`, this method is safe to call, and since the callback
+    /// signature accepts parameters as high-level `Context` and `Value` objects,
+    /// the callback itself can be implemented without resorting to `unsafe` code.
     pub fn wrap_callback<F>(&self, mut f: F) -> Result<Value>
     where
         F: (FnMut(&Self, &Value, &[Value]) -> Result<Value>) + 'static,

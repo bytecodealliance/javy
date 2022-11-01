@@ -231,6 +231,7 @@ mod tests {
     use crate::js_binding::context::Context;
     use crate::js_binding::value::Value;
     use serde::de::DeserializeOwned;
+    use serde_bytes::ByteBuf;
 
     fn deserialize_value<T>(v: Value) -> T
     where
@@ -390,5 +391,28 @@ mod tests {
         let val = context.value_from_u32(expected).unwrap();
         let actual = deserialize_value::<u32>(val);
         assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_array_buffer() {
+        let context = Context::default();
+
+        context
+            .eval_global(
+                "main",
+                "var a = new Uint8Array(3);\
+                 a[0] = 42;\
+                 a[1] = 0;\
+                 a[2] = 255;
+                 a = a.buffer;",
+            )
+            .unwrap();
+
+        let val = deserialize_value::<ByteBuf>(
+            context.global_object().unwrap().get_property("a").unwrap(),
+        )
+        .into_vec();
+
+        assert_eq!(vec![42u8, 0, 255], val);
     }
 }
