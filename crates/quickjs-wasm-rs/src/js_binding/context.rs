@@ -1,16 +1,18 @@
 use super::constants::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER};
+use super::exception::Exception;
 use super::value::Value;
 use anyhow::Result;
 use quickjs_wasm_sys::{
     ext_js_exception, ext_js_null, ext_js_undefined, size_t as JS_size_t, JSCFunctionData,
-    JSContext, JSValue, JS_Eval, JS_FreeCString, JS_GetGlobalObject, JS_NewArray, JS_NewBigInt64,
-    JS_NewBool_Ext, JS_NewCFunctionData, JS_NewContext, JS_NewFloat64_Ext, JS_NewInt32_Ext,
-    JS_NewInt64_Ext, JS_NewObject, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext,
-    JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL,
+    JSContext, JSValue, JS_Eval, JS_ExecutePendingJob, JS_FreeCString, JS_GetGlobalObject,
+    JS_GetRuntime, JS_NewArray, JS_NewBigInt64, JS_NewBool_Ext, JS_NewCFunctionData, JS_NewContext,
+    JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewInt64_Ext, JS_NewObject, JS_NewRuntime,
+    JS_NewStringLen, JS_NewUint32_Ext, JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL,
 };
 use std::ffi::CString;
 use std::io::Write;
 use std::os::raw::{c_char, c_int, c_void};
+use std::ptr;
 
 #[derive(Debug)]
 pub struct Context {
@@ -49,6 +51,19 @@ impl Context {
         };
 
         Value::new(self.inner, raw)
+    }
+
+    pub fn execute_pending(&self) -> Result<()> {
+        let runtime = unsafe { JS_GetRuntime(self.inner) };
+
+        loop {
+            let mut ctx = ptr::null_mut();
+            match unsafe { JS_ExecutePendingJob(runtime, &mut ctx) } {
+                0 => break Ok(()),
+                1 => (),
+                _ => break Err(Exception::new(self.inner)?.into_error()),
+            }
+        }
     }
 
     pub fn global_object(&self) -> Result<Value> {
