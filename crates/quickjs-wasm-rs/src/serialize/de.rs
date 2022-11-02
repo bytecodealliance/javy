@@ -109,12 +109,16 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
         }
 
         if self.value.is_object() {
-            let properties = self.value.properties()?;
-            let map_access = MapAccess {
-                de: self,
-                properties,
-            };
-            return visitor.visit_map(map_access);
+            if self.value.is_array_buffer() {
+                return visitor.visit_bytes(self.value.as_bytes()?);
+            } else {
+                let properties = self.value.properties()?;
+                let map_access = MapAccess {
+                    de: self,
+                    properties,
+                };
+                return visitor.visit_map(map_access);
+            }
         }
 
         Err(Error::Custom(anyhow!(
@@ -227,6 +231,7 @@ mod tests {
     use crate::js_binding::context::Context;
     use crate::js_binding::value::Value;
     use serde::de::DeserializeOwned;
+    use serde_bytes::ByteBuf;
 
     fn deserialize_value<T>(v: Value) -> T
     where
@@ -386,5 +391,28 @@ mod tests {
         let val = context.value_from_u32(expected).unwrap();
         let actual = deserialize_value::<u32>(val);
         assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_array_buffer() {
+        let context = Context::default();
+
+        context
+            .eval_global(
+                "main",
+                "var a = new Uint8Array(3);\
+                 a[0] = 42;\
+                 a[1] = 0;\
+                 a[2] = 255;
+                 a = a.buffer;",
+            )
+            .unwrap();
+
+        let val = deserialize_value::<ByteBuf>(
+            context.global_object().unwrap().get_property("a").unwrap(),
+        )
+        .into_vec();
+
+        assert_eq!(vec![42u8, 0, 255], val);
     }
 }

@@ -3,10 +3,10 @@ use super::properties::Properties;
 use anyhow::{anyhow, Result};
 use quickjs_wasm_sys::{
     size_t as JS_size_t, JSContext, JSValue, JS_BigIntSigned, JS_BigIntToInt64, JS_BigIntToUint64,
-    JS_Call, JS_DefinePropertyValueStr, JS_DefinePropertyValueUint32, JS_GetPropertyStr,
-    JS_GetPropertyUint32, JS_IsArray, JS_IsFloat64_Ext, JS_ToCStringLen2, JS_ToFloat64,
-    JS_PROP_C_W_E, JS_TAG_BIG_INT, JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_NULL,
-    JS_TAG_OBJECT, JS_TAG_STRING, JS_TAG_UNDEFINED,
+    JS_Call, JS_DefinePropertyValueStr, JS_DefinePropertyValueUint32, JS_GetArrayBuffer,
+    JS_GetPropertyStr, JS_GetPropertyUint32, JS_IsArray, JS_IsArrayBuffer_Ext, JS_IsFloat64_Ext,
+    JS_ToCStringLen2, JS_ToFloat64, JS_PROP_C_W_E, JS_TAG_BIG_INT, JS_TAG_BOOL, JS_TAG_EXCEPTION,
+    JS_TAG_INT, JS_TAG_NULL, JS_TAG_OBJECT, JS_TAG_STRING, JS_TAG_UNDEFINED,
 };
 use std::ffi::CString;
 
@@ -129,6 +129,19 @@ impl Value {
         }
     }
 
+    pub fn as_bytes(&self) -> Result<&[u8]> {
+        let mut len = 0;
+        let ptr = unsafe { JS_GetArrayBuffer(self.context, &mut len, self.value) };
+        if ptr.is_null() {
+            Err(anyhow!(
+                "Can't represent {:?} as an array buffer",
+                self.value
+            ))
+        } else {
+            Ok(unsafe { std::slice::from_raw_parts(ptr, len as _) })
+        }
+    }
+
     pub fn properties(&self) -> Result<Properties> {
         Properties::new(self.context, self.value)
     }
@@ -155,6 +168,10 @@ impl Value {
 
     pub fn is_object(&self) -> bool {
         !self.is_array() && self.get_tag() == JS_TAG_OBJECT
+    }
+
+    pub fn is_array_buffer(&self) -> bool {
+        (unsafe { JS_IsArrayBuffer_Ext(self.context, self.value) }) != 0
     }
 
     pub fn is_undefined(&self) -> bool {
