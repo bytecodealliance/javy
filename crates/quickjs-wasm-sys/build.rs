@@ -58,6 +58,7 @@ fn main() {
 
     println!("cargo:rerun-if-changed=extensions/value.c");
     println!("cargo:rerun-if-changed=wrapper.h");
+    println!("cargo:rerun-if-changed=quickjs");
 
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
     bindings.write_to_file(out_dir.join("bindings.rs")).unwrap();
