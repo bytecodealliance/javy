@@ -16,7 +16,7 @@ fn stub_engine_for_clippy() {
     let engine_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("engine.wasm");
 
     if !engine_path.exists() {
-        std::fs::write(engine_path, &[]).expect("failed to write empty engine.wasm stub");
+        std::fs::write(engine_path, []).expect("failed to write empty engine.wasm stub");
         println!("cargo:warning=using stubbed engine.wasm for static analysis purposes...");
     }
 }
