@@ -5,8 +5,8 @@ use quickjs_wasm_sys::{
     size_t as JS_size_t, JSContext, JSValue, JS_BigIntSigned, JS_BigIntToInt64, JS_BigIntToUint64,
     JS_Call, JS_DefinePropertyValueStr, JS_DefinePropertyValueUint32, JS_GetArrayBuffer,
     JS_GetPropertyStr, JS_GetPropertyUint32, JS_IsArray, JS_IsArrayBuffer_Ext, JS_IsFloat64_Ext,
-    JS_ToCStringLen2, JS_ToFloat64, JS_PROP_C_W_E, JS_TAG_BIG_INT, JS_TAG_BOOL, JS_TAG_EXCEPTION,
-    JS_TAG_INT, JS_TAG_NULL, JS_TAG_OBJECT, JS_TAG_STRING, JS_TAG_UNDEFINED,
+    JS_IsFunction, JS_ToCStringLen2, JS_ToFloat64, JS_PROP_C_W_E, JS_TAG_BIG_INT, JS_TAG_BOOL,
+    JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_NULL, JS_TAG_OBJECT, JS_TAG_STRING, JS_TAG_UNDEFINED,
 };
 use std::ffi::CString;
 
@@ -184,6 +184,10 @@ impl Value {
 
     pub fn is_null_or_undefined(&self) -> bool {
         self.is_null() | self.is_undefined()
+    }
+
+    pub fn is_function(&self) -> bool {
+        unsafe { JS_IsFunction(self.context, self.value) != 0 }
     }
 
     pub fn get_property(&self, key: impl Into<Vec<u8>>) -> Result<Self> {
@@ -558,5 +562,26 @@ mod tests {
             BigInt::Unsigned(expected),
             v.as_big_int_unchecked().unwrap()
         );
+    }
+
+    #[test]
+    fn test_is_function() {
+        let ctx = Context::default();
+
+        ctx.eval_global("main", "var x = 42; function foo() {}");
+
+        assert!(!ctx
+            .global_object()
+            .unwrap()
+            .get_property("x")
+            .unwrap()
+            .is_function());
+
+        assert!(ctx
+            .global_object()
+            .unwrap()
+            .get_property("foo")
+            .unwrap()
+            .is_function());
     }
 }
