@@ -12,7 +12,8 @@ use quickjs_wasm_sys::{
 };
 use std::ffi::CString;
 use std::io::Write;
-use std::os::raw::{c_char, c_int, c_void};
+use std::mem;
+use std::os::raw::{c_char, c_int};
 use std::ptr;
 
 #[derive(Debug)]
@@ -144,9 +145,9 @@ impl Context {
 
     /// Wrap the specified function in a JS function.
     ///
-    /// Unlike `new_callback`, this method is safe to call, and since the callback
-    /// signature accepts parameters as high-level `Context` and `Value` objects,
-    /// the callback itself can be implemented without resorting to `unsafe` code.
+    /// Since the callback signature accepts parameters as high-level `Context` and `Value` objects,
+    /// the it can be implemented without resorting to `unsafe` code, unlike [new_callback] which
+    /// provides a low-level API.
     pub fn wrap_callback<F>(&self, mut f: F) -> Result<Value>
     where
         F: (FnMut(&Self, &Value, &[Value]) -> Result<Value>) + 'static,
@@ -169,39 +170,39 @@ impl Context {
             }
         };
 
-        unsafe { self.new_callback(wrapped) }
+        self.new_callback(wrapped)
     }
 
-    /// # Safety
+    /// Wrap the specified function in a JS function.
     ///
-    /// The lifetime of values used in `f` are not respected so you need to
-    /// manually ensure any referenced variables live at least as long as this
-    /// context.
-    ///
-    /// The following example will result in undefined behavior:
-    ///
-    /// ```rs
-    /// let bar = "bar".to_string();
-    /// self.create_callback(|_, _, _, _, _| println!("foo: {}", &bar));
-    /// ```
-    pub unsafe fn new_callback<F>(&self, f: F) -> Result<Value>
+    /// See also [wrap_callback].
+    pub fn new_callback<F>(&self, f: F) -> Result<Value>
     where
-        F: FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue,
+        F: FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static,
     {
-        let trampoline = build_trampoline(&f);
-        let data = &f as *const _ as *mut c_void as *mut JSValue;
+        // This only works on 32-bit systems at the moment
+        assert!(mem::size_of::<*mut F>() == 4);
 
-        let raw = JS_NewCFunctionData(self.inner, trampoline, 0, 1, 1, data);
+        let trampoline = build_trampoline(&f);
+
+        // We must leak the allocation because there's currently no way to add a custom finalizer to a JSValue
+        let pointer = Box::into_raw(Box::new(f));
+
+        // Cast the the pointer to a u32 and package it as a JSValue
+        let mut pointer = unsafe { JS_NewUint32_Ext(self.inner, pointer as u32) };
+
+        let raw = unsafe { JS_NewCFunctionData(self.inner, trampoline, 0, 1, 1, &mut pointer) };
+
         Value::new(self.inner, raw)
     }
 
     pub fn register_globals<T1, T2>(&mut self, log_stream: T1, error_stream: T2) -> Result<()>
     where
-        T1: Write,
-        T2: Write,
+        T1: Write + 'static,
+        T2: Write + 'static,
     {
-        let console_log_callback = unsafe { self.new_callback(console_log_to(log_stream))? };
-        let console_error_callback = unsafe { self.new_callback(console_log_to(error_stream))? };
+        let console_log_callback = self.new_callback(console_log_to(log_stream))?;
+        let console_error_callback = self.new_callback(console_log_to(error_stream))?;
         let global_object = self.global_object()?;
         let console_object = self.object_value()?;
         console_object.set_property("log", console_log_callback)?;
@@ -213,9 +214,9 @@ impl Context {
 
 fn console_log_to<T>(
     mut stream: T,
-) -> impl FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue
+) -> impl FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static
 where
-    T: Write,
+    T: Write + 'static,
 {
     move |ctx: *mut JSContext, _this: JSValue, argc: c_int, argv: *mut JSValue, _magic: c_int| {
         let mut len: JS_size_t = 0;
@@ -244,7 +245,7 @@ where
 
 fn build_trampoline<F>(_f: &F) -> JSCFunctionData
 where
-    F: FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue,
+    F: FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static,
 {
     // We build a trampoline to jump between c <-> rust and allow closing over a specific context.
     // For more info around how this works, see https://adventures.michaelfbryan.com/posts/rust-closures-in-ffi/.
@@ -257,10 +258,9 @@ where
         data: *mut JSValue,
     ) -> JSValue
     where
-        F: FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue,
+        F: FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static,
     {
-        let closure_ptr = data;
-        let closure: &mut F = &mut *(closure_ptr as *mut F);
+        let closure: &mut F = &mut *(*data as u32 as *mut F);
         (*closure)(ctx, this, argc, argv, magic)
     }
 
@@ -271,7 +271,8 @@ where
 mod tests {
     use super::Context;
     use anyhow::Result;
-    use std::cell::RefCell;
+    use quickjs_wasm_sys::ext_js_undefined;
+    use std::cell::{Cell, RefCell};
     use std::io;
     use std::rc::Rc;
     const SCRIPT_NAME: &str = "context.js";
@@ -429,6 +430,38 @@ mod tests {
 
         ctx.eval_global("main", "console.error(\"bonjour\", \"le\", \"monde\")")?;
         assert_eq!(b"bonjour le monde\n", stream.0.borrow().as_slice());
+        Ok(())
+    }
+
+    /// This tests that `Context::new_callback` can handle large (i.e. more than a few machine words) closures
+    /// correctly.
+    #[test]
+    fn test_closure() -> Result<()> {
+        let ctx = Context::default();
+
+        let global = ctx.global_object()?;
+
+        const LENGTH: usize = 256;
+        let array = [42_u8; LENGTH];
+        let called = Rc::new(Cell::new(false));
+
+        global.set_property(
+            "foo",
+            ctx.new_callback({
+                let called = called.clone();
+                move |_, _, _, _, _| {
+                    called.set(true);
+                    assert!(array.len() == LENGTH);
+                    assert!(array.iter().all(|&v| v == 42));
+                    unsafe { ext_js_undefined }
+                }
+            })?,
+        )?;
+
+        ctx.eval_global("main", "foo()");
+
+        assert!(called.get());
+
         Ok(())
     }
 }
