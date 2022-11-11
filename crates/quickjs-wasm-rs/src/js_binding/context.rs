@@ -2,19 +2,26 @@ use super::constants::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER};
 use super::exception::Exception;
 use super::value::Value;
 use anyhow::Result;
+use once_cell::sync::Lazy;
 use quickjs_wasm_sys::{
     ext_js_exception, ext_js_null, ext_js_undefined, size_t as JS_size_t, JSCFunctionData,
-    JSContext, JSValue, JS_Eval, JS_ExecutePendingJob, JS_FreeCString, JS_GetGlobalObject,
-    JS_GetRuntime, JS_NewArray, JS_NewArrayBufferCopy, JS_NewBigInt64, JS_NewBool_Ext,
-    JS_NewCFunctionData, JS_NewContext, JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewInt64_Ext,
-    JS_NewObject, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext, JS_ThrowInternalError,
-    JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL,
+    JSClassDef, JSClassID, JSContext, JSRuntime, JSValue, JS_Eval, JS_ExecutePendingJob,
+    JS_FreeCString, JS_GetGlobalObject, JS_GetOpaque, JS_GetRuntime, JS_NewArray,
+    JS_NewArrayBufferCopy, JS_NewBigInt64, JS_NewBool_Ext, JS_NewCFunctionData, JS_NewClass,
+    JS_NewClassID, JS_NewContext, JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewInt64_Ext,
+    JS_NewObject, JS_NewObjectClass, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext,
+    JS_SetOpaque, JS_ThrowInternalError, JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL, JS_TAG_EXCEPTION,
 };
+use std::any::TypeId;
+use std::collections::HashMap;
+use std::convert::TryInto;
 use std::ffi::CString;
 use std::io::Write;
-use std::mem;
-use std::os::raw::{c_char, c_int};
+use std::os::raw::{c_char, c_int, c_void};
 use std::ptr;
+use std::sync::Mutex;
+
+static CLASSES: Lazy<Mutex<HashMap<TypeId, JSClassID>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
 #[derive(Debug)]
 pub struct Context {
@@ -146,7 +153,7 @@ impl Context {
     /// Wrap the specified function in a JS function.
     ///
     /// Since the callback signature accepts parameters as high-level `Context` and `Value` objects,
-    /// the it can be implemented without resorting to `unsafe` code, unlike [new_callback] which
+    /// it can be implemented without resorting to `unsafe` code, unlike [new_callback] which
     /// provides a low-level API.
     pub fn wrap_callback<F>(&self, mut f: F) -> Result<Value>
     where
@@ -180,18 +187,50 @@ impl Context {
     where
         F: FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static,
     {
-        // This only works on 32-bit systems at the moment
-        assert!(mem::size_of::<*mut F>() == 4);
-
         let trampoline = build_trampoline(&f);
 
-        // We must leak the allocation because there's currently no way to add a custom finalizer to a JSValue
+        unsafe extern "C" fn finalize<F: 'static>(_runtime: *mut JSRuntime, value: JSValue) {
+            drop(Box::from_raw(JS_GetOpaque(
+                value,
+                *CLASSES.lock().unwrap().get(&TypeId::of::<F>()).unwrap(),
+            ) as *mut F))
+        }
+
+        let id = *CLASSES
+            .lock()
+            .unwrap()
+            .entry(TypeId::of::<F>())
+            .or_insert_with(|| unsafe {
+                let mut id = 0;
+                JS_NewClassID(&mut id);
+
+                assert!(
+                    0 == JS_NewClass(
+                        JS_GetRuntime(self.inner),
+                        id,
+                        &JSClassDef {
+                            class_name: b"<rust closure>\0" as *const _ as *const i8,
+                            finalizer: Some(finalize::<F>),
+                            gc_mark: None,
+                            call: None,
+                            exotic: ptr::null_mut(),
+                        },
+                    )
+                );
+
+                id
+            });
+
         let pointer = Box::into_raw(Box::new(f));
 
-        // Cast the the pointer to a u32 and package it as a JSValue
-        let mut pointer = unsafe { JS_NewUint32_Ext(self.inner, pointer as u32) };
+        let raw = unsafe {
+            let mut object = JS_NewObjectClass(self.inner, id.try_into().unwrap());
+            assert!((object >> 32) as i32 != JS_TAG_EXCEPTION);
 
-        let raw = unsafe { JS_NewCFunctionData(self.inner, trampoline, 0, 1, 1, &mut pointer) };
+            JS_SetOpaque(object, pointer as *mut c_void);
+
+            JS_NewCFunctionData(self.inner, trampoline, 0, 1, 1, &mut object)
+        };
 
         Value::new(self.inner, raw)
     }
@@ -260,7 +299,11 @@ where
     where
         F: FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static,
     {
-        let closure: &mut F = &mut *(*data as u32 as *mut F);
+        let closure = &mut *(JS_GetOpaque(
+            *data,
+            *CLASSES.lock().unwrap().get(&TypeId::of::<F>()).unwrap(),
+        ) as *mut F);
+
         (*closure)(ctx, this, argc, argv, magic)
     }
 
