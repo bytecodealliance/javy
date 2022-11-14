@@ -1,0 +1,16 @@
+{
+    "discountNode": {
+        "metafield": {
+            "value": "{\"discountPercentage\":15}"
+        }
+    },
+    "cart": {
+        "buyerIdentity": {
+            "customer": {
+                "metafield": {
+                    "value": "true"
+                }
+            }
+        }
+    }
+}
