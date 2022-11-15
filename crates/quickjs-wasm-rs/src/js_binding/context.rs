@@ -10,9 +10,10 @@ use quickjs_wasm_sys::{
     JS_NewArrayBufferCopy, JS_NewBigInt64, JS_NewBool_Ext, JS_NewCFunctionData, JS_NewClass,
     JS_NewClassID, JS_NewContext, JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewInt64_Ext,
     JS_NewObject, JS_NewObjectClass, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext,
-    JS_SetOpaque, JS_ThrowInternalError, JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL, JS_TAG_EXCEPTION,
+    JS_SetOpaque, JS_ThrowInternalError, JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL,
 };
 use std::any::TypeId;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::convert::TryInto;
 use std::ffi::CString;
@@ -21,7 +22,8 @@ use std::os::raw::{c_char, c_int, c_void};
 use std::ptr;
 use std::sync::Mutex;
 
-static CLASSES: Lazy<Mutex<HashMap<TypeId, JSClassID>>> = Lazy::new(|| Mutex::new(HashMap::new()));
+pub(super) static CLASSES: Lazy<Mutex<HashMap<TypeId, JSClassID>>> =
+    Lazy::new(|| Mutex::new(HashMap::new()));
 
 #[derive(Debug)]
 pub struct Context {
@@ -150,11 +152,72 @@ impl Context {
         Value::new(self.inner, unsafe { ext_js_undefined })
     }
 
+    /// Get the JS class ID used to wrap instances of the specified Rust type, or else create one if it doesn't
+    /// already exist.
+    fn get_class_id<T: 'static>(&self) -> JSClassID {
+        // Since there is no way (as of this writing) to free a `JSValue` wrapped in a `Value` (i.e. they always
+        // leak), the following function will never be called.  We include it anyway in case it becomes useful in
+        // the future.
+        unsafe extern "C" fn finalize<T: 'static>(_runtime: *mut JSRuntime, value: JSValue) {
+            let pointer = JS_GetOpaque(
+                value,
+                *CLASSES.lock().unwrap().get(&TypeId::of::<T>()).unwrap(),
+            ) as *mut RefCell<T>;
+
+            assert!(!pointer.is_null());
+
+            drop(Box::from_raw(pointer))
+        }
+
+        *CLASSES
+            .lock()
+            .unwrap()
+            .entry(TypeId::of::<T>())
+            .or_insert_with(|| unsafe {
+                let mut id = 0;
+                JS_NewClassID(&mut id);
+
+                assert!(
+                    0 == JS_NewClass(
+                        JS_GetRuntime(self.inner),
+                        id,
+                        &JSClassDef {
+                            class_name: b"<rust closure>\0" as *const _ as *const i8,
+                            finalizer: Some(finalize::<T>),
+                            gc_mark: None,
+                            call: None,
+                            exotic: ptr::null_mut(),
+                        },
+                    )
+                );
+
+                id
+            })
+    }
+
+    /// Wrap the specified Rust value in a JS value
+    ///
+    /// You can use [Value::get_rust_value] to retrieve the original value.
+    pub fn wrap_rust_value<T: 'static>(&self, value: T) -> Result<Value> {
+        // Note the use of `RefCell` to provide checked unique references.  Since JS values can be arbitrarily
+        // aliased, we need `RefCell`'s dynamic borrow checking to prevent unsound access.
+        let pointer = Box::into_raw(Box::new(RefCell::new(value)));
+
+        let value = Value::new(self.inner, unsafe {
+            JS_NewObjectClass(self.inner, self.get_class_id::<T>().try_into().unwrap())
+        })?;
+
+        unsafe {
+            JS_SetOpaque(value.value, pointer as *mut c_void);
+        }
+
+        Ok(value)
+    }
+
     /// Wrap the specified function in a JS function.
     ///
-    /// Since the callback signature accepts parameters as high-level `Context` and `Value` objects,
-    /// it can be implemented without resorting to `unsafe` code, unlike [new_callback] which
-    /// provides a low-level API.
+    /// Since the callback signature accepts parameters as high-level `Context` and `Value` objects, it can be
+    /// implemented without using `unsafe` code, unlike [new_callback] which provides a low-level API.
     pub fn wrap_callback<F>(&self, mut f: F) -> Result<Value>
     where
         F: (FnMut(&Self, &Value, &[Value]) -> Result<Value>) + 'static,
@@ -182,55 +245,17 @@ impl Context {
 
     /// Wrap the specified function in a JS function.
     ///
-    /// See also [wrap_callback].
+    /// See also [wrap_callback] for a high-level equivalent.
     pub fn new_callback<F>(&self, f: F) -> Result<Value>
     where
         F: FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static,
     {
         let trampoline = build_trampoline(&f);
 
-        unsafe extern "C" fn finalize<F: 'static>(_runtime: *mut JSRuntime, value: JSValue) {
-            drop(Box::from_raw(JS_GetOpaque(
-                value,
-                *CLASSES.lock().unwrap().get(&TypeId::of::<F>()).unwrap(),
-            ) as *mut F))
-        }
+        let mut object = self.wrap_rust_value(f)?;
 
-        let id = *CLASSES
-            .lock()
-            .unwrap()
-            .entry(TypeId::of::<F>())
-            .or_insert_with(|| unsafe {
-                let mut id = 0;
-                JS_NewClassID(&mut id);
-
-                assert!(
-                    0 == JS_NewClass(
-                        JS_GetRuntime(self.inner),
-                        id,
-                        &JSClassDef {
-                            class_name: b"<rust closure>\0" as *const _ as *const i8,
-                            finalizer: Some(finalize::<F>),
-                            gc_mark: None,
-                            call: None,
-                            exotic: ptr::null_mut(),
-                        },
-                    )
-                );
-
-                id
-            });
-
-        let pointer = Box::into_raw(Box::new(f));
-
-        let raw = unsafe {
-            let mut object = JS_NewObjectClass(self.inner, id.try_into().unwrap());
-            assert!((object >> 32) as i32 != JS_TAG_EXCEPTION);
-
-            JS_SetOpaque(object, pointer as *mut c_void);
-
-            JS_NewCFunctionData(self.inner, trampoline, 0, 1, 1, &mut object)
-        };
+        let raw =
+            unsafe { JS_NewCFunctionData(self.inner, trampoline, 0, 1, 1, &mut object.value) };
 
         Value::new(self.inner, raw)
     }
@@ -299,12 +324,10 @@ where
     where
         F: FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static,
     {
-        let closure = &mut *(JS_GetOpaque(
-            *data,
-            *CLASSES.lock().unwrap().get(&TypeId::of::<F>()).unwrap(),
-        ) as *mut F);
-
-        (*closure)(ctx, this, argc, argv, magic)
+        (Value::new_unchecked(ctx, *data)
+            .get_rust_value::<F>()
+            .unwrap()
+            .borrow_mut())(ctx, this, argc, argv, magic)
     }
 
     Some(trampoline::<F>)
