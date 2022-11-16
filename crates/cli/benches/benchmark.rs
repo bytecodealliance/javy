@@ -1,6 +1,6 @@
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use num_format::{Locale, ToFormattedString};
-use std::{error::Error, fs, path::Path, process::Command};
+use std::{error::Error, fmt::Display, fs, path::Path, process::Command};
 use wasi_common::pipe::{ReadPipe, WritePipe};
 use wasmtime::{Config, Engine, Linker, Module, Store};
 use wasmtime_wasi::sync::WasiCtxBuilder;
@@ -10,6 +10,13 @@ struct Function {
     wasm_bytes: Vec<u8>,
     payload: Vec<u8>,
     engine: Engine,
+}
+
+impl Display for Function {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.name);
+        Ok(())
+    }
 }
 
 impl Function {
@@ -80,9 +87,11 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         .map(|entry| Function::new(&entry.unwrap().path()).unwrap());
 
     for function in functions {
-        c.bench_function(format!("{} uncompiled", function.name).as_str(), |b| {
-            b.iter(|| function.run_uncompiled().unwrap())
-        });
+        c.bench_with_input(
+            BenchmarkId::new("uncompiled", &function),
+            &function,
+            |b, f| b.iter(|| f.run_uncompiled().unwrap()),
+        );
 
         let serialized_module = function.compile().unwrap();
         println!(
@@ -91,9 +100,11 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             serialized_module.len().to_formatted_string(&Locale::en)
         );
 
-        c.bench_function(format!("{} precompiled", function.name).as_str(), |b| {
-            b.iter(|| function.run_precompiled(&serialized_module).unwrap())
-        });
+        c.bench_with_input(
+            BenchmarkId::new("precompiled", &function),
+            &function,
+            |b, f| b.iter(|| f.run_precompiled(&serialized_module).unwrap()),
+        );
     }
 }
 
