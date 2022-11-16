@@ -1,7 +1,10 @@
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use num_format::{Locale, ToFormattedString};
 use std::{error::Error, fmt::Display, fs, path::Path, process::Command};
-use wasi_common::pipe::{ReadPipe, WritePipe};
+use wasi_common::{
+    pipe::{ReadPipe, WritePipe},
+    WasiCtx,
+};
 use wasmtime::{Config, Engine, Linker, Module, Store};
 use wasmtime_wasi::sync::WasiCtxBuilder;
 
@@ -43,29 +46,33 @@ impl Function {
         Ok(module)
     }
 
-    pub fn run_precompiled(&self, elf_js_module: &[u8]) -> Result<(), Box<dyn Error>> {
+    pub fn run_precompiled(
+        &self,
+        elf_js_module: &[u8],
+        linker: &mut Linker<WasiCtx>,
+        store: &mut Store<WasiCtx>,
+    ) -> Result<(), Box<dyn Error>> {
         let js_module = unsafe { Module::deserialize(&self.engine, elf_js_module) }?;
-        self.run(&js_module)?;
+        self.run(&js_module, linker, store)?;
         Ok(())
     }
 
-    pub fn run_uncompiled(&self) -> Result<(), Box<dyn Error>> {
+    pub fn run_uncompiled(
+        &self,
+        linker: &mut Linker<WasiCtx>,
+        store: &mut Store<WasiCtx>,
+    ) -> Result<(), Box<dyn Error>> {
         let js_module = Module::new(&self.engine, &self.wasm_bytes)?;
-        self.run(&js_module)?;
+        self.run(&js_module, linker, store)?;
         Ok(())
     }
 
-    fn run(&self, js_module: &Module) -> Result<(), Box<dyn Error>> {
-        let mut linker = Linker::new(&self.engine);
-        let stdout = WritePipe::new_in_memory();
-        let wasi = WasiCtxBuilder::new()
-            .stdin(Box::new(ReadPipe::from(&self.payload[..])))
-            .stdout(Box::new(stdout.clone()))
-            .stderr(Box::new(stdout))
-            .build();
-        wasmtime_wasi::add_to_linker(&mut linker, |s| s)?;
-        let mut store = Store::new(&self.engine, wasi);
-
+    fn run(
+        &self,
+        js_module: &Module,
+        linker: &mut Linker<WasiCtx>,
+        mut store: &mut Store<WasiCtx>,
+    ) -> Result<(), Box<dyn Error>> {
         let consumer_instance = linker.instantiate(&mut store, &js_module)?;
         linker.instance(&mut store, "consumer", consumer_instance)?;
 
@@ -74,9 +81,22 @@ impl Function {
             .unwrap()
             .into_func()
             .unwrap()
-            .typed::<(), (), _>(&store)?
+            .typed::<(), (), _>(&mut store)?
             .call(&mut store, ())?;
         Ok(())
+    }
+
+    pub fn setup(&self) -> Result<(Linker<WasiCtx>, Store<WasiCtx>), Box<dyn Error>> {
+        let mut linker = Linker::new(&self.engine);
+        let stdout = WritePipe::new_in_memory();
+        let wasi = WasiCtxBuilder::new()
+            .stdin(Box::new(ReadPipe::from(&self.payload[..])))
+            .stdout(Box::new(stdout.clone()))
+            .stderr(Box::new(stdout))
+            .build();
+        wasmtime_wasi::add_to_linker(&mut linker, |s| s).unwrap();
+        let store = Store::new(&self.engine, wasi);
+        Ok((linker, store))
     }
 }
 
@@ -89,7 +109,12 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         c.bench_with_input(
             BenchmarkId::new("uncompiled", &function),
             &function,
-            |b, f| b.iter(|| f.run_uncompiled().unwrap()),
+            |b, f| {
+                b.iter_with_setup(
+                    || function.setup().unwrap(),
+                    |(mut linker, mut store)| f.run_uncompiled(&mut linker, &mut store).unwrap(),
+                )
+            },
         );
 
         let serialized_module = function.compile().unwrap();
@@ -102,7 +127,15 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         c.bench_with_input(
             BenchmarkId::new("precompiled", &function),
             &function,
-            |b, f| b.iter(|| f.run_precompiled(&serialized_module).unwrap()),
+            |b, f| {
+                b.iter_with_setup(
+                    || function.setup().unwrap(),
+                    |(mut linker, mut store)| {
+                        f.run_precompiled(&serialized_module, &mut linker, &mut store)
+                            .unwrap()
+                    },
+                )
+            },
         );
     }
 }
