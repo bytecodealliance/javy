@@ -7,6 +7,9 @@ download-wasi-sdk:
 install:
 	cargo install --path crates/cli
 
+bench: cli
+		cd crates/cli && cargo bench && cd -
+
 cli: core
 		cd crates/cli && cargo build --release && cd -
 

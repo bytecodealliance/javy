@@ -1,0 +1,15 @@
+{
+  "name": "javy",
+  "version": "0.0.2",
+  "description": "",
+  "main": "index.js",
+  "bin": {
+    "javy": "./index.js"
+  },
+  "type": "module",
+  "author": "Surma <surma@surma.dev>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "node-fetch": "^3.2.10"
+  }
+}

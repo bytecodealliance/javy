@@ -1,16 +1,20 @@
+use super::context;
 use super::exception::Exception;
 use super::properties::Properties;
 use anyhow::{anyhow, Result};
 use quickjs_wasm_sys::{
     size_t as JS_size_t, JSContext, JSValue, JS_BigIntSigned, JS_BigIntToInt64, JS_BigIntToUint64,
-    JS_Call, JS_DefinePropertyValueStr, JS_DefinePropertyValueUint32, JS_GetPropertyStr,
-    JS_GetPropertyUint32, JS_IsArray, JS_IsFloat64_Ext, JS_ToCStringLen2, JS_ToFloat64,
-    JS_PROP_C_W_E, JS_TAG_BIG_INT, JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_NULL,
-    JS_TAG_OBJECT, JS_TAG_STRING, JS_TAG_UNDEFINED,
+    JS_Call, JS_DefinePropertyValueStr, JS_DefinePropertyValueUint32, JS_GetArrayBuffer,
+    JS_GetOpaque, JS_GetPropertyStr, JS_GetPropertyUint32, JS_IsArray, JS_IsArrayBuffer_Ext,
+    JS_IsFloat64_Ext, JS_IsFunction, JS_ToCStringLen2, JS_ToFloat64, JS_PROP_C_W_E, JS_TAG_BIG_INT,
+    JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_NULL, JS_TAG_OBJECT, JS_TAG_STRING,
+    JS_TAG_UNDEFINED,
 };
+use std::any::TypeId;
+use std::cell::RefCell;
 use std::ffi::CString;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum BigInt {
     Signed(i64),
     Unsigned(u64),
@@ -18,8 +22,8 @@ pub enum BigInt {
 
 #[derive(Debug, Clone)]
 pub struct Value {
-    context: *mut JSContext,
-    value: JSValue,
+    pub(super) context: *mut JSContext,
+    pub(super) value: JSValue,
 }
 
 impl Value {
@@ -129,6 +133,19 @@ impl Value {
         }
     }
 
+    pub fn as_bytes(&self) -> Result<&[u8]> {
+        let mut len = 0;
+        let ptr = unsafe { JS_GetArrayBuffer(self.context, &mut len, self.value) };
+        if ptr.is_null() {
+            Err(anyhow!(
+                "Can't represent {:?} as an array buffer",
+                self.value
+            ))
+        } else {
+            Ok(unsafe { std::slice::from_raw_parts(ptr, len as _) })
+        }
+    }
+
     pub fn properties(&self) -> Result<Properties> {
         Properties::new(self.context, self.value)
     }
@@ -157,6 +174,10 @@ impl Value {
         !self.is_array() && self.get_tag() == JS_TAG_OBJECT
     }
 
+    pub fn is_array_buffer(&self) -> bool {
+        (unsafe { JS_IsArrayBuffer_Ext(self.context, self.value) }) != 0
+    }
+
     pub fn is_undefined(&self) -> bool {
         self.get_tag() == JS_TAG_UNDEFINED
     }
@@ -167,6 +188,10 @@ impl Value {
 
     pub fn is_null_or_undefined(&self) -> bool {
         self.is_null() | self.is_undefined()
+    }
+
+    pub fn is_function(&self) -> bool {
+        unsafe { JS_IsFunction(self.context, self.value) != 0 }
     }
 
     pub fn get_property(&self, key: impl Into<Vec<u8>>) -> Result<Self> {
@@ -220,6 +245,26 @@ impl Value {
 
     pub fn is_exception(&self) -> bool {
         self.get_tag() == JS_TAG_EXCEPTION
+    }
+
+    /// Get a pointer to the `RefCell` holding a value wrapped using [Context::wrap_rust_value].
+    pub fn get_rust_value<T: 'static>(&self) -> Result<&RefCell<T>> {
+        unsafe {
+            let pointer = JS_GetOpaque(
+                self.value,
+                *context::CLASSES
+                    .lock()
+                    .unwrap()
+                    .get(&TypeId::of::<T>())
+                    .unwrap(),
+            ) as *const RefCell<T>;
+
+            if pointer.is_null() {
+                Err(anyhow!("type mismatch"))
+            } else {
+                Ok(&*pointer)
+            }
+        }
     }
 
     fn get_tag(&self) -> i32 {
@@ -541,5 +586,27 @@ mod tests {
             BigInt::Unsigned(expected),
             v.as_big_int_unchecked().unwrap()
         );
+    }
+
+    #[test]
+    fn test_is_function() {
+        let ctx = Context::default();
+
+        ctx.eval_global("main", "var x = 42; function foo() {}")
+            .unwrap();
+
+        assert!(!ctx
+            .global_object()
+            .unwrap()
+            .get_property("x")
+            .unwrap()
+            .is_function());
+
+        assert!(ctx
+            .global_object()
+            .unwrap()
+            .get_property("foo")
+            .unwrap()
+            .is_function());
     }
 }
