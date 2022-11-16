@@ -592,7 +592,8 @@ mod tests {
     fn test_is_function() {
         let ctx = Context::default();
 
-        ctx.eval_global("main", "var x = 42; function foo() {}");
+        ctx.eval_global("main", "var x = 42; function foo() {}")
+            .unwrap();
 
         assert!(!ctx
             .global_object()

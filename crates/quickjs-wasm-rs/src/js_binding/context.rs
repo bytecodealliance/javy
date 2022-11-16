@@ -5,12 +5,12 @@ use anyhow::Result;
 use once_cell::sync::Lazy;
 use quickjs_wasm_sys::{
     ext_js_exception, ext_js_null, ext_js_undefined, size_t as JS_size_t, JSCFunctionData,
-    JSClassDef, JSClassID, JSContext, JSRuntime, JSValue, JS_Eval, JS_ExecutePendingJob,
-    JS_FreeCString, JS_GetGlobalObject, JS_GetOpaque, JS_GetRuntime, JS_NewArray,
-    JS_NewArrayBufferCopy, JS_NewBigInt64, JS_NewBool_Ext, JS_NewCFunctionData, JS_NewClass,
-    JS_NewClassID, JS_NewContext, JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewInt64_Ext,
-    JS_NewObject, JS_NewObjectClass, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext,
-    JS_SetOpaque, JS_ThrowInternalError, JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL,
+    JSClassDef, JSClassID, JSContext, JSValue, JS_Eval, JS_ExecutePendingJob, JS_FreeCString,
+    JS_GetGlobalObject, JS_GetRuntime, JS_NewArray, JS_NewArrayBufferCopy, JS_NewBigInt64,
+    JS_NewBool_Ext, JS_NewCFunctionData, JS_NewClass, JS_NewClassID, JS_NewContext,
+    JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewInt64_Ext, JS_NewObject, JS_NewObjectClass,
+    JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext, JS_SetOpaque, JS_ThrowInternalError,
+    JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL,
 };
 use std::any::TypeId;
 use std::cell::RefCell;
@@ -156,18 +156,21 @@ impl Context {
     /// already exist.
     fn get_class_id<T: 'static>(&self) -> JSClassID {
         // Since there is no way (as of this writing) to free a `JSValue` wrapped in a `Value` (i.e. they always
-        // leak), the following function will never be called.  We include it anyway in case it becomes useful in
-        // the future.
-        unsafe extern "C" fn finalize<T: 'static>(_runtime: *mut JSRuntime, value: JSValue) {
-            let pointer = JS_GetOpaque(
-                value,
-                *CLASSES.lock().unwrap().get(&TypeId::of::<T>()).unwrap(),
-            ) as *mut RefCell<T>;
+        // leak), there is no need to define a finalizer.  If that changes in the future, this is what the
+        // finalizer might look like:
+        //
+        // ```
+        // unsafe extern "C" fn finalize<T: 'static>(_runtime: *mut JSRuntime, value: JSValue) {
+        //     let pointer = JS_GetOpaque(
+        //         value,
+        //         *CLASSES.lock().unwrap().get(&TypeId::of::<T>()).unwrap(),
+        //     ) as *mut RefCell<T>;
 
-            assert!(!pointer.is_null());
+        //     assert!(!pointer.is_null());
 
-            drop(Box::from_raw(pointer))
-        }
+        //     drop(Box::from_raw(pointer))
+        // }
+        // ```
 
         *CLASSES
             .lock()
@@ -183,7 +186,7 @@ impl Context {
                         id,
                         &JSClassDef {
                             class_name: b"<rust closure>\0" as *const _ as *const i8,
-                            finalizer: Some(finalize::<T>),
+                            finalizer: None,
                             gc_mark: None,
                             call: None,
                             exotic: ptr::null_mut(),
@@ -524,7 +527,7 @@ mod tests {
             })?,
         )?;
 
-        ctx.eval_global("main", "foo()");
+        ctx.eval_global("main", "foo()")?;
 
         assert!(called.get());
 
