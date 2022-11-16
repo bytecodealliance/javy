@@ -14,8 +14,7 @@ struct Function {
 
 impl Display for Function {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.name);
-        Ok(())
+        f.write_str(&self.name)
     }
 }
 
@@ -96,7 +95,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         let serialized_module = function.compile().unwrap();
         println!(
             "Size of precompiled module for {}: {} bytes",
-            function.name,
+            function,
             serialized_module.len().to_formatted_string(&Locale::en)
         );
 
