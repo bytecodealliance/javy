@@ -13,6 +13,7 @@ struct Function {
     wasm_bytes: Vec<u8>,
     payload: Vec<u8>,
     engine: Engine,
+    quickjs_provider: Module,
 }
 
 impl Display for Function {
@@ -33,11 +34,20 @@ impl Function {
         let wasm_path = function_dir.join("index.wasm");
         execute_javy(&function_dir.join("index.js"), &wasm_path);
 
+        let engine = Engine::new(&Config::default().wasm_multi_memory(true))?;
+        let quickjs_provider = Module::from_file(
+            &engine,
+            Path::new("..")
+                .join("..")
+                .join("javy_core.init_engine_wizened.wasm"),
+        )?;
+
         Ok(Function {
             name,
             wasm_bytes: fs::read(wasm_path)?,
             payload: fs::read(function_dir.join("input.json"))?,
-            engine: Engine::new(&Config::default())?,
+            engine,
+            quickjs_provider,
         })
     }
 
@@ -95,7 +105,13 @@ impl Function {
             .stderr(Box::new(stdout))
             .build();
         wasmtime_wasi::add_to_linker(&mut linker, |s| s).unwrap();
-        let store = Store::new(&self.engine, wasi);
+        let mut store = Store::new(&self.engine, wasi);
+        let quickjs_provider_instance = linker.instantiate(&mut store, &self.quickjs_provider)?;
+        linker.instance(
+            &mut store,
+            "shopify_std_runtime_js_v1",
+            quickjs_provider_instance,
+        )?;
         Ok((linker, store))
     }
 }

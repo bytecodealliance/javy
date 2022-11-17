@@ -7,7 +7,7 @@ download-wasi-sdk:
 install:
 	cargo install --path crates/cli
 
-bench: cli
+bench: cli wizen-core
 		cd crates/cli && cargo bench && cd -
 
 cli: core
