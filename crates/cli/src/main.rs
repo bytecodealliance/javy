@@ -17,7 +17,7 @@ fn main() -> Result<()> {
     let mut buffer = vec![];
     contents.read_to_end(&mut buffer)?;
 
-    let core_wasm_module = "target/wasm32-wasi/release/javy_core.wasm";
+    let core_wasm_module = &opts.javy_core;
     let engine = wasmtime::Engine::default();
     let mut linker = wasmtime::Linker::new(&engine);
     wasmtime_wasi::add_to_linker(&mut linker, |s| s)?;

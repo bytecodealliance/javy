@@ -7,6 +7,13 @@ pub struct Options {
     #[structopt(parse(from_os_str))]
     pub input: PathBuf,
 
+    #[structopt(
+        short = "j",
+        parse(from_os_str),
+        default_value = "target/wasm32-wasi/release/javy_core.wasm"
+    )]
+    pub javy_core: PathBuf,
+
     #[structopt(short = "o", parse(from_os_str), default_value = "index.wasm")]
     pub output: PathBuf,
 }

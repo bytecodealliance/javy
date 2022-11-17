@@ -166,7 +166,20 @@ fn execute_javy(index_js: &Path, wasm: &Path) {
             .to_str()
             .unwrap(),
     )
-    .args([index_js.to_str().unwrap(), "-o", wasm.to_str().unwrap()])
+    .args([
+        index_js.to_str().unwrap(),
+        "-j",
+        Path::new("..")
+            .join("..")
+            .join("target")
+            .join("wasm32-wasi")
+            .join("release")
+            .join("javy_core.wasm")
+            .to_str()
+            .unwrap(),
+        "-o",
+        wasm.to_str().unwrap(),
+    ])
     .status()
     .unwrap();
     if !status_code.success() {
