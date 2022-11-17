@@ -25,6 +25,11 @@ JS_BOOL JS_IsFloat64_Ext(int tag) {
   return JS_TAG_IS_FLOAT64(tag);
 }
 
+JS_BOOL JS_IsArrayBuffer_Ext(JSContext* ctx, JSValue val) {
+    size_t len;
+    return JS_GetArrayBuffer(ctx, &len, val) != 0;
+}
+
 typedef struct JSBigFloat {
     JSRefCountHeader header; /* must come first, 32-bit */
     bf_t num;
@@ -74,4 +79,3 @@ const JSValue ext_js_false = JS_FALSE;
 const JSValue ext_js_true = JS_TRUE;
 const JSValue ext_js_exception = JS_EXCEPTION;
 const JSValue ext_js_uninitialized = JS_UNINITIALIZED;
-

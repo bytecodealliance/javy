@@ -202,8 +202,10 @@ impl<'a> ser::Serializer for &'a mut Serializer<'_> {
         Ok(())
     }
 
-    fn serialize_bytes(self, _v: &[u8]) -> Result<()> {
-        unimplemented!()
+    fn serialize_bytes(self, bytes: &[u8]) -> Result<()> {
+        self.value = self.context.array_buffer_value(bytes)?;
+
+        Ok(())
     }
 }
 
@@ -363,6 +365,7 @@ mod tests {
     use anyhow::Result;
     use quickcheck::quickcheck;
     use serde::{Serialize, Serializer};
+    use serde_bytes::ByteBuf;
 
     quickcheck! {
         fn test_i16(v: i16) -> Result<bool> {
@@ -622,5 +625,19 @@ mod tests {
         sequence.serialize(&mut serializer).unwrap();
 
         assert!(serializer.value.is_array());
+    }
+
+    #[test]
+    fn test_array_buffer() {
+        let context = Context::default();
+        let mut serializer = ValueSerializer::from_context(&context).unwrap();
+
+        ByteBuf::from(vec![42u8, 0, 255])
+            .serialize(&mut serializer)
+            .unwrap();
+
+        assert!(serializer.value.is_array_buffer());
+
+        assert_eq!(serializer.value.as_bytes().unwrap(), &[42u8, 0, 255]);
     }
 }

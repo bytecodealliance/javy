@@ -1,7 +1,7 @@
 target/
 javy.wat
 javy.wasm
-index.js
+/index.js
 index.wasm
 
 .DS_Store
