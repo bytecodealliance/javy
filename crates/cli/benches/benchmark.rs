@@ -35,12 +35,7 @@ impl Function {
         execute_javy(&function_dir.join("index.js"), &wasm_path);
 
         let engine = Engine::new(&Config::default().wasm_multi_memory(true))?;
-        let quickjs_provider = Module::from_file(
-            &engine,
-            Path::new("..")
-                .join("..")
-                .join("javy_core.init_engine_wizened.wasm"),
-        )?;
+        let quickjs_provider = quickjs_provider(&engine)?;
 
         Ok(Function {
             name,
@@ -83,6 +78,8 @@ impl Function {
         linker: &mut Linker<WasiCtx>,
         mut store: &mut Store<WasiCtx>,
     ) -> Result<(), Box<dyn Error>> {
+        instantiate_quickjs_provider(linker, store, &self.quickjs_provider)?;
+
         let consumer_instance = linker.instantiate(&mut store, &js_module)?;
         linker.instance(&mut store, "consumer", consumer_instance)?;
 
@@ -105,18 +102,12 @@ impl Function {
             .stderr(Box::new(stdout))
             .build();
         wasmtime_wasi::add_to_linker(&mut linker, |s| s).unwrap();
-        let mut store = Store::new(&self.engine, wasi);
-        let quickjs_provider_instance = linker.instantiate(&mut store, &self.quickjs_provider)?;
-        linker.instance(
-            &mut store,
-            "shopify_std_runtime_js_v1",
-            quickjs_provider_instance,
-        )?;
+        let store = Store::new(&self.engine, wasi);
         Ok((linker, store))
     }
 }
 
-pub fn criterion_benchmark(c: &mut Criterion) {
+pub fn functions_benchmark(c: &mut Criterion) {
     let functions = fs::read_dir(Path::new("benches").join("functions"))
         .unwrap()
         .map(|entry| Function::new(&entry.unwrap().path()).unwrap());
@@ -156,6 +147,25 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     }
 }
 
+pub fn javy_core_instantiation_benchmark(c: &mut Criterion) {
+    let engine = Engine::new(&Config::default()).unwrap();
+    let module = quickjs_provider(&engine).unwrap();
+    c.bench_function("QuickJs provider instantiation", |b| {
+        b.iter_with_setup(
+            || {
+                let wasi = WasiCtxBuilder::new().build();
+                let store = Store::new(&engine, wasi);
+                let mut linker = Linker::new(&engine);
+                wasmtime_wasi::add_to_linker(&mut linker, |s| s).unwrap();
+                (store, linker)
+            },
+            |(mut store, mut linker)| {
+                instantiate_quickjs_provider(&mut linker, &mut store, &module).unwrap()
+            },
+        );
+    });
+}
+
 fn execute_javy(index_js: &Path, wasm: &Path) {
     let status_code = Command::new(
         Path::new("..")
@@ -187,5 +197,33 @@ fn execute_javy(index_js: &Path, wasm: &Path) {
     }
 }
 
-criterion_group!(benches, criterion_benchmark);
+fn instantiate_quickjs_provider(
+    linker: &mut Linker<WasiCtx>,
+    mut store: &mut Store<WasiCtx>,
+    quickjs_provider: &Module,
+) -> Result<(), Box<dyn Error>> {
+    let quickjs_provider_instance = linker.instantiate(&mut store, &quickjs_provider)?;
+    linker.instance(
+        &mut store,
+        "shopify_std_runtime_js_v1",
+        quickjs_provider_instance,
+    )?;
+    Ok(())
+}
+
+fn quickjs_provider(engine: &Engine) -> Result<Module, Box<dyn Error>> {
+    let module = Module::from_file(
+        engine,
+        Path::new("..")
+            .join("..")
+            .join("javy_core.init_engine_wizened.wasm"),
+    )?;
+    Ok(module)
+}
+
+criterion_group!(
+    benches,
+    functions_benchmark,
+    javy_core_instantiation_benchmark
+);
 criterion_main!(benches);
