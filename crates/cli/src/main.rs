@@ -56,7 +56,7 @@ fn main() -> Result<()> {
         ),
     )?;
 
-    memory.write(&mut store, contents_ptr.try_into()?, &mut buffer)?;
+    memory.write(&mut store, contents_ptr.try_into()?, &buffer)?;
     let bytecode_ptr = instance
         .get_typed_func::<(u32, u32, u32), u32, _>(&mut store, "compile-bytecode")?
         .call(

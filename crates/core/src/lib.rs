@@ -36,6 +36,12 @@ pub unsafe extern "C" fn init_engine() {
     JS_CONTEXT.set(context).unwrap();
 }
 
+/// Compiles the bytecode for the JS engine to run
+///
+/// # Safety
+///
+/// See safety for https://doc.rust-lang.org/nightly/std/slice/fn.from_raw_parts_mut.html
+/// See safety for https://doc.rust-lang.org/nightly/std/str/fn.from_utf8_unchecked.html
 #[export_name = "compile-bytecode"]
 pub unsafe extern "C" fn compile_bytecode(
     contents_ptr: *mut u8,

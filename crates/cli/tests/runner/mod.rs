@@ -65,10 +65,13 @@ impl Runner {
         let root = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
         let wasm_file = std::env::temp_dir().join(wasm_file_name);
         let js_file = root.join("tests").join("sample-scripts").join(js_file);
+        let javy_core = root.join("../../target/wasm32-wasi/release/javy_core.wasm");
 
         let output = Command::new(env!("CARGO_BIN_EXE_javy"))
             .current_dir(root)
             .arg(&js_file)
+            .arg("-j")
+            .arg(javy_core)
             .arg("-o")
             .arg(&wasm_file)
             .output()

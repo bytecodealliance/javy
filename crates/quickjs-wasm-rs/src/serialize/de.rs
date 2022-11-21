@@ -87,7 +87,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
         if self.value.is_str() {
             if self.map_key {
                 self.map_key = false;
-                let key = sanitize_key(&self.value, convert_case::Case::Snake)?;
+                let key = sanitize_key(&self.value, convert_case::Case::Camel)?;
                 return visitor.visit_str(key.as_str());
             } else {
                 let val = self.value.as_str()?;
@@ -307,10 +307,10 @@ mod tests {
     }
 
     #[test]
-    fn test_map_keys_are_converted_to_snake_case() {
+    fn test_map_keys_are_converted_to_camel_case() {
         let context = Context::default();
         let val = context.object_value().unwrap();
-        val.set_property("hello_wold", context.value_from_i32(1).unwrap())
+        val.set_property("hello_world", context.value_from_i32(1).unwrap())
             .unwrap();
         val.set_property("toto", context.value_from_i32(2).unwrap())
             .unwrap();
@@ -323,11 +323,15 @@ mod tests {
 
         let actual = deserialize_value::<BTreeMap<String, i32>>(val);
 
-        assert_eq!(1, *actual.get("hello_wold").unwrap());
+        for key in actual.keys() {
+            println!("{}", key);
+        }
+
+        assert_eq!(1, *actual.get("helloWorld").unwrap());
         assert_eq!(2, *actual.get("toto").unwrap());
-        assert_eq!(3, *actual.get("foo_bar").unwrap());
-        assert_eq!(4, *actual.get("joyeux_noël").unwrap());
-        assert_eq!(5, *actual.get("kebab_case").unwrap());
+        assert_eq!(3, *actual.get("fooBar").unwrap());
+        assert_eq!(4, *actual.get("joyeuxNoël").unwrap());
+        assert_eq!(5, *actual.get("kebabCase").unwrap());
     }
 
     #[test]
