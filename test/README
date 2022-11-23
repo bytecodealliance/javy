@@ -1,0 +1,3 @@
+To smoke-test javy with the example shown in the README.md, use
+
+	../target/release/javy index.js -o index.wasm && (echo '{ "n": 2, "bar": "baz" }' | wasmtime index.wasm)

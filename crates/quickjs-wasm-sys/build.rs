@@ -25,6 +25,8 @@ fn main() {
             "quickjs/libunicode.c",
             "quickjs/quickjs.c",
             "extensions/value.c",
+            "walloc/walloc.c",
+            "walloc/walloc_aligned.c",
         ])
         .define("_GNU_SOURCE", None)
         .define("CONFIG_VERSION", "\"2021-03-27\"")
@@ -57,6 +59,8 @@ fn main() {
         .unwrap();
 
     println!("cargo:rerun-if-changed=src/extensions/value.c");
+    println!("cargo:rerun-if-changed=src/walloc/walloc.c");
+    println!("cargo:rerun-if-changed=src/walloc/walloc_aligned.c");
     println!("cargo:rerun-if-changed=wrapper.h");
 
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());

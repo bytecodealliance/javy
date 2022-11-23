@@ -1,13 +1,35 @@
 mod engine;
 
+include!("walloc_bindings.rs");
+
+use std::alloc::{GlobalAlloc, Layout};
+
 use quickjs_wasm_rs::{json, Context, Value};
 
 use once_cell::sync::OnceCell;
 use std::io::{self, Read};
 
+//
+// Implementation of global allocator using walloc
+//
+struct WAllocator {}
+
 #[cfg(not(test))]
 #[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+static ALLOCATOR: WAllocator = WAllocator {};
+
+unsafe impl Sync for WAllocator {}
+
+unsafe impl GlobalAlloc for WAllocator {
+    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+        let _lock = lock::lock();
+        return wmalloc(layout.size(), layout.align());
+    }
+    unsafe fn dealloc(&self, _ptr: *mut u8, _layout: Layout) {
+        let _lock = lock::lock();
+        wfree(_ptr);
+    }
+}
 
 static mut JS_CONTEXT: OnceCell<Context> = OnceCell::new();
 static mut ENTRYPOINT: (OnceCell<Value>, OnceCell<Value>) = (OnceCell::new(), OnceCell::new());
@@ -58,4 +80,37 @@ fn main() {
         let output = json::transcode_output(output_value.unwrap()).unwrap();
         engine::store(&output).expect("Couldn't store output");
     }
+    unsafe {
+        let _ = wmalloc(1024, 16);
+    }
+}
+
+#[cfg(target_feature = "atomics")]
+mod lock {
+    use crate::sync::atomic::{AtomicI32, Ordering::SeqCst};
+
+    static LOCKED: AtomicI32 = AtomicI32::new(0);
+
+    pub struct DropLock;
+
+    pub fn lock() -> DropLock {
+        loop {
+            if LOCKED.swap(1, SeqCst) == 0 {
+                return DropLock;
+            }
+        }
+    }
+
+    impl Drop for DropLock {
+        fn drop(&mut self) {
+            let r = LOCKED.swap(0, SeqCst);
+            debug_assert_eq!(r, 1);
+        }
+    }
+}
+
+#[cfg(not(target_feature = "atomics"))]
+mod lock {
+    #[inline]
+    pub fn lock() {} // no atomics, no threads, that's easy!
 }
