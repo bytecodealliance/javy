@@ -91,8 +91,8 @@ impl Function {
         let stdout = WritePipe::new_in_memory();
         let wasi = WasiCtxBuilder::new()
             .stdin(Box::new(ReadPipe::from(&self.payload[..])))
-            .stdout(Box::new(stdout.clone()))
-            .stderr(Box::new(stdout))
+            .stdout(Box::new(stdout))
+            .inherit_stderr()
             .build();
         wasmtime_wasi::add_to_linker(&mut linker, |s| s).unwrap();
         let store = Store::new(&self.engine, wasi);

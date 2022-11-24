@@ -1,15 +1,16 @@
-function main(input) {
-    const configuration = JSON.parse(input?.discountNode?.metafield?.value || '{}');
+function main(i) {
+    let input = JSON.parse(textDecoder.decode(i));
+    const configuration = input?.discountNode?.metafield?.value || '{}';
     const vipMetafield = input.cart?.buyerIdentity?.customer?.metafield?.value;
 
     if (vipMetafield != "true") {
-        return {
+        return textEncoder.encode(JSON.stringify({
             discountApplicationStrategy: "MAXIMUM",
             discounts: []
-        }
+        }));
     }
 
-    return {
+    return textEncoder.encode(JSON.stringify({
         discountApplicationStrategy: "MAXIMUM",
         discounts: [
             {
@@ -28,7 +29,7 @@ function main(input) {
                 }
             }
         ]
-    };
+    }));
 }
 
 Shopify = {

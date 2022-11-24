@@ -3,7 +3,10 @@ mod engine;
 use quickjs_wasm_rs::{json, Context, Value};
 
 use once_cell::sync::OnceCell;
-use std::io::{self, Read};
+use std::{
+    any::Any,
+    io::{self, Read},
+};
 
 #[cfg(not(test))]
 #[global_allocator]
@@ -48,14 +51,21 @@ fn main() {
         let main = ENTRYPOINT.1.get().unwrap();
         let input_bytes = engine::load().expect("Couldn't load input");
 
-        let input_value = json::transcode_input(context, &input_bytes).unwrap();
+        // let input_str = std::str::from_utf8(&input_bytes).unwrap();
+        // let input_value = json::transcode_input(context, &input_bytes).unwrap();
+        // let input_value = context.value_from_str(input_str).unwrap();
+        let input_value = context.array_buffer_value(&input_bytes).unwrap();
         let output_value = main.call(shopify, &[input_value]);
 
         if output_value.is_err() {
             panic!("{}", output_value.unwrap_err().to_string());
         }
 
-        let output = json::transcode_output(output_value.unwrap()).unwrap();
+        // let output = json::transcode_output(output_value.unwrap()).unwrap();
+        let output_value = output_value.unwrap();
+        // let output_str = output_value.as_str().unwrap();
+        // let output = output_str.as_bytes();
+        let output = output_value.as_bytes().unwrap();
         engine::store(&output).expect("Couldn't store output");
     }
 }

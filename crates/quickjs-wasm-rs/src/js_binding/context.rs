@@ -275,6 +275,15 @@ impl Context {
         console_object.set_property("log", console_log_callback)?;
         console_object.set_property("error", console_error_callback)?;
         global_object.set_property("console", console_object)?;
+
+        let text_decoder_object = self.object_value()?;
+        text_decoder_object.set_property("decode", self.new_callback(text_decoder_decode())?)?;
+        global_object.set_property("textDecoder", text_decoder_object)?;
+
+        let text_encoder_object = self.object_value()?;
+        text_encoder_object.set_property("encode", self.new_callback(text_encoder_encode())?)?;
+        global_object.set_property("textEncoder", text_encoder_object)?;
+
         Ok(())
     }
 }
@@ -307,6 +316,37 @@ where
 
         writeln!(stream,).unwrap();
         unsafe { ext_js_undefined }
+    }
+}
+
+fn text_decoder_decode(
+) -> impl FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static {
+    move |ctx: *mut JSContext, _this: JSValue, _argc: c_int, argv: *mut JSValue, _magic: c_int| {
+        let mut buf_size = 0 as u32;
+        let buf_ptr =
+            unsafe { quickjs_wasm_sys::JS_GetArrayBuffer(ctx, &mut buf_size, *argv.offset(0)) };
+        let buffer = unsafe { std::slice::from_raw_parts(buf_ptr, buf_size.try_into().unwrap()) };
+        let str = std::str::from_utf8(&buffer).unwrap();
+        let str_val =
+            unsafe { JS_NewStringLen(ctx, str.as_ptr() as *const c_char, str.len() as _) };
+        str_val
+    }
+}
+
+fn text_encoder_encode(
+) -> impl FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static {
+    move |ctx: *mut JSContext, _this: JSValue, _argc: c_int, argv: *mut JSValue, _magic: c_int| {
+        let str = unsafe {
+            let mut len: JS_size_t = 0;
+            let ptr = JS_ToCStringLen2(ctx, &mut len, *argv.offset(0), 0);
+            let ptr = ptr as *const u8;
+            let len = len as usize;
+            let buffer = std::slice::from_raw_parts(ptr, len);
+            std::str::from_utf8(buffer).unwrap()
+        };
+        let buffer_val = unsafe { JS_NewArrayBufferCopy(ctx, str.as_ptr(), str.len() as _) };
+        // FIXME should be a Uint8Array, not an ArrayBuffer
+        buffer_val
     }
 }
 
