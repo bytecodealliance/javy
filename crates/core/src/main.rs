@@ -29,6 +29,9 @@ pub extern "C" fn init() {
         context
             .register_globals(io::stderr(), io::stderr())
             .unwrap();
+        context
+            .eval_global("prelude.js", include_str!("../prelude_scripts/prelude.js"))
+            .unwrap();
 
         let mut contents = String::new();
         io::stdin().read_to_string(&mut contents).unwrap();
@@ -51,9 +54,6 @@ fn main() {
         let main = ENTRYPOINT.1.get().unwrap();
         let input_bytes = engine::load().expect("Couldn't load input");
 
-        // let input_str = std::str::from_utf8(&input_bytes).unwrap();
-        // let input_value = json::transcode_input(context, &input_bytes).unwrap();
-        // let input_value = context.value_from_str(input_str).unwrap();
         let input_value = context.array_buffer_value(&input_bytes).unwrap();
         let output_value = main.call(shopify, &[input_value]);
 
@@ -61,10 +61,7 @@ fn main() {
             panic!("{}", output_value.unwrap_err().to_string());
         }
 
-        // let output = json::transcode_output(output_value.unwrap()).unwrap();
         let output_value = output_value.unwrap();
-        // let output_str = output_value.as_str().unwrap();
-        // let output = output_str.as_bytes();
         let output = output_value.as_bytes().unwrap();
         engine::store(&output).expect("Couldn't store output");
     }

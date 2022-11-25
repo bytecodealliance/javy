@@ -276,13 +276,16 @@ impl Context {
         console_object.set_property("error", console_error_callback)?;
         global_object.set_property("console", console_object)?;
 
-        let text_decoder_object = self.object_value()?;
-        text_decoder_object.set_property("decode", self.new_callback(text_decoder_decode())?)?;
-        global_object.set_property("textDecoder", text_decoder_object)?;
-
-        let text_encoder_object = self.object_value()?;
-        text_encoder_object.set_property("encode", self.new_callback(text_encoder_encode())?)?;
-        global_object.set_property("textEncoder", text_encoder_object)?;
+        let javy_object = self.object_value()?;
+        javy_object.set_property(
+            "decodeUtf8BufferToString",
+            self.new_callback(text_decoder_decode())?,
+        )?;
+        javy_object.set_property(
+            "encodeStringToUtf8",
+            self.new_callback(text_encoder_encode())?,
+        )?;
+        global_object.set_property("javy", javy_object)?;
 
         Ok(())
     }
