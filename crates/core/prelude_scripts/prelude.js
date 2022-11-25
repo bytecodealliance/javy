@@ -2,7 +2,7 @@ class TextDecoder {
     constructor(label, options) {
         if (label && label !== "utf-8") {
             // Not spec-compliant behaviour
-            throw new Exception("Labels other than utf-8 are not supported");
+            throw new Error("Labels other than utf-8 are not supported");
         }
         this.fatal = options?.fatal;
         this.ignoreBOM = options?.ignoreBOM;
@@ -14,7 +14,7 @@ class TextDecoder {
         }
         if (options && options.stream) {
             // FIXME
-            throw new Exception("Streaming decoding is not supported");
+            throw new Error("Streaming decoding is not supported");
         }
 
         // FIXME take `fatal` and `ignoreBOM` into account
@@ -23,7 +23,7 @@ class TextDecoder {
             buffer = buffer.buffer;
         }
         if (!(buffer instanceof ArrayBuffer)) {
-            throw new Exception("buffer must be ArrayBuffer, TypedArray, or DataView");
+            throw new Error("buffer must be ArrayBuffer, TypedArray, or DataView");
         }
         return javy.decodeUtf8BufferToString(buffer);
     }
