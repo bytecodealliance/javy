@@ -16,6 +16,7 @@ impl SerError for Error {
 pub struct Deserializer {
     value: Value,
     map_key: bool,
+    convert_key_case: bool,
 }
 
 impl From<Value> for Deserializer {
@@ -23,11 +24,20 @@ impl From<Value> for Deserializer {
         Self {
             value,
             map_key: false,
+            convert_key_case: true,
         }
     }
 }
 
 impl Deserializer {
+    pub fn new_case_preserving(value: Value) -> Self {
+        Self {
+            value,
+            map_key: false,
+            convert_key_case: false,
+        }
+    }
+
     fn deserialize_number<'de, V>(&mut self, visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -87,8 +97,11 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
         if self.value.is_str() {
             if self.map_key {
                 self.map_key = false;
-                let key = sanitize_key(&self.value, convert_case::Case::Snake)?;
-                return visitor.visit_str(key.as_str());
+                let key = sanitize_key(
+                    &self.value,
+                    self.convert_key_case.then_some(convert_case::Case::Snake),
+                )?;
+                return visitor.visit_str(&key);
             } else {
                 let val = self.value.as_str()?;
                 return visitor.visit_str(val);
@@ -328,6 +341,33 @@ mod tests {
         assert_eq!(3, *actual.get("foo_bar").unwrap());
         assert_eq!(4, *actual.get("joyeux_noël").unwrap());
         assert_eq!(5, *actual.get("kebab_case").unwrap());
+    }
+
+    #[test]
+    fn test_map_keys_are_not_converted_to_snake_case() {
+        let context = Context::default();
+        let val = context.object_value().unwrap();
+        val.set_property("hello_wold", context.value_from_i32(1).unwrap())
+            .unwrap();
+        val.set_property("toto", context.value_from_i32(2).unwrap())
+            .unwrap();
+        val.set_property("fooBar", context.value_from_i32(3).unwrap())
+            .unwrap();
+        val.set_property("Joyeux Noël", context.value_from_i32(4).unwrap())
+            .unwrap();
+        val.set_property("kebab-case", context.value_from_i32(5).unwrap())
+            .unwrap();
+
+        let actual = <BTreeMap<String, i32> as serde::Deserialize>::deserialize(
+            &mut ValueDeserializer::new_case_preserving(val),
+        )
+        .unwrap();
+
+        assert_eq!(1, *actual.get("hello_wold").unwrap());
+        assert_eq!(2, *actual.get("toto").unwrap());
+        assert_eq!(3, *actual.get("fooBar").unwrap());
+        assert_eq!(4, *actual.get("Joyeux Noël").unwrap());
+        assert_eq!(5, *actual.get("kebab-case").unwrap());
     }
 
     #[test]

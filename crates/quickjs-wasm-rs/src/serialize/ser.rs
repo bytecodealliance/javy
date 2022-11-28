@@ -10,6 +10,7 @@ pub struct Serializer<'c> {
     pub context: &'c Context,
     pub value: Value,
     pub key: Value,
+    convert_key_case: bool,
 }
 
 impl SerError for Error {
@@ -24,6 +25,16 @@ impl<'c> Serializer<'c> {
             context,
             value: context.undefined_value()?,
             key: context.undefined_value()?,
+            convert_key_case: true,
+        })
+    }
+
+    pub fn from_context_case_preserving(context: &'c Context) -> Result<Self> {
+        Ok(Self {
+            context,
+            value: context.undefined_value()?,
+            key: context.undefined_value()?,
+            convert_key_case: false,
         })
     }
 }
@@ -305,8 +316,12 @@ impl<'a> ser::SerializeMap for &'a mut Serializer<'_> {
     {
         let mut map_serializer = Serializer::from_context(self.context)?;
         value.serialize(&mut map_serializer)?;
-        let key = sanitize_key(&self.key, convert_case::Case::Camel)?;
-        self.value.set_property(key, map_serializer.value)?;
+        let key = sanitize_key(
+            &self.key,
+            self.convert_key_case.then_some(convert_case::Case::Camel),
+        )?;
+        self.value
+            .set_property(key.into_owned(), map_serializer.value)?;
         Ok(())
     }
 
@@ -577,6 +592,28 @@ mod tests {
         assert_eq!(3, v.get_property("fooBar").unwrap().as_i32_unchecked());
         assert_eq!(4, v.get_property("joyeuxNoël").unwrap().as_i32_unchecked());
         assert_eq!(5, v.get_property("kebabCase").unwrap().as_i32_unchecked());
+    }
+
+    #[test]
+    fn test_map_keys_are_not_converted_to_camel_case() {
+        let context = Context::default();
+        let mut serializer = ValueSerializer::from_context_case_preserving(&context).unwrap();
+
+        let mut map = BTreeMap::new();
+        map.insert("hello_world", 1);
+        map.insert("toto", 2);
+        map.insert("fooBar", 3);
+        map.insert("Joyeux Noël", 4);
+        map.insert("kebab-case", 5);
+
+        map.serialize(&mut serializer).unwrap();
+
+        let v = serializer.value;
+        assert_eq!(1, v.get_property("hello_world").unwrap().as_i32_unchecked());
+        assert_eq!(2, v.get_property("toto").unwrap().as_i32_unchecked());
+        assert_eq!(3, v.get_property("fooBar").unwrap().as_i32_unchecked());
+        assert_eq!(4, v.get_property("Joyeux Noël").unwrap().as_i32_unchecked());
+        assert_eq!(5, v.get_property("kebab-case").unwrap().as_i32_unchecked());
     }
 
     #[test]

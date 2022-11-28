@@ -4,12 +4,16 @@ pub mod ser;
 
 use super::js_binding::value::Value;
 use convert_case::{Case, Casing};
+use std::borrow::Cow;
 
-fn sanitize_key(v: &Value, case: Case) -> anyhow::Result<String> {
+fn sanitize_key(v: &Value, case: Option<Case>) -> anyhow::Result<Cow<'_, str>> {
     if v.is_str() {
         let v = v.as_str()?;
-        let v = v.to_case(case);
-        Ok(v)
+        Ok(if let Some(case) = case {
+            Cow::Owned(v.to_case(case))
+        } else {
+            Cow::Borrowed(v)
+        })
     } else {
         anyhow::bail!("map keys must be a string")
     }
