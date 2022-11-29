@@ -1,36 +1,54 @@
 class TextDecoder {
-    constructor(label, options) {
-        if (label && label !== "utf-8") {
+    constructor(label = "utf-8", options = {}) {
+        if (label !== "utf-8") {
             // Not spec-compliant behaviour
-            throw new Error("Labels other than utf-8 are not supported");
+            throw new RangeError("The encoding label provided must be utf-8");
         }
-        this.fatal = options?.fatal;
-        this.ignoreBOM = options?.ignoreBOM;
+        Object.defineProperties(this, {
+            encoding: { value: "utf-8", enumerable: true, writable: false },
+            fatal: { value: !!options.fatal, enumerable: true, writable: false },
+            ignoreBOM: { value: !!options.ignoreBOM, enumerable: true, writable: false },
+        })
     }
 
-    decode(buffer, options) {
-        if (!buffer) {
+    decode(input, options = {}) {
+        if (input === undefined) {
             return "";
         }
-        if (options && options.stream) {
-            // FIXME
-            throw new Error("Streaming decoding is not supported");
+
+        if (options.stream) {
+            throw new Error("Streaming decode is not supported");
         }
 
-        // FIXME take `fatal` and `ignoreBOM` into account
-        if (ArrayBuffer.isView(buffer)) {
-            // FIXME take offset and length of typed array or data view into account
-            buffer = buffer.buffer;
+        // backing buffer would not have byteOffset and may have different byteLength
+        let byteOffset = input.byteOffset || 0;
+        let byteLength = input.byteLength;
+        if (ArrayBuffer.isView(input)) {
+            input = input.buffer;
         }
-        if (!(buffer instanceof ArrayBuffer)) {
-            throw new Error("buffer must be ArrayBuffer, TypedArray, or DataView");
+
+        if (!(input instanceof ArrayBuffer)) {
+            throw new TypeError("The provided value is not of type '(ArrayBuffer or ArrayBufferView)'");
         }
-        return javy.decodeUtf8BufferToString(buffer);
+
+        // ignoreBOM does not appear to change behaviour for UTF-8
+        return javy.decodeUtf8BufferToString(input, byteOffset, byteLength, this.fatal);
     }
 }
 
 class TextEncoder {
-    encode(str) {
+    constructor() {
+        Object.defineProperties(this, {
+            encoding: { value: "utf-8", enumerable: true, writable: false },
+        });
+    }
+
+    encode(input) {
+        input = input.toString(); // non-string inputs are converted to strings
         return new Uint8Array(javy.encodeStringToUtf8(str));
+    }
+
+    encodeInto(source, destination) {
+        throw new Error("encodeInto is not supported");
     }
 }

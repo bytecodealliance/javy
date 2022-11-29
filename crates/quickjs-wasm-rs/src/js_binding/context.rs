@@ -279,11 +279,11 @@ impl Context {
         let javy_object = self.object_value()?;
         javy_object.set_property(
             "decodeUtf8BufferToString",
-            self.new_callback(text_decoder_decode())?,
+            self.new_callback(decode_utf8_buffer_to_js_string())?,
         )?;
         javy_object.set_property(
             "encodeStringToUtf8",
-            self.new_callback(text_encoder_encode())?,
+            self.new_callback(encode_js_string_to_utf8_buffer())?,
         )?;
         global_object.set_property("javy", javy_object)?;
 
@@ -322,21 +322,37 @@ where
     }
 }
 
-fn text_decoder_decode(
+fn decode_utf8_buffer_to_js_string(
 ) -> impl FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static {
-    move |ctx: *mut JSContext, _this: JSValue, _argc: c_int, argv: *mut JSValue, _magic: c_int| {
+    move |ctx: *mut JSContext, _this: JSValue, argc: c_int, argv: *mut JSValue, _magic: c_int| {
+        if argc != 4 {
+            // FIXME throw JS exception
+            panic!("Wrong number of arguments");
+        }
+        unsafe {
+            let array_buffer = *argv.offset(0);
+            let byte_offset = *argv.offset(1);
+            let byte_length = *argv.offset(2);
+            let fatal = *argv.offset(3);
+        }
         let mut buf_size = 0 as u32;
         let buf_ptr =
-            unsafe { quickjs_wasm_sys::JS_GetArrayBuffer(ctx, &mut buf_size, *argv.offset(0)) };
+            unsafe { quickjs_wasm_sys::JS_GetArrayBuffer(ctx, &mut buf_size, array_buffer) };
         let buffer = unsafe { std::slice::from_raw_parts(buf_ptr, buf_size.try_into().unwrap()) };
-        let str = std::str::from_utf8(&buffer).unwrap();
+        let view = &buffer[byte_offset..(byte_offset + byte_length)];
+        let str = if fatal {
+            // FIXME throw TypeError JS exception
+            Cow::from(std::str::from_utf8(view).unwrap())
+        } else {
+            String::from_utf8_lossy(view)
+        };
         let str_val =
             unsafe { JS_NewStringLen(ctx, str.as_ptr() as *const c_char, str.len() as _) };
         str_val
     }
 }
 
-fn text_encoder_encode(
+fn encode_js_string_to_utf8_buffer(
 ) -> impl FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static {
     move |ctx: *mut JSContext, _this: JSValue, _argc: c_int, argv: *mut JSValue, _magic: c_int| {
         let str = unsafe {
