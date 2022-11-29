@@ -10,9 +10,10 @@ use quickjs_wasm_sys::{
     JS_NewBool_Ext, JS_NewCFunctionData, JS_NewClass, JS_NewClassID, JS_NewContext,
     JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewInt64_Ext, JS_NewObject, JS_NewObjectClass,
     JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext, JS_SetOpaque, JS_ThrowInternalError,
-    JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL,
+    JS_ToBool, JS_ToCStringLen2, JS_ToInt32, JS_EVAL_TYPE_GLOBAL,
 };
 use std::any::TypeId;
+use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::convert::TryInto;
@@ -329,16 +330,35 @@ fn decode_utf8_buffer_to_js_string(
             // FIXME throw JS exception
             panic!("Wrong number of arguments");
         }
-        unsafe {
+
+        let buffer = unsafe {
             let array_buffer = *argv.offset(0);
-            let byte_offset = *argv.offset(1);
-            let byte_length = *argv.offset(2);
-            let fatal = *argv.offset(3);
-        }
-        let mut buf_size = 0 as u32;
-        let buf_ptr =
-            unsafe { quickjs_wasm_sys::JS_GetArrayBuffer(ctx, &mut buf_size, array_buffer) };
-        let buffer = unsafe { std::slice::from_raw_parts(buf_ptr, buf_size.try_into().unwrap()) };
+            let mut buf_size = 0 as u32;
+            let buf_ptr = quickjs_wasm_sys::JS_GetArrayBuffer(ctx, &mut buf_size, array_buffer);
+            std::slice::from_raw_parts(buf_ptr, buf_size.try_into().unwrap())
+        };
+
+        let (byte_offset, byte_length, fatal): (_, usize, _) = unsafe {
+            let mut byte_offset = 0;
+            if JS_ToInt32(ctx, &mut byte_offset, *argv.offset(1)) != 0 {
+                panic!("Could not get byte offset");
+            }
+            let mut byte_length = 0;
+            if JS_ToInt32(ctx, &mut byte_length, *argv.offset(2)) != 0 {
+                panic!("Could not get byte length");
+            }
+            let fatal_int = JS_ToBool(ctx, *argv.offset(3));
+            if fatal_int == -1 {
+                panic!("Could not get fatal");
+            }
+            let fatal = fatal_int != 0;
+            (
+                byte_offset.try_into().unwrap(),
+                byte_length.try_into().unwrap(),
+                fatal,
+            )
+        };
+
         let view = &buffer[byte_offset..(byte_offset + byte_length)];
         let str = if fatal {
             // FIXME throw TypeError JS exception

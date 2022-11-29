@@ -45,7 +45,7 @@ class TextEncoder {
 
     encode(input) {
         input = input.toString(); // non-string inputs are converted to strings
-        return new Uint8Array(javy.encodeStringToUtf8(str));
+        return new Uint8Array(javy.encodeStringToUtf8(input));
     }
 
     encodeInto(source, destination) {
