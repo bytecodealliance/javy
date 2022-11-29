@@ -26,6 +26,9 @@ pub extern "C" fn init() {
         context
             .register_globals(io::stderr(), io::stderr())
             .unwrap();
+        context
+            .eval_global("prelude.js", include_str!("../prelude_scripts/prelude.js"))
+            .unwrap();
 
         let mut contents = String::new();
         io::stdin().read_to_string(&mut contents).unwrap();
