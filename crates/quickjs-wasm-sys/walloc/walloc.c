@@ -155,7 +155,14 @@ static inline struct large_object* get_large_object(void *ptr) {
 static struct freelist *small_object_freelists[SMALL_OBJECT_CHUNK_KINDS];
 static struct large_object *large_objects;
 
+#define HEAP_BASE_WORKAROUND
+
+#ifdef HEAP_BASE_WORKAROUND
+static uint8_t __heap_base[128*(1<<20)];
+#else
 extern void __heap_base;
+#endif
+
 static size_t walloc_heap_size;
 
 static struct page*
@@ -168,7 +175,11 @@ allocate_pages(size_t payload_size, size_t *n_allocated) {
   if (!walloc_heap_size) {
     // We are allocating the initial pages, if any.  We skip the first 64 kB,
     // then take any additional space up to the memory size.
+#ifdef HEAP_BASE_WORKAROUND
+    uintptr_t heap_base = align((uintptr_t)__heap_base, PAGE_SIZE);
+#else
     uintptr_t heap_base = align((uintptr_t)&__heap_base, PAGE_SIZE);
+#endif
     preallocated = heap_size - heap_base; // Preallocated pages.
     walloc_heap_size = preallocated;
     base -= preallocated;
