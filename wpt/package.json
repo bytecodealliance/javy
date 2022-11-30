@@ -1,0 +1,9 @@
+{
+  "name": "wpt",
+  "version": "0.0.1",
+  "main": "vite.config.js",
+  "type": "module",
+  "devDependencies": {
+    "rollup": "^3.5.0"
+  }
+}
