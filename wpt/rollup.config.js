@@ -39,11 +39,8 @@ export default {
         return `
 					import "custom:globalFix";
 					import "${path.join(projectRoot, "/resources/testharness.js")}";
-					add_completion_callback((tests, status) => {
-
-						console.log(tests);
-						console.log(status);
-					});
+					import reporter from "${path.join(projectRoot, "/../reporter.js")}";
+					add_completion_callback(reporter);
 					${chunk}
 				`;
       },
