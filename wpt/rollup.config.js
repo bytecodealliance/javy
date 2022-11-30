@@ -74,7 +74,16 @@ export default {
           ${importLines.join("\n")}
           function main() {
   					add_completion_callback(reporter);
-  					${otherLines.join("\n")}
+            // IIFE to avoid main() returning a
+            // value by acciden.
+            try {
+              (function() {
+                ${otherLines.join("\n")}
+              })();
+            } catch(e) {
+              console.log("FAIL");
+              console.log(e);
+            }
           }
           Shopify = {main};
 				`;
