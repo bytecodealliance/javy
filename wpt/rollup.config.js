@@ -1,3 +1,4 @@
+import * as fs from "fs/promises";
 import * as path from "path";
 
 const projectRoot = path.join(
@@ -5,7 +6,6 @@ const projectRoot = path.join(
   "upstream"
 );
 const MATCHER = /^\/\/\s*META:\s+script=(.+)\s*$/gm;
-const PRIVATE = Symbol();
 export default {
   output: {
     file: "bundle.js",
@@ -39,56 +39,52 @@ export default {
     // into the top-level file and fixes up the global scope with
     // stuff we need.
     {
-      name: "harness-injector",
-      async buildStart(options) {
-        const resolvedInputs = await Promise.all(
-          options.input.map((id) => this.resolve(id))
-        );
-        this[PRIVATE] = new Set(resolvedInputs.map((e) => e.id));
-      },
+      name: "test-spec",
       resolveId(id) {
-        if (id !== "custom:globalFix") return;
+        if (id !== "custom:test_spec") return;
         return id;
       },
-      load(id) {
-        if (id !== "custom:globalFix") return;
-        return `
-					globalThis.self = globalThis;
-					globalThis.location = {};
-				`;
-      },
-      transform(chunk, id) {
-        if (!this[PRIVATE].has(id)) return;
-        // OMG this is super brittle, but should work for now.
-        const lines = chunk.split("\n");
-        const importLines = lines.filter((line) =>
-          line.trim().startsWith("import")
-        );
-        const otherLines = lines.filter(
-          (line) => !line.trim().startsWith("import")
-        );
-        return `
-					import "custom:globalFix";
-					import "${path.join(projectRoot, "/resources/testharness.js")}";
-					import {result_reporter} from "${path.join(projectRoot, "/../reporter.js")}";
-          ${importLines.join("\n")}
-          function main() {
-            add_result_callback(result_reporter);
-            // IIFE to avoid main() returning a
-            // value by acciden.
-            try {
-              (function() {
-                ${otherLines.join("\n")}
+      async load(id) {
+        if (id !== "custom:test_spec") return;
+        const buffer = await fs.readFile("./test_spec.json", "utf8");
+        const spec = JSON.parse(buffer);
+        const modules = await Promise.all(
+          spec.map(async ({ testFile, ignoredTests }) => {
+            const { id } = await this.resolve(testFile);
+            const module = await this.load({ id, resolveDependencies: true });
+            const [imports, other] = splitOffImports(module.code);
+            return [
+              imports,
+              `
+              (function () {
+                globalThis.ignoredTests = ${JSON.stringify(ignoredTests)};
+                ${other}
               })();
-            } catch(e) {
-              console.log("FAIL");
-              console.log(e);
-            }
-            return new ArrayBuffer();
+            `,
+            ];
+          })
+        );
+
+        return `
+          ${modules.map(([imports, other]) => imports).join("\n")}
+          
+          export default function() {
+            ${modules.map(([imports, other]) => other).join("\n")}
           }
-          Shopify = {main};
-				`;
+        `;
       },
     },
   ],
 };
+
+// This is brittle and should be improved.
+function splitOffImports(code) {
+  const lines = code.split("\n");
+  const imports = lines
+    .filter((line) => line.trim().startsWith("import "))
+    .join("\n");
+  const other = lines
+    .filter((line) => !line.trim().startsWith("import "))
+    .join("\n");
+  return [imports, other];
+}
