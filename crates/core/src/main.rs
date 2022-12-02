@@ -1,6 +1,6 @@
 mod engine;
 
-use quickjs_wasm_rs::{json, Context, Value};
+use quickjs_wasm_rs::{Context, Value};
 
 use once_cell::sync::OnceCell;
 use std::io::{self, Read};
@@ -50,14 +50,21 @@ fn main() {
         let main = ENTRYPOINT.1.get().unwrap();
         let input_bytes = engine::load().expect("Couldn't load input");
 
-        let input_value = json::transcode_input(context, &input_bytes).unwrap();
+        let input_value = context.array_buffer_value(&input_bytes).unwrap();
         let output_value = main.call(shopify, &[input_value]);
 
         if output_value.is_err() {
             panic!("{}", output_value.unwrap_err().to_string());
         }
 
-        let output = json::transcode_output(output_value.unwrap()).unwrap();
-        engine::store(&output).expect("Couldn't store output");
+        let output_value = output_value.unwrap();
+        if !output_value.is_array_buffer() {
+            panic!(
+                "Only ArrayBuffers are supported as return values, a different type was returned"
+            );
+        }
+
+        let output = output_value.as_bytes().unwrap();
+        engine::store(output).expect("Couldn't store output");
     }
 }
