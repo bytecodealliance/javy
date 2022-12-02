@@ -70,10 +70,10 @@ export default {
         return `
 					import "custom:globalFix";
 					import "${path.join(projectRoot, "/resources/testharness.js")}";
-					import reporter from "${path.join(projectRoot, "/../reporter.js")}";
+					import {result_reporter} from "${path.join(projectRoot, "/../reporter.js")}";
           ${importLines.join("\n")}
           function main() {
-  					add_completion_callback(reporter);
+            add_result_callback(result_reporter);
             // IIFE to avoid main() returning a
             // value by acciden.
             try {
@@ -84,6 +84,7 @@ export default {
               console.log("FAIL");
               console.log(e);
             }
+            return new ArrayBuffer();
           }
           Shopify = {main};
 				`;
