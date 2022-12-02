@@ -27,7 +27,10 @@ pub extern "C" fn init() {
             .register_globals(io::stderr(), io::stderr())
             .unwrap();
         context
-            .eval_global("prelude.js", include_str!("../prelude_scripts/prelude.js"))
+            .eval_global(
+                "text-encoding.js",
+                include_str!("../prelude/text-encoding.js"),
+            )
             .unwrap();
 
         let mut contents = String::new();
