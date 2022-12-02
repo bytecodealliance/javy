@@ -3,6 +3,12 @@
   "version": "0.0.1",
   "main": "vite.config.js",
   "type": "module",
+  "scripts": {
+    "bundle": "rollup -c rollup.config.js runner.js",
+    "javy": "../target/release/javy -o bundle.wasm bundle.js",
+    "wasmtime": "echo | wasmtime bundle.wasm",
+    "test": "npm run bundle && npm run javy && npm run wasmtime"
+  },
   "devDependencies": {
     "rollup": "^3.5.0"
   }

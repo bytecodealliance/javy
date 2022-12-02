@@ -1,0 +1,6 @@
+[
+  {
+    "testFile": "./custom_test.js",
+    "ignoredTests": ["This is an ignored test"]
+  }
+]
