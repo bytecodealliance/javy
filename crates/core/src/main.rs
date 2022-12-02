@@ -22,6 +22,12 @@ pub extern "C" fn init() {
         context
             .register_globals(io::stderr(), io::stderr())
             .unwrap();
+        context
+            .eval_global(
+                "text-encoding.js",
+                include_str!("../prelude/text-encoding.js"),
+            )
+            .unwrap();
 
         let mut contents = String::new();
         io::stdin().read_to_string(&mut contents).unwrap();

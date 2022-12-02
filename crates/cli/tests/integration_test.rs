@@ -49,6 +49,24 @@ fn test_str() {
 }
 
 #[test]
+fn test_encoding() {
+    let _guard = EXCLUSIVE_TEST.lock();
+    let mut runner = Runner::new("text-encoding.js");
+
+    let (output, _) = run::<_, String>(&mut runner, &"hello");
+    assert_eq!("el", output.as_str());
+
+    let (output, _) = run::<_, String>(&mut runner, &"invalid");
+    assert_eq!("true", output.as_str());
+
+    let (output, _) = run::<_, String>(&mut runner, &"invalid_fatal");
+    assert_eq!("The encoded data was not valid", output.as_str());
+
+    let (output, _) = run::<_, String>(&mut runner, &"test");
+    assert_eq!("test2", output.as_str());
+}
+
+#[test]
 fn test_big_ints() {
     let _guard = EXCLUSIVE_TEST.lock();
     let mut runner = Runner::new("big-ints.js");
