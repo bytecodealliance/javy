@@ -5,10 +5,6 @@ use quickjs_wasm_rs::{json, Context, Value};
 use once_cell::sync::OnceCell;
 use std::io::{self, Read};
 
-#[cfg(not(test))]
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
-
 static mut JS_CONTEXT: OnceCell<Context> = OnceCell::new();
 static mut ENTRYPOINT: (OnceCell<Value>, OnceCell<Value>) = (OnceCell::new(), OnceCell::new());
 static SCRIPT_NAME: &str = "script.js";
