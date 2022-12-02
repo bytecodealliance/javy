@@ -46,8 +46,7 @@ export default {
       },
       async load(id) {
         if (id !== "custom:test_spec") return;
-        const buffer = await fs.readFile("./test_spec.json", "utf8");
-        const spec = JSON.parse(buffer);
+        const { default: spec } = await import("./test_spec.js");
         const modules = await Promise.all(
           spec.map(async ({ testFile, ignoredTests }) => {
             const { id } = await this.resolve(testFile);

@@ -26,7 +26,7 @@ $ npm test
 
 ## Test selection
 
-Tests can be included in `test_spec.json`. Individual tests can be ignored by including their name in the test's ignore list.
+Test suites can be added in `test_spec.js`. Individual tests can be ignored by including their name in the test's ignore list.
 
 [wpt]: https://wpt.fyi
 [rollup]: https://rollupjs.org
