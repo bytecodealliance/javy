@@ -35,9 +35,9 @@ export default {
         `;
       },
     },
-    // This plugin injects an import for the test harness
-    // into the top-level file and fixes up the global scope with
-    // stuff we need.
+    // This plugin handles the special import in `runner.js`.
+    // It parses `test_spec.js` and concatenates all
+    // the specified tests.
     {
       name: "test-spec",
       resolveId(id) {
