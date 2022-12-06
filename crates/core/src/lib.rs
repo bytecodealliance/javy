@@ -32,6 +32,14 @@ pub unsafe extern "C" fn init_engine() {
     context
         .register_globals(io::stderr(), io::stderr())
         .unwrap();
+
+    context
+        .eval_global(
+            "text-encoding.js",
+            include_str!("../prelude/text-encoding.js"),
+        )
+        .unwrap();
+
     JS_CONTEXT.set(context).unwrap();
 }
 
@@ -84,14 +92,20 @@ pub unsafe extern "C" fn execute(
     );
 
     let input_bytes = engine::load().expect("Couldn't load input");
-    let input_value = transcode_input(context, &input_bytes).unwrap();
+    let input_value = context.array_buffer_value(&input_bytes).unwrap();
     let output_value = func.call(&this, &[input_value]);
 
     if output_value.is_err() {
         panic!("{}", output_value.unwrap_err().to_string());
     }
-    let output = transcode_output(output_value.unwrap()).unwrap();
-    engine::store(&output).expect("Couldn't store output");
+
+    let output_value = output_value.unwrap();
+    if !output_value.is_array_buffer() {
+        panic!("Only ArrayBuffers are supported as return values, a different type was returned");
+    }
+
+    let output = output_value.as_bytes().unwrap();
+    engine::store(output).expect("Couldn't store output");
 }
 
 /// 1. Allocate memory of new_size with alignment.
