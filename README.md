@@ -50,7 +50,11 @@ function foo(input) {
 }
 
 Shopify = {
-    main: foo,
+    main: (input) => {
+      const decoder = new TextDecoder();
+      const encoder = new TextEncoder();
+      return encoder.encode(JSON.stringify(foo(JSON.parse(decoder.decode(input))))).buffer;
+    }
 };
 ```
 

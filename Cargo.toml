@@ -6,6 +6,19 @@ members = [
   "crates/cli",
 ]
 
+[workspace.package]
+version = "0.3.0"
+authors = ["The Javy Project Developers"]
+edition = "2021"
+license = "MIT"
+
+[workspace.dependencies]
+wasmtime = "0.34.1"
+wasmtime-wasi = "0.34.1"
+wasi-common = "0.34.1"
+anyhow = "1.0"
+once_cell = "1.16"
+
 [profile.release]
 lto = true
 opt-level = 3
