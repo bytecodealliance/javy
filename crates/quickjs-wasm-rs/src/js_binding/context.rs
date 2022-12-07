@@ -1,7 +1,7 @@
 use super::constants::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER};
 use super::exception::Exception;
 use super::value::Value;
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use once_cell::sync::Lazy;
 use quickjs_wasm_sys::{
     ext_js_exception, ext_js_null, ext_js_undefined, size_t as JS_size_t, JSCFunctionData,
@@ -14,6 +14,7 @@ use quickjs_wasm_sys::{
     JS_EVAL_TYPE_GLOBAL, JS_READ_OBJ_BYTECODE, JS_WRITE_OBJ_BYTECODE,
 };
 use std::any::TypeId;
+use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::convert::TryInto;
@@ -21,6 +22,7 @@ use std::ffi::CString;
 use std::io::Write;
 use std::os::raw::{c_char, c_int, c_void};
 use std::ptr;
+use std::str;
 use std::sync::Mutex;
 
 pub(super) static CLASSES: Lazy<Mutex<HashMap<TypeId, JSClassID>>> =
@@ -318,6 +320,18 @@ impl Context {
         console_object.set_property("log", console_log_callback)?;
         console_object.set_property("error", console_error_callback)?;
         global_object.set_property("console", console_object)?;
+
+        let javy_object = self.object_value()?;
+        javy_object.set_property(
+            "decodeUtf8BufferToString",
+            self.wrap_callback(decode_utf8_buffer_to_js_string())?,
+        )?;
+        javy_object.set_property(
+            "encodeStringToUtf8",
+            self.wrap_callback(encode_js_string_to_utf8_buffer())?,
+        )?;
+        global_object.set_property("Javy", javy_object)?;
+
         Ok(())
     }
 }
@@ -350,6 +364,56 @@ where
 
         writeln!(stream,).unwrap();
         unsafe { ext_js_undefined }
+    }
+}
+
+fn decode_utf8_buffer_to_js_string() -> impl FnMut(&Context, &Value, &[Value]) -> Result<Value> {
+    move |ctx: &Context, _this: &Value, args: &[Value]| {
+        if args.len() != 4 {
+            return Err(anyhow!("Expecting 4 arguments, received {}", args.len()));
+        }
+
+        let buffer = args[0].as_bytes()?;
+        let byte_offset = {
+            let byte_offset_val = &args[1];
+            if !byte_offset_val.is_repr_as_i32() {
+                return Err(anyhow!("byte_offset must be an u32"));
+            }
+            byte_offset_val.as_u32_unchecked()
+        }
+        .try_into()?;
+        let byte_length: usize = {
+            let byte_length_val = &args[2];
+            if !byte_length_val.is_repr_as_i32() {
+                return Err(anyhow!("byte_length must be an u32"));
+            }
+            byte_length_val.as_u32_unchecked()
+        }
+        .try_into()?;
+        let fatal = args[3].as_bool()?;
+
+        let view = buffer
+            .get(byte_offset..(byte_offset + byte_length))
+            .ok_or(anyhow!(
+                "Provided offset and length is not valid for provided buffer"
+            ))?;
+        let str = if fatal {
+            Cow::from(str::from_utf8(view).map_err(|_| anyhow!("The encoded data was not valid"))?)
+        } else {
+            String::from_utf8_lossy(view)
+        };
+        ctx.value_from_str(&str)
+    }
+}
+
+fn encode_js_string_to_utf8_buffer() -> impl FnMut(&Context, &Value, &[Value]) -> Result<Value> {
+    move |ctx: &Context, _this: &Value, args: &[Value]| {
+        if args.len() != 1 {
+            return Err(anyhow!("Expecting 1 argument, got {}", args.len()));
+        }
+
+        let js_string = args[0].as_str()?;
+        ctx.array_buffer_value(js_string.as_bytes())
     }
 }
 
