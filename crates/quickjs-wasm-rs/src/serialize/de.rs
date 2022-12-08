@@ -5,7 +5,7 @@ use anyhow::anyhow;
 use serde::de::{self, Error as SerError};
 use serde::forward_to_deserialize_any;
 
-use super::sanitize_key;
+use super::as_key;
 
 impl SerError for Error {
     fn custom<T: std::fmt::Display>(msg: T) -> Self {
@@ -87,8 +87,8 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
         if self.value.is_str() {
             if self.map_key {
                 self.map_key = false;
-                let key = sanitize_key(&self.value, convert_case::Case::Snake)?;
-                return visitor.visit_str(key.as_str());
+                let key = as_key(&self.value)?;
+                return visitor.visit_str(key);
             } else {
                 let val = self.value.as_str()?;
                 return visitor.visit_str(val);
@@ -304,30 +304,6 @@ mod tests {
         let val = context.global_object().unwrap().get_property("a").unwrap();
 
         deserialize_value::<BTreeMap<i32, i32>>(val);
-    }
-
-    #[test]
-    fn test_map_keys_are_converted_to_snake_case() {
-        let context = Context::default();
-        let val = context.object_value().unwrap();
-        val.set_property("hello_wold", context.value_from_i32(1).unwrap())
-            .unwrap();
-        val.set_property("toto", context.value_from_i32(2).unwrap())
-            .unwrap();
-        val.set_property("fooBar", context.value_from_i32(3).unwrap())
-            .unwrap();
-        val.set_property("Joyeux Noël", context.value_from_i32(4).unwrap())
-            .unwrap();
-        val.set_property("kebab-case", context.value_from_i32(5).unwrap())
-            .unwrap();
-
-        let actual = deserialize_value::<BTreeMap<String, i32>>(val);
-
-        assert_eq!(1, *actual.get("hello_wold").unwrap());
-        assert_eq!(2, *actual.get("toto").unwrap());
-        assert_eq!(3, *actual.get("foo_bar").unwrap());
-        assert_eq!(4, *actual.get("joyeux_noël").unwrap());
-        assert_eq!(5, *actual.get("kebab_case").unwrap());
     }
 
     #[test]

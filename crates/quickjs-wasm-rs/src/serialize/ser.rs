@@ -4,7 +4,7 @@ use anyhow::anyhow;
 
 use serde::{ser, ser::Error as SerError, Serialize};
 
-use super::sanitize_key;
+use super::as_key;
 
 pub struct Serializer<'c> {
     pub context: &'c Context,
@@ -305,7 +305,7 @@ impl<'a> ser::SerializeMap for &'a mut Serializer<'_> {
     {
         let mut map_serializer = Serializer::from_context(self.context)?;
         value.serialize(&mut map_serializer)?;
-        let key = sanitize_key(&self.key, convert_case::Case::Camel)?;
+        let key = as_key(&self.key)?;
         self.value.set_property(key, map_serializer.value)?;
         Ok(())
     }
@@ -555,28 +555,6 @@ mod tests {
 
         let err = map.serialize(&mut serializer).unwrap_err();
         assert_eq!("map keys must be a string".to_string(), err.to_string());
-    }
-
-    #[test]
-    fn test_map_keys_are_converted_to_camel_case() {
-        let context = Context::default();
-        let mut serializer = ValueSerializer::from_context(&context).unwrap();
-
-        let mut map = BTreeMap::new();
-        map.insert("hello_world", 1);
-        map.insert("toto", 2);
-        map.insert("fooBar", 3);
-        map.insert("Joyeux Noël", 4);
-        map.insert("kebab-case", 5);
-
-        map.serialize(&mut serializer).unwrap();
-
-        let v = serializer.value;
-        assert_eq!(1, v.get_property("helloWorld").unwrap().as_i32_unchecked());
-        assert_eq!(2, v.get_property("toto").unwrap().as_i32_unchecked());
-        assert_eq!(3, v.get_property("fooBar").unwrap().as_i32_unchecked());
-        assert_eq!(4, v.get_property("joyeuxNoël").unwrap().as_i32_unchecked());
-        assert_eq!(5, v.get_property("kebabCase").unwrap().as_i32_unchecked());
     }
 
     #[test]
