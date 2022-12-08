@@ -45,6 +45,7 @@ fn main() {
         .flag_if_supported("-Wno-cast-function-type")
         .flag_if_supported("-Wno-implicit-fallthrough")
         .flag_if_supported("-Wno-enum-conversion")
+        .target("wasm32-wasi")
         .opt_level(2)
         .compile("quickjs");
 
