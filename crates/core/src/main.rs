@@ -19,6 +19,9 @@ pub extern "C" fn init() {
         .register_globals(io::stderr(), io::stderr())
         .unwrap();
 
+    let global = context.global_object().unwrap();
+    inject_javy_globals(&context, &global);
+
     context
         .eval_global(
             "text-encoding.js",
@@ -30,9 +33,6 @@ pub extern "C" fn init() {
         .eval_global("io.js", include_str!("../prelude/io.js"))
         .unwrap();
 
-    let global = context.global_object().unwrap();
-    inject_javy_globals(&context, &global);
-
     let mut contents = String::new();
     io::stdin().read_to_string(&mut contents).unwrap();
 
@@ -42,7 +42,7 @@ pub extern "C" fn init() {
     }
 }
 
-fn extract_writing_args(args: &[Value]) -> anyhow::Result<(Box<dyn Write>, &[u8])> {
+fn js_args_to_io_writer(args: &[Value]) -> anyhow::Result<(Box<dyn Write>, &[u8])> {
     // TODO: Should throw an exception
     let [fd, data, ..] = args else {
         anyhow::bail!("Invalid number of parameters");
@@ -57,11 +57,11 @@ fn extract_writing_args(args: &[Value]) -> anyhow::Result<(Box<dyn Write>, &[u8]
     if !data.is_array_buffer() {
         anyhow::bail!("Data needs to be an ArrayBuffer");
     }
-    let data = data.as_bytes().unwrap();
+    let data = data.as_bytes()?;
     Ok((fd, data))
 }
 
-fn extract_reading_args(args: &[Value]) -> anyhow::Result<(Box<dyn Read>, &mut [u8])> {
+fn js_args_to_io_reader(args: &[Value]) -> anyhow::Result<(Box<dyn Read>, &mut [u8])> {
     // TODO: Should throw an exception
     let [fd, data, ..] = args else {
         anyhow::bail!("Invalid number of parameters");
@@ -69,13 +69,13 @@ fn extract_reading_args(args: &[Value]) -> anyhow::Result<(Box<dyn Read>, &mut [
 
     let fd: Box<dyn Read> = match fd.as_f64()?.floor() as usize {
         0 => Box::new(std::io::stdin()),
-        _ => anyhow::bail!("Only stdout and stderr are supported"),
+        _ => anyhow::bail!("Only stdin is supported"),
     };
 
     if !data.is_array_buffer() {
         anyhow::bail!("Data needs to be an ArrayBuffer");
     }
-    let data = data.as_bytes_mut().unwrap();
+    let data = data.as_bytes_mut()?;
     Ok((fd, data))
 }
 
@@ -85,14 +85,9 @@ fn inject_javy_globals(context: &Context, global: &Value) {
             "__javy_io_writeSync",
             context
                 .wrap_callback(|ctx, _this_arg, args| {
-                    let Ok((mut fd, data)) = extract_writing_args(args) else {
-                        // TODO: This should probably be an exception.
-                        return Ok(ctx.undefined_value().unwrap());
-                    };
-                    if let Err(_err) = fd.write_all(data) {
-                        return Ok(ctx.undefined_value().unwrap());
-                    }
-                    Ok(ctx.undefined_value().unwrap())
+                    let (mut fd, data) = js_args_to_io_writer(args)?;
+                    fd.write_all(data)?;
+                    Ok(ctx.undefined_value()?)
                 })
                 .unwrap(),
         )
@@ -103,14 +98,9 @@ fn inject_javy_globals(context: &Context, global: &Value) {
             "__javy_io_readSync",
             context
                 .wrap_callback(|ctx, _this_arg, args| {
-                    let Ok((mut fd, data)) = extract_reading_args(args) else {
-                        // TODO: This should probably be an exception.
-                        return Ok(ctx.undefined_value().unwrap());
-                    };
-                    let Ok(n) = fd.read(data) else {
-                        return Ok(ctx.undefined_value().unwrap());
-                    };
-                    Ok(ctx.value_from_i32(n as i32).unwrap())
+                    let (mut fd, data) = js_args_to_io_reader(args)?;
+                    let n = fd.read(data)?;
+                    Ok(ctx.value_from_i32(n.try_into()?)?)
                 })
                 .unwrap(),
         )
