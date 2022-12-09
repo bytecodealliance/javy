@@ -57,6 +57,24 @@ fn extract_writing_args(args: &[Value]) -> anyhow::Result<(Box<dyn Write>, &[u8]
     Ok((fd, data))
 }
 
+fn extract_reading_args(args: &[Value]) -> anyhow::Result<(Box<dyn Read>, &mut [u8])> {
+    // TODO: Should throw an exception
+    let [fd, data, ..] = args else {
+        return anyhow::bail!("Invalid number of parameters");
+    };
+
+    let fd: Box<dyn Read> = match fd.as_f64()?.floor() as usize {
+        0 => Box::new(std::io::stdin()),
+        _ => return anyhow::bail!("Only stdout and stderr are supported"),
+    };
+
+    if !data.is_array_buffer() {
+        return anyhow::bail!("Data needs to be an ArrayBuffer");
+    }
+    let mut data = data.as_bytes_mut().unwrap();
+    Ok((fd, data))
+}
+
 fn inject_javy_globals(context: &Context, global: &Value) {
     global
         .set_property(
@@ -67,7 +85,9 @@ fn inject_javy_globals(context: &Context, global: &Value) {
                         // TODO: This should probably be an exception.
                         return Ok(ctx.undefined_value().unwrap());
                     };
-                    fd.write_all(&mut data);
+                    if let Err(err) = fd.write_all(&mut data) {
+                        return Ok(ctx.undefined_value().unwrap());
+                    }
                     Ok(ctx.undefined_value().unwrap())
                 })
                 .unwrap(),
@@ -79,17 +99,14 @@ fn inject_javy_globals(context: &Context, global: &Value) {
             "__javy_io_readSync",
             context
                 .wrap_callback(|ctx, this_arg, args| {
-                    println!("Reading");
-                    // if argc != 0 {
-                    // return context.exception_value().unwrap().into();
-                    // }
-
-                    // let mut buffer: String = String::new();
-                    // io::stdin().read_to_string(&mut buffer).unwrap();
-
-                    // let val = context.value_from_str(&buffer).unwrap();
-                    // val.into()
-                    Ok(ctx.undefined_value().unwrap())
+                    let Ok((mut fd, mut data)) = extract_reading_args(args) else {
+                        // TODO: This should probably be an exception.
+                        return Ok(ctx.undefined_value().unwrap());
+                    };
+                    let Ok(n) = fd.read(data) else {
+                        return Ok(ctx.undefined_value().unwrap());
+                    };
+                    Ok(ctx.value_from_i32(n as i32).unwrap())
                 })
                 .unwrap(),
         )

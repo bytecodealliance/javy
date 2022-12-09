@@ -156,6 +156,19 @@ impl Value {
         }
     }
 
+    pub fn as_bytes_mut(&self) -> Result<&mut [u8]> {
+        let mut len = 0;
+        let ptr = unsafe { JS_GetArrayBuffer(self.context, &mut len, self.value) };
+        if ptr.is_null() {
+            Err(anyhow!(
+                "Can't represent {:?} as an array buffer",
+                self.value
+            ))
+        } else {
+            Ok(unsafe { std::slice::from_raw_parts_mut(ptr, len as _) })
+        }
+    }
+
     pub fn properties(&self) -> Result<Properties> {
         Properties::new(self.context, self.value)
     }
