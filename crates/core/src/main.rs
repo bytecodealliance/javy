@@ -86,8 +86,8 @@ fn inject_javy_globals(context: &Context, global: &Value) {
             context
                 .wrap_callback(|ctx, _this_arg, args| {
                     let (mut fd, data) = js_args_to_io_writer(args)?;
-                    fd.write_all(data)?;
-                    Ok(ctx.undefined_value()?)
+                    let n = fd.write(data)?;
+                    Ok(ctx.value_from_i32(n.try_into()?)?)
                 })
                 .unwrap(),
         )
