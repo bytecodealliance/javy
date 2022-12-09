@@ -36,12 +36,12 @@ impl Default for StoreContext {
 }
 
 impl StoreContext {
-    fn new(input: &[u8]) -> Self {
+    fn new(input: Vec<u8>) -> Self {
         let mut wasi = WasiCtxBuilder::new().inherit_stdio().build();
         let wasi_output = WritePipe::new_in_memory();
         let log_stream = WritePipe::new_in_memory();
         wasi.set_stdout(Box::new(wasi_output.clone()));
-        wasi.set_stdin(Box::new(ReadPipe::from(input.clone())));
+        wasi.set_stdin(Box::new(ReadPipe::from(input.clone().as_slice())));
         wasi.set_stderr(Box::new(log_stream.clone()));
         Self {
             wasi,
@@ -62,6 +62,8 @@ impl Runner {
     pub fn new(js_file: impl AsRef<Path>) -> Self {
         let wasm_file_name = format!("{}.wasm", uuid::Uuid::new_v4());
 
+        println!("Got here");
+
         let root = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
         let wasm_file = std::env::temp_dir().join(wasm_file_name);
         let js_file = root.join("tests").join("sample-scripts").join(js_file);
@@ -69,6 +71,8 @@ impl Runner {
         let output = Command::new(env!("CARGO_BIN_EXE_javy"))
             .current_dir(root)
             .arg(&js_file)
+            .arg("-j")
+            .arg(concat!(env!("OUT_DIR"), "/engine.wasm"))
             .arg("-o")
             .arg(&wasm_file)
             .output()
@@ -97,7 +101,7 @@ impl Runner {
         }
     }
 
-    pub fn exec(&mut self, input: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
+    pub fn exec(&mut self, input: Vec<u8>) -> Result<(Vec<u8>, Vec<u8>)> {
         let mut store = Store::new(self.linker.engine(), StoreContext::new(input));
         let mut linker = self.linker.clone();
         let js_runtime_instance = linker.instantiate(&mut store, &self.js_runtime_module)?;
@@ -108,6 +112,7 @@ impl Runner {
         let instance = linker.instantiate(&mut store, &module)?;
         let run = instance.get_typed_func::<(), (), _>(&mut store, "_start")?;
 
+        println!("Got here");
         run.call(&mut store, ())?;
         let store_context = store.into_data();
         drop(store_context.wasi);

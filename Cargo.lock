@@ -2658,7 +2658,7 @@ dependencies = [
 [[package]]
 name = "wizer"
 version = "1.4.0"
-source = "git+https://github.com/bytecodealliance/wizer?branch=main#76602d16828648e82720762b83f2ff6f9489ca84"
+source = "git+https://github.com/bytecodealliance/wizer?tag=v1.4.0#479b5a6e14e57fa480215ef87b12a2a8fafec4d4"
 dependencies = [
  "anyhow",
  "cap-std",
