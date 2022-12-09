@@ -38,8 +38,24 @@ pub extern "C" fn init() {
     }
 }
 
-// fn extract_io_args(this_arg: Value, args: [Value]) -> Result<(Box<dyn Write>, Vec<u8>)> {
-// }
+fn extract_writing_args(args: &[Value]) -> anyhow::Result<(Box<dyn Write>, &[u8])> {
+    // TODO: Should throw an exception
+    let [fd, data, ..] = args else {
+        return anyhow::bail!("Invalid number of parameters");
+    };
+
+    let fd: Box<dyn Write> = match fd.as_f64()?.floor() as usize {
+        1 => Box::new(std::io::stdout()),
+        2 => Box::new(std::io::stderr()),
+        _ => return anyhow::bail!("Only stdout and stderr are supported"),
+    };
+
+    if !data.is_array_buffer() {
+        return anyhow::bail!("Data needs to be an ArrayBuffer");
+    }
+    let mut data = data.as_bytes().unwrap();
+    Ok((fd, data))
+}
 
 fn inject_javy_globals(context: &Context, global: &Value) {
     global
@@ -47,27 +63,10 @@ fn inject_javy_globals(context: &Context, global: &Value) {
             "__javy_io_writeSync",
             context
                 .wrap_callback(|ctx, this_arg, args| {
-                    // TODO: Should throw an exception
-                    let [fd, data, ..] = args else {
+                    let Ok((mut fd, mut data)) = extract_writing_args(args) else {
+                        // TODO: This should probably be an exception.
                         return Ok(ctx.undefined_value().unwrap());
                     };
-
-                    if !fd.is_number() {
-                        return Ok(ctx.undefined_value().unwrap());
-                    }
-                    let Ok(fd) = fd.as_f64() else {
-                         return Ok(ctx.undefined_value().unwrap());
-                    };
-                    let mut fd: Box<dyn Write> = match fd.floor() as usize {
-                        1 => Box::new(std::io::stdout()),
-                        2 => Box::new(std::io::stderr()),
-                        _ => return Ok(ctx.undefined_value().unwrap()),
-                    };
-
-                    if !data.is_array_buffer() {
-                        return Ok(ctx.undefined_value().unwrap());
-                    }
-                    let mut data = data.as_bytes().unwrap();
                     fd.write_all(&mut data);
                     Ok(ctx.undefined_value().unwrap())
                 })
