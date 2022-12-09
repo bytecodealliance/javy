@@ -1,13 +1,10 @@
-mod engine;
-
 use quickjs_wasm_rs::{Context, Value};
 
 use once_cell::sync::OnceCell;
-use std::io::{self, Read};
+use std::io::{self, Read, Write};
 
-static mut JS_CONTEXT: OnceCell<Context> = OnceCell::new();
-static mut ENTRYPOINT: (OnceCell<Value>, OnceCell<Value>) = (OnceCell::new(), OnceCell::new());
-static SCRIPT_NAME: &str = "script.js";
+static mut CONTEXT: OnceCell<Context> = OnceCell::new();
+static mut CODE: OnceCell<String> = OnceCell::new();
 
 // TODO
 //
@@ -17,54 +14,77 @@ static SCRIPT_NAME: &str = "script.js";
 
 #[export_name = "wizer.initialize"]
 pub extern "C" fn init() {
+    let mut context = Context::default();
+    context
+        .register_globals(io::stderr(), io::stderr())
+        .unwrap();
+
+    context
+        .eval_global(
+            "text-encoding.js",
+            include_str!("../prelude/text-encoding.js"),
+        )
+        .unwrap();
+
+    let global = context.global_object().unwrap();
+    inject_javy_globals(&context, &global);
+
+    let mut contents = String::new();
+    io::stdin().read_to_string(&mut contents).unwrap();
+
     unsafe {
-        let mut context = Context::default();
-        context
-            .register_globals(io::stderr(), io::stderr())
-            .unwrap();
-        context
-            .eval_global(
-                "text-encoding.js",
-                include_str!("../prelude/text-encoding.js"),
-            )
-            .unwrap();
-
-        let mut contents = String::new();
-        io::stdin().read_to_string(&mut contents).unwrap();
-
-        let _ = context.eval_global(SCRIPT_NAME, &contents).unwrap();
-        let global = context.global_object().unwrap();
-        let shopify = global.get_property("Shopify").unwrap();
-        let main = shopify.get_property("main").unwrap();
-
-        JS_CONTEXT.set(context).unwrap();
-        ENTRYPOINT.0.set(shopify).unwrap();
-        ENTRYPOINT.1.set(main).unwrap();
+        CONTEXT.set(context).unwrap();
+        CODE.set(contents).unwrap();
     }
 }
 
+fn inject_javy_globals(context: &Context, global: &Value) {
+    global
+        .set_property(
+            "__javy_io_writeSync",
+            context
+                .wrap_callback(|ctx, this_arg, args| {
+                    println!("Writing");
+                    // if argc != 0 {
+                    // return context.exception_value().unwrap().into();
+                    // }
+
+                    // let mut buffer: String = String::new();
+                    // io::stdin().read_to_string(&mut buffer).unwrap();
+
+                    // let val = context.value_from_str(&buffer).unwrap();
+                    // val.into()
+                    Ok(ctx.undefined_value().unwrap())
+                })
+                .unwrap(),
+        )
+        .unwrap();
+
+    global
+        .set_property(
+            "__javy_io_readSync",
+            context
+                .wrap_callback(|ctx, this_arg, args| {
+                    println!("Reading");
+                    // if argc != 0 {
+                    // return context.exception_value().unwrap().into();
+                    // }
+
+                    // let mut buffer: String = String::new();
+                    // io::stdin().read_to_string(&mut buffer).unwrap();
+
+                    // let val = context.value_from_str(&buffer).unwrap();
+                    // val.into()
+                    Ok(ctx.undefined_value().unwrap())
+                })
+                .unwrap(),
+        )
+        .unwrap();
+}
+
 fn main() {
-    unsafe {
-        let context = JS_CONTEXT.get().unwrap();
-        let shopify = ENTRYPOINT.0.get().unwrap();
-        let main = ENTRYPOINT.1.get().unwrap();
-        let input_bytes = engine::load().expect("Couldn't load input");
+    let code = unsafe { CODE.take().unwrap() };
+    let context = unsafe { CONTEXT.take().unwrap() };
 
-        let input_value = context.array_buffer_value(&input_bytes).unwrap();
-        let output_value = main.call(shopify, &[input_value]);
-
-        if output_value.is_err() {
-            panic!("{}", output_value.unwrap_err().to_string());
-        }
-
-        let output_value = output_value.unwrap();
-        if !output_value.is_array_buffer() {
-            panic!(
-                "Only ArrayBuffers are supported as return values, a different type was returned"
-            );
-        }
-
-        let output = output_value.as_bytes().unwrap();
-        engine::store(output).expect("Couldn't store output");
-    }
+    context.eval_global("function.mjs", &code).unwrap();
 }
