@@ -114,6 +114,16 @@ impl Value {
         self.get_tag() == JS_TAG_BIG_INT
     }
 
+    pub fn as_f64(&self) -> Result<f64> {
+        if self.is_repr_as_f64() {
+            return Ok(self.as_f64_unchecked());
+        }
+        if self.is_repr_as_i32() {
+            return Ok(self.as_i32_unchecked() as f64);
+        }
+        anyhow::bail!("Value is not a number")
+    }
+
     pub fn as_bool(&self) -> Result<bool> {
         if self.is_bool() {
             Ok(self.value as i32 > 0)
@@ -275,6 +285,12 @@ impl Value {
     /// To actually retrieve the exception, we need to retrieve the exception object from the global state.
     fn as_exception(&self) -> Result<Exception> {
         Exception::new(self.context)
+    }
+}
+
+impl Into<JSValue> for Value {
+    fn into(self) -> JSValue {
+        self.value
     }
 }
 

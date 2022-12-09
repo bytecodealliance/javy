@@ -38,22 +38,37 @@ pub extern "C" fn init() {
     }
 }
 
+// fn extract_io_args(this_arg: Value, args: [Value]) -> Result<(Box<dyn Write>, Vec<u8>)> {
+// }
+
 fn inject_javy_globals(context: &Context, global: &Value) {
     global
         .set_property(
             "__javy_io_writeSync",
             context
                 .wrap_callback(|ctx, this_arg, args| {
-                    println!("Writing");
-                    // if argc != 0 {
-                    // return context.exception_value().unwrap().into();
-                    // }
+                    // TODO: Should throw an exception
+                    let [fd, data, ..] = args else {
+                        return Ok(ctx.undefined_value().unwrap());
+                    };
 
-                    // let mut buffer: String = String::new();
-                    // io::stdin().read_to_string(&mut buffer).unwrap();
+                    if !fd.is_number() {
+                        return Ok(ctx.undefined_value().unwrap());
+                    }
+                    let Ok(fd) = fd.as_f64() else {
+                         return Ok(ctx.undefined_value().unwrap());
+                    };
+                    let mut fd: Box<dyn Write> = match fd.floor() as usize {
+                        1 => Box::new(std::io::stdout()),
+                        2 => Box::new(std::io::stderr()),
+                        _ => return Ok(ctx.undefined_value().unwrap()),
+                    };
 
-                    // let val = context.value_from_str(&buffer).unwrap();
-                    // val.into()
+                    if !data.is_array_buffer() {
+                        return Ok(ctx.undefined_value().unwrap());
+                    }
+                    let mut data = data.as_bytes().unwrap();
+                    fd.write_all(&mut data);
                     Ok(ctx.undefined_value().unwrap())
                 })
                 .unwrap(),
