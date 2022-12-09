@@ -12,3 +12,6 @@ Javy.IO = {
     return __javy_io_writeSync(fd, data.buffer);
   },
 };
+
+Reflect.deleteProperty(globalThis, "__javy_io_readSync");
+Reflect.deleteProperty(globalThis, "__javy_io_writeSync");
