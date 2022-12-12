@@ -32,5 +32,9 @@ function main(input) {
 }
 
 Shopify = {
-    main
+    main: (input) => {
+        const decoder = new TextDecoder();
+        const encoder = new TextEncoder();
+        return encoder.encode(JSON.stringify(main(JSON.parse(decoder.decode(input))))).buffer;
+    }
 };

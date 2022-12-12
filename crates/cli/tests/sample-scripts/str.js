@@ -1,7 +1,8 @@
 var Shopify = {
-  main: (i) => {
+  main: (input) => {
+    const i = new TextDecoder().decode(input);
     if (i === "hello") {
-      return "world";
+      return new TextEncoder().encode("world").buffer;
     }
     throw new Error("unreachable");
   }

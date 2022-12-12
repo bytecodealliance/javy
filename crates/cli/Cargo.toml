@@ -1,8 +1,9 @@
 [package]
 name = "javy"
-version = "0.4.0"
-authors = ["Saúl Cabrera <saulecabrera@gmail.com>"]
-edition = "2018"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
 build = "build.rs"
 
 [[bin]]
@@ -11,27 +12,30 @@ name = "javy"
 [dependencies]
 which = "4.2"
 structopt = "0.3"
-anyhow = "1.0"
+anyhow = { workspace = true }
 tempfile = "3.2.0"
 tera = "1.15"
 wat = "1.0.36"
 wasmtime = "0.34.2"
 wasmtime-wasi = "0.34.2"
 base64 = "0.13.0"
+binaryen = "0.12.0"
+parity-wasm = { version = "0.45.0", features = ["bulk"] }
+brotli = "3.3.4"
 
 [dev-dependencies]
-wasi-common = "0.34.2"
 serde_json = "1.0"
 uuid = { version = "0.8", features = ["v4"] }
 lazy_static = "1.4"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 criterion = "0.3"
 num-format = "0.4.3"
+wasi-common = "0.34.2"
 
 [build-dependencies]
+binaryen = "0.12.0"
 wizer = { git = "https://github.com/bytecodealliance/wizer", branch = "main" }
 anyhow = "1.0"
-binaryen = "0.12.0"
 
 [[bench]]
 name = "benchmark"

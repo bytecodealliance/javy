@@ -1,9 +1,9 @@
 [package]
 name = "quickjs-wasm-sys"
 version = "0.1.0"
-authors = ["Saúl Cabrera <saulecabrera@gmail.com>"]
-edition = "2018"
-license = "MIT"
+authors.workspace = true
+edition.workspace = true 
+license.workspace = true
 description = "Rust bindings for Wasm build of QuickJS"
 homepage = "https://github.com/Shopify/javy/tree/main/crates/quickjs-wasm-sys"
 repository = "https://github.com/Shopify/javy/tree/main/crates/quickjs-wasm-sys"

@@ -6,6 +6,7 @@ use anyhow::{Context, Result};
 use std::convert::TryInto;
 use std::fs;
 use std::io::Read;
+use std::path::Path;
 use structopt::StructOpt;
 use wasmtime_wasi::WasiCtxBuilder;
 
@@ -14,8 +15,8 @@ fn main() -> Result<()> {
 
     let mut contents = fs::File::open(&opts.input)
         .with_context(|| format!("Failed to open input file {}", opts.input.display()))?;
-    let mut buffer = vec![];
-    contents.read_to_end(&mut buffer)?;
+    let mut js_buffer = vec![];
+    contents.read_to_end(&mut js_buffer)?;
 
     let core_wasm_module = &opts.javy_core;
     let engine = wasmtime::Engine::default();
@@ -33,7 +34,7 @@ fn main() -> Result<()> {
     let existing_len = 0;
 
     let contents_alignment = 1;
-    let contents_size = buffer.len();
+    let contents_size = js_buffer.len();
     let contents_ptr = realloc.call(
         &mut store,
         (
@@ -56,7 +57,7 @@ fn main() -> Result<()> {
         ),
     )?;
 
-    memory.write(&mut store, contents_ptr.try_into()?, &mut buffer)?;
+    memory.write(&mut store, contents_ptr.try_into()?, &mut js_buffer)?;
     let bytecode_ptr = instance
         .get_typed_func::<(u32, u32, u32), u32, _>(&mut store, "compile-bytecode")?
         .call(
@@ -77,5 +78,30 @@ fn main() -> Result<()> {
     let js_wasm_binary = wat::parse_str(js_wat)?;
 
     fs::write(&opts.output, &js_wasm_binary)?;
+
+    add_custom_section(&opts.output, "javy_source".to_string(), &js_buffer)?;
+
+    Ok(())
+}
+
+fn add_custom_section<P: AsRef<Path>>(file: P, section: String, contents: &[u8]) -> Result<()> {
+    use parity_wasm::elements::*;
+
+    let mut compressed: Vec<u8> = vec![];
+    brotli::enc::BrotliCompress(
+        &mut std::io::Cursor::new(contents),
+        &mut compressed,
+        &brotli::enc::BrotliEncoderParams {
+            quality: 11,
+            ..Default::default()
+        },
+    )?;
+
+    let mut module = parity_wasm::deserialize_file(&file)?;
+    module
+        .sections_mut()
+        .push(Section::Custom(CustomSection::new(section, compressed)));
+    parity_wasm::serialize_to_file(&file, module)?;
+
     Ok(())
 }
