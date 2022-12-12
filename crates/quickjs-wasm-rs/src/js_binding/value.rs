@@ -124,6 +124,20 @@ impl Value {
         anyhow::bail!("Value is not a number")
     }
 
+    pub fn try_as_integer(&self) -> Result<i32> {
+        if self.is_repr_as_f64() {
+            let v = self.as_f64_unchecked();
+            if v.trunc() != v {
+                anyhow::bail!("Value is not an integer");
+            }
+            return Ok((v as i64).try_into()?);
+        }
+        if self.is_repr_as_i32() {
+            return Ok(self.as_i32_unchecked() as i32);
+        }
+        anyhow::bail!("Value is not a number")
+    }
+
     pub fn as_bool(&self) -> Result<bool> {
         if self.is_bool() {
             Ok(self.value as i32 > 0)

@@ -51,7 +51,7 @@ fn js_args_to_io_writer(args: &[Value]) -> anyhow::Result<(Box<dyn Write>, &[u8]
     let offset: usize = (offset.as_f64()?.floor() as u64).try_into()?;
     let length: usize = (length.as_f64()?.floor() as u64).try_into()?;
 
-    let fd: Box<dyn Write> = match fd.as_f64()?.floor() as usize {
+    let fd: Box<dyn Write> = match fd.try_as_integer()? {
         1 => Box::new(std::io::stdout()),
         2 => Box::new(std::io::stderr()),
         _ => anyhow::bail!("Only stdout and stderr are supported"),
@@ -73,7 +73,7 @@ fn js_args_to_io_reader(args: &[Value]) -> anyhow::Result<(Box<dyn Read>, &mut [
     let offset: usize = (offset.as_f64()?.floor() as u64).try_into()?;
     let length: usize = (length.as_f64()?.floor() as u64).try_into()?;
 
-    let fd: Box<dyn Read> = match fd.as_f64()?.floor() as usize {
+    let fd: Box<dyn Read> = match fd.try_as_integer()? {
         0 => Box::new(std::io::stdin()),
         _ => anyhow::bail!("Only stdin is supported"),
     };
