@@ -69,8 +69,7 @@ fn test_logging() {
     let _guard = EXCLUSIVE_TEST.lock();
     let mut runner = Runner::new("logging.js");
 
-    let (output, logs) = run_with_u8s(&mut runner, 42);
-    assert_eq!(42, output);
+    let (_output, logs) = run(&mut runner, &[]);
     assert_eq!(
         "hello world from console.log\nhello world from console.error\n",
         logs.as_str(),
