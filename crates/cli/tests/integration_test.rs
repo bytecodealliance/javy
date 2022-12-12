@@ -1,18 +1,9 @@
 mod runner;
 
-use lazy_static::lazy_static;
 use runner::Runner;
-use std::sync::Mutex;
-
-lazy_static! {
-    // We avoid running the tests concurrently since the CLI writes on disk at very specific
-    // locations, which causes the tests to be unpredictable.
-    static ref EXCLUSIVE_TEST: Mutex<()> = Mutex::default();
-}
 
 #[test]
 fn test_identity() {
-    let _guard = EXCLUSIVE_TEST.lock();
     let mut runner = Runner::default();
 
     let (output, _) = run_with_u8s(&mut runner, 42);
@@ -21,7 +12,6 @@ fn test_identity() {
 
 #[test]
 fn test_fib() {
-    let _guard = EXCLUSIVE_TEST.lock();
     let mut runner = Runner::new("fib.js");
 
     let (output, _) = run_with_u8s(&mut runner, 5);
@@ -30,7 +20,6 @@ fn test_fib() {
 
 #[test]
 fn test_recursive_fib() {
-    let _guard = EXCLUSIVE_TEST.lock();
     let mut runner = Runner::new("recursive-fib.js");
 
     let (output, _) = run_with_u8s(&mut runner, 5);
@@ -39,7 +28,6 @@ fn test_recursive_fib() {
 
 #[test]
 fn test_str() {
-    let _guard = EXCLUSIVE_TEST.lock();
     let mut runner = Runner::new("str.js");
 
     let (output, _) = run(&mut runner, "hello".as_bytes());
@@ -48,7 +36,6 @@ fn test_str() {
 
 #[test]
 fn test_encoding() {
-    let _guard = EXCLUSIVE_TEST.lock();
     let mut runner = Runner::new("text-encoding.js");
 
     let (output, _) = run(&mut runner, "hello".as_bytes());
@@ -66,7 +53,6 @@ fn test_encoding() {
 
 #[test]
 fn test_logging() {
-    let _guard = EXCLUSIVE_TEST.lock();
     let mut runner = Runner::new("logging.js");
 
     let (_output, logs) = run(&mut runner, &[]);
