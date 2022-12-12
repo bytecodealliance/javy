@@ -40,6 +40,12 @@ test-cli: core
 				&& cargo test --release \
 				&& cd -
 
+test-wpt: cli
+		cd wpt \
+			&& npm install \
+			&& npm test \
+			&& cd -
+
 tests: test-quickjs-wasm-rs test-core test-cli
 
 fmt: fmt-quickjs-wasm-sys fmt-quickjs-wasm-rs fmt-core fmt-cli
