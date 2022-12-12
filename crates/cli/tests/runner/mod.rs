@@ -36,7 +36,7 @@ impl Default for StoreContext {
 }
 
 impl StoreContext {
-    fn new(input: Vec<u8>) -> Self {
+    fn new(input: &[u8]) -> Self {
         let mut wasi = WasiCtxBuilder::new().inherit_stdio().build();
         let wasi_output = WritePipe::new_in_memory();
         let log_stream = WritePipe::new_in_memory();
@@ -97,7 +97,7 @@ impl Runner {
         }
     }
 
-    pub fn exec(&mut self, input: Vec<u8>) -> Result<(Vec<u8>, Vec<u8>)> {
+    pub fn exec(&mut self, input: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
         let mut store = Store::new(self.linker.engine(), StoreContext::new(input));
         let mut linker = self.linker.clone();
         let js_runtime_instance = linker.instantiate(&mut store, &self.js_runtime_module)?;

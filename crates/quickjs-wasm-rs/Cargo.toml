@@ -1,16 +1,16 @@
 [package]
 name = "quickjs-wasm-rs"
 version = "0.1.2"
-authors = ["Saúl Cabrera <saulecabrera@gmail.com>"]
-edition = "2018"
-license = "MIT"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
 description = "High-level bindings and serializers for a Wasm build of QuickJS"
 homepage = "https://github.com/Shopify/javy/tree/main/crates/quickjs-wasm-rs"
 repository = "https://github.com/Shopify/javy/tree/main/crates/quickjs-wasm-rs"
 categories = ["api-bindings"]
 
 [dependencies]
-anyhow = "1.0"
+anyhow = { workspace = true }
 quickjs-wasm-sys = { version = "0.1.0", path = "../quickjs-wasm-sys" }
 rmp-serde = { version = "^0.15", optional = true }
 serde = { version = "1.0", features = ["derive"] }
