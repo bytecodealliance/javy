@@ -1,5 +1,4 @@
-function fibonacci(input) {
-  var num = new Uint8Array(input)[0];
+function fibonacci(num) {
   var a = 1, b = 0, temp;
 
   while (num >= 0) {
@@ -9,9 +8,12 @@ function fibonacci(input) {
     num--;
   }
 
-  return new Uint8Array([b]).buffer;
+  return b;
 }
 
-var Shopify = {
-  main: fibonacci,
-};
+const buffer = new Uint8Array(1);
+Javy.IO.readSync(0, buffer);
+const result = fibonacci(buffer[0]);
+buffer[0] = result;
+Javy.IO.writeSync(1, buffer);
+

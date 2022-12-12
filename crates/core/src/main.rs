@@ -44,9 +44,12 @@ pub extern "C" fn init() {
 
 fn js_args_to_io_writer(args: &[Value]) -> anyhow::Result<(Box<dyn Write>, &[u8])> {
     // TODO: Should throw an exception
-    let [fd, data, ..] = args else {
+    let [fd, data, offset, length, ..] = args else {
         anyhow::bail!("Invalid number of parameters");
     };
+
+    let offset: usize = (offset.as_f64()?.floor() as u64).try_into()?;
+    let length: usize = (length.as_f64()?.floor() as u64).try_into()?;
 
     let fd: Box<dyn Write> = match fd.as_f64()?.floor() as usize {
         1 => Box::new(std::io::stdout()),
@@ -58,14 +61,17 @@ fn js_args_to_io_writer(args: &[Value]) -> anyhow::Result<(Box<dyn Write>, &[u8]
         anyhow::bail!("Data needs to be an ArrayBuffer");
     }
     let data = data.as_bytes()?;
-    Ok((fd, data))
+    Ok((fd, &data[offset..(offset + length)]))
 }
 
 fn js_args_to_io_reader(args: &[Value]) -> anyhow::Result<(Box<dyn Read>, &mut [u8])> {
     // TODO: Should throw an exception
-    let [fd, data, ..] = args else {
+    let [fd, data, offset, length, ..] = args else {
         anyhow::bail!("Invalid number of parameters");
     };
+
+    let offset: usize = (offset.as_f64()?.floor() as u64).try_into()?;
+    let length: usize = (length.as_f64()?.floor() as u64).try_into()?;
 
     let fd: Box<dyn Read> = match fd.as_f64()?.floor() as usize {
         0 => Box::new(std::io::stdin()),
@@ -76,7 +82,7 @@ fn js_args_to_io_reader(args: &[Value]) -> anyhow::Result<(Box<dyn Read>, &mut [
         anyhow::bail!("Data needs to be an ArrayBuffer");
     }
     let data = data.as_bytes_mut()?;
-    Ok((fd, data))
+    Ok((fd, &mut data[offset..(offset + length)]))
 }
 
 fn inject_javy_globals(context: &Context, global: &Value) {

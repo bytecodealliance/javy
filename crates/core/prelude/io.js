@@ -6,13 +6,23 @@
       if (!(data instanceof Uint8Array)) {
         throw TypeError("Data needs to be an Uint8Array");
       }
-      return __javy_io_readSync(fd, data.buffer);
+      return __javy_io_readSync(
+        fd,
+        data.buffer,
+        data.byteOffset,
+        data.byteLength
+      );
     },
     writeSync(fd, data) {
       if (!(data instanceof Uint8Array)) {
         throw TypeError("Data needs to be an Uint8Array");
       }
-      return __javy_io_writeSync(fd, data.buffer);
+      return __javy_io_writeSync(
+        fd,
+        data.buffer,
+        data.byteOffset,
+        data.byteLength
+      );
     },
   };
 
