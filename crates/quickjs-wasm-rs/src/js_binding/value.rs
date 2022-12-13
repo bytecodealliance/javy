@@ -123,13 +123,18 @@ impl Value {
     }
 
     pub fn as_str(&self) -> Result<&str> {
+        let buffer = self.as_str_wtf8_bytes();
+        std::str::from_utf8(buffer).map_err(Into::into)
+    }
+
+    /// A slice containing a WTF-8 representation of a string Value
+    pub fn as_str_wtf8_bytes(&self) -> &[u8] {
         unsafe {
             let mut len: JS_size_t = 0;
             let ptr = JS_ToCStringLen2(self.context, &mut len, self.value, 0);
             let ptr = ptr as *const u8;
             let len = len as usize;
-            let buffer = std::slice::from_raw_parts(ptr, len);
-            std::str::from_utf8(buffer).map_err(Into::into)
+            std::slice::from_raw_parts(ptr, len)
         }
     }
 
