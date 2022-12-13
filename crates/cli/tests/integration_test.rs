@@ -76,6 +76,15 @@ fn test_logging() {
     );
 }
 
+#[test]
+fn test_readme_script() {
+    let _guard = EXCLUSIVE_TEST.lock();
+    let mut runner = Runner::new("readme.js");
+
+    let (output, _) = run(&mut runner, r#"{ "n": 2, "bar": "baz" }"#.as_bytes());
+    assert_eq!(r#"{"foo":3,"newBar":"baz!"}"#.as_bytes(), output);
+}
+
 fn run_with_u8s(r: &mut Runner, stdin: u8) -> (u8, String) {
     let (output, logs) = run(r, &stdin.to_le_bytes());
     assert_eq!(1, output.len());
