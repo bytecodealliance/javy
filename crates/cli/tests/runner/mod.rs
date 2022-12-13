@@ -65,7 +65,9 @@ impl Runner {
         let root = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
         // This directory is unique and will automatically get deleted
         // when `tempdir` goes out of scope.
-        let tempdir = tempfile::tempdir().unwrap();
+        let Ok(tempdir) = tempfile::tempdir() else {
+            panic!("Could not create temporary directory for .wasm test artifacts");
+        };
         let wasm_file = tempdir.path().join(wasm_file_name);
         let js_file = root.join("tests").join("sample-scripts").join(js_file);
 
