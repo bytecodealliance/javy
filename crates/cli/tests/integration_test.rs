@@ -69,22 +69,21 @@ fn test_logging() {
     let _guard = EXCLUSIVE_TEST.lock();
     let mut runner = Runner::new("logging.js");
 
-    let (output, logs) = run_with_u8s(&mut runner, 42);
-    assert_eq!(42, output);
+    let (_output, logs) = run(&mut runner, &[]);
     assert_eq!(
         "hello world from console.log\nhello world from console.error\n",
         logs.as_str(),
     );
 }
 
-fn run_with_u8s(r: &mut Runner, i: u8) -> (u8, String) {
-    let (output, logs) = run(r, &i.to_le_bytes());
+fn run_with_u8s(r: &mut Runner, stdin: u8) -> (u8, String) {
+    let (output, logs) = run(r, &stdin.to_le_bytes());
     assert_eq!(1, output.len());
     (output[0], logs)
 }
 
-fn run(r: &mut Runner, i: &[u8]) -> (Vec<u8>, String) {
-    let (output, logs) = r.exec(i).unwrap();
+fn run(r: &mut Runner, stdin: &[u8]) -> (Vec<u8>, String) {
+    let (output, logs) = r.exec(stdin).unwrap();
     let logs = String::from_utf8(logs).unwrap();
     (output, logs)
 }
