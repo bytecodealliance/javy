@@ -64,7 +64,6 @@ fn test_logging() {
 
 #[test]
 fn test_readme_script() {
-    let _guard = EXCLUSIVE_TEST.lock();
     let mut runner = Runner::new("readme.js");
 
     let (output, _) = run(&mut runner, r#"{ "n": 2, "bar": "baz" }"#.as_bytes());
