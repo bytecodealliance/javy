@@ -315,6 +315,10 @@ impl Value {
     }
 }
 
+// We can't implement From<Value> for JSValue, as
+// JSValue is automatically generated and it would result
+// in a cyclic crate dependency.
+#[allow(clippy::from_over_into)]
 impl Into<JSValue> for Value {
     fn into(self) -> JSValue {
         self.value

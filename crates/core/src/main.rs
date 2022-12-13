@@ -93,7 +93,7 @@ fn inject_javy_globals(context: &Context, global: &Value) {
                 .wrap_callback(|ctx, _this_arg, args| {
                     let (mut fd, data) = js_args_to_io_writer(args)?;
                     let n = fd.write(data)?;
-                    Ok(ctx.value_from_i32(n.try_into()?)?)
+                    ctx.value_from_i32(n.try_into()?)
                 })
                 .unwrap(),
         )
@@ -106,7 +106,7 @@ fn inject_javy_globals(context: &Context, global: &Value) {
                 .wrap_callback(|ctx, _this_arg, args| {
                     let (mut fd, data) = js_args_to_io_reader(args)?;
                     let n = fd.read(data)?;
-                    Ok(ctx.value_from_i32(n.try_into()?)?)
+                    ctx.value_from_i32(n.try_into()?)
                 })
                 .unwrap(),
         )
