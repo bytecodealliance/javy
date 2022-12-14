@@ -31,10 +31,8 @@ function main(input) {
     };
 }
 
-Shopify = {
-    main: (input) => {
-        const decoder = new TextDecoder();
-        const encoder = new TextEncoder();
-        return encoder.encode(JSON.stringify(main(JSON.parse(decoder.decode(input))))).buffer;
-    }
-};
+let buffer = new Uint8Array(1024);
+const bytesRead = Javy.IO.readSync(0, buffer);
+buffer = buffer.subarray(0, bytesRead);
+const output = new TextEncoder().encode(JSON.stringify(main(JSON.parse(new TextDecoder().decode(buffer)))));
+Javy.IO.writeSync(1, output);
