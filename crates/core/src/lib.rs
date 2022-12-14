@@ -1,10 +1,10 @@
 mod engine;
 
-use quickjs_wasm_rs::Context;
+use quickjs_wasm_rs::{Context, Value};
 
 use once_cell::sync::OnceCell;
 use std::alloc::{alloc, dealloc, Layout};
-use std::io::{self};
+use std::io::{self, Read, Write};
 use std::ptr::copy_nonoverlapping;
 
 static mut JS_CONTEXT: OnceCell<Context> = OnceCell::new();
@@ -27,11 +27,18 @@ pub unsafe extern "C" fn init_engine() {
     context
         .register_globals(io::stderr(), io::stderr())
         .unwrap();
+
+    let global = context.global_object().unwrap();
+    inject_javy_globals(&context, &global);
+
     context
         .eval_global(
             "text-encoding.js",
             include_str!("../prelude/text-encoding.js"),
         )
+        .unwrap();
+    context
+        .eval_global("io.js", include_str!("../prelude/io.js"))
         .unwrap();
     JS_CONTEXT.set(context).unwrap();
 }
@@ -45,59 +52,7 @@ pub unsafe extern "C" fn init_engine() {
 pub unsafe extern "C" fn init_src(js_str_ptr: *mut u8, js_str_len: usize) {
     let js = String::from_utf8(Vec::from_raw_parts(js_str_ptr, js_str_len, js_str_len)).unwrap();
     let context = JS_CONTEXT.get().unwrap();
-    let _ = context.eval_global(SCRIPT_NAME, &js).unwrap();
-}
-
-/// Executes the JS code.
-/// func_obj_path is expected to be a dot spearate path to the main function.
-///
-/// # Safety
-///
-/// See safety for https://doc.rust-lang.org/std/vec/struct.Vec.html#method.from_raw_parts
-#[export_name = "execute"]
-pub unsafe extern "C" fn execute(
-    func_obj_path_is_some: u32,
-    func_obj_path_ptr: *mut u8,
-    func_obj_path_len: usize,
-) {
-    let func_obj_path = match func_obj_path_is_some {
-        0 => "Shopify.main".to_string(),
-        _ => String::from_utf8(Vec::from_raw_parts(
-            func_obj_path_ptr,
-            func_obj_path_len,
-            func_obj_path_len,
-        ))
-        .unwrap(),
-    };
-
-    assert!(!func_obj_path.is_empty());
-
-    let context = JS_CONTEXT.get().unwrap();
-    let (this, func) = func_obj_path.split('.').fold(
-        (
-            context.global_object().unwrap(),
-            context.global_object().unwrap(),
-        ),
-        |(_this, func), obj| {
-            let next = func.get_property(obj).unwrap();
-            (func, next)
-        },
-    );
-
-    let input_bytes = engine::load().expect("Couldn't load input");
-    let input_value = context.array_buffer_value(&input_bytes).unwrap();
-    let output_value = func.call(&this, &[input_value]);
-
-    if output_value.is_err() {
-        panic!("{}", output_value.unwrap_err().to_string());
-    }
-    let output_value = output_value.unwrap();
-    if !output_value.is_array_buffer() {
-        panic!("Only ArrayBuffers are supported as return values, a different type was returned");
-    }
-
-    let output = output_value.as_bytes().unwrap();
-    engine::store(output).expect("Couldn't store output");
+    let _ = context.eval_global("function.mjs", &js).unwrap();
 }
 
 /// 1. Allocate memory of new_size with alignment.
@@ -145,4 +100,76 @@ pub unsafe extern "C" fn canonical_abi_free(ptr: *mut u8, size: usize, alignment
     if size > 0 {
         dealloc(ptr, Layout::from_size_align(size, alignment).unwrap())
     };
+}
+
+fn js_args_to_io_writer(args: &[Value]) -> anyhow::Result<(Box<dyn Write>, &[u8])> {
+    // TODO: Should throw an exception
+    let [fd, data, offset, length, ..] = args else {
+        anyhow::bail!("Invalid number of parameters");
+    };
+
+    let offset: usize = (offset.as_f64()?.floor() as u64).try_into()?;
+    let length: usize = (length.as_f64()?.floor() as u64).try_into()?;
+
+    let fd: Box<dyn Write> = match fd.try_as_integer()? {
+        1 => Box::new(std::io::stdout()),
+        2 => Box::new(std::io::stderr()),
+        _ => anyhow::bail!("Only stdout and stderr are supported"),
+    };
+
+    if !data.is_array_buffer() {
+        anyhow::bail!("Data needs to be an ArrayBuffer");
+    }
+    let data = data.as_bytes()?;
+    Ok((fd, &data[offset..(offset + length)]))
+}
+
+fn js_args_to_io_reader(args: &[Value]) -> anyhow::Result<(Box<dyn Read>, &mut [u8])> {
+    // TODO: Should throw an exception
+    let [fd, data, offset, length, ..] = args else {
+        anyhow::bail!("Invalid number of parameters");
+    };
+
+    let offset: usize = (offset.as_f64()?.floor() as u64).try_into()?;
+    let length: usize = (length.as_f64()?.floor() as u64).try_into()?;
+
+    let fd: Box<dyn Read> = match fd.try_as_integer()? {
+        0 => Box::new(std::io::stdin()),
+        _ => anyhow::bail!("Only stdin is supported"),
+    };
+
+    if !data.is_array_buffer() {
+        anyhow::bail!("Data needs to be an ArrayBuffer");
+    }
+    let data = data.as_bytes_mut()?;
+    Ok((fd, &mut data[offset..(offset + length)]))
+}
+
+fn inject_javy_globals(context: &Context, global: &Value) {
+    global
+        .set_property(
+            "__javy_io_writeSync",
+            context
+                .wrap_callback(|ctx, _this_arg, args| {
+                    let (mut fd, data) = js_args_to_io_writer(args)?;
+                    let n = fd.write(data)?;
+                    fd.flush()?;
+                    ctx.value_from_i32(n.try_into()?)
+                })
+                .unwrap(),
+        )
+        .unwrap();
+
+    global
+        .set_property(
+            "__javy_io_readSync",
+            context
+                .wrap_callback(|ctx, _this_arg, args| {
+                    let (mut fd, data) = js_args_to_io_reader(args)?;
+                    let n = fd.read(data)?;
+                    ctx.value_from_i32(n.try_into()?)
+                })
+                .unwrap(),
+        )
+        .unwrap();
 }

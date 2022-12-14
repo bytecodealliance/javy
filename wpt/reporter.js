@@ -1,3 +1,5 @@
+export let failedTestCount = 0;
+
 export function resultReporter(test) {
   // No logging on success;
   if (test.status === 0) return;
@@ -16,4 +18,5 @@ export function resultReporter(test) {
   console.log("[FAIL]", test.name);
   console.log(test.message);
   console.log(test.stack);
+  failedTestCount += 1;
 }
