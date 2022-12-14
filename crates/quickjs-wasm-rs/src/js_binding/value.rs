@@ -118,6 +118,30 @@ impl Value {
         self.get_tag() == JS_TAG_BIG_INT
     }
 
+    pub fn as_f64(&self) -> Result<f64> {
+        if self.is_repr_as_f64() {
+            return Ok(self.as_f64_unchecked());
+        }
+        if self.is_repr_as_i32() {
+            return Ok(self.as_i32_unchecked() as f64);
+        }
+        anyhow::bail!("Value is not a number")
+    }
+
+    pub fn try_as_integer(&self) -> Result<i32> {
+        if self.is_repr_as_f64() {
+            let v = self.as_f64_unchecked();
+            if v.trunc() != v {
+                anyhow::bail!("Value is not an integer");
+            }
+            return Ok((v as i64).try_into()?);
+        }
+        if self.is_repr_as_i32() {
+            return Ok(self.as_i32_unchecked() as i32);
+        }
+        anyhow::bail!("Value is not a number")
+    }
+
     pub fn as_bool(&self) -> Result<bool> {
         if self.is_bool() {
             Ok(self.value as i32 > 0)
@@ -147,6 +171,19 @@ impl Value {
             ))
         } else {
             Ok(unsafe { std::slice::from_raw_parts(ptr, len as _) })
+        }
+    }
+
+    pub fn as_bytes_mut(&self) -> Result<&mut [u8]> {
+        let mut len = 0;
+        let ptr = unsafe { JS_GetArrayBuffer(self.context, &mut len, self.value) };
+        if ptr.is_null() {
+            Err(anyhow!(
+                "Can't represent {:?} as an array buffer",
+                self.value
+            ))
+        } else {
+            Ok(unsafe { std::slice::from_raw_parts_mut(ptr, len as _) })
         }
     }
 
@@ -279,6 +316,16 @@ impl Value {
     /// To actually retrieve the exception, we need to retrieve the exception object from the global state.
     fn as_exception(&self) -> Result<Exception> {
         Exception::new(self.context)
+    }
+}
+
+// We can't implement From<Value> for JSValue, as
+// JSValue is automatically generated and it would result
+// in a cyclic crate dependency.
+#[allow(clippy::from_over_into)]
+impl Into<JSValue> for Value {
+    fn into(self) -> JSValue {
+        self.value
     }
 }
 

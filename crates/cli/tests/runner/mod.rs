@@ -3,6 +3,7 @@ use std::io::{self, Cursor, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::{env, fs};
+use tempfile;
 use wasi_common::pipe::{ReadPipe, WritePipe};
 use wasmtime::{Config, Engine, Linker, Module, OptLevel, Store};
 use wasmtime_wasi::sync::WasiCtxBuilder;
@@ -63,7 +64,12 @@ impl Runner {
         let wasm_file_name = format!("{}.wasm", uuid::Uuid::new_v4());
 
         let root = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
-        let wasm_file = std::env::temp_dir().join(wasm_file_name);
+        // This directory is unique and will automatically get deleted
+        // when `tempdir` goes out of scope.
+        let Ok(tempdir) = tempfile::tempdir() else {
+            panic!("Could not create temporary directory for .wasm test artifacts");
+        };
+        let wasm_file = tempdir.path().join(wasm_file_name);
         let js_file = root.join("tests").join("sample-scripts").join(js_file);
 
         let output = Command::new(env!("CARGO_BIN_EXE_javy"))

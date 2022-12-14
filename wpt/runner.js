@@ -1,6 +1,6 @@
 import "./global_fix.js";
 import "./upstream/resources/testharness.js";
-import { resultReporter } from "./reporter.js";
+import { failedTestCount, resultReporter } from "./reporter.js";
 
 // This is not a normal import and will be handled
 // by a custom rollup plugin in `rollup.config.js`.
@@ -14,6 +14,11 @@ function main() {
     console.log("[FAIL]");
     console.log(e);
   }
+
+  if (failedTestCount > 0) {
+    throw new Error(`${failedTestCount} web platform tests failed`);
+  }
+
   return new ArrayBuffer();
 }
 Shopify = { main };
