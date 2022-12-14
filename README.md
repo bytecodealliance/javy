@@ -44,44 +44,56 @@ executable.
 Define your JavaScript like:
 
 ```javascript
+// Read input from stdin
+const input = readInput();
+// Call the function with the input
+const result = foo(input);
+// Write the result to stdout
+writeOutput(result);
+
+// The main function.
 function foo(input) {
     return { foo: input.n + 1, newBar: input.bar + "!" };
 }
 
-// read stdin into a list of buffers
-const inputBufferSize = 1024;
-let bytesRead = 0;
-let totalBytesRead = 0;
-const inputBuffers = [];
-do {
-    const inputBuffer = new Uint8Array(inputBufferSize);
-    const stdinFileDescriptor = 0;
-    bytesRead = Javy.IO.readSync(stdinFileDescriptor, inputBuffer);
-    totalBytesRead += bytesRead;
-    const startOfArrayIndex = 0;
-    inputBuffers.push(inputBuffer.subarray(startOfArrayIndex, bytesRead));
-} while (bytesRead === inputBufferSize);
+// Read input from stdin
+function readInput() {
+    const chunkSize = 1024;
+    const inputChunks = [];
+    let totalBytes = 0;
 
-// assemble input buffer from list of buffers
-const completeInputBuffer = new Uint8Array(totalBytesRead);
-let offsetIntoInputBuffer = 0;
-inputBuffers.forEach(buffer => {
-    completeInputBuffer.set(buffer, offsetIntoInputBuffer);
-    offsetIntoInputBuffer += buffer.length;
-});
+    // Read all the available bytes
+    while (1) {
+        const buffer = new Uint8Array(chunkSize);
+        // Stdin file descriptor
+        const fd = 0;
+        const bytesRead = Javy.IO.readSync(fd, buffer);
 
-// decode and deserialize input bytes
-const input = JSON.parse(new TextDecoder().decode(completeInputBuffer));
+        totalBytes += bytesRead;
+        if (bytesRead === 0) {
+            break;
+        }
+        inputChunks.push(buffer.subarray(0, bytesRead));
+    }
 
-const functionOutput = foo(input);
+    // Assemble input into a single Uint8Array
+    const { finalBuffer } = inputChunks.reduce((context, chunk) => {
+        context.finalBuffer.set(chunk, context.bufferOffset);
+        context.bufferOffset += chunk.length;
+        return context;
+    }, { bufferOffset: 0, finalBuffer: new Uint8Array(totalBytes) });
 
-// serialize and encode output into output bytes
-const output = new TextEncoder().encode(JSON.stringify(functionOutput));
+    return JSON.parse(new TextDecoder().decode(finalBuffer));
+}
 
-// write output bytes to stdout
-const outputBuffer = new Uint8Array(output);
-const stdoutFileDescriptor = 1;
-Javy.IO.writeSync(stdoutFileDescriptor, outputBuffer);
+// Write output to stdout
+function writeOutput(output) {
+    const encodedOutput = new TextEncoder().encode(JSON.stringify(output));
+    const buffer = new Uint8Array(encodedOutput);
+    // Stdout file descriptor
+    const fd = 1;
+    Javy.IO.writeSync(fd, buffer);
+}
 ```
 
 Create a WebAssembly binary from your JavaScript by:
