@@ -1,3 +1,3 @@
-import { readSync, writeSync } from "../../fs";
+import { readFileSync, writeFileSync } from "../../fs/index.ts";
 
-writeSync(1, readSync(0));
+writeFileSync(1, readFileSync(0));

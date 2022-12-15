@@ -8,10 +8,10 @@ export async function smallEcho() {
 	});
 }
 
-async function libraryEcho() {
+export async function libraryEcho() {
 	await runJS({
 		source: "./fixtures/lib_echo.js",
-		expectedOutput: "x".repeat(16 * 1024),
-		stdin: stringAsInputStream("x".repeat(16 * 1024)),
+		expectedOutput: "x".repeat(1 * 1024),
+		stdin: stringAsInputStream("x".repeat(1 * 1024)),
 	});
 }

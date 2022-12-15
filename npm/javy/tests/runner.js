@@ -12,6 +12,7 @@ import { unlink } from "node:fs/promises";
 
 import { rollup } from "rollup";
 import swc from "rollup-plugin-swc";
+import nodeResolve from "@rollup/plugin-node-resolve";
 
 import * as tests from "./tests.js";
 
@@ -53,7 +54,12 @@ export async function runJS({ source, stdin, expectedOutput }) {
 	const infile = join(dir, `${randomUUID()}.js`);
 	const bundle = await rollup({
 		input: rawInfile,
-		plugins: [swc.default()],
+		plugins: [
+			nodeResolve({
+				extensions: [".mjs", ".js", ".ts"],
+			}),
+			swc.default(),
+		],
 	});
 	await bundle.write({
 		file: infile,
@@ -69,7 +75,7 @@ export async function runJS({ source, stdin, expectedOutput }) {
 	}
 	const output = await collectStream(stdout);
 	if (output != expectedOutput) {
-		throw Error(`Unexpected output\n${output}`);
+		throw Error(`Unexpected output.\n${infile}\n${outfile}`);
 	}
 	await unlink(outfile);
 }
