@@ -41,6 +41,6 @@ fn copy_engine_binary() {
     if engine_path.exists() {
         let copied_engine_path = PathBuf::from(env::var("OUT_DIR").unwrap()).join("engine.wasm");
 
-        fs::copy(&engine_path, &copied_engine_path).unwrap();
+        fs::copy(&engine_path, copied_engine_path).unwrap();
     }
 }
