@@ -133,7 +133,7 @@ impl Value {
             return Ok((v as i64).try_into()?);
         }
         if self.is_repr_as_i32() {
-            return Ok(self.as_i32_unchecked() as i32);
+            return Ok(self.as_i32_unchecked());
         }
         anyhow::bail!("Value is not a number")
     }

@@ -1,24 +1,21 @@
 use super::constants::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER};
 use super::exception::Exception;
 use super::value::Value;
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use once_cell::sync::Lazy;
 use quickjs_wasm_sys::{
-    ext_js_exception, ext_js_null, ext_js_undefined, size_t as JS_size_t, JSCFunctionData,
-    JSClassDef, JSClassID, JSContext, JSValue, JS_Eval, JS_ExecutePendingJob, JS_FreeCString,
-    JS_GetGlobalObject, JS_GetRuntime, JS_NewArray, JS_NewArrayBufferCopy, JS_NewBigInt64,
-    JS_NewBool_Ext, JS_NewCFunctionData, JS_NewClass, JS_NewClassID, JS_NewContext,
-    JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewInt64_Ext, JS_NewObject, JS_NewObjectClass,
-    JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext, JS_SetOpaque, JS_ThrowInternalError,
-    JS_ToCStringLen2, JS_EVAL_TYPE_GLOBAL,
+    ext_js_exception, ext_js_null, ext_js_undefined, JSCFunctionData, JSClassDef, JSClassID,
+    JSContext, JSValue, JS_Eval, JS_ExecutePendingJob, JS_GetGlobalObject, JS_GetRuntime,
+    JS_NewArray, JS_NewArrayBufferCopy, JS_NewBigInt64, JS_NewBool_Ext, JS_NewCFunctionData,
+    JS_NewClass, JS_NewClassID, JS_NewContext, JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewInt64_Ext,
+    JS_NewObject, JS_NewObjectClass, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext,
+    JS_SetOpaque, JS_ThrowInternalError, JS_EVAL_TYPE_GLOBAL,
 };
 use std::any::TypeId;
-use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::convert::TryInto;
 use std::ffi::CString;
-use std::io::Write;
 use std::os::raw::{c_char, c_int, c_void};
 use std::ptr;
 use std::str;
@@ -264,114 +261,6 @@ impl Context {
 
         Value::new(self.inner, raw)
     }
-
-    pub fn register_globals<T1, T2>(&mut self, log_stream: T1, error_stream: T2) -> Result<()>
-    where
-        T1: Write + 'static,
-        T2: Write + 'static,
-    {
-        let console_log_callback = self.new_callback(console_log_to(log_stream))?;
-        let console_error_callback = self.new_callback(console_log_to(error_stream))?;
-        let global_object = self.global_object()?;
-        let console_object = self.object_value()?;
-        console_object.set_property("log", console_log_callback)?;
-        console_object.set_property("error", console_error_callback)?;
-        global_object.set_property("console", console_object)?;
-
-        let javy_object = self.object_value()?;
-        javy_object.set_property(
-            "decodeUtf8BufferToString",
-            self.wrap_callback(decode_utf8_buffer_to_js_string())?,
-        )?;
-        javy_object.set_property(
-            "encodeStringToUtf8",
-            self.wrap_callback(encode_js_string_to_utf8_buffer())?,
-        )?;
-        global_object.set_property("Javy", javy_object)?;
-
-        Ok(())
-    }
-}
-
-fn console_log_to<T>(
-    mut stream: T,
-) -> impl FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static
-where
-    T: Write + 'static,
-{
-    move |ctx: *mut JSContext, _this: JSValue, argc: c_int, argv: *mut JSValue, _magic: c_int| {
-        let mut len: JS_size_t = 0;
-        for i in 0..argc {
-            if i != 0 {
-                write!(stream, " ").unwrap();
-            }
-
-            let str_ptr = unsafe { JS_ToCStringLen2(ctx, &mut len, *argv.offset(i as isize), 0) };
-            if str_ptr.is_null() {
-                return unsafe { ext_js_exception };
-            }
-
-            let str_ptr = str_ptr as *const u8;
-            let str_len = len as usize;
-            let buffer = unsafe { std::slice::from_raw_parts(str_ptr, str_len) };
-
-            stream.write_all(buffer).unwrap();
-            unsafe { JS_FreeCString(ctx, str_ptr as *const i8) };
-        }
-
-        writeln!(stream,).unwrap();
-        unsafe { ext_js_undefined }
-    }
-}
-
-fn decode_utf8_buffer_to_js_string() -> impl FnMut(&Context, &Value, &[Value]) -> Result<Value> {
-    move |ctx: &Context, _this: &Value, args: &[Value]| {
-        if args.len() != 4 {
-            return Err(anyhow!("Expecting 4 arguments, received {}", args.len()));
-        }
-
-        let buffer = args[0].as_bytes()?;
-        let byte_offset = {
-            let byte_offset_val = &args[1];
-            if !byte_offset_val.is_repr_as_i32() {
-                return Err(anyhow!("byte_offset must be an u32"));
-            }
-            byte_offset_val.as_u32_unchecked()
-        }
-        .try_into()?;
-        let byte_length: usize = {
-            let byte_length_val = &args[2];
-            if !byte_length_val.is_repr_as_i32() {
-                return Err(anyhow!("byte_length must be an u32"));
-            }
-            byte_length_val.as_u32_unchecked()
-        }
-        .try_into()?;
-        let fatal = args[3].as_bool()?;
-
-        let view = buffer
-            .get(byte_offset..(byte_offset + byte_length))
-            .ok_or(anyhow!(
-                "Provided offset and length is not valid for provided buffer"
-            ))?;
-        let str = if fatal {
-            Cow::from(str::from_utf8(view).map_err(|_| anyhow!("The encoded data was not valid"))?)
-        } else {
-            String::from_utf8_lossy(view)
-        };
-        ctx.value_from_str(&str)
-    }
-}
-
-fn encode_js_string_to_utf8_buffer() -> impl FnMut(&Context, &Value, &[Value]) -> Result<Value> {
-    move |ctx: &Context, _this: &Value, args: &[Value]| {
-        if args.len() != 1 {
-            return Err(anyhow!("Expecting 1 argument, got {}", args.len()));
-        }
-
-        let js_string = args[0].as_str()?;
-        ctx.array_buffer_value(js_string.as_bytes())
-    }
 }
 
 fn build_trampoline<F>(_f: &F) -> JSCFunctionData
@@ -405,8 +294,7 @@ mod tests {
     use super::Context;
     use anyhow::Result;
     use quickjs_wasm_sys::ext_js_undefined;
-    use std::cell::{Cell, RefCell};
-    use std::io;
+    use std::cell::Cell;
     use std::rc::Rc;
     const SCRIPT_NAME: &str = "context.js";
 
@@ -510,59 +398,6 @@ mod tests {
     fn test_constructs_a_value_as_an_object() -> Result<()> {
         let val = Context::default().object_value()?;
         assert!(val.is_object());
-        Ok(())
-    }
-
-    #[derive(Default, Clone)]
-    struct SharedStream(Rc<RefCell<Vec<u8>>>);
-
-    impl SharedStream {
-        fn clear(&mut self) {
-            (*self.0).borrow_mut().clear();
-        }
-    }
-
-    impl io::Write for SharedStream {
-        fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-            (*self.0).borrow_mut().write(buf)
-        }
-
-        fn flush(&mut self) -> io::Result<()> {
-            (*self.0).borrow_mut().flush()
-        }
-    }
-
-    #[test]
-    fn test_console_log() -> Result<()> {
-        let mut stream = SharedStream::default();
-
-        let mut ctx = Context::default();
-        ctx.register_globals(stream.clone(), stream.clone())?;
-
-        ctx.eval_global("main", "console.log(\"hello world\");")?;
-        assert_eq!(b"hello world\n", stream.0.borrow().as_slice());
-
-        stream.clear();
-
-        ctx.eval_global("main", "console.log(\"bonjour\", \"le\", \"monde\")")?;
-        assert_eq!(b"bonjour le monde\n", stream.0.borrow().as_slice());
-        Ok(())
-    }
-
-    #[test]
-    fn test_console_error() -> Result<()> {
-        let mut stream = SharedStream::default();
-
-        let mut ctx = Context::default();
-        ctx.register_globals(stream.clone(), stream.clone())?;
-
-        ctx.eval_global("main", "console.error(\"hello world\");")?;
-        assert_eq!(b"hello world\n", stream.0.borrow().as_slice());
-
-        stream.clear();
-
-        ctx.eval_global("main", "console.error(\"bonjour\", \"le\", \"monde\")")?;
-        assert_eq!(b"bonjour le monde\n", stream.0.borrow().as_slice());
         Ok(())
     }
 
