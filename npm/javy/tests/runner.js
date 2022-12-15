@@ -35,12 +35,26 @@ async function main() {
 }
 await main();
 
+export function stringFactoryInput(f) {
+	return new ReadableStream({
+		async start(controller) {
+			await f(controller);
+			controller.close();
+		},
+	}).pipeThrough(new TextEncoderStream());
+}
+
+/**
+ * @param {String} str
+ */
 export function stringAsInputStream(str) {
+	const CHUNK_SIZE = 10;
 	return new ReadableStream({
 		start(controller) {
 			// Artificial chunking
-			for (let i = 0; i < str.length; i += 10) {
-				controller.enqueue(str.slice(i * 10, (i + 1) * 10));
+			for (let i = 0; i < str.length; i += CHUNK_SIZE) {
+				const substr = str.slice(i, i + CHUNK_SIZE);
+				controller.enqueue(substr);
 			}
 			controller.close();
 		},
