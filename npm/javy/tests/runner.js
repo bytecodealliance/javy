@@ -10,6 +10,9 @@ import {
 } from "node:stream/web";
 import { unlink } from "node:fs/promises";
 
+import { rollup } from "rollup";
+import swc from "rollup-plugin-swc";
+
 import * as tests from "./tests.js";
 
 const javyPath = new URL("../../../target/release/javy", import.meta.url)
@@ -34,16 +37,27 @@ await main();
 export function stringAsInputStream(str) {
 	return new ReadableStream({
 		start(controller) {
-			controller.enqueue(str);
+			// Artificial chunking
+			for (let i = 0; i < str.length; i += 10) {
+				controller.enqueue(str.slice(i * 10, (i + 1) * 10));
+			}
 			controller.close();
 		},
 	}).pipeThrough(new TextEncoderStream());
 }
 
 export async function runJS({ source, stdin, expectedOutput }) {
-	const uuid = randomUUID();
-	const outfile = join(tmpdir(), `${uuid}.wasm`);
-	const infile = new URL(source, import.meta.url).pathname;
+	const dir = tmpdir();
+	const outfile = join(dir, `${randomUUID()}.wasm`);
+	const rawInfile = new URL(source, import.meta.url).pathname;
+	const infile = join(dir, `${randomUUID()}.js`);
+	const bundle = await rollup({
+		input: rawInfile,
+		plugins: [swc.default()],
+	});
+	await bundle.write({
+		file: infile,
+	});
 	await compileWithJavy(infile, outfile);
 	const { exitCode, stdout, stderr } = await runCommand(
 		"wasmtime",
