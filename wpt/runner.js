@@ -6,19 +6,9 @@ import { failedTestCount, resultReporter } from "./reporter.js";
 // by a custom rollup plugin in `rollup.config.js`.
 import testFunc from "custom:test_spec";
 
-function main() {
-  add_result_callback(resultReporter);
-  try {
-    testFunc();
-  } catch (e) {
-    console.log("[FAIL]");
-    console.log(e);
-  }
+add_result_callback(resultReporter);
+testFunc();
 
-  if (failedTestCount > 0) {
-    throw new Error(`${failedTestCount} web platform tests failed`);
-  }
-
-  return new ArrayBuffer();
+if (failedTestCount > 0) {
+  throw new Error(`${failedTestCount} web platform tests failed`);
 }
-Shopify = { main };
