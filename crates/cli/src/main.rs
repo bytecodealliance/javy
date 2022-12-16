@@ -34,7 +34,7 @@ fn main() -> Result<()> {
 
     {
         env::set_var("JAVY_WIZEN", "1");
-        let mut command = Command::new(&self_cmd)
+        let mut command = Command::new(self_cmd)
             .arg(&opts.input)
             .arg("-o")
             .arg(&opts.output)
