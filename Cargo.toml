@@ -13,9 +13,9 @@ edition = "2021"
 license = "MIT"
 
 [workspace.dependencies]
-wasmtime = "0.34.1"
-wasmtime-wasi = "0.34.1"
-wasi-common = "0.34.1"
+wasmtime = "0.35.3"
+wasmtime-wasi = "0.35.3"
+wasi-common = "0.35.3"
 anyhow = "1.0"
 once_cell = "1.16"
 
