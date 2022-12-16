@@ -1,9 +1,9 @@
 use anyhow::anyhow;
-use quickjs_wasm_rs::{Context, Value};
-use quickjs_wasm_sys::{
-    ext_js_exception, ext_js_undefined, size_t as JS_size_t, JSContext, JSValue, JS_FreeCString,
-    JS_ToCStringLen2,
+use quickjs_wasm_rs::sys::{
+    ext_js_exception, ext_js_undefined, JSContext, JSValue, JS_FreeCString, JS_ToCStringLen2,
+    JS_size_t,
 };
+use quickjs_wasm_rs::{Context, Value};
 use std::borrow::Cow;
 use std::ffi::c_int;
 use std::io::{Read, Write};

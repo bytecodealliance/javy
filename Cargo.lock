@@ -903,7 +903,6 @@ dependencies = [
  "anyhow",
  "once_cell",
  "quickjs-wasm-rs",
- "quickjs-wasm-sys",
 ]
 
 [[package]]

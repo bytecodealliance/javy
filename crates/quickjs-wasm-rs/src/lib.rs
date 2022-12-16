@@ -7,6 +7,9 @@ pub use crate::js_binding::value::Value;
 pub use crate::serialize::de::Deserializer;
 pub use crate::serialize::ser::Serializer;
 
+#[deprecated = "This is a hack to enable Javy Core to compile and will be removed when it's no longer necessary"]
+pub mod sys;
+
 #[cfg(feature = "messagepack")]
 pub mod messagepack;
 
