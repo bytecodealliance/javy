@@ -1,11 +1,6 @@
 use anyhow::anyhow;
-use quickjs_wasm_rs::sys::{
-    ext_js_exception, ext_js_undefined, JSContext, JSValue, JS_FreeCString, JS_ToCStringLen2,
-    JS_size_t,
-};
 use quickjs_wasm_rs::{Context, Value};
 use std::borrow::Cow;
-use std::ffi::c_int;
 use std::io::{Read, Write};
 use std::str;
 
@@ -20,8 +15,8 @@ where
 {
     let global = context.global_object()?;
 
-    let console_log_callback = context.new_callback(console_log_to(log_stream))?;
-    let console_error_callback = context.new_callback(console_log_to(error_stream))?;
+    let console_log_callback = context.wrap_callback(console_log_to(log_stream))?;
+    let console_error_callback = context.wrap_callback(console_log_to(error_stream))?;
     let console_object = context.object_value()?;
     console_object.set_property("log", console_log_callback)?;
     console_object.set_property("error", console_error_callback)?;
@@ -62,32 +57,21 @@ where
 
 fn console_log_to<T>(
     mut stream: T,
-) -> impl FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static
+) -> impl FnMut(&Context, &Value, &[Value]) -> anyhow::Result<Value>
 where
     T: Write + 'static,
 {
-    move |ctx: *mut JSContext, _this: JSValue, argc: c_int, argv: *mut JSValue, _magic: c_int| {
-        let mut len: JS_size_t = 0;
-        for i in 0..argc {
+    move |ctx: &Context, _this: &Value, args: &[Value]| {
+        for (i, arg) in args.iter().enumerate() {
             if i != 0 {
-                write!(stream, " ").unwrap();
+                write!(stream, " ")?;
             }
 
-            let str_ptr = unsafe { JS_ToCStringLen2(ctx, &mut len, *argv.offset(i as isize), 0) };
-            if str_ptr.is_null() {
-                return unsafe { ext_js_exception };
-            }
-
-            let str_ptr = str_ptr as *const u8;
-            let str_len = len as usize;
-            let buffer = unsafe { std::slice::from_raw_parts(str_ptr, str_len) };
-
-            stream.write_all(buffer).unwrap();
-            unsafe { JS_FreeCString(ctx, str_ptr as *const i8) };
+            stream.write_all(arg.as_str()?.as_bytes())?;
         }
 
-        writeln!(stream,).unwrap();
-        unsafe { ext_js_undefined }
+        writeln!(stream)?;
+        ctx.undefined_value()
     }
 }
 
@@ -209,6 +193,17 @@ mod tests {
 
         ctx.eval_global("main", "console.log(\"bonjour\", \"le\", \"monde\")")?;
         assert_eq!(b"bonjour le monde\n", stream.0.borrow().as_slice());
+
+        stream.clear();
+
+        ctx.eval_global(
+            "main",
+            "console.log(2.3, true, { foo: 'bar' }, null, undefined)",
+        )?;
+        assert_eq!(
+            b"2.3 true [object Object] null undefined\n",
+            stream.0.borrow().as_slice()
+        );
         Ok(())
     }
 
@@ -226,6 +221,17 @@ mod tests {
 
         ctx.eval_global("main", "console.error(\"bonjour\", \"le\", \"monde\")")?;
         assert_eq!(b"bonjour le monde\n", stream.0.borrow().as_slice());
+
+        stream.clear();
+
+        ctx.eval_global(
+            "main",
+            "console.error(2.3, true, { foo: 'bar' }, null, undefined)",
+        )?;
+        assert_eq!(
+            b"2.3 true [object Object] null undefined\n",
+            stream.0.borrow().as_slice()
+        );
         Ok(())
     }
 
