@@ -28,15 +28,16 @@ where
     global.set_property("console", console_object)?;
 
     let javy_object = context.object_value()?;
-    javy_object.set_property(
-        "decodeUtf8BufferToString",
+    global.set_property("Javy", javy_object)?;
+
+    global.set_property(
+        "__javy_decodeUtf8BufferToString",
         context.wrap_callback(decode_utf8_buffer_to_js_string())?,
     )?;
-    javy_object.set_property(
-        "encodeStringToUtf8",
+    global.set_property(
+        "__javy_encodeStringToUtf8Buffer",
         context.wrap_callback(encode_js_string_to_utf8_buffer())?,
     )?;
-    global.set_property("Javy", javy_object)?;
 
     global.set_property(
         "__javy_io_writeSync",
