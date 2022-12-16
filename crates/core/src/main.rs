@@ -1,7 +1,9 @@
-use quickjs_wasm_rs::{Context, Value};
-
 use once_cell::sync::OnceCell;
-use std::io::{self, Read, Write};
+use quickjs_wasm_rs::Context;
+use std::io::{self, Read};
+use std::string::String;
+
+mod globals;
 
 static mut CONTEXT: OnceCell<Context> = OnceCell::new();
 static mut CODE: OnceCell<String> = OnceCell::new();
@@ -14,13 +16,8 @@ static mut CODE: OnceCell<String> = OnceCell::new();
 
 #[export_name = "wizer.initialize"]
 pub extern "C" fn init() {
-    let mut context = Context::default();
-    context
-        .register_globals(io::stderr(), io::stderr())
-        .unwrap();
-
-    let global = context.global_object().unwrap();
-    inject_javy_globals(&context, &global);
+    let context = Context::default();
+    globals::inject_javy_globals(&context, io::stderr(), io::stderr()).unwrap();
 
     context
         .eval_global(
@@ -40,78 +37,6 @@ pub extern "C" fn init() {
         CONTEXT.set(context).unwrap();
         CODE.set(contents).unwrap();
     }
-}
-
-fn js_args_to_io_writer(args: &[Value]) -> anyhow::Result<(Box<dyn Write>, &[u8])> {
-    // TODO: Should throw an exception
-    let [fd, data, offset, length, ..] = args else {
-        anyhow::bail!("Invalid number of parameters");
-    };
-
-    let offset: usize = (offset.as_f64()?.floor() as u64).try_into()?;
-    let length: usize = (length.as_f64()?.floor() as u64).try_into()?;
-
-    let fd: Box<dyn Write> = match fd.try_as_integer()? {
-        1 => Box::new(std::io::stdout()),
-        2 => Box::new(std::io::stderr()),
-        _ => anyhow::bail!("Only stdout and stderr are supported"),
-    };
-
-    if !data.is_array_buffer() {
-        anyhow::bail!("Data needs to be an ArrayBuffer");
-    }
-    let data = data.as_bytes()?;
-    Ok((fd, &data[offset..(offset + length)]))
-}
-
-fn js_args_to_io_reader(args: &[Value]) -> anyhow::Result<(Box<dyn Read>, &mut [u8])> {
-    // TODO: Should throw an exception
-    let [fd, data, offset, length, ..] = args else {
-        anyhow::bail!("Invalid number of parameters");
-    };
-
-    let offset: usize = (offset.as_f64()?.floor() as u64).try_into()?;
-    let length: usize = (length.as_f64()?.floor() as u64).try_into()?;
-
-    let fd: Box<dyn Read> = match fd.try_as_integer()? {
-        0 => Box::new(std::io::stdin()),
-        _ => anyhow::bail!("Only stdin is supported"),
-    };
-
-    if !data.is_array_buffer() {
-        anyhow::bail!("Data needs to be an ArrayBuffer");
-    }
-    let data = data.as_bytes_mut()?;
-    Ok((fd, &mut data[offset..(offset + length)]))
-}
-
-fn inject_javy_globals(context: &Context, global: &Value) {
-    global
-        .set_property(
-            "__javy_io_writeSync",
-            context
-                .wrap_callback(|ctx, _this_arg, args| {
-                    let (mut fd, data) = js_args_to_io_writer(args)?;
-                    let n = fd.write(data)?;
-                    fd.flush()?;
-                    ctx.value_from_i32(n.try_into()?)
-                })
-                .unwrap(),
-        )
-        .unwrap();
-
-    global
-        .set_property(
-            "__javy_io_readSync",
-            context
-                .wrap_callback(|ctx, _this_arg, args| {
-                    let (mut fd, data) = js_args_to_io_reader(args)?;
-                    let n = fd.read(data)?;
-                    ctx.value_from_i32(n.try_into()?)
-                })
-                .unwrap(),
-        )
-        .unwrap();
 }
 
 fn main() {
