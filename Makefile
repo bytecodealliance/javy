@@ -25,7 +25,7 @@ docs:
 
 test-quickjs-wasm-rs:
 		cd crates/quickjs-wasm-rs \
-				&& cargo wasi test --features json \
+				&& cargo wasi test --features json -- --nocapture \
 				&& cd -
 
 test-core:
