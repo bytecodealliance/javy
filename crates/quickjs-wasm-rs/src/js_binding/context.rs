@@ -369,7 +369,7 @@ fn encode_js_string_to_utf8_buffer() -> impl FnMut(&Context, &Value, &[Value]) -
             return Err(anyhow!("Expecting 1 argument, got {}", args.len()));
         }
 
-        let js_string = args[0].as_str()?;
+        let js_string = args[0].as_str_lossy();
         ctx.array_buffer_value(js_string.as_bytes())
     }
 }

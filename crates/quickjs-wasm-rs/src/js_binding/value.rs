@@ -147,13 +147,50 @@ impl Value {
     }
 
     pub fn as_str(&self) -> Result<&str> {
+        std::str::from_utf8(self.as_str_wtf8_slice()).map_err(Into::into)
+    }
+
+    pub fn as_str_lossy(&self) -> std::borrow::Cow<str> {
+        let mut buffer = self.as_str_wtf8_slice();
+        eprintln!("buffer = {:X?}", buffer);
+        let mut str = String::new();
+        let mut has_invalid_bytes = false;
+        loop {
+            match std::str::from_utf8(buffer) {
+                Ok(valid) => {
+                    if has_invalid_bytes {
+                        str.push_str("\u{FFFD}");
+                    }
+                    str.push_str(valid);
+                    break;
+                }
+                Err(error) => {
+                    let (valid, after_valid) = buffer.split_at(error.valid_up_to());
+                    if has_invalid_bytes && valid.len() > 0 {
+                        str.push_str("\u{FFFD}");
+                    }
+                    unsafe { str.push_str(std::str::from_utf8_unchecked(valid)) }
+
+                    has_invalid_bytes = true;
+
+                    if let Some(invalid_sequence_length) = error.error_len() {
+                        buffer = &after_valid[invalid_sequence_length..]
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+        std::borrow::Cow::Owned(str)
+    }
+
+    fn as_str_wtf8_slice(&self) -> &[u8] {
         unsafe {
             let mut len: JS_size_t = 0;
             let ptr = JS_ToCStringLen2(self.context, &mut len, self.value, 0);
             let ptr = ptr as *const u8;
             let len = len as usize;
-            let buffer = std::slice::from_raw_parts(ptr, len);
-            std::str::from_utf8(buffer).map_err(Into::into)
+            std::slice::from_raw_parts(ptr, len)
         }
     }
 
@@ -427,6 +464,17 @@ mod tests {
         let ctx = Context::default();
         let val = ctx.value_from_str(s).unwrap();
         assert_eq!(val.as_str().unwrap(), s);
+    }
+
+    #[test]
+    fn test_value_as_str_lossy() {
+        let ctx = Context::default();
+        ctx.eval_global("main", "var str = '\\uD800';").unwrap();
+        let val = ctx.global_object().unwrap().get_property("str").unwrap();
+        eprintln!("");
+        eprintln!("wtf8 bytes = {:x?}", val.as_str_wtf8_slice());
+        eprintln!("str bytes = {:x?}", val.as_str_lossy().as_bytes());
+        assert_eq!(val.as_str_lossy(), "�"); // FIXME this line is crashing for some reason
     }
 
     #[test]
