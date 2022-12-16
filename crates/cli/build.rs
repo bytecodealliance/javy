@@ -35,7 +35,7 @@ fn copy_engine_binary() {
         engine_path = engine_path.join("target/wasm32-wasi/release/javy_core.wasm");
     }
 
-    println!("cargo:rerun-if-changed={:?}", engine_path);
+    println!("cargo:rerun-if-changed={}", engine_path.to_str().unwrap());
     println!("cargo:rerun-if-changed=build.rs");
 
     if engine_path.exists() {
