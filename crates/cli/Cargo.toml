@@ -10,7 +10,7 @@ build = "build.rs"
 name = "javy"
 
 [dependencies]
-wizer = { git = "https://github.com/bytecodealliance/wizer", branch = "main" }
+wizer = "1.6.0"
 which = "4.2"
 structopt = "0.3"
 anyhow = { workspace = true }
