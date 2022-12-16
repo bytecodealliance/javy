@@ -35,7 +35,12 @@ async function main() {
 }
 await main();
 
-export function stringFactoryInput(f) {
+/**
+ * Passes the stream's controller to a callback where strings can be enqueue.
+ * @param {(ctr: ReadableStreamDefaultController<string>) => Promise<void>} f
+ * @returns {ReadableStream<Uint8Array>} Binary stream
+ */
+export function customStringInputStream(f) {
 	return new ReadableStream({
 		async start(controller) {
 			await f(controller);
@@ -45,7 +50,9 @@ export function stringFactoryInput(f) {
 }
 
 /**
- * @param {String} str
+ * Creates a ReadableStream from a given string.
+ * @param {string} str
+ * @returns {ReadableStream<Uint8Array>} Binary stream
  */
 export function stringAsInputStream(str) {
 	const CHUNK_SIZE = 10;
@@ -61,6 +68,14 @@ export function stringAsInputStream(str) {
 	}).pipeThrough(new TextEncoderStream());
 }
 
+/**
+ * Runs the given source code with the given input stream and compares the programs output against the expected output string.
+ * @param {Object} options
+ * @param {string} options.source JS source code.
+ * @param {ReadableStream<Uint8Array>} options.stdin Binary input stream.
+ * @param {string} options.expectedOutput Expected output as a string.
+ * @returns {Promise<void>} Resolves on success, rejects on failure.
+ */
 export async function runJS({ source, stdin, expectedOutput }) {
 	const dir = tmpdir();
 	const outfile = join(dir, `${randomUUID()}.wasm`);
