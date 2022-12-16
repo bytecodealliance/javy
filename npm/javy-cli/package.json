@@ -1,13 +1,13 @@
 {
-  "name": "javy",
-  "version": "0.0.2",
+  "name": "javy-cli",
+  "version": "0.0.1",
   "description": "",
   "main": "index.js",
   "bin": {
     "javy": "./index.js"
   },
   "type": "module",
-  "author": "Surma <surma@surma.dev>",
+  "author": "Surma <surma@shopify.com>",
   "license": "Apache-2.0",
   "dependencies": {
     "node-fetch": "^3.2.10"
