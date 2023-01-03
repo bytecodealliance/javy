@@ -1,6 +1,8 @@
 use std::env;
 use std::path::PathBuf;
 
+use walkdir::WalkDir;
+
 fn main() {
     let this_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
     let wasi_sdk_path =
@@ -59,6 +61,13 @@ fn main() {
 
     println!("cargo:rerun-if-changed=extensions/value.c");
     println!("cargo:rerun-if-changed=wrapper.h");
+
+    for entry in WalkDir::new("quickjs") {
+        println!(
+            "cargo:rerun-if-changed={}",
+            entry.unwrap().path().to_str().unwrap()
+        );
+    }
 
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
     bindings.write_to_file(out_dir.join("bindings.rs")).unwrap();
