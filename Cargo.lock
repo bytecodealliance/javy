@@ -362,12 +362,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "convert_case"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
-
-[[package]]
 name = "cpp_demangle"
 version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1227,7 +1221,6 @@ name = "quickjs-wasm-rs"
 version = "0.1.2"
 dependencies = [
  "anyhow",
- "convert_case",
  "once_cell",
  "quickcheck",
  "quickjs-wasm-sys",
