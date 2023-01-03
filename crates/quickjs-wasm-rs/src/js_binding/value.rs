@@ -4,11 +4,11 @@ use super::properties::Properties;
 use anyhow::{anyhow, Result};
 use quickjs_wasm_sys::{
     size_t as JS_size_t, JSContext, JSValue, JS_BigIntSigned, JS_BigIntToInt64, JS_BigIntToUint64,
-    JS_Call, JS_DefinePropertyValueStr, JS_DefinePropertyValueUint32, JS_GetArrayBuffer,
-    JS_GetOpaque, JS_GetPropertyStr, JS_GetPropertyUint32, JS_IsArray, JS_IsArrayBuffer_Ext,
-    JS_IsFloat64_Ext, JS_IsFunction, JS_ToCStringLen2, JS_ToFloat64, JS_PROP_C_W_E, JS_TAG_BIG_INT,
-    JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_NULL, JS_TAG_OBJECT, JS_TAG_STRING,
-    JS_TAG_UNDEFINED,
+    JS_Call, JS_DefinePropertyValueStr, JS_DefinePropertyValueUint32, JS_EvalFunction,
+    JS_GetArrayBuffer, JS_GetOpaque, JS_GetPropertyStr, JS_GetPropertyUint32, JS_IsArray,
+    JS_IsArrayBuffer_Ext, JS_IsFloat64_Ext, JS_IsFunction, JS_ToCStringLen2, JS_ToFloat64,
+    JS_PROP_C_W_E, JS_TAG_BIG_INT, JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_NULL,
+    JS_TAG_OBJECT, JS_TAG_STRING, JS_TAG_UNDEFINED,
 };
 use std::any::TypeId;
 use std::cell::RefCell;
@@ -43,6 +43,12 @@ impl Value {
 
     pub(super) fn new_unchecked(context: *mut JSContext, value: JSValue) -> Self {
         Self { context, value }
+    }
+
+    pub(super) fn eval_function(&self) -> Result<Self> {
+        Self::new(self.context, unsafe {
+            JS_EvalFunction(self.context, self.value)
+        })
     }
 
     pub fn call(&self, receiver: &Self, args: &[Self]) -> Result<Self> {
@@ -655,5 +661,26 @@ mod tests {
             .get_property("foo")
             .unwrap()
             .is_function());
+    }
+
+    #[test]
+    fn test_eval_function() {
+        let ctx = Context::default();
+
+        let bytecode = ctx.compile_global("main", "var f = 42;").unwrap();
+        ctx.value_from_bytecode(&bytecode)
+            .unwrap()
+            .eval_function()
+            .unwrap();
+
+        assert_eq!(
+            42,
+            ctx.global_object()
+                .unwrap()
+                .get_property("f")
+                .unwrap()
+                .try_as_integer()
+                .unwrap()
+        );
     }
 }
