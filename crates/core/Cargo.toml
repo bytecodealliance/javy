@@ -9,6 +9,10 @@ license.workspace = true
 name = "javy_core"
 path = "src/main.rs"
 
+[lib]
+name = "javy_provider"
+crate-type = ["cdylib"]
+
 [dependencies]
 anyhow = { workspace = true }
 quickjs-wasm-rs = { path = "../quickjs-wasm-rs" }
