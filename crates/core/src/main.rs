@@ -8,12 +8,6 @@ mod globals;
 static mut CONTEXT: OnceCell<Context> = OnceCell::new();
 static mut CODE: OnceCell<String> = OnceCell::new();
 
-// TODO
-//
-// AOT validations:
-//  1. Ensure that the required exports are present
-//  2. If not present just evaluate the top level statement (?)
-
 #[export_name = "wizer.initialize"]
 pub extern "C" fn init() {
     let context = Context::default();
