@@ -11,3 +11,7 @@ For example, if you install the `wasi-sdk` in `/opt/wasi-sdk`, you can run:
 ```bash
 export QUICKJS_WASM_SYS_WASI_SDK_PATH=/opt/wasi-sdk
 ```
+
+## Publishing to crates.io
+
+To publish this crate to crates.io, run `./publish.sh`.
