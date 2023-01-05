@@ -47,8 +47,9 @@
             });
         }
 
-        encode(input) {
+        encode(input = "") {
             input = input.toString(); // non-string inputs are converted to strings
+            input = replaceUnpairedSurrogates(input); // QuickJS does not handle this correctly
             return new Uint8Array(__javy_encodeStringToUtf8Buffer(input));
         }
 
@@ -62,4 +63,35 @@
 
     Reflect.deleteProperty(globalThis, "__javy_decodeUtf8BufferToString");
     Reflect.deleteProperty(globalThis, "__javy_encodeStringToUtf8Buffer");
+
+    function replaceUnpairedSurrogates(input) {
+        const highSurrogateStart = '\uD800';
+        const lowSurrogateStart = '\uDC00';
+        const lowSurrogateEnd = '\uDFFF';
+        const replacementChar = '\uFFFD';
+
+        const segments = [];
+        let start = 0;
+        for (let i = 0; i < input.length; i++) {
+            const currentChar = input[i];
+            const isHighSurrogate = currentChar >= highSurrogateStart && currentChar < lowSurrogateStart;
+            const isLowSurrogate = currentChar >= lowSurrogateStart && currentChar <= lowSurrogateEnd;
+
+            if (
+                (isHighSurrogate && !(input[i + 1] >= lowSurrogateStart && input[i + 1] <= lowSurrogateEnd))
+                || (isLowSurrogate && !(input[i - 1] >= highSurrogateStart && input[i - 1] < lowSurrogateStart))
+            ) {
+                segments.push(input.substring(start, i));
+                segments.push(replacementChar);
+                start = i + 1;
+            }
+        }
+
+        if (start === 0) {
+            return input;
+        }
+
+        segments.push(input.substring(start));
+        return segments.join("");
+    }
 })();
