@@ -9,7 +9,8 @@ use quickjs_wasm_sys::{
     JS_NewArray, JS_NewArrayBufferCopy, JS_NewBigInt64, JS_NewBool_Ext, JS_NewCFunctionData,
     JS_NewClass, JS_NewClassID, JS_NewContext, JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewInt64_Ext,
     JS_NewObject, JS_NewObjectClass, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext,
-    JS_SetOpaque, JS_ThrowInternalError, JS_EVAL_TYPE_GLOBAL,
+    JS_ReadObject, JS_SetOpaque, JS_ThrowInternalError, JS_WriteObject, JS_EVAL_FLAG_COMPILE_ONLY,
+    JS_EVAL_TYPE_GLOBAL, JS_READ_OBJ_BYTECODE, JS_WRITE_OBJ_BYTECODE,
 };
 use std::any::TypeId;
 use std::cell::RefCell;
@@ -63,6 +64,40 @@ impl Context {
         Value::new(self.inner, raw)
     }
 
+    pub fn compile_global(&self, name: &str, contents: &str) -> Result<Vec<u8>> {
+        let input = CString::new(contents)?;
+        let script_name = CString::new(name)?;
+        let len = contents.len() - 1;
+        let raw = unsafe {
+            JS_Eval(
+                self.inner,
+                input.as_ptr(),
+                len as _,
+                script_name.as_ptr(),
+                JS_EVAL_FLAG_COMPILE_ONLY as i32,
+            )
+        };
+
+        let mut output_size = 0;
+        unsafe {
+            let output_buffer = JS_WriteObject(
+                self.inner,
+                &mut output_size,
+                raw,
+                JS_WRITE_OBJ_BYTECODE as i32,
+            );
+            Ok(Vec::from_raw_parts(
+                output_buffer as *mut u8,
+                output_size.try_into()?,
+                output_size.try_into()?,
+            ))
+        }
+    }
+
+    pub fn eval_binary(&self, bytecode: &[u8]) -> Result<Value> {
+        self.value_from_bytecode(bytecode)?.eval_function()
+    }
+
     pub fn execute_pending(&self) -> Result<()> {
         let runtime = unsafe { JS_GetRuntime(self.inner) };
 
@@ -95,6 +130,17 @@ impl Context {
     pub fn object_value(&self) -> Result<Value> {
         let raw = unsafe { JS_NewObject(self.inner) };
         Value::new(self.inner, raw)
+    }
+
+    pub(super) fn value_from_bytecode(&self, bytecode: &[u8]) -> Result<Value> {
+        Value::new(self.inner, unsafe {
+            JS_ReadObject(
+                self.inner,
+                bytecode.as_ptr(),
+                bytecode.len().try_into()?,
+                JS_READ_OBJ_BYTECODE.try_into()?,
+            )
+        })
     }
 
     pub fn value_from_f64(&self, val: f64) -> Result<Value> {
@@ -339,6 +385,19 @@ mod tests {
         let fun = global.get_property("foo")?;
         let result = fun.call(&global, &[]);
         assert!(result.is_ok());
+        Ok(())
+    }
+
+    #[test]
+    fn test_compiles_and_evaluates_global_object() -> Result<()> {
+        let ctx = Context::default();
+        let contents = "var foo = 42;";
+        let bytecode = ctx.compile_global(SCRIPT_NAME, contents)?;
+        let _ = ctx.eval_binary(&bytecode)?;
+        assert_eq!(
+            42,
+            ctx.global_object()?.get_property("foo")?.try_as_integer()?
+        );
         Ok(())
     }
 
