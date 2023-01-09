@@ -47,7 +47,7 @@
             });
         }
 
-        encode(input) {
+        encode(input = "") {
             input = input.toString(); // non-string inputs are converted to strings
             return new Uint8Array(__javy_encodeStringToUtf8Buffer(input));
         }
