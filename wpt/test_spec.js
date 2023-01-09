@@ -10,4 +10,7 @@ export default [
   {
     testFile: "upstream/encoding/textencoder-utf16-surrogates.any.js",
   },
+  {
+    testFile: "upstream/encoding/api-invalid-label.any.js",
+  },
 ];
