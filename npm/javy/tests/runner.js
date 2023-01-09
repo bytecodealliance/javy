@@ -21,10 +21,15 @@ const javyPath = new URL("../../../target/release/javy", import.meta.url)
 
 async function main() {
 	console.log("Running tests...");
-	const resultPromises = Object.entries(tests).map(([testName, testFunc]) =>
-		Promise.resolve(testFunc())
-			.then((value) => ({ testName, success: true, value }))
-			.catch((value) => ({ testName, success: false, value }))
+	const resultPromises = Object.entries(tests).map(
+		async ([testName, testFunc]) => {
+			try {
+				const value = await testFunc();
+				return { testName, success: true, value };
+			} catch (err) {
+				return { testName, sucess: false, value: err };
+			}
+		}
 	);
 	const results = await Promise.all(resultPromises);
 

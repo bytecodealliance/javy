@@ -1,4 +1,8 @@
-import { runJS, stringAsInputStream, customStringInputStream } from "./runner.js";
+import {
+	runJS,
+	stringAsInputStream,
+	customStringInputStream,
+} from "./runner.js";
 
 export async function smallEcho() {
 	await runJS({
@@ -21,16 +25,15 @@ export async function longDelay() {
 	await runJS({
 		source: "./fixtures/lib_echo.js",
 		expectedOutput: "1234",
-		stdin: customStringInputStream(async controller => {
+		stdin: customStringInputStream(async (controller) => {
 			for (let i = 1; i <= 4; i++) {
 				controller.enqueue(i.toString());
-				await sleep(100);
+				await sleep(0);
 			}
-		})
+		}),
 	});
 }
 
 function sleep(ms) {
-	return new Promise(resolve => setTimeout(resolve, ms));
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }
-
