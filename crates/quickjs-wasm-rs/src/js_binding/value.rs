@@ -11,8 +11,10 @@ use quickjs_wasm_sys::{
     JS_TAG_UNDEFINED,
 };
 use std::any::TypeId;
+use std::borrow::Cow;
 use std::cell::RefCell;
 use std::ffi::CString;
+use std::str;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum BigInt {
@@ -147,13 +149,60 @@ impl Value {
     }
 
     pub fn as_str(&self) -> Result<&str> {
+        let buffer = self.as_wtf8_str_buffer();
+        str::from_utf8(buffer).map_err(Into::into)
+    }
+
+    pub fn as_str_lossy(&self) -> std::borrow::Cow<str> {
+        let mut buffer = self.as_wtf8_str_buffer();
+        match str::from_utf8(buffer) {
+            Ok(valid) => Cow::Borrowed(valid),
+            Err(mut error) => {
+                let mut res = String::new();
+                loop {
+                    let (valid, after_valid) = buffer.split_at(error.valid_up_to());
+                    res.push_str(unsafe { str::from_utf8_unchecked(valid) });
+                    const REPLACEMENT_CHAR: char = '\u{FFFD}';
+                    res.push(REPLACEMENT_CHAR);
+
+                    // see https://simonsapin.github.io/wtf-8/#surrogate-byte-sequence
+                    let lone_surrogate =
+                        matches!(after_valid, [0xED, 0xA0..=0xBF, 0x80..=0xBF, ..]);
+                    // Rust's `Utf8Error` reports a lone surrogate as having an error_len of 1
+                    // which results in 3 replacement chars being inserted instead of 1. 1
+                    // replacement char is correct according to
+                    // https://simonsapin.github.io/wtf-8/#converting-wtf-8-utf-8. So, substitute an
+                    // error_len of 3 for lone surrogates so the surrogate is only counted once
+                    // instead of as 3 separate characters.
+                    let error_len = if lone_surrogate {
+                        3
+                    } else {
+                        error
+                            .error_len()
+                            .expect("Error length should always be available on underlying buffer")
+                    };
+
+                    buffer = &after_valid[error_len..];
+                    match str::from_utf8(buffer) {
+                        Ok(valid) => {
+                            res.push_str(valid);
+                            break;
+                        }
+                        Err(e) => error = e,
+                    }
+                }
+                Cow::Owned(res)
+            }
+        }
+    }
+
+    fn as_wtf8_str_buffer(&self) -> &[u8] {
         unsafe {
             let mut len: JS_size_t = 0;
             let ptr = JS_ToCStringLen2(self.context, &mut len, self.value, 0);
             let ptr = ptr as *const u8;
             let len = len as usize;
-            let buffer = std::slice::from_raw_parts(ptr, len);
-            std::str::from_utf8(buffer).map_err(Into::into)
+            std::slice::from_raw_parts(ptr, len)
         }
     }
 
