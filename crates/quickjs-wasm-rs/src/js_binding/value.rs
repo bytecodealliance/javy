@@ -168,8 +168,7 @@ impl Value {
                 loop {
                     let (valid, after_valid) = buffer.split_at(error.valid_up_to());
                     res.push_str(unsafe { str::from_utf8_unchecked(valid) });
-                    const REPLACEMENT_CHAR: char = '\u{FFFD}';
-                    res.push(REPLACEMENT_CHAR);
+                    res.push(char::REPLACEMENT_CHARACTER);
 
                     // see https://simonsapin.github.io/wtf-8/#surrogate-byte-sequence
                     let lone_surrogate =
