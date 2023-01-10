@@ -20,7 +20,7 @@ export default {
         const imports = [];
         const newCode = chunk.replaceAll(MATCHER, (_match, ref) => {
           let base;
-          if (ref.startsWith(".")) {
+          if (!ref.startsWith("/")) {
             base = path.dirname(id);
           } else {
             base = projectRoot;
@@ -48,7 +48,7 @@ export default {
         if (id !== "custom:test_spec") return;
         const { default: spec } = await import("./test_spec.js");
         const modules = await Promise.all(
-          spec.map(async ({ testFile, ignoredTests }) => {
+          spec.map(async ({ testFile, ignoredTests = [] }) => {
             const { id } = await this.resolve(testFile);
             const module = await this.load({ id, resolveDependencies: true });
             const [imports, other] = splitOffImports(module.code);
