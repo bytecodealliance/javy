@@ -9,8 +9,8 @@ export default {
 			},
 			fileName: (fmt, name) => {
 				name = name === "main" ? "index" : `${name}/index`;
-				fmt = fmt === "es" ? "" : `.${fmt}`;
-				return `${name}${fmt}.js`;
+				const ext = fmt === "es" ? "js" : "cjs";
+				return `${name}.${ext}`;
 			},
 		},
 	},

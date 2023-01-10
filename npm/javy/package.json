@@ -2,13 +2,24 @@
 	"name": "javy",
 	"version": "0.0.1",
 	"description": "",
-	"main": "index.js",
 	"type": "module",
 	"author": "Surma <surma@shopify.com>",
 	"license": "Apache-2.0",
 	"scripts": {
 		"build": "vite build",
 		"test": "node ./tests/runner.js"
+	},
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"require": "./dist/index.cjs"
+		},
+		"./fs": {
+			"types": "./dist/fs/index.d.ts",
+			"import": "./dist/fs/index.js",
+			"require": "./dist/fs/index.cjs"
+		}
 	},
 	"devDependencies": {
 		"vite": "^4.0.4",
