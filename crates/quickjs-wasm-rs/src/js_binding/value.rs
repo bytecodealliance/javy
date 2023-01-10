@@ -174,12 +174,15 @@ impl Value {
                     // see https://simonsapin.github.io/wtf-8/#surrogate-byte-sequence
                     let lone_surrogate =
                         matches!(after_valid, [0xED, 0xA0..=0xBF, 0x80..=0xBF, ..]);
-                    // Rust's `Utf8Error` reports a lone surrogate as having an error_len of 1
-                    // which results in 3 replacement chars being inserted instead of 1. 1
-                    // replacement char is correct according to
-                    // https://simonsapin.github.io/wtf-8/#converting-wtf-8-utf-8. So, substitute an
-                    // error_len of 3 for lone surrogates so the surrogate is only counted once
-                    // instead of as 3 separate characters.
+
+                    // https://simonsapin.github.io/wtf-8/#converting-wtf-8-utf-8 states that each
+                    // 3-byte lone surrogate sequence should be replaced by 1 UTF-8 replacement
+                    // char. Rust's `Utf8Error` reports each byte in the lone surrogate byte
+                    // sequence as a separate error with an `error_len` of 1. Since we insert a
+                    // replacement char for each error, this results in 3 replacement chars being
+                    // inserted. So we use an `error_len` of 3 instead of 1 to treat the entire
+                    // 3-byte sequence as 1 error instead of as 3 errors and only emit 1
+                    // replacement char.
                     let error_len = if lone_surrogate {
                         3
                     } else {
