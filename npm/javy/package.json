@@ -7,11 +7,13 @@
   "author": "Surma <surma@shopify.com>",
   "license": "Apache-2.0",
   "scripts": {
+		"build": "vite build",
     "test": "node ./tests/runner.js"
   },
   "devDependencies": {
+		"vite": "^4.0.4",
     "@rollup/plugin-node-resolve": "^15.0.1",
     "rollup": "^3.7.4",
     "rollup-plugin-swc": "^0.2.1"
-  }
+	}
 }
