@@ -5,5 +5,13 @@
   "main": "index.js",
   "type": "module",
   "author": "Surma <surma@shopify.com>",
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "node ./tests/runner.js"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^15.0.1",
+    "rollup": "^3.7.4",
+    "rollup-plugin-swc": "^0.2.1"
+  }
 }
