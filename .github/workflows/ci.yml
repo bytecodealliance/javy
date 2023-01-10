@@ -1,6 +1,6 @@
 name: CI
 
-on: 
+on:
   push:
     branches:
       - main
@@ -12,7 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-       
+        with:
+          submodules: true
+
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -59,6 +61,3 @@ jobs:
 
       - name: Lint
         run: make fmt
-
-
-  

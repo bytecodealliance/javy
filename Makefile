@@ -46,7 +46,7 @@ test-wpt: cli
 			&& npm test \
 			&& cd -
 
-tests: test-quickjs-wasm-rs test-core test-cli
+tests: test-quickjs-wasm-rs test-core test-cli test-wpt
 
 fmt: fmt-quickjs-wasm-sys fmt-quickjs-wasm-rs fmt-core fmt-cli
 
