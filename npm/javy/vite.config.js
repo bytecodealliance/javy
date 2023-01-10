@@ -1,3 +1,5 @@
+import dts from "vite-plugin-dts";
+
 export default {
 	build: {
 		lib: {
@@ -12,4 +14,5 @@ export default {
 			},
 		},
 	},
+	plugins: [dts()],
 };

@@ -24,7 +24,9 @@ interface JavyBuiltins {
 	};
 }
 
-declare var Javy: JavyBuiltins;
+declare global {
+	const Javy: JavyBuiltins;
+}
 
 export const enum STDIO {
 	Stdin,
