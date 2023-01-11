@@ -78,8 +78,8 @@ where
 fn decode_utf8_buffer_to_js_string(
 ) -> impl FnMut(&Context, &Value, &[Value]) -> anyhow::Result<Value> {
     move |ctx: &Context, _this: &Value, args: &[Value]| {
-        if args.len() != 4 {
-            return Err(anyhow!("Expecting 4 arguments, received {}", args.len()));
+        if args.len() != 5 {
+            return Err(anyhow!("Expecting 5 arguments, received {}", args.len()));
         }
 
         let buffer = args[0].as_bytes()?;
@@ -100,12 +100,22 @@ fn decode_utf8_buffer_to_js_string(
         }
         .try_into()?;
         let fatal = args[3].as_bool()?;
+        let ignore_bom = args[4].as_bool()?;
 
-        let view = buffer
+        let mut view = buffer
             .get(byte_offset..(byte_offset + byte_length))
             .ok_or(anyhow!(
                 "Provided offset and length is not valid for provided buffer"
             ))?;
+
+        if !ignore_bom {
+            view = match view {
+                // [0xEF, 0xBB, 0xBF] is the UTF-8 BOM which we want to strip
+                [0xEF, 0xBB, 0xBF, rest @ ..] => rest,
+                _ => view,
+            };
+        }
+
         let str = if fatal {
             Cow::from(str::from_utf8(view).map_err(|_| anyhow!("The encoded data was not valid"))?)
         } else {

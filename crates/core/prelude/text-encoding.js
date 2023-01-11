@@ -35,8 +35,7 @@
                 throw new TypeError("The provided value is not of type '(ArrayBuffer or ArrayBufferView)'");
             }
 
-            // ignoreBOM does not appear to change behaviour for UTF-8
-            return __javy_decodeUtf8BufferToString(input, byteOffset, byteLength, this.fatal);
+            return __javy_decodeUtf8BufferToString(input, byteOffset, byteLength, this.fatal, this.ignoreBOM);
         }
     }
 
