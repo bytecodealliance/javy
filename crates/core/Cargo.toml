@@ -10,7 +10,7 @@ name = "javy_core"
 path = "src/main.rs"
 
 [lib]
-name = "javy_provider"
+name = "javy_quickjs_provider"
 crate-type = ["cdylib"]
 
 [dependencies]

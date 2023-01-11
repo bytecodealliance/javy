@@ -42,7 +42,7 @@ fn create_module(engine: &Engine) -> Result<Module> {
         Path::new("target")
             .join("wasm32-wasi")
             .join("release")
-            .join("javy_provider.wasm"),
+            .join("javy_quickjs_provider.wasm"),
     );
     Module::from_file(engine, lib_path)
 }
