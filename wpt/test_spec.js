@@ -7,15 +7,15 @@ export default [
     testFile: "upstream/encoding/api-basics.any.js",
     ignoredTests: ["Decode sample: utf-16le", "Decode sample: utf-16be", "Decode sample: utf-16"],
   },
-  // { // FIXME script importing isn't working
-  //   testFile: "upstream/encoding/api-invalid-label.any.js",
-  // },
+  {
+    testFile: "upstream/encoding/api-invalid-label.any.js",
+  },
   // { // FIXME script importing isn't working
   //   testFile: "upstream/encoding/api-replacement-encodings.any.js",
   // },
-  // { // FIXME needs fix for TextEncoder to be merged
-  //   testFile: "upstream/encoding/api-surrogates-utf8.any.js",
-  // },
+  {
+    testFile: "upstream/encoding/api-surrogates-utf8.any.js",
+  },
   // { // FIXME requires `encodeInto` support
   //   testFile: "upstream/encoding/encodeInto.any.js",
   // },
@@ -55,8 +55,5 @@ export default [
   // },
   {
     testFile: "upstream/encoding/textencoder-utf16-surrogates.any.js",
-  },
-  {
-    testFile: "upstream/encoding/api-invalid-label.any.js",
   },
 ];
