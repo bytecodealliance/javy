@@ -1,5 +1,12 @@
 export let failedTestCount = 0;
 
+function logFailure({ name, message, stack }) {
+  console.log("[FAIL]", name);
+  console.log(message);
+  console.log(stack);
+  failedTestCount += 1;
+}
+
 export function resultReporter(test) {
   // No logging on success;
   if (test.status === 0) return;
@@ -15,8 +22,13 @@ export function resultReporter(test) {
     return matcher === test.name;
   });
   if (shouldSkipTest) return;
-  console.log("[FAIL]", test.name);
-  console.log(test.message);
-  console.log(test.stack);
-  failedTestCount += 1;
+  logFailure(test);
+}
+
+export function completionReporter(tests, testStatus) {
+  if (testStatus.status == 0) return;
+  // For some reason, neither the `tests` object nor the `testStatus`
+  // object contain a name to reference. We will have to work with the
+  // stack if this one goes wrong.
+  logFailure({ name: "???", ...testStatus });
 }

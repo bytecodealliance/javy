@@ -12,11 +12,11 @@ export default {
     format: "es",
   },
   plugins: [
-    // This plugin transforms the WPT-invented `// META: script=`
-    // directives into ESM imports.
+    // This plugin handles the WPT-invented `// META: script=`
+    // directives.
     {
       name: "wpt-import-sytnax",
-      transform(chunk, id) {
+      async transform(chunk, id) {
         const imports = [];
         const newCode = chunk.replaceAll(MATCHER, (_match, ref) => {
           let base;
@@ -29,10 +29,25 @@ export default {
           imports.push(refPath);
           return "";
         });
-        return `
-          ${imports.map((i) => `import ${JSON.stringify(i)};`).join("\n")}
+
+        // Originally, I just re-wrote the WPT import directives to ESM
+        // imports. However, ES modules are isolated scopes, so top-level
+        // variables would just get stripped/ignored as they were inaccessible
+        // according to ESM semantics. WPT just inlines the code of the
+        // referenced file, so I have to manually implement that behavior
+        // here.
+        const resolvedImports = await Promise.all(
+          imports.map(async (importId) => {
+            const resolution = await this.resolve(importId, id);
+            const moduleInfo = await this.load(resolution);
+            return moduleInfo.code;
+          })
+        );
+        const transformedCode = `
+          ${resolvedImports.join("\n")}
           ${newCode}
         `;
+        return transformedCode;
       },
     },
     // This plugin handles the special import in `runner.js`.
