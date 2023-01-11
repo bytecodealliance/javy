@@ -10,18 +10,18 @@ export default [
   {
     testFile: "upstream/encoding/api-invalid-label.any.js",
   },
-  // { // FIXME script importing isn't working
-  //   testFile: "upstream/encoding/api-replacement-encodings.any.js",
-  // },
+  {
+    testFile: "upstream/encoding/api-replacement-encodings.any.js",
+  },
   {
     testFile: "upstream/encoding/api-surrogates-utf8.any.js",
   },
   // { // FIXME requires `encodeInto` support
   //   testFile: "upstream/encoding/encodeInto.any.js",
   // },
-  // { // FIXME script importing isn't working
-  //   testFile: "upstream/encoding/replacement-encodings.any.js",
-  // },
+  {
+    testFile: "upstream/encoding/replacement-encodings.any.js",
+  },
   // { // FIXME need to add streaming support
   //   testFile: "upstream/encoding/textdecoder-arguments.any.js",
   // },
