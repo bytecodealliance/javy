@@ -28,7 +28,7 @@ const ZERO_SIZE_ALLOCATION_PTR: *mut u8 = 1 as _;
 /// * `js_src_ptr` must reference a valid array of unsigned bytes of `js_src_len` length
 /// * `bytecode_len` must be a pointer allocated by `canonical_abi_realloc` with an `alignment` of
 ///   4 and a `new_size` of 1
-#[export_name = "compile-src"]
+#[export_name = "compile_src"]
 pub unsafe extern "C" fn compile_src(
     js_src_ptr: *const u8,
     js_src_len: usize,
@@ -47,8 +47,8 @@ pub unsafe extern "C" fn compile_src(
 /// # Safety
 ///
 /// * `bytecode_ptr` must reference a valid array of unsigned bytes of `bytecode_len` length
-#[export_name = "eval-bytecode"]
-pub unsafe extern "C" fn eval_src(bytecode_ptr: *const u8, bytecode_len: usize) {
+#[export_name = "eval_bytecode"]
+pub unsafe extern "C" fn eval_bytecode(bytecode_ptr: *const u8, bytecode_len: usize) {
     let context = Context::default();
     globals::inject_javy_globals(&context, io::stderr(), io::stderr()).unwrap();
     let bytecode = slice::from_raw_parts(bytecode_ptr, bytecode_len);

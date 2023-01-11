@@ -21,7 +21,7 @@ fn test_dylib() -> Result<()> {
         let mut store = Store::new(&engine, wasi);
         let instance = linker.instantiate(&mut store, &module)?;
         let eval_bytecode_func =
-            instance.get_typed_func::<(u32, u32), (), _>(&mut store, "eval-bytecode")?;
+            instance.get_typed_func::<(u32, u32), (), _>(&mut store, "eval_bytecode")?;
 
         let js_src = "console.log(42);";
         let (bytecode_ptr, bytecode_len) = compile_src(js_src.as_bytes(), &instance, &mut store)?;
@@ -54,7 +54,7 @@ fn compile_src(
 ) -> Result<(u32, u32)> {
     let memory = instance.get_memory(&mut store, "memory").unwrap();
     let compile_src_func =
-        instance.get_typed_func::<(u32, u32, u32), u32, _>(&mut store, "compile-src")?;
+        instance.get_typed_func::<(u32, u32, u32), u32, _>(&mut store, "compile_src")?;
 
     let js_src_ptr = allocate_memory(&instance, &mut store, 1, js_src.len().try_into()?)?;
     memory.write(&mut store, js_src_ptr.try_into()?, js_src)?;
