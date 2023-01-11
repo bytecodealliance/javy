@@ -44,9 +44,14 @@ export default [
     testFile: "upstream/encoding/textdecoder-ignorebom.any.js",
     ignoredTests: ["/utf-16/"]
   },
-  // { // FIXME script importing isn't working
-  //   testFile: "upstream/encoding/textdecoder-labels.any.js",
-  // },
+  {
+    testFile: "upstream/encoding/textdecoder-labels.any.js",
+    ignoredTests: [
+      "/IBM866/", "/ISO-8859-/", "/KOI8-/", "/macintosh/", "/windows-/", "/x-mac-cyrillic/",
+      "/GBK/", "/gb18030/", "/Big5/", "/EUC-/", "/ISO-2022-JP/", "/Shift_JIS/", "/UTF-16/",
+      "/x-user-defined/",
+    ],
+  },
   // { // FIXME need to make a custom test that doesn't run non-UTF8 encodings and doesn't rely on SharedArrayBuffers
   //   testFile: "upstream/encoding/textdecoder-streaming.any.js",
   // },
