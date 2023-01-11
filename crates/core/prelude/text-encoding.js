@@ -4,6 +4,7 @@
 
     class TextDecoder {
         constructor(label = "utf-8", options = {}) {
+            label = label.trim().toLowerCase();
             if (label !== "utf-8") {
                 // Not spec-compliant behaviour
                 throw new RangeError("The encoding label provided must be utf-8");

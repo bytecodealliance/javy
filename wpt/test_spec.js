@@ -50,9 +50,14 @@ export default [
   // { // FIXME need to make a custom test that doesn't run non-UTF8 encodings and doesn't rely on SharedArrayBuffers
   //   testFile: "upstream/encoding/textdecoder-streaming.any.js",
   // },
-  // { // FIXME script importing isn't working
-  //   testFile: "upstream/encoding/textencoder-constructor-non-utf.any.js",
-  // },
+  {
+    testFile: "upstream/encoding/textencoder-constructor-non-utf.any.js",
+    ignoredTests: [
+      "/IBM866/", "/ISO-8859-/", "/KOI8-/", "/macintosh/", "/windows-/", "/x-mac-cyrillic/",
+      "/GBK/", "/gb18030/", "/Big5/", "/EUC-/", "/ISO-2022-JP/", "/Shift_JIS/", "/UTF-16/",
+      "/x-user-defined/",
+    ],
+  },
   {
     testFile: "upstream/encoding/textencoder-utf16-surrogates.any.js",
   },
