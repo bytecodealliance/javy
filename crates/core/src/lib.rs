@@ -13,33 +13,32 @@ mod globals;
 // non-zero to indicate success.
 const ZERO_SIZE_ALLOCATION_PTR: *mut u8 = 1 as _;
 
+static mut COMPILE_SRC_RET_AREA: [u32; 2] = [0; 2];
+
 /// Compiles JS source code to QuickJS bytecode.
 ///
-/// Returns a pointer to a byte array containing the bytecode.
+/// Returns a pointer to a buffer containing a 32-bit pointer to the bytecode byte array and the
+/// u32 length of the bytecode byte array.
 ///
 /// # Arguments
 ///
 /// * `js_src_ptr` - A pointer to the start of a byte array containing UTF-8 JS source code
 /// * `js_src_len` - The length of the byte array containing JS source code
-/// * `bytecode_len_ptr` - A pointer to where to write the length of the returned bytecode byte array
 ///
 /// # Safety
 ///
 /// * `js_src_ptr` must reference a valid array of unsigned bytes of `js_src_len` length
-/// * `bytecode_len` must be a pointer allocated by `canonical_abi_realloc` with an `alignment` of
-///   4 and a `new_size` of 1
 #[export_name = "compile_src"]
-pub unsafe extern "C" fn compile_src(
-    js_src_ptr: *const u8,
-    js_src_len: usize,
-    bytecode_len_ptr: *mut u32,
-) -> *const u8 {
+pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -> *const u32 {
     let context = Context::default();
     let js_src = str::from_utf8(slice::from_raw_parts(js_src_ptr, js_src_len)).unwrap();
     let bytecode = context.compile_global("function.mjs", js_src).unwrap();
-    *bytecode_len_ptr = bytecode.len().try_into().unwrap();
+    let bytecode_len = bytecode.len();
     // We need the bytecode buffer to live longer than this function so it can be read from memory
-    Box::leak(bytecode.into_boxed_slice()).as_ptr()
+    let bytecode_ptr = Box::leak(bytecode.into_boxed_slice()).as_ptr();
+    COMPILE_SRC_RET_AREA[0] = bytecode_ptr as u32;
+    COMPILE_SRC_RET_AREA[1] = bytecode_len.try_into().unwrap();
+    COMPILE_SRC_RET_AREA.as_ptr()
 }
 
 /// Evaluates QuickJS bytecode

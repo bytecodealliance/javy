@@ -54,24 +54,16 @@ fn compile_src(
 ) -> Result<(u32, u32)> {
     let memory = instance.get_memory(&mut store, "memory").unwrap();
     let compile_src_func =
-        instance.get_typed_func::<(u32, u32, u32), u32, _>(&mut store, "compile_src")?;
+        instance.get_typed_func::<(u32, u32), u32, _>(&mut store, "compile_src")?;
 
     let js_src_ptr = allocate_memory(&instance, &mut store, 1, js_src.len().try_into()?)?;
     memory.write(&mut store, js_src_ptr.try_into()?, js_src)?;
 
-    let bytecode_len_ptr = allocate_memory(&instance, &mut store, 4, 1)?;
-    let bytecode_ptr = compile_src_func.call(
-        &mut store,
-        (js_src_ptr, js_src.len().try_into()?, bytecode_len_ptr),
-    )?;
-
-    let mut bytecode_len_buffer = [0; 4];
-    memory.read(
-        &mut store,
-        bytecode_ptr.try_into()?,
-        &mut bytecode_len_buffer,
-    )?;
-    let bytecode_len = u32::from_le_bytes(bytecode_len_buffer);
+    let ret_ptr = compile_src_func.call(&mut store, (js_src_ptr, js_src.len().try_into()?))?;
+    let mut ret_buffer = [0; 8];
+    memory.read(&mut store, ret_ptr.try_into()?, &mut ret_buffer)?;
+    let bytecode_ptr = u32::from_le_bytes(ret_buffer[0..4].try_into()?);
+    let bytecode_len = u32::from_le_bytes(ret_buffer[4..8].try_into()?);
 
     Ok((bytecode_ptr, bytecode_len))
 }
