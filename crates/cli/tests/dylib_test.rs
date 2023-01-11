@@ -17,6 +17,7 @@ fn test_dylib() -> Result<()> {
         .build();
     let module = create_module(&engine)?;
 
+    // scope is needed to ensure `store` is dropped before trying to read from `stderr` below
     {
         let mut store = Store::new(&engine, wasi);
         let instance = linker.instantiate(&mut store, &module)?;
