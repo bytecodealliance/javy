@@ -29,6 +29,7 @@ lazy_static = "1.4"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 criterion = "0.3"
 num-format = "0.4.3"
+wasm-encoder = "0.20"
 
 [[bench]]
 name = "benchmark"
