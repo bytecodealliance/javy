@@ -5,10 +5,8 @@
     class TextDecoder {
         constructor(label = "utf-8", options = {}) {
             label = label.trim().toLowerCase();
-            if (
-                label !== "utf-8" && label !== "utf8" && label !== "unicode-1-1-utf-8"
-                && label !== "unicode11utf8" && label !== "unicode20utf8" && label !== "x-unicode20utf8"
-            ) {
+            const acceptedLabels = ["utf-8", "utf8", "unicode-1-1-utf-8", "unicode11utf8", "unicode20utf8", "x-unicode20utf8"];
+            if (!acceptedLabels.includes(label)) {
                 // Not spec-compliant behaviour
                 throw new RangeError("The encoding label provided must be utf-8");
             }
