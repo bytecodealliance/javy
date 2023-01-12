@@ -13,17 +13,6 @@ pub extern "C" fn init() {
     let context = Context::default();
     globals::inject_javy_globals(&context, io::stderr(), io::stderr()).unwrap();
 
-    context
-        .eval_global(
-            "text-encoding.js",
-            include_str!("../prelude/text-encoding.js"),
-        )
-        .unwrap();
-
-    context
-        .eval_global("io.js", include_str!("../prelude/io.js"))
-        .unwrap();
-
     let mut contents = String::new();
     io::stdin().read_to_string(&mut contents).unwrap();
 

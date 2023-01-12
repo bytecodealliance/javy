@@ -52,6 +52,14 @@ where
             ctx.value_from_i32(n.try_into()?)
         })?,
     )?;
+
+    context.eval_global(
+        "text-encoding.js",
+        include_str!("../prelude/text-encoding.js"),
+    )?;
+
+    context.eval_global("io.js", include_str!("../prelude/io.js"))?;
+
     Ok(())
 }
 
