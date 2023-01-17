@@ -5,6 +5,8 @@ use wasm_encoder::{
     MemoryType, Module, TypeSection, ValType,
 };
 
+use crate::custom_section;
+
 // Run the calling code with the `dump_wat` feature enabled to print the WAT to stdout
 //
 // For the example generated WAT, the `bytecode_len` is 67
@@ -36,7 +38,7 @@ use wasm_encoder::{
 //     (export "_start" (func 2))
 //     (data (;0;) "\02\03\0econsole\06log\18function.mjs\0e\00\06\00\a0\01\00\01\00\03\00\00\11\01\a2\01\00\00\008\de\00\00\00B\df\00\00\00\bd*$\01\00\cd(\c0\03\01\00")
 // )
-pub fn generate_module(bytecode: Vec<u8>, js_src: &str) -> Result<Vec<u8>> {
+pub fn generate_module(bytecode: Vec<u8>, js_src: &[u8]) -> Result<Vec<u8>> {
     let mut module = Module::new();
     let mut indices = Indices::new();
 
@@ -51,14 +53,7 @@ pub fn generate_module(bytecode: Vec<u8>, js_src: &str) -> Result<Vec<u8>> {
     add_source_code(&mut module, js_src)?;
 
     let wasm_binary = module.finish();
-
-    if cfg!(feature = "dump_wat") {
-        println!(
-            "Generated WAT: \n{}",
-            wasmprinter::print_bytes(&wasm_binary)?
-        );
-    }
-
+    print_wat(&wasm_binary)?;
     Ok(wasm_binary)
 }
 
@@ -261,20 +256,26 @@ fn add_data(module: &mut Module, bytecode: Vec<u8>) {
     module.section(&data);
 }
 
-fn add_source_code(module: &mut Module, js_src: &str) -> Result<()> {
-    let mut compressed_source_code: Vec<u8> = vec![];
-    brotli::enc::BrotliCompress(
-        &mut std::io::Cursor::new(js_src.as_bytes()),
-        &mut compressed_source_code,
-        &brotli::enc::BrotliEncoderParams {
-            quality: 11,
-            ..Default::default()
-        },
-    )?;
+fn add_source_code(module: &mut Module, js_src: &[u8]) -> Result<()> {
+    let compressed_source_code = custom_section::compress_source_code(js_src)?;
     let source_code_custom = CustomSection {
-        name: "javy_source",
+        name: custom_section::SOURCE_CODE_SECTION_NAME,
         data: &compressed_source_code,
     };
     module.section(&source_code_custom);
+    Ok(())
+}
+
+#[cfg(feature = "dump_wat")]
+fn print_wat(wasm_binary: &[u8]) -> Result<()> {
+    println!(
+        "Generated WAT: \n{}",
+        wasmprinter::print_bytes(&wasm_binary)?
+    );
+    Ok(())
+}
+
+#[cfg(not(feature = "dump_wat"))]
+fn print_wat(_wasm_binary: &[u8]) -> Result<()> {
     Ok(())
 }
