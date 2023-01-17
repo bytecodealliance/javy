@@ -112,9 +112,9 @@ fn decode_utf8_buffer_to_js_string(
 
         let mut view = buffer
             .get(byte_offset..(byte_offset + byte_length))
-            .ok_or(anyhow!(
-                "Provided offset and length is not valid for provided buffer"
-            ))?;
+            .ok_or_else(|| {
+                anyhow!("Provided offset and length is not valid for provided buffer")
+            })?;
 
         if !ignore_bom {
             view = match view {
