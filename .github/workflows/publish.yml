@@ -10,7 +10,7 @@ jobs:
     name: Compile Core
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -27,7 +27,7 @@ jobs:
         run: make core
 
       - name: Upload core binary to artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: engine
           path: target/wasm32-wasi/release/javy_core.wasm
@@ -56,9 +56,9 @@ jobs:
             shasum_cmd: sha256sum
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
 
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: engine
           path: crates/cli/
@@ -83,7 +83,7 @@ jobs:
         run: gzip -k -f ${{ matrix.path }} && mv ${{ matrix.path }}.gz ${{ matrix.asset_name }}.gz
 
       - name: Upload assets to artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.asset_name }}.gz
           path: ${{ matrix.asset_name }}.gz
@@ -102,7 +102,7 @@ jobs:
         run: ${{ matrix.shasum_cmd }} ${{ matrix.asset_name }}.gz | awk '{ print $1 }' > ${{ matrix.asset_name }}.gz.sha256
 
       - name: Upload asset hash to artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.asset_name }}.gz.sha256
           path: ${{ matrix.asset_name }}.gz.sha256
