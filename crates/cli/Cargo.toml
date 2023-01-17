@@ -9,6 +9,9 @@ build = "build.rs"
 [[bin]]
 name = "javy"
 
+[features]
+dump_wat = []
+
 [dependencies]
 wizer = "1.6.0"
 which = "4.2"
@@ -29,6 +32,10 @@ lazy_static = "1.4"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 criterion = "0.3"
 num-format = "0.4.3"
+wasm-encoder = "0.20"
+# ideally would be optional and only included for builds with `dump_wat` enabled but cargo doesn't
+# allow that for dev dependencies
+wasmprinter = "0.2.45"
 
 [[bench]]
 name = "benchmark"
