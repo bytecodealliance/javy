@@ -6,6 +6,35 @@ use wasm_encoder::{
 };
 
 // Run the calling code with the `dump_wat` feature enabled to print the WAT to stdout
+//
+// (module
+//     (type (;0;) (func (param i32 i32 i32 i32) (result i32)))
+//     (type (;1;) (func (param i32 i32)))
+//     (type (;2;) (func))
+//     (import "javy_quickjs_provider_v1" "canonical_abi_realloc" (func (;0;) (type 0)))
+//     (import "javy_quickjs_provider_v1" "eval_bytecode" (func (;1;) (type 1)))
+//     (import "javy_quickjs_provider_v1" "memory" (memory (;0;) 0))
+//     (func (;2;) (type 2)
+//         (local i32)
+//         i32.const 0
+//         i32.const 0
+//         i32.const 1
+//         i32.const 67
+//         call 0
+//         local.tee 0
+//         i32.const 0
+//         i32.const 67
+//         memory.init 0
+//         data.drop 0
+//         local.get 0
+//         i32.const 67
+//         call 1
+//     )
+//     (memory (;1;) 0)
+//     (export "memory" (memory 1))
+//     (export "_start" (func 2))
+//     (data (;0;) "\02\03\0econsole\06log\18function.mjs\0e\00\06\00\a0\01\00\01\00\03\00\00\11\01\a2\01\00\00\008\de\00\00\00B\df\00\00\00\bd*$\01\00\cd(\c0\03\01\00")
+// )
 pub fn generate_module(bytecode: Vec<u8>, js_src: &str) -> Result<Vec<u8>> {
     let mut module = Module::new();
     let mut indices = Indices::new();
