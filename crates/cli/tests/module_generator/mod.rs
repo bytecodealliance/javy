@@ -7,6 +7,7 @@ use wasm_encoder::{
 
 // Run the calling code with the `dump_wat` feature enabled to print the WAT to stdout
 //
+// For the example generated WAT, the `bytecode_len` is 67
 // (module
 //     (type (;0;) (func (param i32 i32 i32 i32) (result i32)))
 //     (type (;1;) (func (param i32 i32)))
