@@ -5,6 +5,7 @@ use wasm_encoder::{
     MemoryType, Module, TypeSection, ValType,
 };
 
+// Run the calling code with the `dump_wat` feature enabled to print the WAT to stdout
 pub fn generate_module(bytecode: Vec<u8>, js_src: &str) -> Result<Vec<u8>> {
     let mut module = Module::new();
     let mut indices = Indices::new();
@@ -19,7 +20,16 @@ pub fn generate_module(bytecode: Vec<u8>, js_src: &str) -> Result<Vec<u8>> {
     add_data(&mut module, bytecode);
     add_source_code(&mut module, js_src)?;
 
-    Ok(module.finish())
+    let wasm_binary = module.finish();
+
+    if cfg!(feature = "dump_wat") {
+        println!(
+            "Generated WAT: \n{}",
+            wasmprinter::print_bytes(&wasm_binary)?
+        );
+    }
+
+    Ok(wasm_binary)
 }
 
 struct Indices {

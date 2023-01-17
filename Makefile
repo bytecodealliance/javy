@@ -37,7 +37,7 @@ test-core:
 # Note: to make this faster, the engine should be optimized beforehand (wasm-strip + wasm-opt).
 test-cli: core
 		cd crates/cli \
-				&& cargo test --release \
+				&& cargo test --release -- --nocapture\
 				&& cd -
 
 test-wpt: cli
