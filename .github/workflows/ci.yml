@@ -11,7 +11,7 @@ jobs:
     name: Tests + Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
         with:
           submodules: true
 
@@ -24,7 +24,7 @@ jobs:
           components: clippy, rustfmt
 
       - name: Cargo Cache
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: ~/.cargo
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
@@ -33,7 +33,7 @@ jobs:
             ${{ runner.os }}-cargo
 
       - name: Cargo Target Cache
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: target
           key: ${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
