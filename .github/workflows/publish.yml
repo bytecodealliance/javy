@@ -12,14 +12,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: default
-          toolchain: stable
-          target: wasm32-wasi
-          default: true
-
       - name: Install wasi-sdk
         run: make download-wasi-sdk
 
@@ -66,13 +58,6 @@ jobs:
       - name: ls
         run: ls -R
         working-directory: crates/cli/
-
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: default
-          toolchain: 1.53.0
-          default: true
 
       - name: Build CLI ${{ matrix.os }}
         env:

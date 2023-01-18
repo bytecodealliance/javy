@@ -15,14 +15,6 @@ jobs:
         with:
           submodules: true
 
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: default
-          toolchain: stable
-          default: true
-          components: clippy, rustfmt
-
       - name: Cargo Cache
         uses: actions/cache@v3
         with:
