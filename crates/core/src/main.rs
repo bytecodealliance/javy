@@ -6,7 +6,7 @@ use std::string::String;
 mod globals;
 
 static mut CONTEXT: OnceCell<Context> = OnceCell::new();
-static mut CODE: OnceCell<String> = OnceCell::new();
+static mut BYTECODE: OnceCell<Vec<u8>> = OnceCell::new();
 
 #[export_name = "wizer.initialize"]
 pub extern "C" fn init() {
@@ -15,16 +15,17 @@ pub extern "C" fn init() {
 
     let mut contents = String::new();
     io::stdin().read_to_string(&mut contents).unwrap();
+    let bytecode = context.compile_global("function.mjs", &contents).unwrap();
 
     unsafe {
         CONTEXT.set(context).unwrap();
-        CODE.set(contents).unwrap();
+        BYTECODE.set(bytecode).unwrap();
     }
 }
 
 fn main() {
-    let code = unsafe { CODE.take().unwrap() };
+    let bytecode = unsafe { BYTECODE.take().unwrap() };
     let context = unsafe { CONTEXT.take().unwrap() };
 
-    context.eval_global("function.mjs", &code).unwrap();
+    context.eval_binary(&bytecode).unwrap();
 }
