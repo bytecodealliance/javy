@@ -1,5 +1,8 @@
+mod bytecode;
+mod module_generator;
 mod opt;
 mod options;
+mod source_code_section;
 
 use crate::options::Options;
 use anyhow::{bail, Context, Result};
@@ -12,6 +15,17 @@ use structopt::StructOpt;
 
 fn main() -> Result<()> {
     let opts = Options::from_args();
+
+    if opts.dynamic {
+        create_dynamically_linked_module(opts)?;
+    } else {
+        create_statically_linked_module(opts)?;
+    }
+
+    Ok(())
+}
+
+fn create_statically_linked_module(opts: Options) -> Result<()> {
     let wizen = env::var("JAVY_WIZEN");
 
     if wizen.eq(&Ok("1".into())) {
@@ -25,10 +39,7 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    let mut input_file = fs::File::open(&opts.input)
-        .with_context(|| format!("Failed to open input file {}", opts.input.display()))?;
-    let mut contents: Vec<u8> = vec![];
-    input_file.read_to_end(&mut contents)?;
+    let contents = read_input_file(&opts.input)?;
 
     let self_cmd = env::args().next().unwrap();
 
@@ -47,7 +58,11 @@ fn main() -> Result<()> {
         }
     }
 
-    add_custom_section(&opts.output, "javy_source".to_string(), contents)?;
+    add_custom_section(
+        &opts.output,
+        source_code_section::SOURCE_CODE_SECTION_NAME.to_string(),
+        contents,
+    )?;
 
     Ok(())
 }
@@ -55,15 +70,7 @@ fn main() -> Result<()> {
 fn add_custom_section<P: AsRef<Path>>(file: P, section: String, contents: Vec<u8>) -> Result<()> {
     use parity_wasm::elements::*;
 
-    let mut compressed: Vec<u8> = vec![];
-    brotli::enc::BrotliCompress(
-        &mut std::io::Cursor::new(contents),
-        &mut compressed,
-        &brotli::enc::BrotliEncoderParams {
-            quality: 11,
-            ..Default::default()
-        },
-    )?;
+    let compressed = source_code_section::compress_source_code(&contents)?;
 
     let mut module = parity_wasm::deserialize_file(&file)?;
     module
@@ -72,4 +79,21 @@ fn add_custom_section<P: AsRef<Path>>(file: P, section: String, contents: Vec<u8
     parity_wasm::serialize_to_file(&file, module)?;
 
     Ok(())
+}
+
+fn create_dynamically_linked_module(opts: Options) -> Result<()> {
+    let js_source_code = read_input_file(&opts.input)?;
+    let quickjs_bytecode = bytecode::compile_source(&js_source_code)?;
+    let wasm_module = module_generator::generate_module(quickjs_bytecode, &js_source_code)?;
+    let mut output_file = fs::File::create(&opts.output)?;
+    output_file.write_all(&wasm_module)?;
+    Ok(())
+}
+
+fn read_input_file(path: &Path) -> Result<Vec<u8>> {
+    let mut input_file = fs::File::open(path)
+        .with_context(|| format!("Failed to open input file {}", path.display()))?;
+    let mut contents: Vec<u8> = vec![];
+    input_file.read_to_end(&mut contents)?;
+    Ok(contents)
 }

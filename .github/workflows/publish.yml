@@ -24,6 +24,12 @@ jobs:
           name: engine
           path: target/wasm32-wasi/release/javy_core.wasm
 
+      - name: Upload core dylib to artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: provider
+          path: target/wasm32-wasi/release/javy_quickjs_provider.wasm
+
   compile_cli:
     name: Compile CLI
     needs: compile_core
@@ -53,6 +59,11 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: engine
+          path: crates/cli/
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: provider
           path: crates/cli/
 
       - name: ls
