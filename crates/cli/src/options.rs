@@ -12,6 +12,6 @@ pub struct Options {
 
     #[structopt(short = "d")]
     /// Creates a smaller module that requires a dynamically linked QuickJS provider Wasm
-    /// component to execute the JavaScript
+    /// module to execute the JavaScript
     pub dynamic: bool,
 }
