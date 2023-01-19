@@ -5,7 +5,7 @@ use wasm_encoder::{
     MemoryType, Module, TypeSection, ValType,
 };
 
-use crate::custom_section;
+use crate::source_code_section;
 
 // Run the calling code with the `dump_wat` feature enabled to print the WAT to stdout
 //
@@ -257,9 +257,9 @@ fn add_data(module: &mut Module, bytecode: Vec<u8>) {
 }
 
 fn add_source_code(module: &mut Module, js_src: &[u8]) -> Result<()> {
-    let compressed_source_code = custom_section::compress_source_code(js_src)?;
+    let compressed_source_code = source_code_section::compress_source_code(js_src)?;
     let source_code_custom = CustomSection {
-        name: custom_section::SOURCE_CODE_SECTION_NAME,
+        name: source_code_section::SOURCE_CODE_SECTION_NAME,
         data: &compressed_source_code,
     };
     module.section(&source_code_custom);

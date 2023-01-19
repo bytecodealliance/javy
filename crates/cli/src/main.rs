@@ -1,8 +1,8 @@
 mod bytecode;
-mod custom_section;
 mod module_generator;
 mod opt;
 mod options;
+mod source_code_section;
 
 use crate::options::Options;
 use anyhow::{bail, Context, Result};
@@ -60,7 +60,7 @@ fn create_statically_linked_module(opts: Options) -> Result<()> {
 
     add_custom_section(
         &opts.output,
-        custom_section::SOURCE_CODE_SECTION_NAME.to_string(),
+        source_code_section::SOURCE_CODE_SECTION_NAME.to_string(),
         contents,
     )?;
 
@@ -70,7 +70,7 @@ fn create_statically_linked_module(opts: Options) -> Result<()> {
 fn add_custom_section<P: AsRef<Path>>(file: P, section: String, contents: Vec<u8>) -> Result<()> {
     use parity_wasm::elements::*;
 
-    let compressed = custom_section::compress_source_code(&contents)?;
+    let compressed = source_code_section::compress_source_code(&contents)?;
 
     let mut module = parity_wasm::deserialize_file(&file)?;
     module
