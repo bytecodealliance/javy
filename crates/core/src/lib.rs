@@ -1,3 +1,4 @@
+use once_cell::sync::OnceCell;
 use quickjs_wasm_rs::Context;
 use std::alloc::{alloc, dealloc, Layout};
 use std::io;
@@ -15,6 +16,16 @@ const ZERO_SIZE_ALLOCATION_PTR: *mut u8 = 1 as _;
 
 static mut COMPILE_SRC_RET_AREA: [u32; 2] = [0; 2];
 
+static mut CONTEXT: OnceCell<Context> = OnceCell::new();
+
+/// Used by Wizer to preinitialize the module
+#[export_name = "wizer.initialize"]
+pub extern "C" fn init() {
+    let context = Context::default();
+    globals::inject_javy_globals(&context, io::stderr(), io::stderr()).unwrap();
+    unsafe { CONTEXT.set(context).unwrap() };
+}
+
 /// Compiles JS source code to QuickJS bytecode.
 ///
 /// Returns a pointer to a buffer containing a 32-bit pointer to the bytecode byte array and the
@@ -30,6 +41,7 @@ static mut COMPILE_SRC_RET_AREA: [u32; 2] = [0; 2];
 /// * `js_src_ptr` must reference a valid array of unsigned bytes of `js_src_len` length
 #[export_name = "compile_src"]
 pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -> *const u32 {
+    // Use fresh context to avoid depending on Wizened context
     let context = Context::default();
     let js_src = str::from_utf8(slice::from_raw_parts(js_src_ptr, js_src_len)).unwrap();
     let bytecode = context.compile_global("function.mjs", js_src).unwrap();
@@ -48,8 +60,7 @@ pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -
 /// * `bytecode_ptr` must reference a valid array of unsigned bytes of `bytecode_len` length
 #[export_name = "eval_bytecode"]
 pub unsafe extern "C" fn eval_bytecode(bytecode_ptr: *const u8, bytecode_len: usize) {
-    let context = Context::default();
-    globals::inject_javy_globals(&context, io::stderr(), io::stderr()).unwrap();
+    let context = CONTEXT.get().unwrap();
     let bytecode = slice::from_raw_parts(bytecode_ptr, bytecode_len);
     context.eval_binary(bytecode).unwrap();
 }
