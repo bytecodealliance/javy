@@ -7,14 +7,24 @@ mod source_code_section;
 use crate::options::Options;
 use anyhow::{bail, Context, Result};
 use std::env;
+use std::fs::File;
 use std::io::{Read, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use std::{fs, process::Command};
 use structopt::StructOpt;
 
+const QUICKJS_PROVIDER_MODULE: &[u8] = include_bytes!(concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../../target/wasm32-wasi/release/javy_quickjs_provider.wasm"
+));
+
 fn main() -> Result<()> {
     let opts = Options::from_args();
+
+    if let Some(path) = &opts.provider {
+        output_provider(path)?;
+    }
 
     if opts.dynamic {
         create_dynamically_linked_module(opts)?;
@@ -22,6 +32,12 @@ fn main() -> Result<()> {
         create_statically_linked_module(opts)?;
     }
 
+    Ok(())
+}
+
+fn output_provider(path: &PathBuf) -> Result<()> {
+    let mut file = File::create(path)?;
+    file.write_all(QUICKJS_PROVIDER_MODULE)?;
     Ok(())
 }
 

@@ -14,4 +14,9 @@ pub struct Options {
     /// Creates a smaller module that requires a dynamically linked QuickJS provider Wasm
     /// module to execute the JavaScript
     pub dynamic: bool,
+
+    #[structopt(long = "emit-provider")]
+    /// Emits an additional WebAssembly module that is needed to run
+    /// dynamically linked modules created with `-d`.
+    pub provider: Option<PathBuf>,
 }
