@@ -286,7 +286,7 @@ impl Context {
                 let format = CString::new("%s").unwrap();
                 match error.downcast::<JSError>() {
                     Ok(js_error) => {
-                        let message = CString::new(js_error.msg())
+                        let message = CString::new(js_error.to_string())
                             .unwrap_or_else(|_| CString::new("Unknown error").unwrap());
                         match js_error {
                             JSError::Internal(_) => unsafe {

@@ -1,27 +1,25 @@
-use thiserror::Error;
+use std::error::Error;
+use std::fmt::{self, Display, Formatter};
 
-#[derive(Error, Debug)]
+#[derive(Debug)]
 pub enum JSError {
-    #[error("SyntaxError: {0}")]
     Syntax(String),
-    #[error("TypeError: {0}")]
     Type(String),
-    #[error("ReferenceError: {0}")]
     Reference(String),
-    #[error("RangeError: {0}")]
     Range(String),
-    #[error("InternalError: {0}")]
     Internal(String),
 }
 
-impl JSError {
-    pub(super) fn msg(&self) -> &str {
+impl Display for JSError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Syntax(err) => err,
-            Self::Type(err) => err,
-            Self::Reference(err) => err,
-            Self::Range(err) => err,
-            Self::Internal(err) => err,
+            Self::Internal(msg) => write!(f, "{}", msg),
+            Self::Range(msg) => write!(f, "{}", msg),
+            Self::Reference(msg) => write!(f, "{}", msg),
+            Self::Syntax(msg) => write!(f, "{}", msg),
+            Self::Type(msg) => write!(f, "{}", msg),
         }
     }
 }
+
+impl Error for JSError {}

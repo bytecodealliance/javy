@@ -1256,7 +1256,6 @@ dependencies = [
  "serde-transcode",
  "serde_bytes",
  "serde_json",
- "thiserror",
 ]
 
 [[package]]
