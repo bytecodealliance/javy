@@ -10,7 +10,7 @@ pub fn create_quickjs_provider_module(engine: &Engine) -> Result<Module> {
         Path::new("target")
             .join("wasm32-wasi")
             .join("release")
-            .join("javy_quickjs_provider.wasm"),
+            .join("javy_quickjs_provider_wizened.wasm"),
     );
     Module::from_file(engine, lib_path)
 }

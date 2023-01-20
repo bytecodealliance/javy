@@ -16,6 +16,7 @@ cli: core
 core:
 		cd crates/core \
 				&& cargo build --release --target=wasm32-wasi \
+				&& wizer ../../target/wasm32-wasi/release/javy_quickjs_provider.wasm --allow-wasi -o ../../target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm \
 				&& cd -
 
 docs:
