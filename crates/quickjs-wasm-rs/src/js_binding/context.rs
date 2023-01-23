@@ -1,4 +1,5 @@
 use super::constants::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER};
+use super::error::JSError;
 use super::exception::Exception;
 use super::value::Value;
 use anyhow::Result;
@@ -9,7 +10,8 @@ use quickjs_wasm_sys::{
     JS_NewArray, JS_NewArrayBufferCopy, JS_NewBigInt64, JS_NewBool_Ext, JS_NewCFunctionData,
     JS_NewClass, JS_NewClassID, JS_NewContext, JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewInt64_Ext,
     JS_NewObject, JS_NewObjectClass, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext,
-    JS_ReadObject, JS_SetOpaque, JS_ThrowInternalError, JS_WriteObject, JS_EVAL_FLAG_COMPILE_ONLY,
+    JS_ReadObject, JS_SetOpaque, JS_ThrowInternalError, JS_ThrowRangeError, JS_ThrowReferenceError,
+    JS_ThrowSyntaxError, JS_ThrowTypeError, JS_WriteObject, JS_EVAL_FLAG_COMPILE_ONLY,
     JS_EVAL_TYPE_GLOBAL, JS_READ_OBJ_BYTECODE, JS_WRITE_OBJ_BYTECODE,
 };
 use std::any::TypeId;
@@ -266,6 +268,8 @@ impl Context {
     ///
     /// Since the callback signature accepts parameters as high-level `Context` and `Value` objects, it can be
     /// implemented without using `unsafe` code, unlike [new_callback] which provides a low-level API.
+    /// Returning a [JSError] from the callback will cause a JavaScript error with the appropriate
+    /// type to be thrown.
     pub fn wrap_callback<F>(&self, mut f: F) -> Result<Value>
     where
         F: (FnMut(&Self, &Value, &[Value]) -> Result<Value>) + 'static,
@@ -279,11 +283,38 @@ impl Context {
         ) {
             Ok(value) => value.value,
             Err(error) => {
-                if let Ok(message) = CString::new(format!("{error:?}")) {
-                    let format = CString::new("%s").unwrap();
-                    unsafe { JS_ThrowInternalError(inner, format.as_ptr(), message.as_ptr()) }
-                } else {
-                    unsafe { ext_js_exception }
+                let format = CString::new("%s").unwrap();
+                match error.downcast::<JSError>() {
+                    Ok(js_error) => {
+                        let message = CString::new(js_error.to_string())
+                            .unwrap_or_else(|_| CString::new("Unknown error").unwrap());
+                        match js_error {
+                            JSError::Internal(_) => unsafe {
+                                JS_ThrowInternalError(inner, format.as_ptr(), message.as_ptr())
+                            },
+                            JSError::Syntax(_) => unsafe {
+                                JS_ThrowSyntaxError(inner, format.as_ptr(), message.as_ptr())
+                            },
+                            JSError::Type(_) => unsafe {
+                                JS_ThrowTypeError(inner, format.as_ptr(), message.as_ptr())
+                            },
+                            JSError::Reference(_) => unsafe {
+                                JS_ThrowReferenceError(inner, format.as_ptr(), message.as_ptr())
+                            },
+                            JSError::Range(_) => unsafe {
+                                JS_ThrowRangeError(inner, format.as_ptr(), message.as_ptr())
+                            },
+                        }
+                    }
+                    Err(e) => {
+                        if let Ok(message) = CString::new(format!("{e:?}")) {
+                            unsafe {
+                                JS_ThrowInternalError(inner, format.as_ptr(), message.as_ptr())
+                            }
+                        } else {
+                            unsafe { ext_js_exception }
+                        }
+                    }
                 }
             }
         };
@@ -338,6 +369,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::Context;
+    use crate::JSError;
     use anyhow::Result;
     use quickjs_wasm_sys::ext_js_undefined;
     use std::cell::Cell;
@@ -489,6 +521,42 @@ mod tests {
 
         assert!(called.get());
 
+        Ok(())
+    }
+
+    #[test]
+    fn test_wrap_callback_can_throw_typed_errors() -> Result<()> {
+        error_test_case(|| JSError::Internal("".to_string()), "InternalError")?;
+        error_test_case(|| JSError::Range("".to_string()), "RangeError")?;
+        error_test_case(|| JSError::Reference("".to_string()), "ReferenceError")?;
+        error_test_case(|| JSError::Syntax("".to_string()), "SyntaxError")?;
+        error_test_case(|| JSError::Type("".to_string()), "TypeError")?;
+        Ok(())
+    }
+
+    fn error_test_case<F>(error: F, js_type: &str) -> Result<()>
+    where
+        F: Fn() -> JSError + 'static,
+    {
+        let ctx = Context::default();
+        ctx.global_object()?.set_property(
+            "foo",
+            ctx.wrap_callback(move |_, _, _| Err(error().into()))?,
+        )?;
+        ctx.eval_global(
+            "main",
+            &format!(
+                "
+                try {{
+                    foo()
+                }} catch (e) {{
+                    if (e instanceof {js_type}) {{
+                        result = true
+                    }}
+                }}"
+            ),
+        )?;
+        assert!(ctx.global_object()?.get_property("result")?.as_bool()?);
         Ok(())
     }
 }

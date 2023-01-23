@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use quickjs_wasm_rs::{Context, Value};
+use quickjs_wasm_rs::{Context, JSError, Value};
 use std::borrow::Cow;
 use std::io::{Read, Write};
 use std::str;
@@ -124,11 +124,14 @@ fn decode_utf8_buffer_to_js_string(
             };
         }
 
-        let str = if fatal {
-            Cow::from(str::from_utf8(view).map_err(|_| anyhow!("The encoded data was not valid"))?)
-        } else {
-            String::from_utf8_lossy(view)
-        };
+        let str =
+            if fatal {
+                Cow::from(str::from_utf8(view).map_err(|_| {
+                    JSError::Type("The encoded data was not valid utf-8".to_string())
+                })?)
+            } else {
+                String::from_utf8_lossy(view)
+            };
         ctx.value_from_str(&str)
     }
 }
