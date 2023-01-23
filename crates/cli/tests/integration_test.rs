@@ -45,7 +45,7 @@ fn test_encoding() {
     assert_eq!("true".as_bytes(), output);
 
     let (output, _) = run(&mut runner, "invalid_fatal".as_bytes());
-    assert_eq!("The encoded data was not valid".as_bytes(), output);
+    assert_eq!("The encoded data was not valid utf-8".as_bytes(), output);
 
     let (output, _) = run(&mut runner, "test".as_bytes());
     assert_eq!("test2".as_bytes(), output);

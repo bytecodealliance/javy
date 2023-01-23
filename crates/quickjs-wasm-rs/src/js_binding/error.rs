@@ -18,7 +18,6 @@ impl Display for JSError {
             | Self::Reference(msg)
             | Self::Syntax(msg)
             | Self::Type(msg) => write!(f, "{}", msg),
-
         }
     }
 }
