@@ -14,11 +14,6 @@ use std::process::Stdio;
 use std::{fs, process::Command as OsCommand};
 use structopt::StructOpt;
 
-const QUICKJS_PROVIDER_MODULE: &[u8] = include_bytes!(concat!(
-    env!("CARGO_MANIFEST_DIR"),
-    "/../../target/wasm32-wasi/release/javy_quickjs_provider.wasm"
-));
-
 fn main() -> Result<()> {
     let cmd = Command::from_args();
 
@@ -39,7 +34,7 @@ fn emit_provider(opts: &EmitProviderCommandOpts) -> Result<()> {
         Some(path) => Box::new(File::create(path)?),
         _ => Box::new(std::io::stdout()),
     };
-    file.write_all(QUICKJS_PROVIDER_MODULE)?;
+    file.write_all(bytecode::QUICKJS_PROVIDER_MODULE)?;
     Ok(())
 }
 

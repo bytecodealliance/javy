@@ -2,7 +2,8 @@ use anyhow::Result;
 use wasmtime::{Engine, Instance, Linker, Memory, Module, Store};
 use wasmtime_wasi::{WasiCtx, WasiCtxBuilder};
 
-const QUICKJS_PROVIDER_MODULE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/provider.wasm"));
+pub const QUICKJS_PROVIDER_MODULE: &[u8] =
+    include_bytes!(concat!(env!("OUT_DIR"), "/provider.wasm"));
 
 pub fn compile_source(js_source_code: &[u8]) -> Result<Vec<u8>> {
     let (mut store, instance, memory) = create_wasm_env()?;

@@ -47,7 +47,7 @@ fn copy_javy_core() {
     quickjs_provider_path.pop();
     quickjs_provider_path.pop();
     quickjs_provider_path =
-        quickjs_provider_path.join("target/wasm32-wasi/release/javy_quickjs_provider.wasm");
+        quickjs_provider_path.join("target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm");
 
     println!("cargo:rerun-if-changed={}", engine_path.to_str().unwrap());
     println!(
