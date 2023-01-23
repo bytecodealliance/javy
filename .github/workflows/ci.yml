@@ -31,6 +31,9 @@ jobs:
       - name: Install wasi-sdk
         run: make download-wasi-sdk
 
+      - name: Install Apple Silicon target
+        run: rustup target add aarch64-apple-darwin
+
       - name: compile
         run: make core && cargo build --release --target aarch64-apple-darwin -p javy
 
