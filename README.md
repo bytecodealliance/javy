@@ -29,6 +29,7 @@ Javy is a beta project and will be under major development. We welcome feedback,
 - wasmtime-cli, can be installed via `cargo install wasmtime-cli` (required for
   `cargo-wasi`)
 - cargo-wasi, can be installed via `cargo install cargo-wasi`
+- wizer, can be installed via `cargo install wizer --all-features`
 
 ## Building
 

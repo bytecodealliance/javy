@@ -120,17 +120,15 @@ checksum = "904dfeac50f3cdaba28fc6f57fdcddb75f49ed61346676a78c4ffe55877802fd"
 [[package]]
 name = "binaryen"
 version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "783bea139d75b6a565b13fab54d12ec4d58724a9458598ad7283d578f4f8777a"
+source = "git+https://github.com/pepyakin/binaryen-rs#00c98174843f957681ba0bc5cdcc9d15f5d0cb23"
 dependencies = [
  "binaryen-sys",
 ]
 
 [[package]]
 name = "binaryen-sys"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86e9636d01b92f2df45dce29c35a9e3724687c1055bb4472fb4b829cc4a5a561"
+version = "0.12.1"
+source = "git+https://github.com/pepyakin/binaryen-rs#00c98174843f957681ba0bc5cdcc9d15f5d0cb23"
 dependencies = [
  "cc",
  "cmake",

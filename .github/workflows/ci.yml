@@ -45,6 +45,9 @@ jobs:
       - name: Install cargo-wasi
         run: cargo install cargo-wasi
 
+      - name: Install wizer
+        run: cargo install wizer --all-features
+
       - name: Install wasi-sdk
         run: make download-wasi-sdk
 
