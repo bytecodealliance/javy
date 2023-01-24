@@ -76,10 +76,6 @@ jobs:
           name: provider
           path: target/wasm32-wasi/release/
 
-      - name: ls
-        run: ls -R
-        working-directory: crates/cli/
-
       - name: Build CLI ${{ matrix.os }}
         env:
           JAVY_ENGINE_PATH: javy_core.wasm
