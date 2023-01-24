@@ -26,7 +26,7 @@ async function main() {
 		}
 	}
 	try {
-		childProcess.spawnSync(frBinaryPath(), getArgs(), { stdio: "inherit" });
+		childProcess.spawnSync(javyBinaryPath(), getArgs(), { stdio: "inherit" });
 	} catch (e) {
 		if (typeof e?.status === "number") return;
 		console.error(e);
