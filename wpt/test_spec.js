@@ -33,9 +33,10 @@ export default [
     testFile: "upstream/encoding/textdecoder-eof.any.js",
     ignoredTests: ["/stream: true/"],
   },
-  // { // FIXME need to fix the type of the exception thrown
-  //   testFile: "custom_tests/textdecoder-fatal-streaming.any.js",
-  // },
+  {
+    testFile: "custom_tests/textdecoder-fatal-streaming.any.js",
+    ignoredTests: ["Fatal flag, streaming cases"]
+  },
   {
     testFile: "upstream/encoding/textdecoder-fatal.any.js",
     ignoredTests: ["Fatal flag: utf-16le - truncated code unit"],
