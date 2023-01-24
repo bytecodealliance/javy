@@ -32,22 +32,14 @@ fn stub_javy_core_for_clippy() {
 // Copy the engine binary build from the `core` crate
 fn copy_javy_core() {
     let cargo_manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
-    let override_engine_path = env::var("JAVY_ENGINE_PATH");
-    let is_override = override_engine_path.is_ok();
-    let mut engine_path =
-        PathBuf::from(override_engine_path.as_ref().unwrap_or(&cargo_manifest_dir));
-
-    if !is_override {
-        engine_path.pop();
-        engine_path.pop();
-        engine_path = engine_path.join("target/wasm32-wasi/release/javy_core.wasm");
-    }
-
-    let mut quickjs_provider_path = PathBuf::from(&cargo_manifest_dir);
-    quickjs_provider_path.pop();
-    quickjs_provider_path.pop();
-    quickjs_provider_path =
-        quickjs_provider_path.join("target/wasm32-wasi/release/javy_quickjs_provider.wasm");
+    let module_path = PathBuf::from(&cargo_manifest_dir)
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .join("target/wasm32-wasi/release");
+    let engine_path = module_path.join("javy_core.wasm");
+    let quickjs_provider_path = module_path.join("javy_quickjs_provider.wasm");
 
     println!("cargo:rerun-if-changed={}", engine_path.to_str().unwrap());
     println!(

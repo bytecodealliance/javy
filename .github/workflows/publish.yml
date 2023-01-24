@@ -69,7 +69,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: engine
-          path: crates/cli/
+          path: target/wasm32-wasi/release/
 
       - uses: actions/download-artifact@v3
         with:
@@ -81,8 +81,6 @@ jobs:
         working-directory: crates/cli/
 
       - name: Build CLI ${{ matrix.os }}
-        env:
-          JAVY_ENGINE_PATH: javy_core.wasm
         run: cargo build --release --package javy
 
       - name: Archive assets
