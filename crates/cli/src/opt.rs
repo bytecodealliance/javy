@@ -24,6 +24,7 @@ impl<'a> Optimizer<'a> {
         let mut wasm = Wizer::new()
             .allow_wasi(true)?
             .inherit_stdio(true)
+            .wasm_bulk_memory(true)
             .run(self.wasm)?;
 
         if self.optimize {

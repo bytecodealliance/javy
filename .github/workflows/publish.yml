@@ -34,11 +34,49 @@ jobs:
           name: engine
           path: target/wasm32-wasi/release/javy_core.wasm
 
-      - name: Upload core dylib to artifacts
+      - name: Upload quickjs_provider to artifacts
         uses: actions/upload-artifact@v3
         with:
           name: provider
           path: target/wasm32-wasi/release/javy_quickjs_provider.wasm
+
+      - name: Archive wizened quickjs_provider
+        run: gzip -k -f target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm && mv target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm.gz javy-quickjs_provider.wasm.gz
+
+      - name: Upload archived quickjs_provider to artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: javy-quickjs_provider.wasm.gz
+          path: javy-quickjs_provider.wasm.gz
+
+      - name: Upload archived quickjs_provider to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./javy-quickjs_provider.wasm.gz
+          asset_name: javy-quickjs_provider.wasm.gz
+          asset_content_type: application/gzip
+
+      - name: Generate archived quickjs_provider hash
+        run: shasum -a 256 javy-quickjs_provider.wasm.gz | awk '{ print $1 }' > javy-quickjs_provider.wasm.gz.sha256
+
+      - name: Upload asset hash to artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: javy-quickjs_provider.wasm.gz.sha256
+          path: javy-quickjs_provider.wasm.gz.sha256
+
+      - name: Upload asset hash to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./javy-quickjs_provider.wasm.gz.sha256
+          asset_name: javy-quickjs_provider.wasm.gz.sha256
+          asset_content_type: plain/text
 
   compile_cli:
     name: Compile CLI
@@ -89,10 +127,6 @@ jobs:
           name: provider
           path: target/wasm32-wasi/release/
 
-      - name: ls
-        run: ls -R
-        working-directory: crates/cli/
-
       - name: Build CLI ${{ matrix.os }}
         env:
           JAVY_ENGINE_PATH: javy_core.wasm
@@ -108,14 +142,9 @@ jobs:
           path: ${{ matrix.asset_name }}.gz
 
       - name: Upload assets to release
-        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./${{ matrix.asset_name }}.gz
-          asset_name: ${{ matrix.asset_name }}.gz
-          asset_content_type: application/gzip
+        run: gh release upload ${{ github.event.release.tag_name }} ${{ matrix.asset_name }}.gz
 
       - name: Generate asset hash
         run: ${{ matrix.shasum_cmd }} ${{ matrix.asset_name }}.gz | awk '{ print $1 }' > ${{ matrix.asset_name }}.gz.sha256
@@ -127,11 +156,6 @@ jobs:
           path: ${{ matrix.asset_name }}.gz.sha256
 
       - name: Upload asset hash to release
-        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./${{ matrix.asset_name }}.gz.sha256
-          asset_name: ${{ matrix.asset_name }}.gz.sha256
-          asset_content_type: plain/text
+        run: gh release upload ${{ github.event.release.tag_name }} ${{ matrix.asset_name }}.gz.sha256
