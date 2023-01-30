@@ -1,5 +1,6 @@
 [toolchain]
-channel = "stable"
+ # Rust versions after 1.66 fail to build because Wizer does not accept bulk memory instructions (see https://github.com/bytecodealliance/wizer/pull/37)
+channel = "1.66"
 components = ["clippy", "rustfmt"]
 targets = ["wasm32-wasi"]
 profile = "default"
