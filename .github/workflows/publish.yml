@@ -62,7 +62,7 @@ jobs:
           - name: macos-arm64
             os: macos-latest
             path: target/aarch64-apple-darwin/release/javy
-            asset_name: javy-arm64-macos-${{ github.event.release.tag_name }}
+            asset_name: javy-arm-macos-${{ github.event.release.tag_name }}
             shasum_cmd: shasum -a 256
             target: aarch64-apple-darwin
           - name: windows
