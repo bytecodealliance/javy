@@ -132,15 +132,4 @@ git tag v0.2.0
 git push origin --tags
 ```
 2. Create a new release from the new tag in github [here](https://github.com/Shopify/javy/releases/new).
-3. A GitHub Action will trigger for `publish.yml` when a release is published ([i.e. it doesn't run on drafts](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#:~:text=created%2C%20edited%2C%20or%20deleted%20activity%20types%20for%20draft%20releases)), creating the artifacts for downloading. However this does not currently support `arm-macos`, ie. M1 Macs.
-4. Manually build this on a m1 mac
-
-```
-gzip -k -f target/release/javy && mv target/release/javy.gz javy-arm-macos-v0.2.0.gz
-
-```
-5. Manually create the shasum file
-```
-shasum -a 256 javy-arm-macos-v0.2.0.gz | awk '{ print $1 }' > javy-arm-macos-v0.2.0.gz.sha256
-```
-6.  Attach both files to the new release page
+3. A GitHub Action will trigger for `publish.yml` when a release is published ([i.e. it doesn't run on drafts](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#:~:text=created%2C%20edited%2C%20or%20deleted%20activity%20types%20for%20draft%20releases)), creating the artifacts for downloading.
