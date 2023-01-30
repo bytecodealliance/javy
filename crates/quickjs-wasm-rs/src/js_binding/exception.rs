@@ -13,7 +13,7 @@ impl fmt::Display for Exception {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.msg)?;
         if let Some(stack) = &self.stack {
-            write!(f, "\n{}", stack)?;
+            write!(f, "\n{stack}")?;
         }
         Ok(())
     }
