@@ -6,7 +6,7 @@ use walkdir::WalkDir;
 fn main() {
     let this_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
     let wasi_sdk_path =
-        env::var("QUICKJS_WASM_SYS_WASI_SDK_PATH").unwrap_or(format!("{}/wasi-sdk", this_dir));
+        env::var("QUICKJS_WASM_SYS_WASI_SDK_PATH").unwrap_or(format!("{this_dir}/wasi-sdk"));
     if !std::path::Path::exists(std::path::Path::new(&wasi_sdk_path)) {
         panic!(
             "wasi-sdk not installed in specified path of {}",
