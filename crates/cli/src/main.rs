@@ -59,6 +59,7 @@ fn create_statically_linked_module(opts: &CompileCommandOpts) -> Result<()> {
     {
         env::set_var("JAVY_WIZEN", "1");
         let mut command = OsCommand::new(self_cmd)
+            .arg("compile")
             .arg(&opts.input)
             .arg("-o")
             .arg(&opts.output)

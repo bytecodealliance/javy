@@ -49,6 +49,7 @@ fn create_dynamically_linked_wasm_module(js_src: &str) -> Result<Vec<u8>> {
     let mut js_file = File::create(&js_path)?;
     js_file.write_all(js_src.as_bytes())?;
     let output = Command::new(env!("CARGO_BIN_EXE_javy"))
+        .arg("compile")
         .arg(&js_path.to_str().unwrap())
         .arg("-o")
         .arg(wasm_path.to_str().unwrap())
