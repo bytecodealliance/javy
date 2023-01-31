@@ -50,14 +50,9 @@ jobs:
           path: javy-quickjs_provider.wasm.gz
 
       - name: Upload archived quickjs_provider to release
-        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./javy-quickjs_provider.wasm.gz
-          asset_name: javy-quickjs_provider.wasm.gz
-          asset_content_type: application/gzip
+        run: gh release upload ${{ github.event.release.tag_name }} javy-quickjs_provider.wasm.gz
 
       - name: Generate archived quickjs_provider hash
         run: shasum -a 256 javy-quickjs_provider.wasm.gz | awk '{ print $1 }' > javy-quickjs_provider.wasm.gz.sha256
@@ -69,14 +64,9 @@ jobs:
           path: javy-quickjs_provider.wasm.gz.sha256
 
       - name: Upload asset hash to release
-        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./javy-quickjs_provider.wasm.gz.sha256
-          asset_name: javy-quickjs_provider.wasm.gz.sha256
-          asset_content_type: plain/text
+        run: gh release upload ${{ github.event.release.tag_name }} javy-quickjs_provider.wasm.gz.sha256
 
   compile_cli:
     name: Compile CLI
