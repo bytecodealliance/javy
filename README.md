@@ -100,7 +100,7 @@ function writeOutput(output) {
 Create a WebAssembly binary from your JavaScript by:
 
 ```bash
-javy index.js -o destination/index.wasm
+javy compile index.js -o destination/index.wasm
 ```
 
 For more information on the commands you can run `javy --help`
