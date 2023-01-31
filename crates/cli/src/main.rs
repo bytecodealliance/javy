@@ -1,38 +1,51 @@
 mod bytecode;
+mod commands;
 mod module_generator;
 mod opt;
-mod options;
 mod source_code_section;
 
-use crate::options::Options;
+use crate::commands::{Command, CompileCommandOpts, EmitProviderCommandOpts};
 use anyhow::{bail, Context, Result};
 use std::env;
+use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
 use std::process::Stdio;
-use std::{fs, process::Command};
+use std::{fs, process::Command as OsCommand};
 use structopt::StructOpt;
 
 fn main() -> Result<()> {
-    let opts = Options::from_args();
+    let cmd = Command::from_args();
 
-    if opts.dynamic {
-        create_dynamically_linked_module(opts)?;
-    } else {
-        create_statically_linked_module(opts)?;
+    match &cmd {
+        Command::EmitProvider(opts) => emit_provider(opts),
+        Command::Compile(opts) => {
+            if opts.dynamic {
+                create_dynamically_linked_module(opts)
+            } else {
+                create_statically_linked_module(opts)
+            }
+        }
     }
+}
 
+fn emit_provider(opts: &EmitProviderCommandOpts) -> Result<()> {
+    let mut file: Box<dyn Write> = match opts.out.as_ref() {
+        Some(path) => Box::new(File::create(path)?),
+        _ => Box::new(std::io::stdout()),
+    };
+    file.write_all(bytecode::QUICKJS_PROVIDER_MODULE)?;
     Ok(())
 }
 
-fn create_statically_linked_module(opts: Options) -> Result<()> {
+fn create_statically_linked_module(opts: &CompileCommandOpts) -> Result<()> {
     let wizen = env::var("JAVY_WIZEN");
 
     if wizen.eq(&Ok("1".into())) {
         let wasm: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/engine.wasm"));
         opt::Optimizer::new(wasm)
             .optimize(true)
-            .write_optimized_wasm(opts.output)?;
+            .write_optimized_wasm(&opts.output)?;
 
         env::remove_var("JAVY_WIZEN");
 
@@ -45,7 +58,8 @@ fn create_statically_linked_module(opts: Options) -> Result<()> {
 
     {
         env::set_var("JAVY_WIZEN", "1");
-        let mut command = Command::new(self_cmd)
+        let mut command = OsCommand::new(self_cmd)
+            .arg("compile")
             .arg(&opts.input)
             .arg("-o")
             .arg(&opts.output)
@@ -81,7 +95,7 @@ fn add_custom_section<P: AsRef<Path>>(file: P, section: String, contents: Vec<u8
     Ok(())
 }
 
-fn create_dynamically_linked_module(opts: Options) -> Result<()> {
+fn create_dynamically_linked_module(opts: &CompileCommandOpts) -> Result<()> {
     let js_source_code = read_input_file(&opts.input)?;
     let quickjs_bytecode = bytecode::compile_source(&js_source_code)?;
     let wasm_module = module_generator::generate_module(quickjs_bytecode, &js_source_code)?;
