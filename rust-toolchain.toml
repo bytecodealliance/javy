@@ -1,7 +1,5 @@
 [toolchain]
-# FIXME
-# https://github.com/Shopify/javy/issues/218
-channel = "1.66.0"
+channel = "stable"
 components = ["clippy", "rustfmt"]
 targets = ["wasm32-wasi"]
 profile = "default"
