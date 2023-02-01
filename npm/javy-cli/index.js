@@ -1,32 +1,32 @@
 #!/usr/bin/env node
 
-import * as os from "os";
 import * as path from "path";
 import * as fs from "fs";
 import * as childProcess from "child_process";
 import * as gzip from "zlib";
 import * as stream from "stream";
 import fetch from "node-fetch";
+import cachedir from "cachedir";
 
-const JAVY_URL = "https://github.com/Shopify/javy/releases/";
-const JAVY_VERSION = "0.4.0";
+const REPO = "Shopify/javy";
+const NAME = "javy";
 
 async function main() {
-	if (!(await isJavyAvailable()) || process.env.REFRESH_JAVY) {
-		console.error("Javy is not available locally.");
-		await fs.promises.unlink(javyBinaryPath()).catch(() => {});
-		if (process.env.BUILD_JAVY) {
-			console.error("Building Javy from source...");
-			await buildJavy();
-			console.error("Done.");
+	if (!(await isBinaryDownloaded()) || shouldIgnoreLocalBinary()) {
+		console.error(`${NAME} is not available locally.`);
+		await fs.promises.unlink(binaryPath()).catch(() => {});
+		if (process.env.FORCE_FROM_SOURCE) {
+			console.error(`Building ${NAME} from source...`);
+			await buildBinary();
+			console.error(`Done.`);
 		} else {
-			console.error("Downloading Javy...");
-			await downloadJavy();
-			console.error("Done.");
+			console.error(`${NAME} needs to be downloaded...`);
+			await downloadBinary();
+			console.error(`Done.`);
 		}
 	}
 	try {
-		childProcess.spawnSync(javyBinaryPath(), getArgs(), { stdio: "inherit" });
+		childProcess.spawnSync(binaryPath(), getArgs(), { stdio: "inherit" });
 	} catch (e) {
 		if (typeof e?.status === "number") return;
 		console.error(e);
@@ -34,30 +34,37 @@ async function main() {
 }
 main();
 
+function shouldIgnoreLocalBinary() {
+	return process.env.FORCE_RELEASE || process.env.FORCE_FROM_SOURCE;
+}
+
 function cacheDir(...suffixes) {
-	const cacheDir = path.join(os.homedir(), ".javy_cache", ...suffixes);
+	const cacheDir = path.join(cachedir("binarycache"), ...suffixes);
 	fs.mkdirSync(cacheDir, { recursive: true });
 	return cacheDir;
 }
 
-function javyBinaryPath() {
-	return path.join(cacheDir(), "javy");
+function binaryPath() {
+	return path.join(cacheDir(), NAME);
 }
 
-async function isJavyAvailable() {
+async function isBinaryDownloaded() {
 	return fs.promises
-		.stat(javyBinaryPath())
+		.stat(binaryPath())
 		.then(() => true)
 		.catch(() => false);
 }
 
-async function downloadJavy() {
+async function downloadBinary() {
+	const targetPath = binaryPath();
 	const compressedStream = await new Promise(async (resolve) => {
-		const resp = await fetch(binaryUrl());
+		const { url, version } = await binaryUrl();
+		console.log(`Downloading ${NAME} ${version} to ${targetPath}...`);
+		const resp = await fetch(url);
 		resolve(resp.body);
 	});
 	const gunzip = gzip.createGunzip();
-	const output = fs.createWriteStream(javyBinaryPath());
+	const output = fs.createWriteStream(targetPath);
 
 	await new Promise((resolve, reject) => {
 		stream.pipeline(compressedStream, gunzip, output, (err, val) => {
@@ -66,12 +73,40 @@ async function downloadJavy() {
 		});
 	});
 
-	await fs.promises.chmod(javyBinaryPath(), 0o775);
+	await fs.promises.chmod(binaryPath(), 0o775);
 }
 
-function binaryUrl() {
-	// https://github.com/Shopify/javy/releases/download/v0.3.0/javy-x86_64-linux-v0.3.0.gz
-	return `${JAVY_URL}/download/v${JAVY_VERSION}/javy-${platarch()}-v${JAVY_VERSION}.gz`;
+async function binaryUrl() {
+	let version = process.env.FORCE_RELEASE;
+	// If no version is forced, use the GitHub API to grab the latest release.
+	if (!version || version?.toLowerCase() === "latest") {
+		const releaseDataResponse = await fetch(
+			`https://api.github.com/repos/${REPO}/releases?per_page=3`,
+			{
+				headers: {
+					Accept: "application/vnd.github+json",
+				},
+			}
+		);
+		if (!releaseDataResponse.ok) {
+			throw Error(
+				`Could not determine latest release using the GitHub API (Status code ${
+					releaseDataResponse.status
+				}): ${await releaseDataResponse
+					.text()
+					.catch(() => "<No error message>")}`
+			);
+		}
+		const releaseData = await releaseDataResponse.json();
+		version = releaseData.find((release) => release.tag_name)?.tag_name;
+		if (!version) {
+			throw Error(
+				"None of the three most recent release have a valid tag name."
+			);
+		}
+	}
+	const url = `https://github.com/${REPO}/releases/download/${version}/javy-${platarch()}-${version}.gz`;
+	return { url, version };
 }
 
 const SUPPORTED_TARGETS = [
@@ -122,7 +157,7 @@ function getArgs() {
 	return args;
 }
 
-async function buildJavy() {
+async function buildBinary() {
 	const repoDir = cacheDir("build", "javy");
 	try {
 		console.log("Downloading Javy's source code...");
@@ -144,6 +179,6 @@ async function buildJavy() {
 	}
 	await fs.promises.rename(
 		path.join(repoDir, "target", "release", "javy"),
-		javyBinaryPath()
+		binaryPath()
 	);
 }
