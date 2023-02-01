@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
-import * as os from "os";
 import * as path from "path";
 import * as fs from "fs";
 import * as childProcess from "child_process";
 import * as gzip from "zlib";
 import * as stream from "stream";
 import fetch from "node-fetch";
+import cachedir from "cachedir";
 
 const REPO = "Shopify/javy";
 const NAME = "javy";
@@ -39,7 +39,7 @@ function shouldIgnoreLocalBinary() {
 }
 
 function cacheDir(...suffixes) {
-	const cacheDir = path.join(os.homedir(), ".binary_cache", ...suffixes);
+	const cacheDir = path.join(cachedir("binarycache"), ...suffixes);
 	fs.mkdirSync(cacheDir, { recursive: true });
 	return cacheDir;
 }
@@ -56,14 +56,15 @@ async function isBinaryDownloaded() {
 }
 
 async function downloadBinary() {
+	const targetPath = binaryPath();
 	const compressedStream = await new Promise(async (resolve) => {
 		const { url, version } = await binaryUrl();
-		console.log(`Downloading ${NAME} ${version}...`);
+		console.log(`Downloading ${NAME} ${version} to ${targetPath}...`);
 		const resp = await fetch(url);
 		resolve(resp.body);
 	});
 	const gunzip = gzip.createGunzip();
-	const output = fs.createWriteStream(binaryPath());
+	const output = fs.createWriteStream(targetPath);
 
 	await new Promise((resolve, reject) => {
 		stream.pipeline(compressedStream, gunzip, output, (err, val) => {
