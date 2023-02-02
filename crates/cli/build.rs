@@ -39,7 +39,7 @@ fn copy_javy_core() {
         .unwrap()
         .join("target/wasm32-wasi/release");
     let engine_path = module_path.join("javy_core.wasm");
-    let quickjs_provider_path = module_path.join("javy_quickjs_provider.wasm");
+    let quickjs_provider_path = module_path.join("javy_quickjs_provider_wizened.wasm");
 
     println!("cargo:rerun-if-changed={}", engine_path.to_str().unwrap());
     println!(

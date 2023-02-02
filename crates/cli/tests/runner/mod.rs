@@ -73,6 +73,7 @@ impl Runner {
 
         let output = Command::new(env!("CARGO_BIN_EXE_javy"))
             .current_dir(root)
+            .arg("compile")
             .arg(&js_file)
             .arg("-o")
             .arg(&wasm_file)
