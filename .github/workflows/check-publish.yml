@@ -1,0 +1,76 @@
+# This workflow exists to make it easier to see when a PR introduces a change that will break the publish workflow
+
+name: Check publish flow
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  compile_core:
+    name: Compile Core
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install wasi-sdk
+        run: make download-wasi-sdk
+
+      - name: Install wizer
+        run: cargo install wizer --all-features
+
+      - name: Make core
+        run: make core
+
+      - name: Upload core binary to artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: engine
+          path: target/wasm32-wasi/release/javy_core.wasm
+
+      - name: Upload quickjs_provider to artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: provider
+          path: target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm
+
+      - name: Archive wizened quickjs_provider
+        run: gzip -k -f target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm && mv target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm.gz javy-quickjs_provider.wasm.gz
+
+      - name: Upload archived quickjs_provider to artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: javy-quickjs_provider.wasm.gz
+          path: javy-quickjs_provider.wasm.gz
+
+      - name: Generate archived quickjs_provider hash
+        run: shasum -a 256 javy-quickjs_provider.wasm.gz | awk '{ print $1 }' > javy-quickjs_provider.wasm.gz.sha256
+
+      - name: Upload asset hash to artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: javy-quickjs_provider.wasm.gz.sha256
+          path: javy-quickjs_provider.wasm.gz.sha256
+
+  compile_cli:
+    name: Compile CLI
+    needs: compile_core
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: engine
+          path: crates/cli/
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: provider
+          path: target/wasm32-wasi/release/
+
+      - name: Build CLI
+        env:
+          JAVY_ENGINE_PATH: javy_core.wasm
+        run: cargo build --release --package javy
