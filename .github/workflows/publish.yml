@@ -120,7 +120,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: engine
-          path: crates/cli/
+          path: target/wasm32-wasi/release/
 
       - uses: actions/download-artifact@v3
         with:
@@ -128,8 +128,6 @@ jobs:
           path: target/wasm32-wasi/release/
 
       - name: Build CLI ${{ matrix.os }}
-        env:
-          JAVY_ENGINE_PATH: javy_core.wasm
         run: cargo build --release --target ${{ matrix.target }} --package javy
 
       - name: Archive assets
