@@ -5,10 +5,10 @@ use super::value::Value;
 use anyhow::Result;
 use once_cell::sync::Lazy;
 use quickjs_wasm_sys::{
-    ext_js_exception, ext_js_null, ext_js_undefined, JSCFunctionData, JSClassDef, JSClassID,
-    JSContext, JSValue, JS_Eval, JS_ExecutePendingJob, JS_GetGlobalObject, JS_GetRuntime,
-    JS_NewArray, JS_NewArrayBufferCopy, JS_NewBigInt64, JS_NewBool_Ext, JS_NewCFunctionData,
-    JS_NewClass, JS_NewClassID, JS_NewContext, JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewInt64_Ext,
+    ext_js_null, ext_js_undefined, JSCFunctionData, JSClassDef, JSClassID, JSContext, JSValue,
+    JS_Eval, JS_ExecutePendingJob, JS_GetGlobalObject, JS_GetRuntime, JS_NewArray,
+    JS_NewArrayBufferCopy, JS_NewBigInt64, JS_NewBool_Ext, JS_NewCFunctionData, JS_NewClass,
+    JS_NewClassID, JS_NewContext, JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewInt64_Ext,
     JS_NewObject, JS_NewObjectClass, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext,
     JS_ReadObject, JS_SetOpaque, JS_ThrowInternalError, JS_ThrowRangeError, JS_ThrowReferenceError,
     JS_ThrowSyntaxError, JS_ThrowTypeError, JS_WriteObject, JS_EVAL_FLAG_COMPILE_ONLY,
@@ -307,13 +307,14 @@ impl Context {
                         }
                     }
                     Err(e) => {
-                        if let Ok(message) = CString::new(format!("{e:?}")) {
-                            unsafe {
-                                JS_ThrowInternalError(inner, format.as_ptr(), message.as_ptr())
-                            }
-                        } else {
-                            unsafe { ext_js_exception }
-                        }
+                        let message = format!("{e:?}");
+                        let message = CString::new(message.as_str()).unwrap_or_else(|err| {
+                            CString::new(format!("{} - truncated due to null byte", unsafe {
+                                str::from_utf8_unchecked(&message.as_bytes()[..err.nul_position()])
+                            }))
+                            .unwrap()
+                        });
+                        unsafe { JS_ThrowInternalError(inner, format.as_ptr(), message.as_ptr()) }
                     }
                 }
             }
@@ -557,6 +558,22 @@ mod tests {
             ),
         )?;
         assert!(ctx.global_object()?.get_property("result")?.as_bool()?);
+        Ok(())
+    }
+
+    #[test]
+    fn test_wrap_callback_handles_error_messages_with_null_bytes() -> Result<()> {
+        let ctx = Context::default();
+        ctx.global_object()?.set_property(
+            "foo",
+            ctx.wrap_callback(move |_, _, _| anyhow::bail!("Error containing \u{0000} with more"))?,
+        )?;
+        let res = ctx.eval_global("main", "foo();");
+        let err = res.unwrap_err();
+        assert_eq!(
+            "Uncaught InternalError: Error containing  - truncated due to null byte\n    at <eval> (main)\n",
+            err.to_string()
+        );
         Ok(())
     }
 }
