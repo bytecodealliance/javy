@@ -56,7 +56,7 @@ jobs:
           path: javy-quickjs_provider.wasm.gz
 
       - name: Upload archived quickjs_provider to release
-        if: github.event_name == "release"
+        if: github.event_name == 'release'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release upload ${{ github.event.release.tag_name }} javy-quickjs_provider.wasm.gz
@@ -71,7 +71,7 @@ jobs:
           path: javy-quickjs_provider.wasm.gz.sha256
 
       - name: Upload asset hash to release
-        if: github.event_name == "release"
+        if: github.event_name == 'release'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release upload ${{ github.event.release.tag_name }} javy-quickjs_provider.wasm.gz.sha256
