@@ -13,6 +13,5 @@ extern "C" {
     pub static ext_js_undefined: JSValue;
     pub static ext_js_false: JSValue;
     pub static ext_js_true: JSValue;
-    pub static ext_js_exception: JSValue;
     pub static ext_js_uninitialized: JSValue;
 }
