@@ -12,21 +12,23 @@ const REPO = "Shopify/javy";
 const NAME = "javy";
 
 async function main() {
-	if (!(await isBinaryDownloaded()) || shouldIgnoreLocalBinary()) {
-		console.error(`${NAME} is not available locally.`);
-		await fs.promises.unlink(binaryPath()).catch(() => {});
+	const version = await getDesiredVersionNumber();
+	if (!(await isBinaryDownloaded(version))) {
+		console.error(`${NAME} ${version} is not available locally.`);
 		if (process.env.FORCE_FROM_SOURCE) {
 			console.error(`Building ${NAME} from source...`);
 			await buildBinary();
 			console.error(`Done.`);
 		} else {
 			console.error(`${NAME} needs to be downloaded...`);
-			await downloadBinary();
+			await downloadBinary(version);
 			console.error(`Done.`);
 		}
 	}
 	try {
-		childProcess.spawnSync(binaryPath(), getArgs(), { stdio: "inherit" });
+		childProcess.spawnSync(binaryPath(version), getArgs(), {
+			stdio: "inherit",
+		});
 	} catch (e) {
 		if (typeof e?.status === "number") return;
 		console.error(e);
@@ -34,31 +36,27 @@ async function main() {
 }
 main();
 
-function shouldIgnoreLocalBinary() {
-	return process.env.FORCE_RELEASE || process.env.FORCE_FROM_SOURCE;
-}
-
 function cacheDir(...suffixes) {
 	const cacheDir = path.join(cachedir("binarycache"), ...suffixes);
 	fs.mkdirSync(cacheDir, { recursive: true });
 	return cacheDir;
 }
 
-function binaryPath() {
-	return path.join(cacheDir(), NAME);
+function binaryPath(version) {
+	return path.join(cacheDir(), `${NAME}-${version}`);
 }
 
-async function isBinaryDownloaded() {
+async function isBinaryDownloaded(version) {
 	return fs.promises
-		.stat(binaryPath())
+		.stat(binaryPath(version))
 		.then(() => true)
 		.catch(() => false);
 }
 
-async function downloadBinary() {
-	const targetPath = binaryPath();
+async function downloadBinary(version) {
+	const targetPath = binaryPath(version);
 	const compressedStream = await new Promise(async (resolve) => {
-		const { url, version } = await binaryUrl();
+		const url = binaryUrl(version);
 		console.log(`Downloading ${NAME} ${version} to ${targetPath}...`);
 		const resp = await fetch(url);
 		resolve(resp.body);
@@ -73,40 +71,39 @@ async function downloadBinary() {
 		});
 	});
 
-	await fs.promises.chmod(binaryPath(), 0o775);
+	await fs.promises.chmod(binaryPath(version), 0o775);
 }
 
-async function binaryUrl() {
-	let version = process.env.FORCE_RELEASE;
-	// If no version is forced, use the GitHub API to grab the latest release.
-	if (!version || version?.toLowerCase() === "latest") {
-		const releaseDataResponse = await fetch(
-			`https://api.github.com/repos/${REPO}/releases?per_page=3`,
-			{
-				headers: {
-					Accept: "application/vnd.github+json",
-				},
-			}
+/**
+ * getDesiredVersionNumber returns the version number of the release that
+ * should be downloaded and launched. If the FORCE_RELEASE env variable is set,
+ * that will be used as the desired version number, if not, we determine the
+ * latest release available on GitHub.
+ *
+ * GitHub has a public Release API, but  rate limits it per IP, so that the
+ * CLI can end up breaking. Instead, we use a little trick. You can download
+ * artifacts from the latest release by using `latest` as your version number.
+ * The server will respond with a 302 redirect to the artifact's URL. That URL
+ * contains the actual release version number, which we can extract.
+ */
+async function getDesiredVersionNumber() {
+	if (process.env.FORCE_RELEASE) return process.env.FORCE_RELEASE;
+	const resp = await fetch(
+		`https://github.com/${REPO}/releases/latest/download/lol`,
+		{ redirect: "manual" }
+	);
+	if (resp.status != 302) {
+		throw Error(
+			`Could not determine latest release using the GitHub (Status code ${
+				resp.status
+			}): ${await resp.text().catch(() => "<No error message>")}`
 		);
-		if (!releaseDataResponse.ok) {
-			throw Error(
-				`Could not determine latest release using the GitHub API (Status code ${
-					releaseDataResponse.status
-				}): ${await releaseDataResponse
-					.text()
-					.catch(() => "<No error message>")}`
-			);
-		}
-		const releaseData = await releaseDataResponse.json();
-		version = releaseData.find((release) => release.tag_name)?.tag_name;
-		if (!version) {
-			throw Error(
-				"None of the three most recent release have a valid tag name."
-			);
-		}
 	}
-	const url = `https://github.com/${REPO}/releases/download/${version}/javy-${platarch()}-${version}.gz`;
-	return { url, version };
+	return resp.headers.get("location").split("/").at(-2);
+}
+
+function binaryUrl(version) {
+	return `https://github.com/${REPO}/releases/download/${version}/javy-${platarch()}-${version}.gz`;
 }
 
 const SUPPORTED_TARGETS = [
