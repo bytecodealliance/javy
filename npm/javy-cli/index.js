@@ -74,6 +74,18 @@ async function downloadBinary(version) {
 	await fs.promises.chmod(binaryPath(version), 0o775);
 }
 
+/**
+ * getDesiredVersionNumber returns the version number of the release that
+ * should be downloaded and launched. If the FORCE_RELEASE env variable is set,
+ * that will be used as the desired version number, if not, we determine the
+ * latest release available on GitHub.
+ *
+ * GitHub has a public Release API, but  rate limits it per IP, so that the
+ * CLI can end up breaking. Instead, we use a little trick. You can download
+ * artifacts from the latest release by using `latest` as your version number.
+ * The server will respond with a 302 redirect to the artifact's URL. That URL
+ * contains the actual release version number, which we can extract.
+ */
 async function getDesiredVersionNumber() {
 	if (process.env.FORCE_RELEASE) return process.env.FORCE_RELEASE;
 	const resp = await fetch(
