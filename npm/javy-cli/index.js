@@ -103,7 +103,7 @@ async function getDesiredVersionNumber() {
 }
 
 function binaryUrl(version) {
-	return `https://github.com/${REPO}/releases/download/${version}/javy-${platarch()}-${version}.gz`;
+	return `https://github.com/${REPO}/releases/download/${version}/${NAME}-${platarch()}-${version}.gz`;
 }
 
 const SUPPORTED_TARGETS = [
@@ -150,32 +150,31 @@ function platarch() {
 
 function getArgs() {
 	const args = process.argv.slice(2);
-	// TODO: Check if this needs to be changed when javy is installed via `npm install`.
 	return args;
 }
 
 async function buildBinary() {
-	const repoDir = cacheDir("build", "javy");
+	const repoDir = cacheDir("build", NAME);
 	try {
-		console.log("Downloading Javy's source code...");
+		console.log(`Downloading ${NAME}'s source code...`);
 		childProcess.execSync(
-			`git clone https://github.com/shopify/javy ${repoDir}`
+			`git clone https://github.com/${REPO} ${repoDir}`
 		);
 		console.log("Downloading WASI SDK...");
 		childProcess.execSync("make download-wasi-sdk", { cwd: repoDir });
-		console.log("Building Javy...");
+		console.log(`Building ${NAME}...`);
 		childProcess.execSync("make", { cwd: repoDir });
 	} catch (e) {
 		console.error(e);
 		console.error("");
-		console.error("BUILDING JAVY FAILED");
+		console.error(`BUILDING ${NAME} FAILED`);
 		console.error(
 			"Please make sure you have cmake, Rust with the wasm32-wasi target, wasmtime-cli and cargo-wasi installed"
 		);
-		console.error("See the javy README for more details.");
+		console.error("See the README for more details.");
 	}
 	await fs.promises.rename(
-		path.join(repoDir, "target", "release", "javy"),
+		path.join(repoDir, "target", "release", NAME),
 		binaryPath()
 	);
 }
