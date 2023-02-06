@@ -1,16 +1,22 @@
-# One approach to testing changes to this is:
+# One approach to testing changes to the asset upload to release process is to:
 # 1. Fork this repo to your personal account
 # 2. Go into the repo settings on your fork, go to _Actions_, go to _General_, under _Workflow permissions_, select _Read and Write permissions_, then _Save_
 # 3. Add your fork as a new remote and push your branch to it
 # 4. Publish a release in your personal fork with the target of the release set to the branch with your changes
 # 5. Confirm the workflow completes and that assets are attached to the release as expected
 
-name: Publish
+name: Build Assets
 
 on:
+  # Build and attach assets to any published releases
   release:
     types:
       - published
+  # Test on every CI run too
+  push:
+    branches:
+      - main
+  pull_request:
 
 jobs:
   compile_core:
@@ -50,6 +56,7 @@ jobs:
           path: javy-quickjs_provider.wasm.gz
 
       - name: Upload archived quickjs_provider to release
+        if: github.event_name == 'release'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release upload ${{ github.event.release.tag_name }} javy-quickjs_provider.wasm.gz
@@ -64,6 +71,7 @@ jobs:
           path: javy-quickjs_provider.wasm.gz.sha256
 
       - name: Upload asset hash to release
+        if: github.event_name == 'release'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release upload ${{ github.event.release.tag_name }} javy-quickjs_provider.wasm.gz.sha256
@@ -130,6 +138,7 @@ jobs:
           path: ${{ matrix.asset_name }}.gz
 
       - name: Upload assets to release
+        if: github.event_name == 'release'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release upload ${{ github.event.release.tag_name }} ${{ matrix.asset_name }}.gz
@@ -144,6 +153,7 @@ jobs:
           path: ${{ matrix.asset_name }}.gz.sha256
 
       - name: Upload asset hash to release
+        if: github.event_name == 'release'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release upload ${{ github.event.release.tag_name }} ${{ matrix.asset_name }}.gz.sha256
