@@ -108,9 +108,9 @@ function binaryUrl(version) {
 
 const SUPPORTED_TARGETS = [
 	"arm-macos",
-	"x64_64-macos",
-	"x64_64-windows",
-	"x64_64-linux",
+	"x86_64-macos",
+	"x86_64-windows",
+	"x86_64-linux",
 ];
 
 function platarch() {
