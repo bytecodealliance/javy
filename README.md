@@ -118,6 +118,26 @@ In a runtime like Wasmtime, [wasmtime-wasi](
 https://docs.rs/wasmtime-wasi/latest/wasmtime_wasi/struct.WasiCtx.html#method.set_stdin)
 can be used to set the input and retrieve the output.
 
+## Creating and using dynamically linked modules
+
+In some scenarios, you may want or need to generate much smaller Wasm modules with Javy. Using the `-d` flag when invoking Javy will create a dynamically linked module which will have a much smaller file size than a statically linked module. Dynamically linked modules have special requirements that statically linked modules do not and will not execute in WebAssembly runtimes that do not meet these requirements.
+
+To successfully instantiate and run a dynamically linked Javy module, the execution environment must provide a `javy_quickjs_provider_v1` namespace for importing that links to the exports provided by the `javy_quickjs_provider.wasm` module. Dynamically linked modules **cannot** be instantiated in environments that do not provide this import.
+
+### Obtaining the QuickJS provider module
+
+The `javy_quickjs_provider.wasm` module is available as an asset on the Javy release you are using. It can also be obtained by running `javy emit-provider -o <path>` to write the module into `<path>`.
+
+### Creating and running a dynamically linked module on the CLI
+
+```
+$ echo 'console.log("hello world!");' > my_code.js
+$ javy compile -d -o my_code.wasm my_code.js
+$ javy emit-provider -o provider.wasm
+$ wasmtime run --preload javy_quickjs_provider_v1=provider.wasm my_code.wasm
+hello world!
+```
+
 ## Using quickjs-wasm-rs to build your own toolchain
 
 The `quickjs-wasm-rs` crate that is part of this project can be used as part of a Rust crate targeting Wasm to customize how that Rust crate interacts with QuickJS. This may be useful when trying to use JavaScript inside a Wasm module and Javy does not fit your needs as `quickjs-wasm-rs` contains serializers that make it easier to send structured data (for example, strings or objects) between host code and Wasm code.
