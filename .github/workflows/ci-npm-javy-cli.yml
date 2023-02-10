@@ -1,0 +1,25 @@
+name: javy-cli NPM package CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    name: npm test
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - run: npm install
+        working-directory: npm/javy-cli
+
+      - run: npm test
+        working-directory: npm/javy-cli
