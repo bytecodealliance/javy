@@ -28,4 +28,5 @@ fn main() {
     let context = unsafe { CONTEXT.take().unwrap() };
 
     context.eval_binary(&bytecode).unwrap();
+    context.execute_pending().unwrap();
 }
