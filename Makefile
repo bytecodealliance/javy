@@ -69,10 +69,12 @@ fmt-core:
 				&& cargo clippy --target=wasm32-wasi -- -D warnings \
 				&& cd -
 
+# Use `--release` on CLI clippy to align with `test-cli`.
+# This reduces the size of the target directory which improves CI stability.
 fmt-cli:
 		cd crates/cli/ \
 				&& cargo fmt -- --check \
-				&& cargo clippy -- -D warnings \
+				&& cargo clippy --release -- -D warnings \
 				&& cd -
 
 clean: clean-wasi-sdk clean-cargo
