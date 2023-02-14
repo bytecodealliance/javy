@@ -70,6 +70,7 @@ fn test_readme_script() {
     assert_eq!(r#"{"foo":3,"newBar":"baz!"}"#.as_bytes(), output);
 }
 
+#[cfg(feature = "experimental_event_loop")]
 #[test]
 fn test_promises() {
     let mut runner = Runner::new("promise.js");
