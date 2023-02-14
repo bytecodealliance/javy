@@ -15,7 +15,7 @@ cli: core
 
 core:
 		cd crates/core \
-				&& cargo build --release --target=wasm32-wasi \
+				&& cargo build --release --target=wasm32-wasi --features=$(CORE_FEATURES) \
 				&& wizer ../../target/wasm32-wasi/release/javy_quickjs_provider.wasm --allow-wasi --wasm-bulk-memory true -o ../../target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm \
 				&& cd -
 
@@ -38,7 +38,7 @@ test-core:
 # Note: to make this faster, the engine should be optimized beforehand (wasm-strip + wasm-opt).
 test-cli: core
 		cd crates/cli \
-				&& cargo test --release -- --nocapture\
+				&& cargo test --release --features=$(CLI_FEATURES) -- --nocapture \
 				&& cd -
 
 test-wpt: cli

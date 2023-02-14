@@ -28,4 +28,7 @@ fn main() {
     let context = unsafe { CONTEXT.take().unwrap() };
 
     context.eval_binary(&bytecode).unwrap();
+    if cfg!(feature = "experimental_event_loop") {
+        context.execute_pending().unwrap();
+    }
 }

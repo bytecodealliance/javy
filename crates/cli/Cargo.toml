@@ -11,6 +11,7 @@ name = "javy"
 
 [features]
 dump_wat = ["dep:wasmprinter"]
+experimental_event_loop = []
 
 [dependencies]
 wizer = "1.6.0"
