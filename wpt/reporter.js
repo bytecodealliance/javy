@@ -1,10 +1,7 @@
-export let failedTestCount = 0;
-
 function logFailure({ name, message, stack }) {
   console.log("[FAIL]", name);
   console.log(message);
   console.log(stack);
-  failedTestCount += 1;
 }
 
 export function resultReporter(test) {
@@ -25,10 +22,3 @@ export function resultReporter(test) {
   logFailure(test);
 }
 
-export function completionReporter(tests, testStatus) {
-  if (testStatus.status == 0) return;
-  // For some reason, neither the `tests` object nor the `testStatus`
-  // object contain a name to reference. We will have to work with the
-  // stack if this one goes wrong.
-  logFailure({ name: "???", ...testStatus });
-}
