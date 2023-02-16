@@ -2,6 +2,7 @@ mod bytecode;
 mod commands;
 mod module_generator;
 mod opt;
+mod producers_section;
 mod source_code_section;
 
 use crate::commands::{Command, CompileCommandOpts, EmitProviderCommandOpts};
@@ -78,6 +79,8 @@ fn create_statically_linked_module(opts: &CompileCommandOpts) -> Result<()> {
         contents,
     )?;
 
+    update_producers_section(&opts.output)?;
+
     Ok(())
 }
 
@@ -92,6 +95,13 @@ fn add_custom_section<P: AsRef<Path>>(file: P, section: String, contents: Vec<u8
         .push(Section::Custom(CustomSection::new(section, compressed)));
     parity_wasm::serialize_to_file(&file, module)?;
 
+    Ok(())
+}
+
+fn update_producers_section(file: &Path) -> Result<()> {
+    let bytes = fs::read(file)?;
+    let module_bytes = producers_section::update_producers_section(&bytes)?;
+    fs::write(file, module_bytes)?;
     Ok(())
 }
 

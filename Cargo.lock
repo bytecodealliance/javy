@@ -902,6 +902,7 @@ dependencies = [
  "brotli",
  "criterion",
  "lazy_static",
+ "leb128",
  "num-format",
  "parity-wasm",
  "serde",
@@ -911,6 +912,7 @@ dependencies = [
  "uuid",
  "wasi-common",
  "wasm-encoder 0.20.0",
+ "wasmparser 0.101.0",
  "wasmprinter",
  "wasmtime",
  "wasmtime-wasi",
@@ -1972,6 +1974,16 @@ name = "wasmparser"
 version = "0.96.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "adde01ade41ab9a5d10ec8ed0bb954238cf8625b5cd5a13093d6de2ad9c2be1a"
+dependencies = [
+ "indexmap",
+ "url",
+]
+
+[[package]]
+name = "wasmparser"
+version = "0.101.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9cc3222d9e47412382cc95e2f013c6a9f510bcff80af92de5665ae3ec1e4a2f6"
 dependencies = [
  "indexmap",
  "url",

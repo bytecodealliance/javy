@@ -5,7 +5,7 @@ use wasm_encoder::{
     TypeSection, ValType,
 };
 
-use crate::source_code_section;
+use crate::{producers_section, source_code_section};
 
 // Run the calling code with the `dump_wat` feature enabled to print the WAT to stdout
 //
@@ -48,6 +48,7 @@ pub fn generate_module(bytecode: Vec<u8>, js_src: &[u8]) -> Result<Vec<u8>> {
     add_code(&mut module, &indices, bytecode.len().try_into()?);
     add_data(&mut module, bytecode);
     add_source_code(&mut module, js_src)?;
+    add_producers_section(&mut module)?;
 
     let wasm_binary = module.finish();
     print_wat(&wasm_binary)?;
@@ -240,6 +241,14 @@ fn add_source_code(module: &mut Module, js_src: &[u8]) -> Result<()> {
         data: &compressed_source_code,
     };
     module.section(&source_code_custom);
+    Ok(())
+}
+
+fn add_producers_section(module: &mut Module) -> Result<()> {
+    module.section(&CustomSection {
+        name: producers_section::PRODUCERS_SECTION_NAME,
+        data: &producers_section::producers_section_content()?,
+    });
     Ok(())
 }
 
