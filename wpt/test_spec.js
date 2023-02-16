@@ -22,9 +22,9 @@ export default [
   {
     testFile: "upstream/encoding/replacement-encodings.any.js",
   },
-  // { // FIXME need to add streaming support
-  //   testFile: "upstream/encoding/textdecoder-arguments.any.js",
-  // },
+  {
+    testFile: "custom_tests/textdecoder-arguments.any.js",
+  },
   {
     testFile: "upstream/encoding/textdecoder-byte-order-marks.any.js",
     ignoredTests: ["Byte-order marks: utf-16le", "Byte-order marks: utf-16be"],
