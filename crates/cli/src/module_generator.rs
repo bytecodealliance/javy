@@ -1,11 +1,10 @@
 use anyhow::Result;
 use wasm_encoder::{
-    CodeSection, CustomSection, DataCountSection, DataSection, EntityType, ExportKind,
-    ExportSection, Function, FunctionSection, ImportSection, Instruction, MemoryType, Module,
-    TypeSection, ValType,
+    CodeSection, DataCountSection, DataSection, EntityType, ExportKind, ExportSection, Function,
+    FunctionSection, ImportSection, Instruction, MemoryType, Module, TypeSection, ValType,
 };
 
-use crate::source_code_section;
+use crate::transform;
 
 // Run the calling code with the `dump_wat` feature enabled to print the WAT to stdout
 //
@@ -47,7 +46,7 @@ pub fn generate_module(bytecode: Vec<u8>, js_src: &[u8]) -> Result<Vec<u8>> {
     add_data_count(&mut module, 1);
     add_code(&mut module, &indices, bytecode.len().try_into()?);
     add_data(&mut module, bytecode);
-    add_source_code(&mut module, js_src)?;
+    transform::add_source_code_section(&mut module, js_src)?;
 
     let wasm_binary = module.finish();
     print_wat(&wasm_binary)?;
@@ -231,16 +230,6 @@ fn add_data(module: &mut Module, bytecode: Vec<u8>) {
     let mut data = DataSection::new();
     data.passive(bytecode);
     module.section(&data);
-}
-
-fn add_source_code(module: &mut Module, js_src: &[u8]) -> Result<()> {
-    let compressed_source_code = source_code_section::compress_source_code(js_src)?;
-    let source_code_custom = CustomSection {
-        name: source_code_section::SOURCE_CODE_SECTION_NAME,
-        data: &compressed_source_code,
-    };
-    module.section(&source_code_custom);
-    Ok(())
 }
 
 #[cfg(feature = "dump_wat")]
