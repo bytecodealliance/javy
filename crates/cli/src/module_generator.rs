@@ -1,11 +1,9 @@
 use anyhow::Result;
-use wasm_encoder::CustomSection;
 use wasm_encoder::{
     CodeSection, DataCountSection, DataSection, EntityType, ExportKind, ExportSection, Function,
     FunctionSection, ImportSection, Instruction, MemoryType, Module, TypeSection, ValType,
 };
 
-use crate::producers_section;
 use crate::transform;
 
 // Run the calling code with the `dump_wat` feature enabled to print the WAT to stdout
@@ -49,7 +47,7 @@ pub fn generate_module(bytecode: Vec<u8>, js_src: &[u8]) -> Result<Vec<u8>> {
     add_code(&mut module, &indices, bytecode.len().try_into()?);
     add_data(&mut module, bytecode);
     transform::add_source_code_section(&mut module, js_src)?;
-    add_producers_section(&mut module)?;
+    transform::add_producers_section(&mut module)?;
 
     let wasm_binary = module.finish();
     print_wat(&wasm_binary)?;
@@ -233,14 +231,6 @@ fn add_data(module: &mut Module, bytecode: Vec<u8>) {
     let mut data = DataSection::new();
     data.passive(bytecode);
     module.section(&data);
-}
-
-fn add_producers_section(module: &mut Module) -> Result<()> {
-    module.section(&CustomSection {
-        name: producers_section::PRODUCERS_SECTION_NAME,
-        data: &producers_section::producers_section_content()?,
-    });
-    Ok(())
 }
 
 #[cfg(feature = "dump_wat")]
