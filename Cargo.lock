@@ -903,7 +903,6 @@ dependencies = [
  "criterion",
  "lazy_static",
  "num-format",
- "parity-wasm",
  "serde",
  "serde_json",
  "structopt",
@@ -911,6 +910,7 @@ dependencies = [
  "uuid",
  "wasi-common",
  "wasm-encoder 0.20.0",
+ "wasmparser 0.101.0",
  "wasmprinter",
  "wasmtime",
  "wasmtime-wasi",
@@ -1123,12 +1123,6 @@ name = "opaque-debug"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
-
-[[package]]
-name = "parity-wasm"
-version = "0.45.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1ad0aff30c1da14b1254fcb2af73e1fa9a28670e584a626f53a369d0e157304"
 
 [[package]]
 name = "paste"
@@ -1972,6 +1966,16 @@ name = "wasmparser"
 version = "0.96.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "adde01ade41ab9a5d10ec8ed0bb954238cf8625b5cd5a13093d6de2ad9c2be1a"
+dependencies = [
+ "indexmap",
+ "url",
+]
+
+[[package]]
+name = "wasmparser"
+version = "0.101.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9cc3222d9e47412382cc95e2f013c6a9f510bcff80af92de5665ae3ec1e4a2f6"
 dependencies = [
  "indexmap",
  "url",
