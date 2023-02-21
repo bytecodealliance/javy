@@ -20,7 +20,6 @@ structopt = "0.3"
 anyhow = { workspace = true }
 tempfile = "3.2.0"
 binaryen = { git = "https://github.com/pepyakin/binaryen-rs" }
-parity-wasm = { version = "0.45.0", features = ["bulk"] }
 brotli = "3.3.4"
 wasm-encoder = "0.20"
 wasmprinter = { version = "0.2.45", optional = true }

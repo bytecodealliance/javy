@@ -3,7 +3,7 @@ mod commands;
 mod module_generator;
 mod opt;
 mod producers_section;
-mod source_code_section;
+mod transform;
 
 use crate::commands::{Command, CompileCommandOpts, EmitProviderCommandOpts};
 use anyhow::{bail, Context, Result};
@@ -14,6 +14,8 @@ use std::path::Path;
 use std::process::Stdio;
 use std::{fs, process::Command as OsCommand};
 use structopt::StructOpt;
+use wasm_encoder::RawSection;
+use wasmparser::Parser;
 
 fn main() -> Result<()> {
     let cmd = Command::from_args();
@@ -73,28 +75,30 @@ fn create_statically_linked_module(opts: &CompileCommandOpts) -> Result<()> {
         }
     }
 
-    add_custom_section(
-        &opts.output,
-        source_code_section::SOURCE_CODE_SECTION_NAME.to_string(),
-        contents,
-    )?;
+    add_source_code_section(&opts.output, &contents)?;
 
     update_producers_section(&opts.output)?;
 
     Ok(())
 }
 
-fn add_custom_section<P: AsRef<Path>>(file: P, section: String, contents: Vec<u8>) -> Result<()> {
-    use parity_wasm::elements::*;
+fn add_source_code_section<P: AsRef<Path>>(file: P, contents: &[u8]) -> Result<()> {
+    let input = fs::read(&file)?;
+    let mut module = wasm_encoder::Module::new();
+    for payload in Parser::new(0).parse_all(&input) {
+        if let Some((id, range)) = payload?.as_section() {
+            module.section(&RawSection {
+                id,
+                data: &input[range],
+            });
+        }
+    }
 
-    let compressed = source_code_section::compress_source_code(&contents)?;
+    transform::add_source_code_section(&mut module, contents)?;
 
-    let mut module = parity_wasm::deserialize_file(&file)?;
-    module
-        .sections_mut()
-        .push(Section::Custom(CustomSection::new(section, compressed)));
-    parity_wasm::serialize_to_file(&file, module)?;
-
+    let module_bytes = module.finish();
+    wasmparser::validate(&module_bytes)?;
+    fs::write(&file, module_bytes)?;
     Ok(())
 }
 
