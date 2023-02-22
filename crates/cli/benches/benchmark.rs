@@ -22,7 +22,7 @@ impl Display for Function {
 }
 
 impl Function {
-    pub fn new(function_dir: &Path) -> Result<Function, Box<dyn Error>> {
+    pub fn new(function_dir: &Path, js_path: &Path) -> Result<Function, Box<dyn Error>> {
         let name = function_dir
             .file_name()
             .ok_or("Path terminates in ..")?
@@ -31,7 +31,7 @@ impl Function {
             .to_string();
 
         let wasm_path = function_dir.join("index.wasm");
-        execute_javy(&function_dir.join("index.js"), &wasm_path);
+        execute_javy(&function_dir.join(js_path), &wasm_path);
 
         Ok(Function {
             name,
@@ -100,9 +100,18 @@ impl Function {
 }
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    let functions = fs::read_dir(Path::new("benches").join("functions"))
-        .unwrap()
-        .map(|entry| Function::new(&entry.unwrap().path()).unwrap());
+    let functions = vec![
+        Function::new(
+            Path::new("benches/functions/simple_discount"),
+            Path::new("index.js"),
+        )
+        .unwrap(),
+        Function::new(
+            Path::new("benches/functions/complex_discount"),
+            Path::new("dist/function.js"),
+        )
+        .unwrap(),
+    ];
 
     for function in functions {
         c.bench_with_input(
