@@ -10,7 +10,7 @@ use wasmtime_wasi::sync::WasiCtxBuilder;
 use wasmtime_wasi::WasiCtx;
 
 pub struct Runner {
-    wasm: Vec<u8>,
+    pub wasm: Vec<u8>,
     linker: Linker<StoreContext>,
 }
 

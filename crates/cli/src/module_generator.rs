@@ -47,6 +47,7 @@ pub fn generate_module(bytecode: Vec<u8>, js_src: &[u8]) -> Result<Vec<u8>> {
     add_code(&mut module, &indices, bytecode.len().try_into()?);
     add_data(&mut module, bytecode);
     transform::add_source_code_section(&mut module, js_src)?;
+    transform::add_producers_section(&mut module)?;
 
     let wasm_binary = module.finish();
     print_wat(&wasm_binary)?;

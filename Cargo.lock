@@ -902,6 +902,7 @@ dependencies = [
  "brotli",
  "criterion",
  "lazy_static",
+ "leb128",
  "num-format",
  "serde",
  "serde_json",

@@ -14,7 +14,7 @@ use std::process::Stdio;
 use std::{fs, process::Command as OsCommand};
 use structopt::StructOpt;
 use wasm_encoder::RawSection;
-use wasmparser::Parser;
+use wasmparser::{Parser, Payload::CustomSection};
 
 fn main() -> Result<()> {
     let cmd = Command::from_args();
@@ -74,16 +74,25 @@ fn create_statically_linked_module(opts: &CompileCommandOpts) -> Result<()> {
         }
     }
 
-    add_source_code_section(&opts.output, &contents)?;
+    add_producers_and_source_code_sections(&opts.output, &contents)?;
 
     Ok(())
 }
 
-fn add_source_code_section<P: AsRef<Path>>(file: P, contents: &[u8]) -> Result<()> {
+fn add_producers_and_source_code_sections<P: AsRef<Path>>(file: P, contents: &[u8]) -> Result<()> {
     let input = fs::read(&file)?;
     let mut module = wasm_encoder::Module::new();
     for payload in Parser::new(0).parse_all(&input) {
-        if let Some((id, range)) = payload?.as_section() {
+        let payload = payload?;
+
+        // remove existing producers custom section
+        if let CustomSection(section) = &payload {
+            if section.name() == transform::PRODUCERS_SECTION_NAME {
+                continue;
+            }
+        }
+
+        if let Some((id, range)) = payload.as_section() {
             module.section(&RawSection {
                 id,
                 data: &input[range],
@@ -92,6 +101,7 @@ fn add_source_code_section<P: AsRef<Path>>(file: P, contents: &[u8]) -> Result<(
     }
 
     transform::add_source_code_section(&mut module, contents)?;
+    transform::add_producers_section(&mut module)?;
 
     let module_bytes = module.finish();
     wasmparser::validate(&module_bytes)?;
