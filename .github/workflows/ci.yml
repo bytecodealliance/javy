@@ -54,5 +54,8 @@ jobs:
       - name: Tests
         run: make tests
 
+      - name: Check benchmarks
+        run: make check-bench
+
       - name: Lint
         run: make fmt
