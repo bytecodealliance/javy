@@ -10,6 +10,9 @@ install:
 bench: cli
 		cd crates/cli && cargo bench && cd -
 
+check-bench:
+		cd crates/cli && cargo check --release --benches && cd -
+
 cli: core
 		cd crates/cli && cargo build --release && cd -
 
