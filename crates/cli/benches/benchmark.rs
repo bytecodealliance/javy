@@ -1,6 +1,7 @@
+use anyhow::{anyhow, bail, Result};
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use num_format::{Locale, ToFormattedString};
-use std::{error::Error, fmt::Display, fs, path::Path, process::Command};
+use std::{fmt::Display, fs, path::Path, process::Command};
 use wasi_common::{
     pipe::{ReadPipe, WritePipe},
     WasiCtx,
@@ -22,16 +23,16 @@ impl Display for Function {
 }
 
 impl Function {
-    pub fn new(function_dir: &Path, js_path: &Path) -> Result<Function, Box<dyn Error>> {
+    pub fn new(function_dir: &Path, js_path: &Path) -> Result<Function> {
         let name = function_dir
             .file_name()
-            .ok_or("Path terminates in ..")?
+            .ok_or(anyhow!("Path terminates in .."))?
             .to_str()
-            .ok_or("Function file name contains invalid unicode")?
+            .ok_or(anyhow!("Function file name contains invalid unicode"))?
             .to_string();
 
         let wasm_path = function_dir.join("index.wasm");
-        execute_javy(&function_dir.join(js_path), &wasm_path);
+        execute_javy(&function_dir.join(js_path), &wasm_path)?;
 
         Ok(Function {
             name,
@@ -41,7 +42,7 @@ impl Function {
         })
     }
 
-    pub fn compile(&self) -> Result<Vec<u8>, Box<dyn Error>> {
+    pub fn compile(&self) -> Result<Vec<u8>> {
         let module = Module::new(&self.engine, &self.wasm_bytes)?.serialize()?;
         Ok(module)
     }
@@ -51,7 +52,7 @@ impl Function {
         elf_js_module: &[u8],
         linker: &mut Linker<WasiCtx>,
         store: &mut Store<WasiCtx>,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<()> {
         let js_module = unsafe { Module::deserialize(&self.engine, elf_js_module) }?;
         self.run(&js_module, linker, store)?;
         Ok(())
@@ -61,7 +62,7 @@ impl Function {
         &self,
         linker: &mut Linker<WasiCtx>,
         store: &mut Store<WasiCtx>,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<()> {
         let js_module = Module::new(&self.engine, &self.wasm_bytes)?;
         self.run(&js_module, linker, store)?;
         Ok(())
@@ -72,7 +73,7 @@ impl Function {
         js_module: &Module,
         linker: &mut Linker<WasiCtx>,
         mut store: &mut Store<WasiCtx>,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<()> {
         let consumer_instance = linker.instantiate(&mut store, &js_module)?;
         linker.instance(&mut store, "consumer", consumer_instance)?;
 
@@ -86,7 +87,7 @@ impl Function {
         Ok(())
     }
 
-    pub fn setup(&self) -> Result<(Linker<WasiCtx>, Store<WasiCtx>), Box<dyn Error>> {
+    pub fn setup(&self) -> Result<(Linker<WasiCtx>, Store<WasiCtx>)> {
         let mut linker = Linker::new(&self.engine);
         let wasi = WasiCtxBuilder::new()
             .stdin(Box::new(ReadPipe::from(&self.payload[..])))
@@ -148,27 +149,19 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     }
 }
 
-fn execute_javy(index_js: &Path, wasm: &Path) {
-    let status_code = Command::new(
-        Path::new("..")
-            .join("..")
-            .join("target")
-            .join("release")
-            .join("javy")
-            .to_str()
-            .unwrap(),
-    )
-    .args([
-        "compile",
-        index_js.to_str().unwrap(),
-        "-o",
-        wasm.to_str().unwrap(),
-    ])
-    .status()
-    .unwrap();
+fn execute_javy(index_js: &Path, wasm: &Path) -> Result<()> {
+    let status_code = Command::new(Path::new("../../target/release/javy").to_str().unwrap())
+        .args([
+            "compile",
+            index_js.to_str().unwrap(),
+            "-o",
+            wasm.to_str().unwrap(),
+        ])
+        .status()?;
     if !status_code.success() {
-        panic!("Javy exited with non-zero exit code");
+        bail!("Javy exited with non-zero exit code");
     }
+    Ok(())
 }
 
 criterion_group!(benches, criterion_benchmark);
