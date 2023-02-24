@@ -117,6 +117,14 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             )
             .unwrap(),
         );
+        function_cases.push(
+            FunctionCase::new(
+                Path::new("benches/functions/complex_discount"),
+                Path::new("dist/function.js"),
+                precompiled,
+            )
+            .unwrap(),
+        );
     }
 
     for function_case in function_cases {
