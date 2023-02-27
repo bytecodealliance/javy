@@ -3,19 +3,19 @@ updates:
   - package-ecosystem: "cargo"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     open-pull-requests-limit: 100
   - package-ecosystem: npm
     directory: "/npm/javy"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     open-pull-requests-limit: 100
   - package-ecosystem: npm
     directory: "/npm/javy-cli"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     open-pull-requests-limit: 100
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
