@@ -33,7 +33,7 @@ impl Display for FunctionCase {
 }
 
 impl FunctionCase {
-    pub fn new(function_dir: &Path, js_path: &Path, precompiled: bool) -> Result<Self> {
+    pub fn new(function_dir: &Path, js_path: &Path, compilation: &Compilation) -> Result<Self> {
         let name = function_dir
             .file_name()
             .ok_or(anyhow!("Path terminates in .."))?
@@ -47,7 +47,7 @@ impl FunctionCase {
         let engine = Engine::default();
         let wasm_bytes = fs::read(wasm_path)?;
 
-        let precompiled_elf_bytes = if precompiled {
+        let precompiled_elf_bytes = if let Compilation::Precompiled = compilation {
             Some(Module::new(&engine, &wasm_bytes)?.serialize()?)
         } else {
             None
@@ -108,12 +108,12 @@ impl FunctionCase {
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     let mut function_cases = vec![];
-    for precompiled in [false, true] {
+    for compilation in [Compilation::Uncompiled, Compilation::Precompiled] {
         function_cases.push(
             FunctionCase::new(
                 Path::new("benches/functions/simple_discount"),
                 Path::new("index.js"),
-                precompiled,
+                &compilation,
             )
             .unwrap(),
         );
@@ -121,7 +121,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             FunctionCase::new(
                 Path::new("benches/functions/complex_discount"),
                 Path::new("dist/function.js"),
-                precompiled,
+                &compilation,
             )
             .unwrap(),
         );
@@ -154,6 +154,11 @@ fn execute_javy(index_js: &Path, wasm: &Path) -> Result<()> {
         bail!("Javy exited with non-zero exit code");
     }
     Ok(())
+}
+
+enum Compilation {
+    Uncompiled,
+    Precompiled,
 }
 
 criterion_group!(benches, criterion_benchmark);
