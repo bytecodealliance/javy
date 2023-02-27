@@ -245,16 +245,14 @@ mod tests {
     fn test_null() {
         let context = Context::default();
         let val = context.null_value().unwrap();
-        let actual = deserialize_value::<()>(val);
-        assert_eq!((), actual);
+        deserialize_value::<()>(val);
     }
 
     #[test]
     fn test_undefined() {
         let context = Context::default();
         let val = context.undefined_value().unwrap();
-        let actual = deserialize_value::<()>(val);
-        assert_eq!((), actual);
+        deserialize_value::<()>(val);
     }
 
     #[test]

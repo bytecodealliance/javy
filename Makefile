@@ -63,13 +63,13 @@ fmt-quickjs-wasm-sys:
 fmt-quickjs-wasm-rs:
 		cd crates/quickjs-wasm-rs/ \
 				&& cargo fmt -- --check \
-				&& cargo clippy --target=wasm32-wasi -- -D warnings \
+				&& cargo clippy --target=wasm32-wasi --all-targets -- -D warnings \
 				&& cd -
 
 fmt-core:
 		cd crates/core/ \
 				&& cargo fmt -- --check \
-				&& cargo clippy --target=wasm32-wasi -- -D warnings \
+				&& cargo clippy --target=wasm32-wasi --all-targets -- -D warnings \
 				&& cd -
 
 # Use `--release` on CLI clippy to align with `test-cli`.
@@ -77,7 +77,7 @@ fmt-core:
 fmt-cli:
 		cd crates/cli/ \
 				&& cargo fmt -- --check \
-				&& cargo clippy --release -- -D warnings \
+				&& cargo clippy --release --all-targets -- -D warnings \
 				&& cd -
 
 clean: clean-wasi-sdk clean-cargo

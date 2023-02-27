@@ -73,7 +73,7 @@ mod tests {
     fn test_keys() -> Result<()> {
         let contents = "globalThis.o = {a: 1, b: 2, c: [1, 2, 3]};";
         let context = Context::default();
-        context.eval_global("script", &contents)?;
+        context.eval_global("script", contents)?;
         let global = context.global_object()?;
         let o = global.get_property("o")?;
 
@@ -94,7 +94,7 @@ mod tests {
     fn test_values() -> Result<()> {
         let contents = "globalThis.o = {a: 1, b: 2, c: [1, 2, 3]};";
         let context = Context::default();
-        context.eval_global("script", &contents)?;
+        context.eval_global("script", contents)?;
         let global = context.global_object()?;
         let o = global.get_property("o")?;
 

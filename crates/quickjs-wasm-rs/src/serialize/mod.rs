@@ -163,9 +163,7 @@ mod tests {
 
     #[test]
     fn test_sequence() {
-        let mut expected = Vec::new();
-        expected.push("hello".to_string());
-        expected.push("world".to_string());
+        let expected = vec!["hello".to_string(), "world".to_string()];
 
         let actual = do_roundtrip::<_, Vec<String>>(&expected);
 
@@ -175,12 +173,8 @@ mod tests {
     #[test]
     fn test_nested_sequences() {
         let mut expected = Vec::new();
-        let mut a = Vec::new();
-        a.push("foo".to_string());
-        a.push("bar".to_string());
-        let mut b = Vec::new();
-        b.push("toto".to_string());
-        b.push("tata".to_string());
+        let a = vec!["foo".to_string(), "bar".to_string()];
+        let b = vec!["toto".to_string(), "tata".to_string()];
         expected.push(a);
         expected.push(b);
 
