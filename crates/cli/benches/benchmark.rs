@@ -6,24 +6,34 @@ use wasi_common::{
     pipe::{ReadPipe, WritePipe},
     WasiCtx,
 };
-use wasmtime::{Config, Engine, Linker, Module, Store};
+use wasmtime::{Engine, Linker, Module, Store};
 use wasmtime_wasi::sync::WasiCtxBuilder;
 
-struct Function {
+struct FunctionCase {
     name: String,
     wasm_bytes: Vec<u8>,
     payload: Vec<u8>,
     engine: Engine,
+    precompiled_elf_bytes: Option<Vec<u8>>,
 }
 
-impl Display for Function {
+impl Display for FunctionCase {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.name)
+        write!(
+            f,
+            "{} {}",
+            if self.precompiled_elf_bytes.is_some() {
+                "ahead of time"
+            } else {
+                "just in time"
+            },
+            self.name
+        )
     }
 }
 
-impl Function {
-    pub fn new(function_dir: &Path, js_path: &Path) -> Result<Function> {
+impl FunctionCase {
+    pub fn new(function_dir: &Path, js_path: &Path, compilation: &Compilation) -> Result<Self> {
         let name = function_dir
             .file_name()
             .ok_or(anyhow!("Path terminates in .."))?
@@ -34,46 +44,41 @@ impl Function {
         let wasm_path = function_dir.join("index.wasm");
         execute_javy(&function_dir.join(js_path), &wasm_path)?;
 
-        Ok(Function {
+        let engine = Engine::default();
+        let wasm_bytes = fs::read(wasm_path)?;
+
+        let precompiled_elf_bytes = match compilation {
+            Compilation::AheadOfTime => Some(Module::new(&engine, &wasm_bytes)?.serialize()?),
+            Compilation::JustInTime => None,
+        };
+        let module_size = precompiled_elf_bytes
+            .as_ref()
+            .map(|bs| bs.len())
+            .unwrap_or_else(|| wasm_bytes.len());
+
+        let function_case = FunctionCase {
             name,
-            wasm_bytes: fs::read(wasm_path)?,
+            wasm_bytes,
             payload: fs::read(function_dir.join("input.json"))?,
-            engine: Engine::new(&Config::default())?,
-        })
+            engine,
+            precompiled_elf_bytes,
+        };
+
+        println!(
+            "Size of module for {}: {} bytes",
+            function_case,
+            module_size.to_formatted_string(&Locale::en),
+        );
+
+        Ok(function_case)
     }
 
-    pub fn compile(&self) -> Result<Vec<u8>> {
-        let module = Module::new(&self.engine, &self.wasm_bytes)?.serialize()?;
-        Ok(module)
-    }
+    pub fn run(&self, linker: &mut Linker<WasiCtx>, mut store: &mut Store<WasiCtx>) -> Result<()> {
+        let js_module = match &self.precompiled_elf_bytes {
+            Some(bytes) => unsafe { Module::deserialize(&self.engine, bytes) }?,
+            None => Module::new(&self.engine, &self.wasm_bytes)?,
+        };
 
-    pub fn run_precompiled(
-        &self,
-        elf_js_module: &[u8],
-        linker: &mut Linker<WasiCtx>,
-        store: &mut Store<WasiCtx>,
-    ) -> Result<()> {
-        let js_module = unsafe { Module::deserialize(&self.engine, elf_js_module) }?;
-        self.run(&js_module, linker, store)?;
-        Ok(())
-    }
-
-    pub fn run_uncompiled(
-        &self,
-        linker: &mut Linker<WasiCtx>,
-        store: &mut Store<WasiCtx>,
-    ) -> Result<()> {
-        let js_module = Module::new(&self.engine, &self.wasm_bytes)?;
-        self.run(&js_module, linker, store)?;
-        Ok(())
-    }
-
-    fn run(
-        &self,
-        js_module: &Module,
-        linker: &mut Linker<WasiCtx>,
-        mut store: &mut Store<WasiCtx>,
-    ) -> Result<()> {
         let consumer_instance = linker.instantiate(&mut store, &js_module)?;
         linker.instance(&mut store, "consumer", consumer_instance)?;
 
@@ -101,48 +106,34 @@ impl Function {
 }
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    let functions = vec![
-        Function::new(
-            Path::new("benches/functions/simple_discount"),
-            Path::new("index.js"),
-        )
-        .unwrap(),
-        Function::new(
-            Path::new("benches/functions/complex_discount"),
-            Path::new("dist/function.js"),
-        )
-        .unwrap(),
-    ];
+    let mut function_cases = vec![];
+    for compilation in [Compilation::JustInTime, Compilation::AheadOfTime] {
+        function_cases.push(
+            FunctionCase::new(
+                Path::new("benches/functions/simple_discount"),
+                Path::new("index.js"),
+                &compilation,
+            )
+            .unwrap(),
+        );
+        function_cases.push(
+            FunctionCase::new(
+                Path::new("benches/functions/complex_discount"),
+                Path::new("dist/function.js"),
+                &compilation,
+            )
+            .unwrap(),
+        );
+    }
 
-    for function in functions {
+    for function_case in function_cases {
         c.bench_with_input(
-            BenchmarkId::new("uncompiled", &function),
-            &function,
+            BenchmarkId::new("run", &function_case),
+            &function_case,
             |b, f| {
                 b.iter_with_setup(
-                    || function.setup().unwrap(),
-                    |(mut linker, mut store)| f.run_uncompiled(&mut linker, &mut store).unwrap(),
-                )
-            },
-        );
-
-        let serialized_module = function.compile().unwrap();
-        println!(
-            "Size of precompiled module for {}: {} bytes",
-            function,
-            serialized_module.len().to_formatted_string(&Locale::en)
-        );
-
-        c.bench_with_input(
-            BenchmarkId::new("precompiled", &function),
-            &function,
-            |b, f| {
-                b.iter_with_setup(
-                    || function.setup().unwrap(),
-                    |(mut linker, mut store)| {
-                        f.run_precompiled(&serialized_module, &mut linker, &mut store)
-                            .unwrap()
-                    },
+                    || function_case.setup().unwrap(),
+                    |(mut linker, mut store)| f.run(&mut linker, &mut store).unwrap(),
                 )
             },
         );
@@ -162,6 +153,11 @@ fn execute_javy(index_js: &Path, wasm: &Path) -> Result<()> {
         bail!("Javy exited with non-zero exit code");
     }
     Ok(())
+}
+
+enum Compilation {
+    AheadOfTime,
+    JustInTime,
 }
 
 criterion_group!(benches, criterion_benchmark);
