@@ -23,9 +23,9 @@ impl Display for FunctionCase {
             f,
             "{} {}",
             if self.precompiled_elf_bytes.is_some() {
-                "precompiled"
+                "ahead of time"
             } else {
-                "uncompiled"
+                "just in time"
             },
             self.name
         )
@@ -47,10 +47,9 @@ impl FunctionCase {
         let engine = Engine::default();
         let wasm_bytes = fs::read(wasm_path)?;
 
-        let precompiled_elf_bytes = if let Compilation::Precompiled = compilation {
-            Some(Module::new(&engine, &wasm_bytes)?.serialize()?)
-        } else {
-            None
+        let precompiled_elf_bytes = match compilation {
+            Compilation::AheadOfTime => Some(Module::new(&engine, &wasm_bytes)?.serialize()?),
+            Compilation::JustInTime => None,
         };
         let module_size = precompiled_elf_bytes
             .as_ref()
@@ -108,7 +107,7 @@ impl FunctionCase {
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     let mut function_cases = vec![];
-    for compilation in [Compilation::Uncompiled, Compilation::Precompiled] {
+    for compilation in [Compilation::JustInTime, Compilation::AheadOfTime] {
         function_cases.push(
             FunctionCase::new(
                 Path::new("benches/functions/simple_discount"),
@@ -157,8 +156,8 @@ fn execute_javy(index_js: &Path, wasm: &Path) -> Result<()> {
 }
 
 enum Compilation {
-    Uncompiled,
-    Precompiled,
+    AheadOfTime,
+    JustInTime,
 }
 
 criterion_group!(benches, criterion_benchmark);
