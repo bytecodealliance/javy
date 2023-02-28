@@ -15,13 +15,18 @@ struct FunctionCase {
     payload: Vec<u8>,
     engine: Engine,
     precompiled_elf_bytes: Option<Vec<u8>>,
+    linking: Linking,
 }
 
 impl Display for FunctionCase {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "{} {}",
+            "{} {} {}",
+            match self.linking {
+                Linking::Dynamic => "dynamic",
+                Linking::Static => "static",
+            },
             if self.precompiled_elf_bytes.is_some() {
                 "ahead of time"
             } else {
@@ -33,7 +38,12 @@ impl Display for FunctionCase {
 }
 
 impl FunctionCase {
-    pub fn new(function_dir: &Path, js_path: &Path, compilation: &Compilation) -> Result<Self> {
+    fn new(
+        function_dir: &Path,
+        js_path: &Path,
+        compilation: &Compilation,
+        linking: Linking,
+    ) -> Result<Self> {
         let name = function_dir
             .file_name()
             .ok_or(anyhow!("Path terminates in .."))?
@@ -42,7 +52,7 @@ impl FunctionCase {
             .to_string();
 
         let wasm_path = function_dir.join("index.wasm");
-        execute_javy(&function_dir.join(js_path), &wasm_path)?;
+        execute_javy(&function_dir.join(js_path), &wasm_path, &linking)?;
 
         let engine = Engine::default();
         let wasm_bytes = fs::read(wasm_path)?;
@@ -62,6 +72,7 @@ impl FunctionCase {
             payload: fs::read(function_dir.join("input.json"))?,
             engine,
             precompiled_elf_bytes,
+            linking,
         };
 
         println!(
@@ -100,30 +111,46 @@ impl FunctionCase {
             .inherit_stderr()
             .build();
         wasmtime_wasi::add_to_linker(&mut linker, |s| s).unwrap();
-        let store = Store::new(&self.engine, wasi);
+        let mut store = Store::new(&self.engine, wasi);
+
+        if let Linking::Dynamic = self.linking {
+            let qjs_provider = Module::new(
+                &self.engine,
+                fs::read(Path::new(
+                    "../../target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm",
+                ))?,
+            )?;
+            let instance = linker.instantiate(&mut store, &qjs_provider)?;
+            linker.instance(&mut store, "javy_quickjs_provider_v1", instance)?;
+        }
+
         Ok((linker, store))
     }
 }
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     let mut function_cases = vec![];
-    for compilation in [Compilation::JustInTime, Compilation::AheadOfTime] {
-        function_cases.push(
-            FunctionCase::new(
-                Path::new("benches/functions/simple_discount"),
-                Path::new("index.js"),
-                &compilation,
-            )
-            .unwrap(),
-        );
-        function_cases.push(
-            FunctionCase::new(
-                Path::new("benches/functions/complex_discount"),
-                Path::new("dist/function.js"),
-                &compilation,
-            )
-            .unwrap(),
-        );
+    for linking in [Linking::Static, Linking::Dynamic] {
+        for compilation in [Compilation::JustInTime, Compilation::AheadOfTime] {
+            function_cases.push(
+                FunctionCase::new(
+                    Path::new("benches/functions/simple_discount"),
+                    Path::new("index.js"),
+                    &compilation,
+                    linking,
+                )
+                .unwrap(),
+            );
+            function_cases.push(
+                FunctionCase::new(
+                    Path::new("benches/functions/complex_discount"),
+                    Path::new("dist/function.js"),
+                    &compilation,
+                    linking,
+                )
+                .unwrap(),
+            );
+        }
     }
 
     for function_case in function_cases {
@@ -140,14 +167,18 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     }
 }
 
-fn execute_javy(index_js: &Path, wasm: &Path) -> Result<()> {
+fn execute_javy(index_js: &Path, wasm: &Path, linking: &Linking) -> Result<()> {
+    let mut args = vec![
+        "compile",
+        index_js.to_str().unwrap(),
+        "-o",
+        wasm.to_str().unwrap(),
+    ];
+    if let Linking::Dynamic = linking {
+        args.push("-d");
+    }
     let status_code = Command::new(Path::new("../../target/release/javy").to_str().unwrap())
-        .args([
-            "compile",
-            index_js.to_str().unwrap(),
-            "-o",
-            wasm.to_str().unwrap(),
-        ])
+        .args(args)
         .status()?;
     if !status_code.success() {
         bail!("Javy exited with non-zero exit code");
@@ -158,6 +189,12 @@ fn execute_javy(index_js: &Path, wasm: &Path) -> Result<()> {
 enum Compilation {
     AheadOfTime,
     JustInTime,
+}
+
+#[derive(Clone, Copy)]
+enum Linking {
+    Static,
+    Dynamic,
 }
 
 criterion_group!(benches, criterion_benchmark);
