@@ -341,7 +341,7 @@ impl Value {
         self.get_tag() == JS_TAG_EXCEPTION
     }
 
-    /// Get a pointer to the `RefCell` holding a value wrapped using [Context::wrap_rust_value].
+    /// Get a pointer to the `RefCell` holding a value wrapped using [crate::Context::wrap_rust_value].
     pub fn get_rust_value<T: 'static>(&self) -> Result<&RefCell<T>> {
         unsafe {
             let pointer = JS_GetOpaque(
