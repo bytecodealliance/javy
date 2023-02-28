@@ -45,7 +45,7 @@ fn compile_src(
     let compile_src_func =
         instance.get_typed_func::<(u32, u32), u32, _>(&mut store, "compile_src")?;
 
-    let js_src_ptr = allocate_memory(&instance, &mut store, 1, js_src.len().try_into()?)?;
+    let js_src_ptr = allocate_memory(instance, store, 1, js_src.len().try_into()?)?;
     memory.write(&mut store, js_src_ptr.try_into()?, js_src)?;
 
     let ret_ptr = compile_src_func.call(&mut store, (js_src_ptr, js_src.len().try_into()?))?;

@@ -596,9 +596,7 @@ mod tests {
         let context = Context::default();
         let mut serializer = ValueSerializer::from_context(&context).unwrap();
 
-        let mut sequence = Vec::new();
-        sequence.push("hello");
-        sequence.push("world");
+        let sequence = vec!["hello", "world"];
 
         sequence.serialize(&mut serializer).unwrap();
 

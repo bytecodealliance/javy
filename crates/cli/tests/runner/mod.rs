@@ -3,7 +3,6 @@ use std::fs;
 use std::io::{self, Cursor, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use tempfile;
 use wasi_common::pipe::{ReadPipe, WritePipe};
 use wasmtime::{Config, Engine, Linker, Module, OptLevel, Store};
 use wasmtime_wasi::sync::WasiCtxBuilder;
@@ -41,13 +40,12 @@ impl StoreContext {
         let wasi_output = WritePipe::new_in_memory();
         let log_stream = WritePipe::new_in_memory();
         wasi.set_stdout(Box::new(wasi_output.clone()));
-        wasi.set_stdin(Box::new(ReadPipe::from(input.clone())));
+        wasi.set_stdin(Box::new(ReadPipe::from(input)));
         wasi.set_stderr(Box::new(log_stream.clone()));
         Self {
             wasi,
             wasi_output,
             log_stream,
-            ..Default::default()
         }
     }
 }
