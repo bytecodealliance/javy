@@ -10,9 +10,9 @@ use quickjs_wasm_sys::{
     JS_NewArrayBufferCopy, JS_NewBigInt64, JS_NewBool_Ext, JS_NewCFunctionData, JS_NewClass,
     JS_NewClassID, JS_NewContext, JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewInt64_Ext,
     JS_NewObject, JS_NewObjectClass, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext,
-    JS_ReadObject, JS_SetOpaque, JS_ThrowInternalError, JS_ThrowRangeError, JS_ThrowReferenceError,
-    JS_ThrowSyntaxError, JS_ThrowTypeError, JS_WriteObject, JS_EVAL_FLAG_COMPILE_ONLY,
-    JS_EVAL_TYPE_GLOBAL, JS_READ_OBJ_BYTECODE, JS_WRITE_OBJ_BYTECODE,
+    JS_ReadObject, JS_SetGCThreshold, JS_SetOpaque, JS_ThrowInternalError, JS_ThrowRangeError,
+    JS_ThrowReferenceError, JS_ThrowSyntaxError, JS_ThrowTypeError, JS_WriteObject,
+    JS_EVAL_FLAG_COMPILE_ONLY, JS_EVAL_TYPE_GLOBAL, JS_READ_OBJ_BYTECODE, JS_WRITE_OBJ_BYTECODE,
 };
 use std::any::TypeId;
 use std::cell::RefCell;
@@ -38,6 +38,7 @@ impl Default for Context {
         if runtime.is_null() {
             panic!("Couldn't create JavaScript runtime");
         }
+        unsafe { JS_SetGCThreshold(runtime, u32::MAX) };
 
         let inner = unsafe { JS_NewContext(runtime) };
         if inner.is_null() {
