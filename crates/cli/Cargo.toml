@@ -18,7 +18,6 @@ wizer = "1.6.0"
 which = "4.2"
 structopt = "0.3"
 anyhow = { workspace = true }
-tempfile = "3.2.0"
 binaryen = { git = "https://github.com/pepyakin/binaryen-rs" }
 brotli = "3.3.4"
 wasm-encoder = "0.20"
@@ -36,6 +35,7 @@ lazy_static = "1.4"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 criterion = "0.3"
 num-format = "0.4.3"
+tempfile = "3.4.0"
 
 [[bench]]
 name = "benchmark"
