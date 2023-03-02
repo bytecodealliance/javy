@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use wasmtime::{Engine, Instance, Linker, Memory, Module, Store};
 use wasmtime_wasi::{WasiCtx, WasiCtxBuilder};
 
@@ -19,7 +19,7 @@ fn create_wasm_env() -> Result<(Store<WasiCtx>, Instance, Memory)> {
     let module = Module::new(&engine, QUICKJS_PROVIDER_MODULE)?;
     let mut linker = Linker::new(&engine);
     wasmtime_wasi::add_to_linker(&mut linker, |s| s)?;
-    let wasi = WasiCtxBuilder::new().build();
+    let wasi = WasiCtxBuilder::new().inherit_stderr().build();
     let mut store = Store::new(&engine, wasi);
     let instance = linker.instantiate(&mut store, &module)?;
     let memory = instance.get_memory(&mut store, "memory").unwrap();
@@ -56,7 +56,9 @@ fn call_compile(
 ) -> Result<u32> {
     let compile_src_fn =
         instance.get_typed_func::<(u32, u32), u32, _>(&mut store, "compile_src")?;
-    let ret_ptr = compile_src_fn.call(&mut store, (js_src_ptr, js_src_len))?;
+    let ret_ptr = compile_src_fn
+        .call(&mut store, (js_src_ptr, js_src_len))
+        .map_err(|_| anyhow!("JS compilation failed"))?;
     Ok(ret_ptr)
 }
 

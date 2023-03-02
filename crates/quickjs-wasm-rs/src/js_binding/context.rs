@@ -79,6 +79,8 @@ impl Context {
                 JS_EVAL_FLAG_COMPILE_ONLY as i32,
             )
         };
+        // returns err with details if JS_Eval fails
+        Value::new(self.inner, raw)?;
 
         let mut output_size = 0;
         unsafe {
@@ -431,6 +433,16 @@ mod tests {
             42,
             ctx.global_object()?.get_property("foo")?.try_as_integer()?
         );
+        Ok(())
+    }
+
+    #[test]
+    fn test_compile_errors_when_invalid_using_syntax() -> Result<()> {
+        let ctx = Context::default();
+        let contents = "await foo;";
+        let res = ctx.compile_global(SCRIPT_NAME, contents);
+        let err = res.unwrap_err();
+        assert!(err.to_string().starts_with("Uncaught SyntaxError"));
         Ok(())
     }
 
