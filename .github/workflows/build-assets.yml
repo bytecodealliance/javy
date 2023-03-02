@@ -89,6 +89,12 @@ jobs:
             asset_name: javy-x86_64-linux-${{ github.event.release.tag_name }}
             shasum_cmd: sha256sum
             target: x86_64-unknown-linux-gnu
+          - name: linux-arm64
+            os: ubuntu-latest
+            path: target/aarch64-unknown-linux-gnu/release/javy
+            asset_name: javy-arm-linux-${{ github.event.release.tag_name }}
+            shasum_cmd: sha256sum
+            target: aarch64-unknown-linux-gnu
           - name: macos
             os: macos-latest
             path: target/x86_64-apple-darwin/release/javy
@@ -111,9 +117,14 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # Should no-op except for macos-arm case where that target won't be installed
+      # Should no-op except for macos-arm and linux-arm cases where that target won't be installed
       - name: Install target
         run: rustup target add ${{ matrix.target }}
+
+      # wasmtime-fiber and binaryen fail to compile without this
+      - name: Install Aarch64 GCC toolchain
+        run: sudo apt-get --assume-yes install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
 
       - uses: actions/download-artifact@v3
         with:
@@ -127,6 +138,8 @@ jobs:
 
       - name: Build CLI ${{ matrix.os }}
         run: cargo build --release --target ${{ matrix.target }} --package javy
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
 
       - name: Archive assets
         run: gzip -k -f ${{ matrix.path }} && mv ${{ matrix.path }}.gz ${{ matrix.asset_name }}.gz
