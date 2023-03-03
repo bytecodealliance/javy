@@ -133,6 +133,9 @@ function platarch() {
 		case "arm64":
 			arch = "arm";
 			break;
+		// A 32 bit arch likely needs that someone has 32bit Node installed on a
+		// 64 bit system, and wasmtime doesn't support 32bit anyway.
+		case "ia32":
 		case "x64":
 			arch = "x86_64";
 			break;
