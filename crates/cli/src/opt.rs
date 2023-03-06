@@ -1,4 +1,4 @@
-use anyhow::{bail, Error, Result};
+use anyhow::{anyhow, bail, Error, Result};
 use binaryen::{CodegenConfig, Module};
 use std::path::Path;
 use wizer::Wizer;
@@ -25,7 +25,8 @@ impl<'a> Optimizer<'a> {
             .allow_wasi(true)?
             .inherit_stdio(true)
             .wasm_bulk_memory(true)
-            .run(self.wasm)?;
+            .run(self.wasm)
+            .map_err(|_| anyhow!("JS compilation failed"))?;
 
         if self.optimize {
             let codegen_cfg = CodegenConfig {
