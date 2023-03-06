@@ -1,6 +1,7 @@
 (function () {
   const __javy_io_readSync = globalThis.__javy_io_readSync;
   const __javy_io_writeSync = globalThis.__javy_io_writeSync;
+  const __javy_io_args = globalThis.__javy_io_args;
   globalThis.Javy.IO = {
     readSync(fd, data) {
       if (!(data instanceof Uint8Array)) {
@@ -24,8 +25,12 @@
         data.byteLength
       );
     },
+    args(){
+      return __javy_io_args();
+    },
   };
 
   Reflect.deleteProperty(globalThis, "__javy_io_readSync");
   Reflect.deleteProperty(globalThis, "__javy_io_writeSync");
+  Reflect.deleteProperty(globalThis, "__javy_io_args");
 })();

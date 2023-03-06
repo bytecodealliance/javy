@@ -53,6 +53,18 @@ where
         })?,
     )?;
 
+    global.set_property(
+        "__javy_io_args",
+        context.wrap_callback(|ctx, _this_arg, _args| {
+            let args: Vec<String> = std::env::args().collect();
+            let args_array= ctx.array_value().unwrap();
+            for arg in args.iter(){
+                args_array.append_property(ctx.value_from_str(arg).unwrap()).unwrap();
+            }
+            Ok(args_array)
+        })?,
+    )?;
+
     context.eval_global(
         "text-encoding.js",
         include_str!("../prelude/text-encoding.js"),
