@@ -44,7 +44,7 @@ pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -
     // Use fresh context to avoid depending on Wizened context
     let context = Context::default();
     let js_src = str::from_utf8(slice::from_raw_parts(js_src_ptr, js_src_len)).unwrap();
-    let bytecode = context.compile_global("function.mjs", js_src).unwrap();
+    let bytecode = context.compile_module("function.mjs", js_src).unwrap();
     let bytecode_len = bytecode.len();
     // We need the bytecode buffer to live longer than this function so it can be read from memory
     let bytecode_ptr = Box::leak(bytecode.into_boxed_slice()).as_ptr();

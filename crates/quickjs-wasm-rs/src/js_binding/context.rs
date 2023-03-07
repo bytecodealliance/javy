@@ -12,7 +12,7 @@ use quickjs_wasm_sys::{
     JS_NewObject, JS_NewObjectClass, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext,
     JS_ReadObject, JS_SetOpaque, JS_ThrowInternalError, JS_ThrowRangeError, JS_ThrowReferenceError,
     JS_ThrowSyntaxError, JS_ThrowTypeError, JS_WriteObject, JS_EVAL_FLAG_COMPILE_ONLY,
-    JS_EVAL_TYPE_GLOBAL, JS_READ_OBJ_BYTECODE, JS_WRITE_OBJ_BYTECODE,
+    JS_EVAL_TYPE_GLOBAL, JS_EVAL_TYPE_MODULE, JS_READ_OBJ_BYTECODE, JS_WRITE_OBJ_BYTECODE,
 };
 use std::any::TypeId;
 use std::cell::RefCell;
@@ -66,17 +66,29 @@ impl Context {
         Value::new(self.inner, raw)
     }
 
+    pub fn compile_module(&self, name: &str, contents: &str) -> Result<Vec<u8>> {
+        self.compile(name, contents, CompileType::Module)
+    }
+
     pub fn compile_global(&self, name: &str, contents: &str) -> Result<Vec<u8>> {
+        self.compile(name, contents, CompileType::Global)
+    }
+
+    fn compile(&self, name: &str, contents: &str, compile_as: CompileType) -> Result<Vec<u8>> {
         let input = CString::new(contents)?;
         let script_name = CString::new(name)?;
         let len = contents.len() - 1;
+        let compile_type = match compile_as {
+            CompileType::Global => JS_EVAL_TYPE_GLOBAL,
+            CompileType::Module => JS_EVAL_TYPE_MODULE,
+        };
         let raw = unsafe {
             JS_Eval(
                 self.inner,
                 input.as_ptr(),
                 len as _,
                 script_name.as_ptr(),
-                JS_EVAL_FLAG_COMPILE_ONLY as i32,
+                (JS_EVAL_FLAG_COMPILE_ONLY | compile_type) as i32,
             )
         };
         // returns err with details if JS_Eval fails
@@ -369,6 +381,11 @@ where
     Some(trampoline::<F>)
 }
 
+enum CompileType {
+    Global,
+    Module,
+}
+
 #[cfg(test)]
 mod tests {
     use super::Context;
@@ -424,7 +441,7 @@ mod tests {
     }
 
     #[test]
-    fn test_compiles_and_evaluates_global_object() -> Result<()> {
+    fn test_compile_global_compiles_and_evaluates_global_object() -> Result<()> {
         let ctx = Context::default();
         let contents = "var foo = 42;";
         let bytecode = ctx.compile_global(SCRIPT_NAME, contents)?;
@@ -437,12 +454,48 @@ mod tests {
     }
 
     #[test]
-    fn test_compile_errors_when_invalid_using_syntax() -> Result<()> {
+    fn test_compile_module_does_not_implicitly_change_global_object() -> Result<()> {
         let ctx = Context::default();
-        let contents = "await foo;";
+        let contents = "var foo = 42;";
+        let bytecode = ctx.compile_module(SCRIPT_NAME, contents)?;
+        let _ = ctx.eval_binary(&bytecode)?;
+        assert!(ctx.global_object()?.get_property("foo")?.is_undefined());
+        Ok(())
+    }
+
+    #[test]
+    fn test_compile_module_bytecode_evaluates() -> Result<()> {
+        let ctx = Context::default();
+        ctx.eval_global("foo.js", "globalThis.foo = 1;")?;
+        let bytecode = ctx.compile_module(SCRIPT_NAME, "foo += 1;")?;
+        let _ = ctx.eval_binary(&bytecode)?;
+        assert_eq!(
+            2,
+            ctx.global_object()?.get_property("foo")?.try_as_integer()?
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_compile_global_errors_when_invalid_using_syntax() -> Result<()> {
+        let ctx = Context::default();
+        let contents = "import 'foo';";
         let res = ctx.compile_global(SCRIPT_NAME, contents);
         let err = res.unwrap_err();
         assert!(err.to_string().starts_with("Uncaught SyntaxError"));
+        Ok(())
+    }
+
+    #[test]
+    fn test_compile_module_errors_when_importing() -> Result<()> {
+        let ctx = Context::default();
+        let contents = "import 'foo';";
+        let res = ctx.compile_module(SCRIPT_NAME, contents);
+        let err = res.unwrap_err();
+        assert_eq!(
+            err.to_string(),
+            "Uncaught ReferenceError: could not load module 'foo'\n"
+        );
         Ok(())
     }
 
