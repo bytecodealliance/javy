@@ -1,0 +1,19 @@
+---
+name: Bug report
+about: File a bug report
+title: 
+labels: ["bug"]
+assignees: 
+
+---
+
+Operating system: ...
+Processor architecture: ...
+Rust version: ...
+Javy version: ...
+
+## Problem
+...
+
+## Error Message and Context
+...
