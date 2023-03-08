@@ -15,7 +15,7 @@ pub extern "C" fn init() {
 
     let mut contents = String::new();
     io::stdin().read_to_string(&mut contents).unwrap();
-    let bytecode = context.compile_global("function.mjs", &contents).unwrap();
+    let bytecode = context.compile_module("function.mjs", &contents).unwrap();
 
     unsafe {
         CONTEXT.set(context).unwrap();
