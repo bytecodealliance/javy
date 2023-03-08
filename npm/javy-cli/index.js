@@ -14,15 +14,15 @@ const NAME = "javy";
 async function main() {
 	const version = await getDesiredVersionNumber();
 	if (!(await isBinaryDownloaded(version))) {
-		console.error(`${NAME} ${version} is not available locally.`);
+		console.log(`${NAME} ${version} is not available locally.`);
 		if (process.env.FORCE_FROM_SOURCE) {
-			console.error(`Building ${NAME} from source...`);
+			console.log(`Building ${NAME} from source...`);
 			await buildBinary();
-			console.error(`Done.`);
+			console.log(`Done.`);
 		} else {
-			console.error(`${NAME} needs to be downloaded...`);
+			console.log(`${NAME} needs to be downloaded...`);
 			await downloadBinary(version);
-			console.error(`Done.`);
+			console.log(`Done.`);
 		}
 	}
 	try {
@@ -94,8 +94,7 @@ async function getDesiredVersionNumber() {
 	);
 	if (resp.status != 302) {
 		throw Error(
-			`Could not determine latest release using the GitHub (Status code ${
-				resp.status
+			`Could not determine latest release using the GitHub (Status code ${resp.status
 			}): ${await resp.text().catch(() => "<No error message>")}`
 		);
 	}
