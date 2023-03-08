@@ -3,6 +3,7 @@ use quickjs_wasm_rs::Context;
 use std::io::{self, Read};
 use std::string::String;
 
+mod execution;
 mod globals;
 
 static mut CONTEXT: OnceCell<Context> = OnceCell::new();
@@ -26,9 +27,5 @@ pub extern "C" fn init() {
 fn main() {
     let bytecode = unsafe { BYTECODE.take().unwrap() };
     let context = unsafe { CONTEXT.take().unwrap() };
-
-    context.eval_binary(&bytecode).unwrap();
-    if cfg!(feature = "experimental_event_loop") {
-        context.execute_pending().unwrap();
-    }
+    execution::run_bytecode(&context, &bytecode).unwrap();
 }

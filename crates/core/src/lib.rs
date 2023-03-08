@@ -6,6 +6,7 @@ use std::ptr::copy_nonoverlapping;
 use std::slice;
 use std::str;
 
+mod execution;
 mod globals;
 
 // Unlike C's realloc, zero-length allocations need not have
@@ -62,7 +63,7 @@ pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -
 pub unsafe extern "C" fn eval_bytecode(bytecode_ptr: *const u8, bytecode_len: usize) {
     let context = CONTEXT.get().unwrap();
     let bytecode = slice::from_raw_parts(bytecode_ptr, bytecode_len);
-    context.eval_binary(bytecode).unwrap();
+    execution::run_bytecode(context, bytecode).unwrap();
 }
 
 /// 1. Allocate memory of new_size with alignment.
