@@ -77,7 +77,7 @@ jobs:
         run: gh release upload ${{ github.event.release.tag_name }} javy-quickjs_provider.wasm.gz.sha256
 
   compile_cli:
-    name: Compile CLI
+    name: Compile CLI - ${{ matrix.name }}
     needs: compile_core
     runs-on: ${{ matrix.os }}
     strategy:
