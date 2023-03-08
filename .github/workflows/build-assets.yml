@@ -20,7 +20,7 @@ on:
 
 jobs:
   compile_core:
-    name: Compile Core
+    name: compile_core
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
@@ -77,7 +77,7 @@ jobs:
         run: gh release upload ${{ github.event.release.tag_name }} javy-quickjs_provider.wasm.gz.sha256
 
   compile_cli:
-    name: Compile CLI
+    name: compile_cli-${{ matrix.name }}
     needs: compile_core
     runs-on: ${{ matrix.os }}
     strategy:
