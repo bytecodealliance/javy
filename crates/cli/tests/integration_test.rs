@@ -80,6 +80,19 @@ fn test_promises() {
     assert_eq!("\"foo\"\"bar\"".as_bytes(), output);
 }
 
+#[cfg(not(feature = "experimental_event_loop"))]
+#[test]
+fn test_promises() {
+    use crate::runner::RunnerError;
+
+    let mut runner = Runner::new("promise.js");
+    let res = runner.exec(&[]);
+    let err = res.err().unwrap().downcast::<RunnerError>().unwrap();
+    assert!(str::from_utf8(&err.stderr)
+        .unwrap()
+        .contains("Adding tasks to the event queue is not supported"));
+}
+
 #[test]
 fn test_producers_section_present() {
     let runner = Runner::new("readme.js");

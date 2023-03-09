@@ -6,7 +6,7 @@
   "scripts": {
     "bundle": "rollup -c rollup.config.js runner.js",
     "javy": "../target/release/javy compile -o bundle.wasm bundle.js",
-    "wasmtime": "wasmtime bundle.wasm",
+    "wasmtime": "wasmtime --env JAVY_WPT=1 bundle.wasm",
     "test": "npm run bundle && npm run javy && npm run wasmtime"
   },
   "devDependencies": {
