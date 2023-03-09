@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: npm test
+    name: npm_test-${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
