@@ -1,7 +1,7 @@
 use anyhow::anyhow;
 use quickjs_wasm_rs::{Context, JSError, Value};
 use std::borrow::Cow;
-use std::io::{Read, Write};
+use std::io::{ErrorKind, Read, Write};
 use std::str;
 
 pub fn inject_javy_globals<T1, T2>(
@@ -81,7 +81,11 @@ where
             log_line.push_str(arg.as_str()?);
         }
 
-        writeln!(stream, "{log_line}")?;
+        writeln!(stream, "{log_line}").or_else(|e| match e.kind() {
+            ErrorKind::WriteZero => Ok(()), // ignore error when destination buffer is full
+            _ => Err(e),
+        })?;
+
         ctx.undefined_value()
     }
 }
@@ -259,6 +263,18 @@ mod tests {
         Ok(())
     }
 
+    #[test]
+    fn test_console_error_with_fixed_capacity() -> Result<()> {
+        let stream = SharedStream::new(2);
+
+        let ctx = Context::default();
+        inject_javy_globals(&ctx, stream.clone(), stream.clone())?;
+
+        ctx.eval_global("main", "console.error(\"hello world\");")?;
+        assert_eq!(b"he", stream.buffer.borrow().as_slice());
+        Ok(())
+    }
+
     #[derive(Clone)]
     struct SharedStream {
         buffer: Rc<RefCell<Vec<u8>>>,
@@ -275,6 +291,13 @@ mod tests {
     }
 
     impl SharedStream {
+        fn new(capacity: usize) -> Self {
+            Self {
+                buffer: Default::default(),
+                capacity,
+            }
+        }
+
         fn clear(&mut self) {
             (*self.buffer).borrow_mut().clear();
         }

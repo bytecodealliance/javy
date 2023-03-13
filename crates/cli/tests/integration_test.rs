@@ -64,6 +64,14 @@ fn test_logging() {
 }
 
 #[test]
+fn test_logging_with_limited_capacity() {
+    let mut runner = Runner::new_with_fixed_logging_capacity("logging.js", 2);
+
+    let (_output, logs) = run(&mut runner, &[]);
+    assert_eq!("he", logs.as_str());
+}
+
+#[test]
 fn test_readme_script() {
     let mut runner = Runner::new("readme.js");
 
