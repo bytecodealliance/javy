@@ -70,9 +70,8 @@ where
     T: Write + 'static,
 {
     move |ctx: &Context, _this: &Value, args: &[Value]| {
-    // Write full string to in-memory destination before writing to stream since each write call to the stream
-    // will invoke a hostcall.
-    ```
+        // Write full string to in-memory destination before writing to stream since each write call to the stream
+        // will invoke a hostcall.
         let mut log_line = String::new();
         for (i, arg) in args.iter().enumerate() {
             if i != 0 {
