@@ -108,7 +108,7 @@ impl FunctionCase {
         let wasi = WasiCtxBuilder::new()
             .stdin(Box::new(ReadPipe::from(&self.payload[..])))
             .stdout(Box::new(WritePipe::new_in_memory()))
-            .inherit_stderr()
+            .stderr(Box::new(WritePipe::new_in_memory()))
             .build();
         wasmtime_wasi::add_to_linker(&mut linker, |s| s).unwrap();
         let mut store = Store::new(&self.engine, wasi);
@@ -145,6 +145,15 @@ pub fn criterion_benchmark(c: &mut Criterion) {
                 FunctionCase::new(
                     Path::new("benches/functions/complex_discount"),
                     Path::new("dist/function.js"),
+                    &compilation,
+                    linking,
+                )
+                .unwrap(),
+            );
+            function_cases.push(
+                FunctionCase::new(
+                    Path::new("benches/functions/logging"),
+                    Path::new("index.js"),
                     &compilation,
                     linking,
                 )
