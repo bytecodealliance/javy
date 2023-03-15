@@ -70,15 +70,18 @@ where
     T: Write + 'static,
 {
     move |ctx: &Context, _this: &Value, args: &[Value]| {
+        // Write full string to in-memory destination before writing to stream since each write call to the stream
+        // will invoke a hostcall.
+        let mut log_line = String::new();
         for (i, arg) in args.iter().enumerate() {
             if i != 0 {
-                write!(stream, " ")?;
+                log_line.push(' ');
             }
 
-            stream.write_all(arg.as_str()?.as_bytes())?;
+            log_line.push_str(arg.as_str()?);
         }
 
-        writeln!(stream)?;
+        writeln!(stream, "{log_line}")?;
         ctx.undefined_value()
     }
 }
@@ -197,8 +200,8 @@ mod tests {
     use anyhow::Result;
     use quickjs_wasm_rs::Context;
     use std::cell::RefCell;
-    use std::io;
     use std::rc::Rc;
+    use std::{cmp, io};
 
     #[test]
     fn test_console_log() -> Result<()> {
@@ -208,12 +211,12 @@ mod tests {
         inject_javy_globals(&ctx, stream.clone(), stream.clone())?;
 
         ctx.eval_global("main", "console.log(\"hello world\");")?;
-        assert_eq!(b"hello world\n", stream.0.borrow().as_slice());
+        assert_eq!(b"hello world\n", stream.buffer.borrow().as_slice());
 
         stream.clear();
 
         ctx.eval_global("main", "console.log(\"bonjour\", \"le\", \"monde\")")?;
-        assert_eq!(b"bonjour le monde\n", stream.0.borrow().as_slice());
+        assert_eq!(b"bonjour le monde\n", stream.buffer.borrow().as_slice());
 
         stream.clear();
 
@@ -223,7 +226,7 @@ mod tests {
         )?;
         assert_eq!(
             b"2.3 true [object Object] null undefined\n",
-            stream.0.borrow().as_slice()
+            stream.buffer.borrow().as_slice()
         );
         Ok(())
     }
@@ -236,12 +239,12 @@ mod tests {
         inject_javy_globals(&ctx, stream.clone(), stream.clone())?;
 
         ctx.eval_global("main", "console.error(\"hello world\");")?;
-        assert_eq!(b"hello world\n", stream.0.borrow().as_slice());
+        assert_eq!(b"hello world\n", stream.buffer.borrow().as_slice());
 
         stream.clear();
 
         ctx.eval_global("main", "console.error(\"bonjour\", \"le\", \"monde\")")?;
-        assert_eq!(b"bonjour le monde\n", stream.0.borrow().as_slice());
+        assert_eq!(b"bonjour le monde\n", stream.buffer.borrow().as_slice());
 
         stream.clear();
 
@@ -251,27 +254,41 @@ mod tests {
         )?;
         assert_eq!(
             b"2.3 true [object Object] null undefined\n",
-            stream.0.borrow().as_slice()
+            stream.buffer.borrow().as_slice()
         );
         Ok(())
     }
 
-    #[derive(Default, Clone)]
-    struct SharedStream(Rc<RefCell<Vec<u8>>>);
+    #[derive(Clone)]
+    struct SharedStream {
+        buffer: Rc<RefCell<Vec<u8>>>,
+        capacity: usize,
+    }
+
+    impl Default for SharedStream {
+        fn default() -> Self {
+            Self {
+                buffer: Default::default(),
+                capacity: usize::MAX,
+            }
+        }
+    }
 
     impl SharedStream {
         fn clear(&mut self) {
-            (*self.0).borrow_mut().clear();
+            (*self.buffer).borrow_mut().clear();
         }
     }
 
     impl io::Write for SharedStream {
         fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-            (*self.0).borrow_mut().write(buf)
+            let available_capacity = self.capacity - (*self.buffer).borrow().len();
+            let leftover = cmp::min(available_capacity, buf.len());
+            (*self.buffer).borrow_mut().write(&buf[..leftover])
         }
 
         fn flush(&mut self) -> io::Result<()> {
-            (*self.0).borrow_mut().flush()
+            (*self.buffer).borrow_mut().flush()
         }
     }
 }
