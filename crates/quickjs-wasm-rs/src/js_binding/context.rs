@@ -663,13 +663,10 @@ mod tests {
         ctx.eval_global(
             "main",
             "
-async function foo() {
-    const x = 42;
-}
-(async function() {
-    await foo();
-})();
-        ",
+            async function foo() {
+                const x = 42;
+            }
+            foo().then(() => {})",
         )?;
         assert!(ctx.is_pending());
         Ok(())
