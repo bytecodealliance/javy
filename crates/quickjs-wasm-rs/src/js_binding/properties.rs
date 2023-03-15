@@ -1,28 +1,29 @@
 use super::{exception::Exception, value::Value};
 use anyhow::Result;
 use quickjs_wasm_sys::{
-    JSAtom, JSContext, JSPropertyEnum, JSValue, JS_AtomToString, JS_GetOwnPropertyNames,
+    JSAtom, JSPropertyEnum, JSValue, JS_AtomToString, JS_GetOwnPropertyNames,
     JS_GetPropertyInternal, JS_GPN_ENUM_ONLY, JS_GPN_STRING_MASK, JS_GPN_SYMBOL_MASK,
 };
+use super::context::Context;
 use std::ptr;
 
 #[derive(Debug)]
-pub struct Properties {
+pub struct Properties<'a> {
     value: JSValue,
-    context: *mut JSContext,
+    context: &'a Context,
     property_enum: *mut JSPropertyEnum,
     current_key: JSAtom,
     length: isize,
     offset: isize,
 }
 
-impl Properties {
-    pub(super) fn new(context: *mut JSContext, value: JSValue) -> Result<Self> {
+impl<'a> Properties<'a> {
+    pub(super) fn new(context: &'a Context, value: JSValue) -> Result<Self> {
         let flags = (JS_GPN_STRING_MASK | JS_GPN_SYMBOL_MASK | JS_GPN_ENUM_ONLY) as i32;
         let mut property_enum: *mut JSPropertyEnum = ptr::null_mut();
         let mut length = 0;
         let ret = unsafe {
-            JS_GetOwnPropertyNames(context, &mut property_enum, &mut length, value, flags)
+            JS_GetOwnPropertyNames(context.inner, &mut property_enum, &mut length, value, flags)
         };
 
         if ret < 0 {
@@ -53,13 +54,13 @@ impl Properties {
 
     pub fn next_value(&self) -> Result<Value> {
         let val = unsafe {
-            JS_GetPropertyInternal(self.context, self.value, self.current_key, self.value, 0)
+            JS_GetPropertyInternal(self.context.inner, self.value, self.current_key, self.value, 0)
         };
         Value::new(self.context, val)
     }
 
     fn atom_to_string(&self, atom: JSAtom) -> Result<Value> {
-        let raw = unsafe { JS_AtomToString(self.context, atom) };
+        let raw = unsafe { JS_AtomToString(self.context.inner, atom) };
         Value::new(self.context, raw)
     }
 }
@@ -79,14 +80,17 @@ mod tests {
 
         let mut props = o.properties()?;
         let a = props.next_key()?.unwrap();
-        let b = props.next_key()?.unwrap();
-        let c = props.next_key()?.unwrap();
-        let d = props.next_key()?;
-
         assert!(a.is_str());
+
+        let b = props.next_key()?.unwrap();
         assert!(b.is_str());
+
+        let c = props.next_key()?.unwrap();
         assert!(c.is_str());
+
+        let d = props.next_key()?;
         assert!(d.is_none());
+
         Ok(())
     }
 
@@ -101,14 +105,16 @@ mod tests {
         let mut props = o.properties()?;
         props.next_key()?;
         let a = props.next_value()?;
+        assert!(a.is_repr_as_i32());
+
         props.next_key()?;
         let b = props.next_value()?;
+        assert!(b.is_repr_as_i32());
+
         props.next_key()?;
         let c = props.next_value()?;
-
-        assert!(a.is_repr_as_i32());
-        assert!(b.is_repr_as_i32());
         assert!(c.is_array());
+
         Ok(())
     }
 

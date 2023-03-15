@@ -29,7 +29,7 @@ pub(super) static CLASSES: Lazy<Mutex<HashMap<TypeId, JSClassID>>> =
 
 #[derive(Debug)]
 pub struct Context {
-    inner: *mut JSContext,
+    pub inner: *mut JSContext,
 }
 
 impl Default for Context {
@@ -49,6 +49,10 @@ impl Default for Context {
 }
 
 impl Context {
+    pub fn new(inner: *mut JSContext) -> Self {
+        Self { inner }
+    }
+
     pub fn eval_global(&self, name: &str, contents: &str) -> Result<Value> {
         let input = CString::new(contents)?;
         let script_name = CString::new(name)?;
@@ -63,7 +67,7 @@ impl Context {
             )
         };
 
-        Value::new(self.inner, raw)
+        Value::new(self, raw)
     }
 
     pub fn compile_module(&self, name: &str, contents: &str) -> Result<Vec<u8>> {
@@ -92,7 +96,7 @@ impl Context {
             )
         };
         // returns err with details if JS_Eval fails
-        Value::new(self.inner, raw)?;
+        Value::new(self, raw)?;
 
         let mut output_size = 0;
         unsafe {
@@ -122,34 +126,34 @@ impl Context {
             match unsafe { JS_ExecutePendingJob(runtime, &mut ctx) } {
                 0 => break Ok(()),
                 1 => (),
-                _ => break Err(Exception::new(self.inner)?.into_error()),
+                _ => break Err(Exception::new(self)?.into_error()),
             }
         }
     }
 
     pub fn global_object(&self) -> Result<Value> {
         let raw = unsafe { JS_GetGlobalObject(self.inner) };
-        Value::new(self.inner, raw)
+        Value::new(self, raw)
     }
 
     pub fn array_value(&self) -> Result<Value> {
         let raw = unsafe { JS_NewArray(self.inner) };
-        Value::new(self.inner, raw)
+        Value::new(self, raw)
     }
 
     pub fn array_buffer_value(&self, bytes: &[u8]) -> Result<Value> {
-        Value::new(self.inner, unsafe {
+        Value::new(self, unsafe {
             JS_NewArrayBufferCopy(self.inner, bytes.as_ptr(), bytes.len() as _)
         })
     }
 
     pub fn object_value(&self) -> Result<Value> {
         let raw = unsafe { JS_NewObject(self.inner) };
-        Value::new(self.inner, raw)
+        Value::new(self, raw)
     }
 
     pub(super) fn value_from_bytecode(&self, bytecode: &[u8]) -> Result<Value> {
-        Value::new(self.inner, unsafe {
+        Value::new(self, unsafe {
             JS_ReadObject(
                 self.inner,
                 bytecode.as_ptr(),
@@ -161,12 +165,12 @@ impl Context {
 
     pub fn value_from_f64(&self, val: f64) -> Result<Value> {
         let raw = unsafe { JS_NewFloat64_Ext(self.inner, val) };
-        Value::new(self.inner, raw)
+        Value::new(self, raw)
     }
 
     pub fn value_from_i32(&self, val: i32) -> Result<Value> {
         let raw = unsafe { JS_NewInt32_Ext(self.inner, val) };
-        Value::new(self.inner, raw)
+        Value::new(self, raw)
     }
 
     pub fn value_from_i64(&self, val: i64) -> Result<Value> {
@@ -175,13 +179,13 @@ impl Context {
         } else {
             unsafe { JS_NewBigInt64(self.inner, val) }
         };
-        Value::new(self.inner, raw)
+        Value::new(self, raw)
     }
 
     pub fn value_from_u64(&self, val: u64) -> Result<Value> {
         if val <= MAX_SAFE_INTEGER as u64 {
             let raw = unsafe { JS_NewInt64_Ext(self.inner, val as i64) };
-            Value::new(self.inner, raw)
+            Value::new(self, raw)
         } else {
             let value = self.value_from_str(&val.to_string())?;
             let bigint = self.global_object()?.get_property("BigInt")?;
@@ -191,26 +195,26 @@ impl Context {
 
     pub fn value_from_u32(&self, val: u32) -> Result<Value> {
         let raw = unsafe { JS_NewUint32_Ext(self.inner, val) };
-        Value::new(self.inner, raw)
+        Value::new(self, raw)
     }
 
     pub fn value_from_bool(&self, val: bool) -> Result<Value> {
         let raw = unsafe { JS_NewBool_Ext(self.inner, i32::from(val)) };
-        Value::new(self.inner, raw)
+        Value::new(self, raw)
     }
 
     pub fn value_from_str(&self, val: &str) -> Result<Value> {
         let raw =
             unsafe { JS_NewStringLen(self.inner, val.as_ptr() as *const c_char, val.len() as _) };
-        Value::new(self.inner, raw)
+        Value::new(self, raw)
     }
 
     pub fn null_value(&self) -> Result<Value> {
-        Value::new(self.inner, unsafe { ext_js_null })
+        Value::new(self, unsafe { ext_js_null })
     }
 
     pub fn undefined_value(&self) -> Result<Value> {
-        Value::new(self.inner, unsafe { ext_js_undefined })
+        Value::new(self, unsafe { ext_js_undefined })
     }
 
     /// Get the JS class ID used to wrap instances of the specified Rust type, or else create one if it doesn't
@@ -267,7 +271,7 @@ impl Context {
         // aliased, we need `RefCell`'s dynamic borrow checking to prevent unsound access.
         let pointer = Box::into_raw(Box::new(RefCell::new(value)));
 
-        let value = Value::new(self.inner, unsafe {
+        let value = Value::new(self, unsafe {
             JS_NewObjectClass(self.inner, self.get_class_id::<T>().try_into().unwrap())
         })?;
 
@@ -286,49 +290,58 @@ impl Context {
     /// type to be thrown.
     pub fn wrap_callback<F>(&self, mut f: F) -> Result<Value>
     where
-        F: (FnMut(&Self, &Value, &[Value]) -> Result<Value>) + 'static,
+        F: (FnMut(&Self, &Value, &[Value]) -> Result<JSValue>) + 'static,
     {
-        let wrapped = move |inner, this, argc, argv: *mut JSValue, _| match f(
-            &Self { inner },
-            &Value::new_unchecked(inner, this),
-            &(0..argc)
-                .map(|offset| Value::new_unchecked(inner, unsafe { *argv.offset(offset as isize) }))
-                .collect::<Box<[_]>>(),
-        ) {
-            Ok(value) => value.value,
-            Err(error) => {
-                let format = CString::new("%s").unwrap();
-                match error.downcast::<JSError>() {
-                    Ok(js_error) => {
-                        let message = CString::new(js_error.to_string())
-                            .unwrap_or_else(|_| CString::new("Unknown error").unwrap());
-                        match js_error {
-                            JSError::Internal(_) => unsafe {
-                                JS_ThrowInternalError(inner, format.as_ptr(), message.as_ptr())
-                            },
-                            JSError::Syntax(_) => unsafe {
-                                JS_ThrowSyntaxError(inner, format.as_ptr(), message.as_ptr())
-                            },
-                            JSError::Type(_) => unsafe {
-                                JS_ThrowTypeError(inner, format.as_ptr(), message.as_ptr())
-                            },
-                            JSError::Reference(_) => unsafe {
-                                JS_ThrowReferenceError(inner, format.as_ptr(), message.as_ptr())
-                            },
-                            JSError::Range(_) => unsafe {
-                                JS_ThrowRangeError(inner, format.as_ptr(), message.as_ptr())
-                            },
+        let wrapped = move |inner, this, argc, argv: *mut JSValue, _| {
+            let inner_ctx = Context::new(inner);
+            match f(
+                &Self { inner },
+                &Value::new_unchecked(&inner_ctx, this),
+                &(0..argc)
+                    .map(|offset| {
+                        Value::new_unchecked(&inner_ctx, unsafe { *argv.offset(offset as isize) })
+                    })
+                    .collect::<Box<[_]>>(),
+            ) {
+                Ok(value) => value,
+                Err(error) => {
+                    let format = CString::new("%s").unwrap();
+                    match error.downcast::<JSError>() {
+                        Ok(js_error) => {
+                            let message = CString::new(js_error.to_string())
+                                .unwrap_or_else(|_| CString::new("Unknown error").unwrap());
+                            match js_error {
+                                JSError::Internal(_) => unsafe {
+                                    JS_ThrowInternalError(inner, format.as_ptr(), message.as_ptr())
+                                },
+                                JSError::Syntax(_) => unsafe {
+                                    JS_ThrowSyntaxError(inner, format.as_ptr(), message.as_ptr())
+                                },
+                                JSError::Type(_) => unsafe {
+                                    JS_ThrowTypeError(inner, format.as_ptr(), message.as_ptr())
+                                },
+                                JSError::Reference(_) => unsafe {
+                                    JS_ThrowReferenceError(inner, format.as_ptr(), message.as_ptr())
+                                },
+                                JSError::Range(_) => unsafe {
+                                    JS_ThrowRangeError(inner, format.as_ptr(), message.as_ptr())
+                                },
+                            }
                         }
-                    }
-                    Err(e) => {
-                        let message = format!("{e:?}");
-                        let message = CString::new(message.as_str()).unwrap_or_else(|err| {
-                            CString::new(format!("{} - truncated due to null byte", unsafe {
-                                str::from_utf8_unchecked(&message.as_bytes()[..err.nul_position()])
-                            }))
-                            .unwrap()
-                        });
-                        unsafe { JS_ThrowInternalError(inner, format.as_ptr(), message.as_ptr()) }
+                        Err(e) => {
+                            let message = format!("{e:?}");
+                            let message = CString::new(message.as_str()).unwrap_or_else(|err| {
+                                CString::new(format!("{} - truncated due to null byte", unsafe {
+                                    str::from_utf8_unchecked(
+                                        &message.as_bytes()[..err.nul_position()],
+                                    )
+                                }))
+                                .unwrap()
+                            });
+                            unsafe {
+                                JS_ThrowInternalError(inner, format.as_ptr(), message.as_ptr())
+                            }
+                        }
                     }
                 }
             }
@@ -351,7 +364,7 @@ impl Context {
         let raw =
             unsafe { JS_NewCFunctionData(self.inner, trampoline, 0, 1, 1, &mut object.value) };
 
-        Value::new(self.inner, raw)
+        Value::new(self, raw)
     }
 }
 
@@ -369,11 +382,13 @@ where
         magic: c_int,
         data: *mut JSValue,
     ) -> JSValue
+    // rust closure (id) => FnMut,
+    // rust closure (id) => FnMut
     where
         F: FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static,
     {
-        (Value::new_unchecked(ctx, *data)
-            .get_rust_value::<F>()
+        // TODO: get_rust_value does not need to be implemented on `Value`
+        (Value::get_rust_value::<F>(*data)
             .unwrap()
             .borrow_mut())(ctx, this, argc, argv, magic)
     }
@@ -553,7 +568,8 @@ mod tests {
 
     #[test]
     fn test_constructs_a_value_as_an_object() -> Result<()> {
-        let val = Context::default().object_value()?;
+        let context = Context::default();
+        let val = context.object_value()?;
         assert!(val.is_object());
         Ok(())
     }

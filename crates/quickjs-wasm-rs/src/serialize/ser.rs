@@ -8,8 +8,8 @@ use super::as_key;
 
 pub struct Serializer<'c> {
     pub context: &'c Context,
-    pub value: Value,
-    pub key: Value,
+    pub value: Value<'c>,
+    pub key: Value<'c>,
 }
 
 impl SerError for Error {

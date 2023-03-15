@@ -13,13 +13,13 @@ impl SerError for Error {
     }
 }
 
-pub struct Deserializer {
-    value: Value,
+pub struct Deserializer<'a> {
+    value: Value<'a>,
     map_key: bool,
 }
 
-impl From<Value> for Deserializer {
-    fn from(value: Value) -> Self {
+impl<'a> From<Value<'a>> for Deserializer<'a> {
+    fn from(value: Value<'a>) -> Self {
         Self {
             value,
             map_key: false,
@@ -27,7 +27,7 @@ impl From<Value> for Deserializer {
     }
 }
 
-impl Deserializer {
+impl Deserializer<'_> {
     fn deserialize_number<'de, V>(&mut self, visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -56,7 +56,7 @@ impl Deserializer {
     }
 }
 
-impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
+impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     type Error = Error;
 
     fn deserialize_any<V>(self, visitor: V) -> Result<V::Value>
@@ -169,8 +169,8 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
 }
 
 struct MapAccess<'a> {
-    de: &'a mut Deserializer,
-    properties: Properties,
+    de: &'a mut Deserializer<'a>,
+    properties: Properties<'a>,
 }
 
 impl<'a, 'de> de::MapAccess<'de> for MapAccess<'a> {
@@ -199,8 +199,8 @@ impl<'a, 'de> de::MapAccess<'de> for MapAccess<'a> {
 }
 
 struct SeqAccess<'a> {
-    de: &'a mut Deserializer,
-    seq: Value,
+    de: &'a mut Deserializer<'a>,
+    seq: Value<'a>,
     length: u32,
     index: u32,
 }

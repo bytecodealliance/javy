@@ -4,7 +4,7 @@ pub mod ser;
 
 use super::js_binding::value::Value;
 
-fn as_key(v: &Value) -> anyhow::Result<&str> {
+fn as_key<'a>(v: &'a Value) -> anyhow::Result<&'a str> {
     if v.is_str() {
         let v = v.as_str()?;
         Ok(v)
