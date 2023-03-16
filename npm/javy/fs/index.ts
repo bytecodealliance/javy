@@ -32,9 +32,13 @@ export function writeFileSync(fd: number, buffer: Uint8Array) {
 	while (buffer.length > 0) {
 		// Try to write the entire buffer.
 		const bytesWritten = Javy.IO.writeSync(fd, buffer);
-		// A negative number of bytes read indicates an error.
+		// A negative number of bytes written indicates an error.
 		if (bytesWritten < 0) {
 			throw Error("Error while writing to file descriptor");
+		}
+		// 0 bytes means that the destination cannot accept additional bytes.
+		if (bytesWritten === 0) {
+			throw Error("Could not write all contents in buffer to file descriptor");
 		}
 		// Otherwise cut off the bytes from the buffer that
 		// were successfully written.
