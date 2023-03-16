@@ -16,11 +16,11 @@ import nodeResolve from "@rollup/plugin-node-resolve";
 
 import * as tests from "./tests.js";
 
-const javyPath = new URL("../../../target/release/javy", import.meta.url)
-	.pathname;
-
 async function main() {
 	console.log("Running tests...");
+
+	await forceJavyDownload(); // trying to download Javy in parallel causes problems with the tests
+
 	const resultPromises = Object.entries(tests).map(
 		async ([testName, testFunc]) => {
 			try {
@@ -37,8 +37,16 @@ async function main() {
 		const marker = success ? "PASS" : "FAIL";
 		console.log(`[${marker}] ${testName}${success ? "" : `: ${value}`}`);
 	}
+	process.exit(results.every(r => r.success) ? 0 : 1);
 }
 await main();
+
+async function forceJavyDownload() {
+	let { exitCode, stderr } = await runCommand("javy", ["--version"]);
+	if (await exitCode !== 0) {
+		throw Error(await collectStream(stderr));
+	}
+}
 
 /**
  * Passes the stream's controller to a callback where strings can be enqueue.
@@ -115,7 +123,8 @@ export async function runJS({ source, stdin, expectedOutput }) {
 }
 
 async function compileWithJavy(infile, outfile) {
-	const { exitCode, stdout, stderr } = await runCommand(javyPath, [
+	const { exitCode, stdout, stderr } = await runCommand("javy", [
+		"compile",
 		"-o",
 		outfile,
 		infile,
