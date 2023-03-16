@@ -1,0 +1,29 @@
+name: javy NPM package CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    name: javy_npm_test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install wasmtime-cli
+        env:
+          WASMTIME_VERSION: 6.0.1
+        run: |
+          wget -nv 'https://github.com/bytecodealliance/wasmtime/releases/download/v${{ env.WASMTIME_VERSION }}/wasmtime-v${{ env.WASMTIME_VERSION }}-x86_64-linux.tar.xz' -O /tmp/wasmtime.tar.xz
+          mkdir /tmp/wasmtime
+          tar xvf /tmp/wasmtime.tar.xz --strip-components=1 -C /tmp/wasmtime
+          echo "/tmp/wasmtime" >> $GITHUB_PATH
+
+      - run: npm install
+        working-directory: npm/javy
+
+      - run: npm test
+        working-directory: npm/javy
