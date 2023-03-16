@@ -6,7 +6,7 @@ use anyhow::Result;
 use once_cell::sync::Lazy;
 use quickjs_wasm_sys::{
     ext_js_null, ext_js_undefined, JSCFunctionData, JSClassDef, JSClassID, JSContext, JSValue,
-    JS_Eval, JS_ExecutePendingJob, JS_GetGlobalObject, JS_GetRuntime, JS_NewArray,
+    JS_Eval, JS_ExecutePendingJob, JS_GetGlobalObject, JS_GetRuntime, JS_IsJobPending, JS_NewArray,
     JS_NewArrayBufferCopy, JS_NewBigInt64, JS_NewBool_Ext, JS_NewCFunctionData, JS_NewClass,
     JS_NewClassID, JS_NewContext, JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewInt64_Ext,
     JS_NewObject, JS_NewObjectClass, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext,
@@ -112,6 +112,13 @@ impl Context {
 
     pub fn eval_binary(&self, bytecode: &[u8]) -> Result<Value> {
         self.value_from_bytecode(bytecode)?.eval_function()
+    }
+
+    pub fn is_pending(&self) -> bool {
+        unsafe {
+            let runtime = JS_GetRuntime(self.inner);
+            JS_IsJobPending(runtime) == 1
+        }
     }
 
     pub fn execute_pending(&self) -> Result<()> {
@@ -639,6 +646,29 @@ mod tests {
             "Uncaught InternalError: Error containing  - truncated due to null byte\n    at <eval> (main)\n",
             err.to_string()
         );
+        Ok(())
+    }
+
+    #[test]
+    fn test_is_pending_returns_false_when_nothing_is_pending() -> Result<()> {
+        let ctx = Context::default();
+        ctx.eval_global("main", "const x = 42;")?;
+        assert!(!ctx.is_pending());
+        Ok(())
+    }
+
+    #[test]
+    fn test_is_pending_returns_true_when_pending() -> Result<()> {
+        let ctx = Context::default();
+        ctx.eval_global(
+            "main",
+            "
+            async function foo() {
+                const x = 42;
+            }
+            foo().then(() => {})",
+        )?;
+        assert!(ctx.is_pending());
         Ok(())
     }
 }

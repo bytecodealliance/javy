@@ -35,7 +35,11 @@ test-core:
 test-cli: core
 	cargo test --package=javy --release --features=$(CLI_FEATURES) -- --nocapture
 
-test-wpt: cli
+# WPT requires a Javy build with the experimental_event_loop feature to pass
+test-wpt: export CORE_FEATURES ?= experimental_event_loop
+test-wpt:
+# Can't use a prerequisite here b/c a prequisite will not cause a rebuild of the CLI
+	$(MAKE) cli
 	npm install --prefix wpt
 	npm test --prefix wpt 
 

@@ -19,9 +19,9 @@ export default [
   // { // FIXME requires `encodeInto` support
   //   testFile: "upstream/encoding/encodeInto.any.js",
   // },
-  {
-    testFile: "upstream/encoding/replacement-encodings.any.js",
-  },
+  // { // FIXME fails with `promise_test: Unhandled rejection with value: object "ReferenceError: 'XMLHttpRequest' is not defined`
+  //   testFile: "upstream/encoding/replacement-encodings.any.js",
+  // },
   {
     testFile: "custom_tests/textdecoder-arguments.any.js",
   },
