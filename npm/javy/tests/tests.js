@@ -34,6 +34,13 @@ export async function longDelay() {
 	});
 }
 
+export async function exceededWriteCapacity() {
+	await runJS({
+		source: "./fixtures/exceeded_write_capacity.js",
+		expectedOutput: "",
+	});
+}
+
 function sleep(ms) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
