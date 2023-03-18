@@ -2,6 +2,7 @@ use super::constants::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER};
 use super::error::JSError;
 use super::exception::Exception;
 use super::value::Value;
+use crate::javy_value::JavyValue;
 use anyhow::Result;
 use once_cell::sync::Lazy;
 use quickjs_wasm_sys::{
@@ -12,7 +13,7 @@ use quickjs_wasm_sys::{
     JS_NewObject, JS_NewObjectClass, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext,
     JS_ReadObject, JS_SetOpaque, JS_ThrowInternalError, JS_ThrowRangeError, JS_ThrowReferenceError,
     JS_ThrowSyntaxError, JS_ThrowTypeError, JS_WriteObject, JS_EVAL_FLAG_COMPILE_ONLY,
-    JS_EVAL_TYPE_GLOBAL, JS_EVAL_TYPE_MODULE, JS_READ_OBJ_BYTECODE, JS_WRITE_OBJ_BYTECODE,
+    JS_EVAL_TYPE_GLOBAL, JS_EVAL_TYPE_MODULE, JS_READ_OBJ_BYTECODE, JS_WRITE_OBJ_BYTECODE, ext_js_true, ext_js_false,
 };
 use std::any::TypeId;
 use std::cell::RefCell;
@@ -281,6 +282,113 @@ impl Context {
 
         Ok(value)
     }
+    
+    // pub fn deserialize(&self, val: JSValue) -> JavyValue {
+    //     // TODO
+    // }
+    
+    pub fn serialize(&self, javy_val: JavyValue) -> JSValue { // should this return JSValue or Value?
+        let v = unsafe {
+            match javy_val {
+            JavyValue::Undefined => ext_js_undefined,
+            JavyValue::Null => ext_js_null,
+            JavyValue::Bool(flag) => if flag {
+                ext_js_true
+            } else {
+                ext_js_false
+            },
+            JavyValue::Int(val) => JS_NewInt32_Ext(self.inner, val),
+            JavyValue::Float(val) => JS_NewFloat64_Ext(self.inner, val),
+            JavyValue::String(val) => JS_NewStringLen(self.inner, val.as_ptr() as *const c_char, val.len() as _)
+            // JavyValue::Array(values) => {
+            //     // Allocate a new array in the runtime.
+            //     let arr = unsafe { JS_NewArray(context) };
+            //     if arr.tag == TAG_EXCEPTION {
+            //         return Err(ValueError::Internal(
+            //             "Could not create array in runtime".into(),
+            //         ));
+            //     }
+    
+            //     for (index, value) in values.into_iter().enumerate() {
+            //         let qvalue = match serialize_value(context, value) {
+            //             Ok(qval) => qval,
+            //             Err(e) => {
+            //                 // Make sure to free the array if a individual element
+            //                 // fails.
+    
+            //                 unsafe {
+            //                     JS_FreeValue(context, arr);
+            //                 }
+    
+            //                 return Err(e);
+            //             }
+            //         };
+    
+            //         let ret = unsafe {
+            //             JS_DefinePropertyValueUint32(
+            //                 context,
+            //                 arr,
+            //                 index as u32,
+            //                 qvalue,
+            //                 JS_PROP_C_W_E as i32,
+            //             )
+            //         };
+            //         if ret < 0 {
+            //             // Make sure to free the array if a individual
+            //             // element fails.
+            //             unsafe {
+            //                 JS_FreeValue(context, arr);
+            //             }
+            //             return Err(ValueError::Internal(
+            //                 "Could not append element to array".into(),
+            //             ));
+            //         }
+            //     }
+            //     arr
+            // }
+            // JavyValue::Object(map) => {
+            //     let obj = unsafe { JS_NewObject(context) };
+            //     if obj.tag == TAG_EXCEPTION {
+            //         return Err(ValueError::Internal("Could not create object".into()));
+            //     }
+    
+            //     for (key, value) in map {
+            //         let ckey = make_cstring(key)?;
+    
+            //         let qvalue = serialize_value(context, value).map_err(|e| {
+            //             // Free the object if a property failed.
+            //             unsafe {
+            //                 JS_FreeValue(context, obj);
+            //             }
+            //             e
+            //         })?;
+    
+            //         let ret = unsafe {
+            //             JS_DefinePropertyValueStr(
+            //                 context,
+            //                 obj,
+            //                 ckey.as_ptr(),
+            //                 qvalue,
+            //                 JS_PROP_C_W_E as i32,
+            //             )
+            //         };
+            //         if ret < 0 {
+            //             // Free the object if a property failed.
+            //             unsafe {
+            //                 JS_FreeValue(context, obj);
+            //             }
+            //             return Err(ValueError::Internal(
+            //                 "Could not add add property to object".into(),
+            //             ));
+            //         }
+            //     }
+    
+            //     obj
+            // }
+            }
+        };
+        v
+    }
 
     /// Wrap the specified function in a JS function.
     ///
@@ -290,7 +398,7 @@ impl Context {
     /// type to be thrown.
     pub fn wrap_callback<F>(&self, mut f: F) -> Result<Value>
     where
-        F: (FnMut(&Self, &Value, &[Value]) -> Result<JSValue>) + 'static,
+        F: (FnMut(&Self, &Value, &[Value]) -> Result<JavyValue>) + 'static,
     {
         let wrapped = move |inner, this, argc, argv: *mut JSValue, _| {
             let inner_ctx = Context::new(inner);
@@ -303,7 +411,7 @@ impl Context {
                     })
                     .collect::<Box<[_]>>(),
             ) {
-                Ok(value) => value,
+                Ok(value) => inner_ctx.serialize(value),
                 Err(error) => {
                     let format = CString::new("%s").unwrap();
                     match error.downcast::<JSError>() {
@@ -404,7 +512,7 @@ enum CompileType {
 #[cfg(test)]
 mod tests {
     use super::Context;
-    use crate::JSError;
+    use crate::{JSError};
     use anyhow::Result;
     use quickjs_wasm_sys::ext_js_undefined;
     use std::cell::Cell;

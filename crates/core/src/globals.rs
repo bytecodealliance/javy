@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use quickjs_wasm_rs::{Context, JSError, Value};
+use quickjs_wasm_rs::{Context, JSError, Value, JavyValue};
 use std::borrow::Cow;
 use std::io::{Read, Write};
 use std::str;
@@ -29,27 +29,28 @@ where
         "__javy_decodeUtf8BufferToString",
         context.wrap_callback(decode_utf8_buffer_to_js_string())?,
     )?;
-    global.set_property(
-        "__javy_encodeStringToUtf8Buffer",
-        context.wrap_callback(encode_js_string_to_utf8_buffer())?,
-    )?;
+    // TODO
+    // global.set_property(
+    //     "__javy_encodeStringToUtf8Buffer",
+    //     context.wrap_callback(encode_js_string_to_utf8_buffer())?,
+    // )?;
 
     global.set_property(
         "__javy_io_writeSync",
-        context.wrap_callback(|ctx, _this_arg, args| {
+        context.wrap_callback(|_, _this_arg, args| {
             let (mut fd, data) = js_args_to_io_writer(args)?;
             let n = fd.write(data)?;
             fd.flush()?;
-            ctx.value_from_i32(n.try_into()?)
+            Ok(JavyValue::Int(n as i32))
         })?,
     )?;
 
     global.set_property(
         "__javy_io_readSync",
-        context.wrap_callback(|ctx, _this_arg, args| {
+        context.wrap_callback(|_, _this_arg, args| {
             let (mut fd, data) = js_args_to_io_reader(args)?;
             let n = fd.read(data)?;
-            ctx.value_from_i32(n.try_into()?)
+            Ok(JavyValue::Int(n as i32))
         })?,
     )?;
 
@@ -65,11 +66,11 @@ where
 
 fn console_log_to<T>(
     mut stream: T,
-) -> impl FnMut(&Context, &Value, &[Value]) -> anyhow::Result<Value>
+) -> impl FnMut(&Context, &Value, &[Value]) -> anyhow::Result<JavyValue>
 where
     T: Write + 'static,
 {
-    move |ctx: &Context, _this: &Value, args: &[Value]| {
+    move |_: &Context, _this: &Value, args: &[Value]| {
         // Write full string to in-memory destination before writing to stream since each write call to the stream
         // will invoke a hostcall.
         let mut log_line = String::new();
@@ -82,13 +83,13 @@ where
         }
 
         writeln!(stream, "{log_line}")?;
-        ctx.undefined_value()
+        Ok(JavyValue::Undefined)
     }
 }
 
 fn decode_utf8_buffer_to_js_string(
-) -> impl FnMut(&Context, &Value, &[Value]) -> anyhow::Result<Value> {
-    move |ctx: &Context, _this: &Value, args: &[Value]| {
+) -> impl FnMut(&Context, &Value, &[Value]) -> anyhow::Result<JavyValue> {
+    move |_: &Context, _this: &Value, args: &[Value]| {
         if args.len() != 5 {
             return Err(anyhow!("Expecting 5 arguments, received {}", args.len()));
         }
@@ -135,23 +136,23 @@ fn decode_utf8_buffer_to_js_string(
             } else {
                 String::from_utf8_lossy(view)
             };
-        ctx.value_from_str(&str)
+        Ok(JavyValue::String(str.to_string()))
     }
 }
 
-fn encode_js_string_to_utf8_buffer(
-) -> impl FnMut(&Context, &Value, &[Value]) -> anyhow::Result<Value> {
-    move |ctx: &Context, _this: &Value, args: &[Value]| {
-        if args.len() != 1 {
-            return Err(anyhow!("Expecting 1 argument, got {}", args.len()));
-        }
+// fn encode_js_string_to_utf8_buffer(
+// ) -> impl FnMut(&Context, &Value, &[Value]) -> anyhow::Result<JavyValue> {
+//     move |ctx: &Context, _this: &Value, args: &[Value]| {
+//         if args.len() != 1 {
+//             return Err(anyhow!("Expecting 1 argument, got {}", args.len()));
+//         }
 
-        let js_string = args[0].as_str_lossy();
-        ctx.array_buffer_value(js_string.as_bytes())
-    }
-}
+//         let js_string = args[0].as_str_lossy();
+//         ctx.array_buffer_value(js_string.as_bytes()) // TODO: Need to implement serde for Arrays
+//     }
+// }
 
-fn js_args_to_io_writer(args: &[Value]) -> anyhow::Result<(Box<dyn Write>, &[u8])> {
+fn js_args_to_io_writer<'a> (args: &'a [Value<'a>]) -> anyhow::Result<(Box<dyn Write>, &'a [u8])> {
     // TODO: Should throw an exception
     let [fd, data, offset, length, ..] = args else {
         anyhow::bail!("Invalid number of parameters");
@@ -173,7 +174,7 @@ fn js_args_to_io_writer(args: &[Value]) -> anyhow::Result<(Box<dyn Write>, &[u8]
     Ok((fd, &data[offset..(offset + length)]))
 }
 
-fn js_args_to_io_reader(args: &[Value]) -> anyhow::Result<(Box<dyn Read>, &mut [u8])> {
+fn js_args_to_io_reader<'a>(args: &'a [Value<'a>]) -> anyhow::Result<(Box<dyn Read>, &'a mut [u8])> {
     // TODO: Should throw an exception
     let [fd, data, offset, length, ..] = args else {
         anyhow::bail!("Invalid number of parameters");
