@@ -13,7 +13,7 @@ use quickjs_wasm_sys::{
     JS_NewObject, JS_NewObjectClass, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext,
     JS_ReadObject, JS_SetOpaque, JS_ThrowInternalError, JS_ThrowRangeError, JS_ThrowReferenceError,
     JS_ThrowSyntaxError, JS_ThrowTypeError, JS_WriteObject, JS_EVAL_FLAG_COMPILE_ONLY,
-    JS_EVAL_TYPE_GLOBAL, JS_EVAL_TYPE_MODULE, JS_READ_OBJ_BYTECODE, JS_WRITE_OBJ_BYTECODE, ext_js_true, ext_js_false,
+    JS_EVAL_TYPE_GLOBAL, JS_EVAL_TYPE_MODULE, JS_READ_OBJ_BYTECODE, JS_WRITE_OBJ_BYTECODE,
 };
 use std::any::TypeId;
 use std::cell::RefCell;
@@ -282,24 +282,36 @@ impl Context {
 
         Ok(value)
     }
-    
-    // pub fn deserialize(&self, val: JSValue) -> JavyValue {
-    //     // TODO
-    // }
-    
-    pub fn serialize(&self, javy_val: JavyValue) -> JSValue { // should this return JSValue or Value?
-        let v = unsafe {
-            match javy_val {
-            JavyValue::Undefined => ext_js_undefined,
-            JavyValue::Null => ext_js_null,
-            JavyValue::Bool(flag) => if flag {
-                ext_js_true
-            } else {
-                ext_js_false
-            },
-            JavyValue::Int(val) => JS_NewInt32_Ext(self.inner, val),
-            JavyValue::Float(val) => JS_NewFloat64_Ext(self.inner, val),
-            JavyValue::String(val) => JS_NewStringLen(self.inner, val.as_ptr() as *const c_char, val.len() as _)
+
+    pub fn deserialize(&self, val: &Value) -> Result<JavyValue> {
+        let v = if val.is_null() {
+            JavyValue::Null
+        } else if val.is_undefined() {
+            JavyValue::Undefined
+        } else if val.is_bool() {
+            JavyValue::Bool(val.as_bool()?)
+        } else if val.is_repr_as_i32() {
+            JavyValue::Int(val.as_i32_unchecked())
+        } else if val.is_repr_as_f64() {
+            JavyValue::Float(val.as_f64_unchecked())
+        } else if val.is_str() {
+            JavyValue::String(val.as_str()?.to_string())
+        } else {
+            panic!("IDK WHAT VAL IS");
+        };
+        Ok(v)
+    }
+
+    pub fn serialize(&self, javy_val: JavyValue) -> Result<Value> {
+        // should this return JSValue or Value?
+        let v = match javy_val {
+            JavyValue::Undefined => self.undefined_value()?,
+            JavyValue::Null => self.null_value()?,
+            JavyValue::Bool(flag) => self.value_from_bool(flag)?,
+            JavyValue::Int(val) => self.value_from_i32(val)?,
+            JavyValue::Float(val) => self.value_from_f64(val)?,
+            JavyValue::String(val) => self.value_from_str(&val)?,
+            JavyValue::Bytecode(val) => self.value_from_bytecode(&val)?
             // JavyValue::Array(values) => {
             //     // Allocate a new array in the runtime.
             //     let arr = unsafe { JS_NewArray(context) };
@@ -308,22 +320,22 @@ impl Context {
             //             "Could not create array in runtime".into(),
             //         ));
             //     }
-    
+
             //     for (index, value) in values.into_iter().enumerate() {
             //         let qvalue = match serialize_value(context, value) {
             //             Ok(qval) => qval,
             //             Err(e) => {
             //                 // Make sure to free the array if a individual element
             //                 // fails.
-    
+
             //                 unsafe {
             //                     JS_FreeValue(context, arr);
             //                 }
-    
+
             //                 return Err(e);
             //             }
             //         };
-    
+
             //         let ret = unsafe {
             //             JS_DefinePropertyValueUint32(
             //                 context,
@@ -351,10 +363,10 @@ impl Context {
             //     if obj.tag == TAG_EXCEPTION {
             //         return Err(ValueError::Internal("Could not create object".into()));
             //     }
-    
+
             //     for (key, value) in map {
             //         let ckey = make_cstring(key)?;
-    
+
             //         let qvalue = serialize_value(context, value).map_err(|e| {
             //             // Free the object if a property failed.
             //             unsafe {
@@ -362,7 +374,7 @@ impl Context {
             //             }
             //             e
             //         })?;
-    
+
             //         let ret = unsafe {
             //             JS_DefinePropertyValueStr(
             //                 context,
@@ -382,14 +394,13 @@ impl Context {
             //             ));
             //         }
             //     }
-    
+
             //     obj
             // }
-            }
         };
-        v
+        Ok(v)
     }
-
+    
     /// Wrap the specified function in a JS function.
     ///
     /// Since the callback signature accepts parameters as high-level `Context` and `Value` objects, it can be
@@ -398,20 +409,20 @@ impl Context {
     /// type to be thrown.
     pub fn wrap_callback<F>(&self, mut f: F) -> Result<Value>
     where
-        F: (FnMut(&Self, &Value, &[Value]) -> Result<JavyValue>) + 'static,
+        F: (FnMut(&Context, &JavyValue, &[JavyValue]) -> Result<JavyValue>) + 'static,
     {
         let wrapped = move |inner, this, argc, argv: *mut JSValue, _| {
             let inner_ctx = Context::new(inner);
             match f(
-                &Self { inner },
-                &Value::new_unchecked(&inner_ctx, this),
+                &inner_ctx,
+                &inner_ctx.deserialize(&Value::new_unchecked(&inner_ctx, this)).unwrap(),
                 &(0..argc)
                     .map(|offset| {
-                        Value::new_unchecked(&inner_ctx, unsafe { *argv.offset(offset as isize) })
+                        inner_ctx.deserialize(&Value::new_unchecked(&inner_ctx, unsafe { *argv.offset(offset as isize) })).unwrap()
                     })
                     .collect::<Box<[_]>>(),
             ) {
-                Ok(value) => inner_ctx.serialize(value),
+                Ok(value) => inner_ctx.serialize(value).unwrap().value, // TODO: Should probably not unwrap here
                 Err(error) => {
                     let format = CString::new("%s").unwrap();
                     match error.downcast::<JSError>() {
@@ -496,9 +507,7 @@ where
         F: FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static,
     {
         // TODO: get_rust_value does not need to be implemented on `Value`
-        (Value::get_rust_value::<F>(*data)
-            .unwrap()
-            .borrow_mut())(ctx, this, argc, argv, magic)
+        (Value::get_rust_value::<F>(*data).unwrap().borrow_mut())(ctx, this, argc, argv, magic)
     }
 
     Some(trampoline::<F>)
@@ -512,7 +521,7 @@ enum CompileType {
 #[cfg(test)]
 mod tests {
     use super::Context;
-    use crate::{JSError};
+    use crate::JSError;
     use anyhow::Result;
     use quickjs_wasm_sys::ext_js_undefined;
     use std::cell::Cell;
@@ -765,4 +774,18 @@ mod tests {
         );
         Ok(())
     }
+
+    // #[test]
+    // fn test_basic_callback_add() -> Result<()> {
+    //     let ctx = Context::default();
+    //     let callback = ctx.wrap_callback(
+    //         move |a, b| {
+    //             a + b
+    //         }
+    //     )?;
+    //     ctx.global_object()?.set_property("add", callback)?;
+    //     let result = ctx.eval_global("main", "add(4, 5)")?;
+    //     assert_eq!(9, result.value as i32);
+    //     Ok(())
+    // }
 }

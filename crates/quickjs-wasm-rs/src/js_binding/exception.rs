@@ -1,6 +1,6 @@
+use super::context::Context;
 use super::value::Value;
 use anyhow::{anyhow, Result};
-use super::context::Context;
 use quickjs_wasm_sys::{JS_GetException, JS_IsError};
 use std::fmt;
 

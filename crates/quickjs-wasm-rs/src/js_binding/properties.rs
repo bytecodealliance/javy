@@ -1,10 +1,10 @@
+use super::context::Context;
 use super::{exception::Exception, value::Value};
 use anyhow::Result;
 use quickjs_wasm_sys::{
     JSAtom, JSPropertyEnum, JSValue, JS_AtomToString, JS_GetOwnPropertyNames,
     JS_GetPropertyInternal, JS_GPN_ENUM_ONLY, JS_GPN_STRING_MASK, JS_GPN_SYMBOL_MASK,
 };
-use super::context::Context;
 use std::ptr;
 
 #[derive(Debug)]
@@ -54,7 +54,13 @@ impl<'a> Properties<'a> {
 
     pub fn next_value(&self) -> Result<Value> {
         let val = unsafe {
-            JS_GetPropertyInternal(self.context.inner, self.value, self.current_key, self.value, 0)
+            JS_GetPropertyInternal(
+                self.context.inner,
+                self.value,
+                self.current_key,
+                self.value,
+                0,
+            )
         };
         Value::new(self.context, val)
     }

@@ -66,11 +66,11 @@ where
 
 fn console_log_to<T>(
     mut stream: T,
-) -> impl FnMut(&Context, &Value, &[Value]) -> anyhow::Result<JavyValue>
+) -> impl FnMut(&Context, &JavyValue, &[JavyValue]) -> anyhow::Result<JavyValue>
 where
     T: Write + 'static,
 {
-    move |_: &Context, _this: &Value, args: &[Value]| {
+    move |_: &Context, _this: &JavyValue, args: &[JavyValue]| {
         // Write full string to in-memory destination before writing to stream since each write call to the stream
         // will invoke a hostcall.
         let mut log_line = String::new();
@@ -78,8 +78,8 @@ where
             if i != 0 {
                 log_line.push(' ');
             }
-
-            log_line.push_str(arg.as_str()?);
+            let str_arg = arg.as_str().unwrap(); // check for None
+            log_line.push_str(str_arg);
         }
 
         writeln!(stream, "{log_line}")?;
@@ -88,13 +88,13 @@ where
 }
 
 fn decode_utf8_buffer_to_js_string(
-) -> impl FnMut(&Context, &Value, &[Value]) -> anyhow::Result<JavyValue> {
-    move |_: &Context, _this: &Value, args: &[Value]| {
+) -> impl FnMut(&Context, &JavyValue, &[JavyValue]) -> anyhow::Result<JavyValue> {
+    move |_: &Context, _this: &JavyValue, args: &[JavyValue]| {
         if args.len() != 5 {
             return Err(anyhow!("Expecting 5 arguments, received {}", args.len()));
         }
 
-        let buffer = args[0].as_bytes()?;
+        let buffer = args[0];
         let byte_offset = {
             let byte_offset_val = &args[1];
             if !byte_offset_val.is_repr_as_i32() {

@@ -347,11 +347,7 @@ impl<'a> Value<'a> {
         unsafe {
             let pointer = JS_GetOpaque(
                 raw,
-                *CLASSES
-                    .lock()
-                    .unwrap()
-                    .get(&TypeId::of::<T>())
-                    .unwrap(),
+                *CLASSES.lock().unwrap().get(&TypeId::of::<T>()).unwrap(),
             ) as *const RefCell<T>;
 
             if pointer.is_null() {
