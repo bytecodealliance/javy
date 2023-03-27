@@ -79,8 +79,8 @@ where
             if i != 0 {
                 log_line.push(' ');
             }
-            let str_arg = arg.as_str()?;
-            log_line.push_str(str_arg);
+            let str_arg = arg.to_string();
+            log_line.push_str(&str_arg);
         }
 
         writeln!(stream, "{log_line}")?;
@@ -217,12 +217,13 @@ mod tests {
 
         stream.clear();
 
+
         ctx.eval_global(
             "main",
-            "console.log(2.3, true, { foo: 'bar' }, null, undefined)",
+            "console.log(2.3, true, { foo: 'bar' }, null, undefined, [1, 2, 3])",
         )?;
         assert_eq!(
-            b"2.3 true [object Object] null undefined\n",
+            b"2.3 true [object Object] null undefined 1,2,3\n",
             stream.buffer.borrow().as_slice()
         );
         Ok(())

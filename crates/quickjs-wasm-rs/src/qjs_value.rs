@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Result};
 use std::convert::TryFrom;
-use std::{collections::HashMap};
+use std::{collections::HashMap, fmt};
 
 // Should this type be in a completely separate crate if we plan to have multiple JS engines?
 // That way the spidermonkey engine can also use to serialize to their internal types
@@ -18,14 +18,7 @@ pub enum QJSValue {
     Object(HashMap<String, QJSValue>),
 }
 
-impl QJSValue {
-    pub fn as_str(&self) -> Result<&str> {
-        match self {
-            QJSValue::String(s) => Ok(s.as_str()),
-            _ => Err(anyhow!("Can't represent as an str")),
-        }
-    }
-    
+impl QJSValue {    
     pub fn as_bytes(&self) -> Result<&[u8]> {
         match self {
             QJSValue::ArrayBuffer(bytes) => Ok(bytes.as_slice()),
@@ -44,6 +37,25 @@ impl QJSValue {
         match self {
             QJSValue::Bool(b) => Ok(*b),
             _ => Err(anyhow!("Can't represent as a bool")),
+        }
+    }
+}
+
+// Used http://numcalc.com/ to playaround and determine the default display format for each type
+impl fmt::Display for QJSValue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            QJSValue::Undefined => write!(f, "undefined"),
+            QJSValue::Null => write!(f, "null"),
+            QJSValue::Bool(b) => write!(f, "{}", b),
+            QJSValue::Int(i) => write!(f, "{}", i),
+            QJSValue::Float(n) => write!(f, "{}", n),
+            QJSValue::String(s) => write!(f, "{}", s),
+            QJSValue::ArrayBuffer(bytes) => write!(f, "{:?}", bytes),
+            QJSValue::Array(arr) => {
+                write!(f, "{}", arr.iter().map(|e| format!("{}", e)).collect::<Vec<String>>().join(","))     
+            }
+            QJSValue::Object(_) => write!(f, "[object Object]"),
         }
     }
 }
