@@ -3,6 +3,7 @@ use quickjs_wasm_rs::{ContextWrapper, JSError, ValueWrapper, QJSValue};
 use std::borrow::Cow;
 use std::io::{Read, Write};
 use std::str;
+use std::collections::VecDeque;
 
 pub fn inject_javy_globals<T1, T2>(
     context: &ContextWrapper,
@@ -35,24 +36,24 @@ where
     //     context.wrap_callback(encode_js_string_to_utf8_buffer())?,
     // )?;
 
-    global.set_property(
-        "__javy_io_writeSync",
-        context.wrap_callback(|_, _this_arg, args| {
-            let (mut fd, data) = js_args_to_io_writer(args)?;
-            let n = fd.write(data)?;
-            fd.flush()?;
-            Ok(QJSValue::Int(n as i32))
-        })?,
-    )?;
+    // global.set_property(
+    //     "__javy_io_writeSync",
+    //     context.wrap_callback(|_, _this_arg, args| {
+    //         let (mut fd, data) = js_args_to_io_writer(args)?;
+    //         let n = fd.write(data)?;
+    //         fd.flush()?;
+    //         Ok(QJSValue::Int(n as i32))
+    //     })?,
+    // )?;
 
-    global.set_property(
-        "__javy_io_readSync",
-        context.wrap_callback(|_, _this_arg, args| {
-            let (mut fd, data) = js_args_to_io_reader(args)?;
-            let n = fd.read(data)?;
-            Ok(QJSValue::Int(n as i32))
-        })?,
-    )?;
+    // global.set_property(
+    //     "__javy_io_readSync",
+    //     context.wrap_callback(|_, _this_arg, args| {
+    //         let (mut fd, data) = js_args_to_io_reader(args)?;
+    //         let n = fd.read(data)?;
+    //         Ok(QJSValue::Int(n as i32))
+    //     })?,
+    // )?;
 
     context.eval_global(
         "text-encoding.js",
@@ -78,7 +79,7 @@ where
             if i != 0 {
                 log_line.push(' ');
             }
-            let str_arg = arg.as_str().unwrap(); // check for None
+            let str_arg = arg.as_str()?;
             log_line.push_str(str_arg);
         }
 
@@ -94,27 +95,20 @@ fn decode_utf8_buffer_to_js_string(
             return Err(anyhow!("Expecting 5 arguments, received {}", args.len()));
         }
 
-        // return __javy_decodeUtf8BufferToString(input, byteOffset, byteLength, this.fatal, this.ignoreBOM);
+        // DISCUSSION: When impl TryFrom and using it, because try_into consumes the value in the array, we need to 
+        // do the overhead of something like this: Probably not worth it
+        // let mut args = args.to_vec();
+        // let buffer: Vec<u8> = args.remove(0).try_into()?;
+        // let byte_offset: i32 = args.remove(0).try_into()?;
+        // let byte_length: i32 = args.remove(0).try_into()?;
+        // let fatal: bool = args.remove(0).try_into()?;
+        // let ignore_bom: bool = args.remove(0).try_into()?;
 
-        let buffer = args[0];
-        let byte_offset = {
-            let byte_offset_val = &args[1];
-            if !byte_offset_val.is_repr_as_i32() {
-                return Err(anyhow!("byte_offset must be an u32"));
-            }
-            byte_offset_val.as_u32_unchecked()
-        }
-        .try_into()?;
-        let byte_length: usize = {
-            let byte_length_val = &args[2];
-            if !byte_length_val.is_repr_as_i32() {
-                return Err(anyhow!("byte_length must be an u32"));
-            }
-            byte_length_val.as_u32_unchecked()
-        }
-        .try_into()?;
-        let fatal = args[3].as_bool()?;
-        let ignore_bom = args[4].as_bool()?;
+        let buffer = args[0].as_bytes()?;
+        let byte_offset = args[1].as_i32()? as usize;
+        let byte_length = args[2].as_i32()? as usize;
+        let ignore_bom = args[3].as_bool()?;
+        let fatal = args[4].as_bool()?;
 
         let mut view = buffer
             .get(byte_offset..(byte_offset + byte_length))

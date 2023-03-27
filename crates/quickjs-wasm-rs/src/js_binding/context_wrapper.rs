@@ -296,107 +296,56 @@ impl ContextWrapper {
             QJSValue::Float(val.as_f64_unchecked())
         } else if val.is_str() {
             QJSValue::String(val.as_str()?.to_string())
+        } else if val.is_array_buffer() {
+            QJSValue::ArrayBuffer(val.as_bytes()?.to_vec())
+        } else if val.is_array() {
+            let array_len = self.deserialize(&val.get_property("length")?)?.as_i32()?;
+            let mut result = Vec::new();
+            for i in 0..array_len {
+                result.push(self.deserialize(&val.get_indexed_property(i.try_into()?)?)?);
+            }
+            QJSValue::Array(result)
+        } else if val.is_object() {
+            let mut result = HashMap::new();
+            let mut properties = val.properties()?;
+            while let Some(property_key) = properties.next_key()? {
+                let property_key = property_key.as_str()?;
+                let property_value = self.deserialize(&val.get_property(property_key)?)?;
+                result.insert(property_key.to_string(), property_value);
+            }
+            
+            QJSValue::Object(result)
         } else {
-            panic!("IDK WHAT VAL IS");
+            panic!("IDK WHAT TYPE VAL IS");
         };
         Ok(v)
     }
 
-    pub fn serialize(&self, javy_val: QJSValue) -> Result<ValueWrapper> {
+    // DISCUSSION: I think it makes sense to take ownership of the value that is being serialized here, thoughts?
+    pub fn serialize(&self, qjs_val: QJSValue) -> Result<ValueWrapper> {
         // should this return JSValue or Value?
-        let v = match javy_val {
+        let v = match qjs_val {
             QJSValue::Undefined => self.undefined_value()?,
             QJSValue::Null => self.null_value()?,
             QJSValue::Bool(flag) => self.value_from_bool(flag)?,
             QJSValue::Int(val) => self.value_from_i32(val)?,
             QJSValue::Float(val) => self.value_from_f64(val)?,
             QJSValue::String(val) => self.value_from_str(&val)?,
-            QJSValue::Bytecode(val) => self.value_from_bytecode(&val)?
-            // JavyValue::Array(values) => {
-            //     // Allocate a new array in the runtime.
-            //     let arr = unsafe { JS_NewArray(context) };
-            //     if arr.tag == TAG_EXCEPTION {
-            //         return Err(ValueError::Internal(
-            //             "Could not create array in runtime".into(),
-            //         ));
-            //     }
-
-            //     for (index, value) in values.into_iter().enumerate() {
-            //         let qvalue = match serialize_value(context, value) {
-            //             Ok(qval) => qval,
-            //             Err(e) => {
-            //                 // Make sure to free the array if a individual element
-            //                 // fails.
-
-            //                 unsafe {
-            //                     JS_FreeValue(context, arr);
-            //                 }
-
-            //                 return Err(e);
-            //             }
-            //         };
-
-            //         let ret = unsafe {
-            //             JS_DefinePropertyValueUint32(
-            //                 context,
-            //                 arr,
-            //                 index as u32,
-            //                 qvalue,
-            //                 JS_PROP_C_W_E as i32,
-            //             )
-            //         };
-            //         if ret < 0 {
-            //             // Make sure to free the array if a individual
-            //             // element fails.
-            //             unsafe {
-            //                 JS_FreeValue(context, arr);
-            //             }
-            //             return Err(ValueError::Internal(
-            //                 "Could not append element to array".into(),
-            //             ));
-            //         }
-            //     }
-            //     arr
-            // }
-            // JavyValue::Object(map) => {
-            //     let obj = unsafe { JS_NewObject(context) };
-            //     if obj.tag == TAG_EXCEPTION {
-            //         return Err(ValueError::Internal("Could not create object".into()));
-            //     }
-
-            //     for (key, value) in map {
-            //         let ckey = make_cstring(key)?;
-
-            //         let qvalue = serialize_value(context, value).map_err(|e| {
-            //             // Free the object if a property failed.
-            //             unsafe {
-            //                 JS_FreeValue(context, obj);
-            //             }
-            //             e
-            //         })?;
-
-            //         let ret = unsafe {
-            //             JS_DefinePropertyValueStr(
-            //                 context,
-            //                 obj,
-            //                 ckey.as_ptr(),
-            //                 qvalue,
-            //                 JS_PROP_C_W_E as i32,
-            //             )
-            //         };
-            //         if ret < 0 {
-            //             // Free the object if a property failed.
-            //             unsafe {
-            //                 JS_FreeValue(context, obj);
-            //             }
-            //             return Err(ValueError::Internal(
-            //                 "Could not add add property to object".into(),
-            //             ));
-            //         }
-            //     }
-
-            //     obj
-            // }
+            QJSValue::ArrayBuffer(val) => self.value_from_bytecode(&val)?,
+            QJSValue::Array(values) => {
+                let arr = self.array_value()?;
+                for v in values.into_iter() {
+                    arr.append_property(self.serialize(v)?)?
+                }
+                arr
+            }
+            QJSValue::Object(hashmap) => {
+                let obj = self.object_value()?;
+                for (key, value) in hashmap {
+                    obj.set_property(key, self.serialize(value)?)?
+                }
+                obj
+            }
         };
         Ok(v)
     }

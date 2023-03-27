@@ -8,7 +8,7 @@ use quickjs_wasm_sys::{
     JS_GetOpaque, JS_GetPropertyStr, JS_GetPropertyUint32, JS_IsArray, JS_IsArrayBuffer_Ext,
     JS_IsFloat64_Ext, JS_IsFunction, JS_ToCStringLen2, JS_ToFloat64, JS_PROP_C_W_E, JS_TAG_BIG_INT,
     JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_NULL, JS_TAG_OBJECT, JS_TAG_STRING,
-    JS_TAG_UNDEFINED,
+    JS_TAG_UNDEFINED, 
 };
 use std::any::TypeId;
 use std::borrow::Cow;
