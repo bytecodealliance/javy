@@ -1,4 +1,4 @@
-use super::context::{Context, CLASSES};
+use super::context_wrapper::{ContextWrapper, CLASSES};
 use super::exception::Exception;
 use super::properties::Properties;
 use anyhow::{anyhow, Result};
@@ -23,16 +23,16 @@ pub enum BigInt {
 }
 
 #[derive(Debug, Clone)]
-pub struct Value<'a> {
-    pub(super) context: &'a Context,
-    pub(super) value: JSValue,
+pub struct ValueWrapper<'a> {
+    pub(super) context: &'a ContextWrapper,
+    pub(super) inner: JSValue,
 }
 
-impl<'a> Value<'a> {
-    pub(super) fn new(context: &'a Context, raw_value: JSValue) -> Result<Self> {
+impl<'a> ValueWrapper<'a> {
+    pub(super) fn new(context: &'a ContextWrapper, raw_value: JSValue) -> Result<Self> {
         let value = Self {
             context,
-            value: raw_value,
+            inner: raw_value,
         };
 
         if value.is_exception() {
@@ -43,23 +43,23 @@ impl<'a> Value<'a> {
         }
     }
 
-    pub(super) fn new_unchecked(context: &'a Context, value: JSValue) -> Self {
-        Self { context, value }
+    pub(super) fn new_unchecked(context: &'a ContextWrapper, value: JSValue) -> Self {
+        Self { context, inner: value }
     }
 
     pub(super) fn eval_function(&self) -> Result<Self> {
         Self::new(self.context, unsafe {
-            JS_EvalFunction(self.context.inner, self.value)
+            JS_EvalFunction(self.context.inner, self.inner)
         })
     }
 
     pub fn call(&self, receiver: &Self, args: &[Self]) -> Result<Self> {
-        let args: Vec<JSValue> = args.iter().map(|v| v.value).collect();
+        let args: Vec<JSValue> = args.iter().map(|v| v.inner).collect();
         let return_val = unsafe {
             JS_Call(
                 self.context.inner,
-                self.value,
-                receiver.value,
+                self.inner,
+                receiver.inner,
                 args.len() as i32,
                 args.as_slice().as_ptr() as *mut JSValue,
             )
@@ -69,16 +69,16 @@ impl<'a> Value<'a> {
     }
 
     pub fn as_i32_unchecked(&self) -> i32 {
-        self.value as i32
+        self.inner as i32
     }
 
     pub fn as_u32_unchecked(&self) -> u32 {
-        self.value as u32
+        self.inner as u32
     }
 
     pub fn as_f64_unchecked(&self) -> f64 {
         let mut ret = 0_f64;
-        unsafe { JS_ToFloat64(self.context.inner, &mut ret, self.value) };
+        unsafe { JS_ToFloat64(self.context.inner, &mut ret, self.inner) };
         ret
     }
 
@@ -93,12 +93,12 @@ impl<'a> Value<'a> {
     }
 
     fn is_signed_big_int(&self) -> bool {
-        unsafe { JS_BigIntSigned(self.context.inner, self.value) == 1 }
+        unsafe { JS_BigIntSigned(self.context.inner, self.inner) == 1 }
     }
 
     fn bigint_as_i64(&self) -> Result<i64> {
         let mut ret = 0_i64;
-        let err = unsafe { JS_BigIntToInt64(self.context.inner, &mut ret, self.value) };
+        let err = unsafe { JS_BigIntToInt64(self.context.inner, &mut ret, self.inner) };
         if err < 0 {
             anyhow::bail!("big int underflow, value does not fit in i64");
         }
@@ -107,7 +107,7 @@ impl<'a> Value<'a> {
 
     fn bigint_as_u64(&self) -> Result<u64> {
         let mut ret = 0_u64;
-        let err = unsafe { JS_BigIntToUint64(self.context.inner, &mut ret, self.value) };
+        let err = unsafe { JS_BigIntToUint64(self.context.inner, &mut ret, self.inner) };
         if err < 0 {
             anyhow::bail!("big int overflow, value does not fit in u64");
         }
@@ -148,9 +148,9 @@ impl<'a> Value<'a> {
 
     pub fn as_bool(&self) -> Result<bool> {
         if self.is_bool() {
-            Ok(self.value as i32 > 0)
+            Ok(self.inner as i32 > 0)
         } else {
-            Err(anyhow!("Can't represent {:?} as bool", self.value))
+            Err(anyhow!("Can't represent {:?} as bool", self.inner))
         }
     }
 
@@ -207,7 +207,7 @@ impl<'a> Value<'a> {
     fn as_wtf8_str_buffer(&self) -> &[u8] {
         unsafe {
             let mut len: JS_size_t = 0;
-            let ptr = JS_ToCStringLen2(self.context.inner, &mut len, self.value, 0);
+            let ptr = JS_ToCStringLen2(self.context.inner, &mut len, self.inner, 0);
             let ptr = ptr as *const u8;
             let len = len as usize;
             std::slice::from_raw_parts(ptr, len)
@@ -216,11 +216,11 @@ impl<'a> Value<'a> {
 
     pub fn as_bytes(&self) -> Result<&[u8]> {
         let mut len = 0;
-        let ptr = unsafe { JS_GetArrayBuffer(self.context.inner, &mut len, self.value) };
+        let ptr = unsafe { JS_GetArrayBuffer(self.context.inner, &mut len, self.inner) };
         if ptr.is_null() {
             Err(anyhow!(
                 "Can't represent {:?} as an array buffer",
-                self.value
+                self.inner
             ))
         } else {
             Ok(unsafe { std::slice::from_raw_parts(ptr, len as _) })
@@ -229,11 +229,11 @@ impl<'a> Value<'a> {
 
     pub fn as_bytes_mut(&self) -> Result<&mut [u8]> {
         let mut len = 0;
-        let ptr = unsafe { JS_GetArrayBuffer(self.context.inner, &mut len, self.value) };
+        let ptr = unsafe { JS_GetArrayBuffer(self.context.inner, &mut len, self.inner) };
         if ptr.is_null() {
             Err(anyhow!(
                 "Can't represent {:?} as an array buffer",
-                self.value
+                self.inner
             ))
         } else {
             Ok(unsafe { std::slice::from_raw_parts_mut(ptr, len as _) })
@@ -241,7 +241,7 @@ impl<'a> Value<'a> {
     }
 
     pub fn properties(&self) -> Result<Properties> {
-        Properties::new(self.context, self.value)
+        Properties::new(self.context, self.inner)
     }
 
     pub fn is_repr_as_f64(&self) -> bool {
@@ -261,7 +261,7 @@ impl<'a> Value<'a> {
     }
 
     pub fn is_array(&self) -> bool {
-        unsafe { JS_IsArray(self.context.inner, self.value) == 1 }
+        unsafe { JS_IsArray(self.context.inner, self.inner) == 1 }
     }
 
     pub fn is_object(&self) -> bool {
@@ -269,7 +269,7 @@ impl<'a> Value<'a> {
     }
 
     pub fn is_array_buffer(&self) -> bool {
-        (unsafe { JS_IsArrayBuffer_Ext(self.context.inner, self.value) }) != 0
+        (unsafe { JS_IsArrayBuffer_Ext(self.context.inner, self.inner) }) != 0
     }
 
     pub fn is_undefined(&self) -> bool {
@@ -285,24 +285,24 @@ impl<'a> Value<'a> {
     }
 
     pub fn is_function(&self) -> bool {
-        unsafe { JS_IsFunction(self.context.inner, self.value) != 0 }
+        unsafe { JS_IsFunction(self.context.inner, self.inner) != 0 }
     }
 
     pub fn get_property(&self, key: impl Into<Vec<u8>>) -> Result<Self> {
         let cstring_key = CString::new(key)?;
         let raw =
-            unsafe { JS_GetPropertyStr(self.context.inner, self.value, cstring_key.as_ptr()) };
+            unsafe { JS_GetPropertyStr(self.context.inner, self.inner, cstring_key.as_ptr()) };
         Self::new(self.context, raw)
     }
 
-    pub fn set_property(&self, key: impl Into<Vec<u8>>, val: Value) -> Result<()> {
+    pub fn set_property(&self, key: impl Into<Vec<u8>>, val: ValueWrapper) -> Result<()> {
         let cstring_key = CString::new(key)?;
         let ret = unsafe {
             JS_DefinePropertyValueStr(
                 self.context.inner,
-                self.value,
+                self.inner,
                 cstring_key.as_ptr(),
-                val.value,
+                val.inner,
                 JS_PROP_C_W_E as i32,
             )
         };
@@ -315,18 +315,18 @@ impl<'a> Value<'a> {
     }
 
     pub fn get_indexed_property(&self, index: u32) -> Result<Self> {
-        let raw = unsafe { JS_GetPropertyUint32(self.context.inner, self.value, index) };
+        let raw = unsafe { JS_GetPropertyUint32(self.context.inner, self.inner, index) };
         Self::new(self.context, raw)
     }
 
-    pub fn append_property(&self, val: Value) -> Result<()> {
+    pub fn append_property(&self, val: ValueWrapper) -> Result<()> {
         let len = self.get_property("length")?;
         let ret = unsafe {
             JS_DefinePropertyValueUint32(
                 self.context.inner,
-                self.value,
-                len.value as u32,
-                val.value,
+                self.inner,
+                len.inner as u32,
+                val.inner,
                 JS_PROP_C_W_E as i32,
             )
         };
@@ -359,7 +359,7 @@ impl<'a> Value<'a> {
     }
 
     fn get_tag(&self) -> i32 {
-        (self.value >> 32) as i32
+        (self.inner >> 32) as i32
     }
 
     /// All methods in quickjs return an exception value, not an object.
@@ -373,9 +373,9 @@ impl<'a> Value<'a> {
 // JSValue is automatically generated and it would result
 // in a cyclic crate dependency.
 #[allow(clippy::from_over_into)]
-impl Into<JSValue> for Value<'_> {
+impl Into<JSValue> for ValueWrapper<'_> {
     fn into(self) -> JSValue {
-        self.value
+        self.inner
     }
 }
 
@@ -384,14 +384,14 @@ mod tests {
     use crate::js_binding::constants::MAX_SAFE_INTEGER;
     use crate::js_binding::constants::MIN_SAFE_INTEGER;
 
-    use super::super::context::Context;
+    use super::super::context_wrapper::ContextWrapper;
     use super::BigInt;
     use anyhow::Result;
     const SCRIPT_NAME: &str = "value.js";
 
     #[test]
     fn test_value_objects_allow_retrieving_a_str_property() -> Result<()> {
-        let ctx = Context::default();
+        let ctx = ContextWrapper::default();
         let contents = "globalThis.bar = 1;";
         let _ = ctx.eval_global(SCRIPT_NAME, contents)?;
         let global = ctx.global_object()?;
@@ -402,7 +402,7 @@ mod tests {
 
     #[test]
     fn test_value_objects_allow_setting_a_str_property() -> Result<()> {
-        let ctx = Context::default();
+        let ctx = ContextWrapper::default();
         let obj = ctx.object_value()?;
         obj.set_property("foo", ctx.value_from_i32(1_i32)?)?;
         let val = obj.get_property("foo");
@@ -413,7 +413,7 @@ mod tests {
 
     #[test]
     fn test_value_objects_allow_setting_an_indexed_property() {
-        let ctx = Context::default();
+        let ctx = ContextWrapper::default();
         let seq = ctx.array_value().unwrap();
         seq.append_property(ctx.value_from_str("hello").unwrap())
             .unwrap();
@@ -429,7 +429,7 @@ mod tests {
 
     #[test]
     fn test_value_set_property_returns_exception() {
-        let ctx = Context::default();
+        let ctx = ContextWrapper::default();
         let val = ctx.value_from_i32(1337).unwrap();
         let err = val
             .set_property("foo", ctx.value_from_str("hello").unwrap())
@@ -442,7 +442,7 @@ mod tests {
 
     #[test]
     fn test_value_append_property_returns_exception() {
-        let ctx = Context::default();
+        let ctx = ContextWrapper::default();
         let val = ctx.value_from_i32(1337).unwrap();
         let err = val
             .append_property(ctx.value_from_str("hello").unwrap())
@@ -455,7 +455,7 @@ mod tests {
 
     #[test]
     fn test_value_objects_allow_retrieving_a_indexed_property() -> Result<()> {
-        let ctx = Context::default();
+        let ctx = ContextWrapper::default();
         let contents = "globalThis.arr = [1];";
         let _ = ctx.eval_global(SCRIPT_NAME, contents)?;
         let val = ctx
@@ -469,7 +469,7 @@ mod tests {
 
     #[test]
     fn test_allows_representing_a_value_as_f64() -> Result<()> {
-        let ctx = Context::default();
+        let ctx = ContextWrapper::default();
         let val = ctx.value_from_f64(f64::MIN)?.as_f64_unchecked();
         assert_eq!(val, f64::MIN);
         Ok(())
@@ -478,7 +478,7 @@ mod tests {
     #[test]
     fn test_value_as_str() {
         let s = "hello";
-        let ctx = Context::default();
+        let ctx = ContextWrapper::default();
         let val = ctx.value_from_str(s).unwrap();
         assert_eq!(val.as_str().unwrap(), s);
     }
@@ -486,14 +486,14 @@ mod tests {
     #[test]
     fn test_value_as_str_middle_nul_terminator() {
         let s = "hello\0world!";
-        let ctx = Context::default();
+        let ctx = ContextWrapper::default();
         let val = ctx.value_from_str(s).unwrap();
         assert_eq!(val.as_str().unwrap(), s);
     }
 
     #[test]
     fn test_exception() {
-        let ctx = Context::default();
+        let ctx = ContextWrapper::default();
         let error = ctx
             .eval_global("main", "should_throw")
             .unwrap_err()
@@ -505,7 +505,7 @@ mod tests {
 
     #[test]
     fn test_exception_with_stack() {
-        let ctx = Context::default();
+        let ctx = ContextWrapper::default();
         let script = r#"
             function foo() { return bar(); }
             function bar() { return foobar(); }
@@ -530,7 +530,7 @@ mod tests {
 
     #[test]
     fn test_syntax_error() {
-        let ctx = Context::default();
+        let ctx = ContextWrapper::default();
         let error = ctx
             .eval_global("main", "func boom() {}")
             .unwrap_err()
@@ -541,7 +541,7 @@ mod tests {
 
     #[test]
     fn test_is_null_or_undefined() {
-        let ctx = Context::default();
+        let ctx = ContextWrapper::default();
         let v = ctx.undefined_value().unwrap();
         assert!(v.is_null_or_undefined());
 
@@ -554,7 +554,7 @@ mod tests {
 
     #[test]
     fn test_i64() {
-        let ctx = Context::default();
+        let ctx = ContextWrapper::default();
 
         // max
         let val = i64::MAX;
@@ -614,7 +614,7 @@ mod tests {
 
     #[test]
     fn test_u64() {
-        let ctx = Context::default();
+        let ctx = ContextWrapper::default();
 
         // max
         let val = u64::MAX;
@@ -647,7 +647,7 @@ mod tests {
 
     #[test]
     fn test_value_larger_than_u64_max_returns_overflow_error() {
-        let ctx = Context::default();
+        let ctx = ContextWrapper::default();
 
         ctx.eval_global("main", "var num = BigInt(\"18446744073709551616\");")
             .unwrap(); // u64::MAX + 1
@@ -662,7 +662,7 @@ mod tests {
 
     #[test]
     fn test_value_smaller_than_i64_min_returns_underflow_error() {
-        let ctx = Context::default();
+        let ctx = ContextWrapper::default();
 
         ctx.eval_global("main", "var num = BigInt(\"-9223372036854775809\");")
             .unwrap(); // i64::MIN - 1
@@ -677,7 +677,7 @@ mod tests {
 
     #[test]
     fn test_u64_creates_an_unsigned_bigint() {
-        let ctx = Context::default();
+        let ctx = ContextWrapper::default();
 
         let expected = i64::MAX as u64 + 2;
         let v = ctx.value_from_u64(expected).unwrap();
@@ -691,7 +691,7 @@ mod tests {
 
     #[test]
     fn test_is_function() {
-        let ctx = Context::default();
+        let ctx = ContextWrapper::default();
 
         ctx.eval_global("main", "var x = 42; function foo() {}")
             .unwrap();
@@ -713,7 +713,7 @@ mod tests {
 
     #[test]
     fn test_eval_function() {
-        let ctx = Context::default();
+        let ctx = ContextWrapper::default();
 
         let bytecode = ctx.compile_global("main", "var f = 42;").unwrap();
         ctx.value_from_bytecode(&bytecode)

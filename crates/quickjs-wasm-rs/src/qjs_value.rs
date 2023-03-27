@@ -1,10 +1,10 @@
 // use std::{collections::HashMap};
 
-use std::io::Bytes;
+// use std::io::Bytes;
 
 // Should this type be in a completely separate crate if we plan to have multiple JS engines?
 // That way the spidermonkey engine can also use to serialize to their internal types
-pub enum JavyValue {
+pub enum QJSValue {
     Undefined,
     Null,
     Bool(bool),
@@ -16,23 +16,23 @@ pub enum JavyValue {
     // Object(HashMap<String, JavyValue>),
 }
 
-impl JavyValue {
+impl QJSValue {
     pub fn as_str(&self) -> Option<&str> {
         match self {
-            JavyValue::String(ref s) => Some(s.as_str()),
+            QJSValue::String(ref s) => Some(s.as_str()),
             _ => None,
         }
     }
 
     pub fn into_string(self) -> Option<String> {
         match self {
-            JavyValue::String(s) => Some(s),
+            QJSValue::String(s) => Some(s),
             _ => None,
         }
     }
 
     pub fn from_bytecode(bytecode: &[u8]) -> Self {
-        JavyValue::Bytecode(bytecode.to_vec())
+        QJSValue::Bytecode(bytecode.to_vec())
     }
 }
 

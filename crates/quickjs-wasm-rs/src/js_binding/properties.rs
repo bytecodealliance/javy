@@ -1,5 +1,5 @@
-use super::context::Context;
-use super::{exception::Exception, value::Value};
+use super::context_wrapper::ContextWrapper;
+use super::{exception::Exception, value_wrapper::ValueWrapper};
 use anyhow::Result;
 use quickjs_wasm_sys::{
     JSAtom, JSPropertyEnum, JSValue, JS_AtomToString, JS_GetOwnPropertyNames,
@@ -10,7 +10,7 @@ use std::ptr;
 #[derive(Debug)]
 pub struct Properties<'a> {
     value: JSValue,
-    context: &'a Context,
+    context: &'a ContextWrapper,
     property_enum: *mut JSPropertyEnum,
     current_key: JSAtom,
     length: isize,
@@ -18,7 +18,7 @@ pub struct Properties<'a> {
 }
 
 impl<'a> Properties<'a> {
-    pub(super) fn new(context: &'a Context, value: JSValue) -> Result<Self> {
+    pub(super) fn new(context: &'a ContextWrapper, value: JSValue) -> Result<Self> {
         let flags = (JS_GPN_STRING_MASK | JS_GPN_SYMBOL_MASK | JS_GPN_ENUM_ONLY) as i32;
         let mut property_enum: *mut JSPropertyEnum = ptr::null_mut();
         let mut length = 0;
@@ -41,7 +41,7 @@ impl<'a> Properties<'a> {
         })
     }
 
-    pub fn next_key(&mut self) -> Result<Option<Value>> {
+    pub fn next_key(&mut self) -> Result<Option<ValueWrapper>> {
         if self.offset >= self.length {
             Ok(None)
         } else {
@@ -52,7 +52,7 @@ impl<'a> Properties<'a> {
         }
     }
 
-    pub fn next_value(&self) -> Result<Value> {
+    pub fn next_value(&self) -> Result<ValueWrapper> {
         let val = unsafe {
             JS_GetPropertyInternal(
                 self.context.inner,
@@ -62,24 +62,24 @@ impl<'a> Properties<'a> {
                 0,
             )
         };
-        Value::new(self.context, val)
+        ValueWrapper::new(self.context, val)
     }
 
-    fn atom_to_string(&self, atom: JSAtom) -> Result<Value> {
+    fn atom_to_string(&self, atom: JSAtom) -> Result<ValueWrapper> {
         let raw = unsafe { JS_AtomToString(self.context.inner, atom) };
-        Value::new(self.context, raw)
+        ValueWrapper::new(self.context, raw)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::super::context::Context;
+    use super::super::context_wrapper::ContextWrapper;
     use anyhow::Result;
 
     #[test]
     fn test_keys() -> Result<()> {
         let contents = "globalThis.o = {a: 1, b: 2, c: [1, 2, 3]};";
-        let context = Context::default();
+        let context = ContextWrapper::default();
         context.eval_global("script", contents)?;
         let global = context.global_object()?;
         let o = global.get_property("o")?;
@@ -103,7 +103,7 @@ mod tests {
     #[test]
     fn test_values() -> Result<()> {
         let contents = "globalThis.o = {a: 1, b: 2, c: [1, 2, 3]};";
-        let context = Context::default();
+        let context = ContextWrapper::default();
         context.eval_global("script", contents)?;
         let global = context.global_object()?;
         let o = global.get_property("o")?;
@@ -126,7 +126,7 @@ mod tests {
 
     #[test]
     fn test_invalid_access_to_own_props() {
-        let context = Context::default();
+        let context = ContextWrapper::default();
         let val = context.value_from_i32(1_i32).unwrap();
         let err = val.properties().unwrap_err();
         assert_eq!(
