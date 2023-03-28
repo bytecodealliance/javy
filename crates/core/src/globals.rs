@@ -104,8 +104,8 @@ fn decode_utf8_buffer_to_js_string(
         let buffer = args[0].as_bytes_mut()?; // TODO: add a non-mut version of this
         let byte_offset = args[1].as_i32()? as usize;
         let byte_length = args[2].as_i32()? as usize;
-        let ignore_bom = args[3].as_bool()?;
-        let fatal = args[4].as_bool()?;
+        let fatal = args[3].as_bool()?;
+        let ignore_bom = args[4].as_bool()?;
 
         let mut view = buffer
             .get(byte_offset..(byte_offset + byte_length))
