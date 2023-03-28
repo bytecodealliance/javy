@@ -1,9 +1,8 @@
 use anyhow::anyhow;
-use quickjs_wasm_rs::{ContextWrapper, JSError, ValueWrapper, QJSValue};
+use quickjs_wasm_rs::{ContextWrapper, JSError, QJSValue};
 use std::borrow::Cow;
 use std::io::{Read, Write};
 use std::str;
-use std::collections::VecDeque;
 
 pub fn inject_javy_globals<T1, T2>(
     context: &ContextWrapper,
@@ -30,30 +29,29 @@ where
         "__javy_decodeUtf8BufferToString",
         context.wrap_callback(decode_utf8_buffer_to_js_string())?,
     )?;
-    // TODO
-    // global.set_property(
-    //     "__javy_encodeStringToUtf8Buffer",
-    //     context.wrap_callback(encode_js_string_to_utf8_buffer())?,
-    // )?;
+    global.set_property(
+        "__javy_encodeStringToUtf8Buffer",
+        context.wrap_callback(encode_js_string_to_utf8_buffer())?,
+    )?;
 
-    // global.set_property(
-    //     "__javy_io_writeSync",
-    //     context.wrap_callback(|_, _this_arg, args| {
-    //         let (mut fd, data) = js_args_to_io_writer(args)?;
-    //         let n = fd.write(data)?;
-    //         fd.flush()?;
-    //         Ok(QJSValue::Int(n as i32))
-    //     })?,
-    // )?;
+    global.set_property(
+        "__javy_io_writeSync",
+        context.wrap_callback(|_, _this_arg, args| {
+            let (mut fd, data) = js_args_to_io_writer(args)?;
+            let n = fd.write(data)?;
+            fd.flush()?;
+            Ok(QJSValue::Int(n as i32))
+        })?,
+    )?;
 
-    // global.set_property(
-    //     "__javy_io_readSync",
-    //     context.wrap_callback(|_, _this_arg, args| {
-    //         let (mut fd, data) = js_args_to_io_reader(args)?;
-    //         let n = fd.read(data)?;
-    //         Ok(QJSValue::Int(n as i32))
-    //     })?,
-    // )?;
+    global.set_property(
+        "__javy_io_readSync",
+        context.wrap_callback(|_, _this_arg, args| {
+            let (mut fd, data) = js_args_to_io_reader(args)?;
+            let n = fd.read(data)?;
+            Ok(QJSValue::Int(n as i32))
+        })?,
+    )?;
 
     context.eval_global(
         "text-encoding.js",
@@ -82,7 +80,6 @@ where
             let str_arg = arg.to_string();
             log_line.push_str(&str_arg);
         }
-
         writeln!(stream, "{log_line}")?;
         Ok(QJSValue::Undefined)
     }
@@ -104,7 +101,7 @@ fn decode_utf8_buffer_to_js_string(
         // let fatal: bool = args.remove(0).try_into()?;
         // let ignore_bom: bool = args.remove(0).try_into()?;
 
-        let buffer = args[0].as_bytes()?;
+        let buffer = args[0].as_bytes_mut()?; // TODO: add a non-mut version of this
         let byte_offset = args[1].as_i32()? as usize;
         let byte_length = args[2].as_i32()? as usize;
         let ignore_bom = args[3].as_bool()?;
@@ -136,55 +133,54 @@ fn decode_utf8_buffer_to_js_string(
     }
 }
 
-// fn encode_js_string_to_utf8_buffer(
-// ) -> impl FnMut(&Context, &Value, &[Value]) -> anyhow::Result<JavyValue> {
-//     move |ctx: &Context, _this: &Value, args: &[Value]| {
-//         if args.len() != 1 {
-//             return Err(anyhow!("Expecting 1 argument, got {}", args.len()));
-//         }
+fn encode_js_string_to_utf8_buffer(
+) -> impl FnMut(&ContextWrapper, &QJSValue, &[QJSValue]) -> anyhow::Result<QJSValue> {
+    move |_: &ContextWrapper, _this: &QJSValue, args: &[QJSValue]| {
+        if args.len() != 1 {
+            return Err(anyhow!("Expecting 1 argument, got {}", args.len()));
+        }
 
-//         let js_string = args[0].as_str_lossy();
-//         ctx.array_buffer_value(js_string.as_bytes()) // TODO: Need to implement serde for Arrays
-//     }
-// }
+        let js_string = args[0].to_string();
+        Ok(QJSValue::ArrayBuffer(js_string.as_bytes().to_vec()))
+    }
+}
 
-fn js_args_to_io_writer<'a> (args: &'a [ValueWrapper<'a>]) -> anyhow::Result<(Box<dyn Write>, &'a [u8])> {
+fn js_args_to_io_writer (args: &[QJSValue]) -> anyhow::Result<(Box<dyn Write>, &[u8])> {
     // TODO: Should throw an exception
     let [fd, data, offset, length, ..] = args else {
         anyhow::bail!("Invalid number of parameters");
     };
 
-    let offset: usize = (offset.as_f64()?.floor() as u64).try_into()?;
-    let length: usize = (length.as_f64()?.floor() as u64).try_into()?;
+    let offset: usize = offset.as_i32()?.try_into()?;
+    let length: usize = length.as_i32()?.try_into()?;
 
-    let fd: Box<dyn Write> = match fd.try_as_integer()? {
+    let fd: Box<dyn Write> = match fd.as_i32()? {
         1 => Box::new(std::io::stdout()),
         2 => Box::new(std::io::stderr()),
         _ => anyhow::bail!("Only stdout and stderr are supported"),
     };
 
-    if !data.is_array_buffer() {
+    if !matches!(data, QJSValue::MutArrayBuffer(_, _)) {
         anyhow::bail!("Data needs to be an ArrayBuffer");
     }
-    let data = data.as_bytes()?;
+    let data = data.as_bytes_mut()?;
     Ok((fd, &data[offset..(offset + length)]))
 }
 
-fn js_args_to_io_reader<'a>(args: &'a [ValueWrapper<'a>]) -> anyhow::Result<(Box<dyn Read>, &'a mut [u8])> {
+fn js_args_to_io_reader(args: &[QJSValue]) -> anyhow::Result<(Box<dyn Read>, &mut [u8])> {
     // TODO: Should throw an exception
     let [fd, data, offset, length, ..] = args else {
         anyhow::bail!("Invalid number of parameters");
     };
 
-    let offset: usize = (offset.as_f64()?.floor() as u64).try_into()?;
-    let length: usize = (length.as_f64()?.floor() as u64).try_into()?;
-
-    let fd: Box<dyn Read> = match fd.try_as_integer()? {
+    let offset: usize = offset.as_i32()?.try_into()?;
+    let length: usize = length.as_i32()?.try_into()?;
+    let fd: Box<dyn Read> = match fd.as_i32()? {
         0 => Box::new(std::io::stdin()),
         _ => anyhow::bail!("Only stdin is supported"),
     };
 
-    if !data.is_array_buffer() {
+    if !matches!(data, QJSValue::MutArrayBuffer(_, _)) {
         anyhow::bail!("Data needs to be an ArrayBuffer");
     }
     let data = data.as_bytes_mut()?;
@@ -248,14 +244,54 @@ mod tests {
 
         ctx.eval_global(
             "main",
-            "console.error(2.3, true, { foo: 'bar' }, null, undefined)",
+            "console.error(2.3, true, { foo: 'bar' }, null, undefined, [1, 2, 3])",
         )?;
         assert_eq!(
-            b"2.3 true [object Object] null undefined\n",
+            b"2.3 true [object Object] null undefined 1,2,3\n",
             stream.buffer.borrow().as_slice()
         );
         Ok(())
     }
+
+    #[test]
+    fn test_text_encoder_decoder() -> Result<()> {
+        let stream = SharedStream::default();
+        let ctx = ContextWrapper::default();
+        inject_javy_globals(&ctx, stream.clone(), stream.clone())?;
+        ctx.eval_global(
+            "main",
+            "let encoder = new TextEncoder(); let buffer = encoder.encode('hello'); let decoder = new TextDecoder(); console.log(decoder.decode(buffer));"
+        )?;
+        assert_eq!(b"hello\n", stream.buffer.borrow().as_slice());
+
+        Ok(())
+    }
+
+    // sanity test for when I was prototyping - send 'hello' into stdin to pass test
+    // #[test]
+    // fn test_read_sync() -> Result<()> {
+    //     let stream = SharedStream::default();
+
+    //     let ctx = ContextWrapper::default();
+    //     inject_javy_globals(&ctx, stream.clone(), stream.clone())?;
+
+    //     ctx.eval_global("main", "const buffer = new Uint8Array(5); Javy.IO.readSync(0, buffer); console.log(new TextDecoder().decode(buffer))")?;
+    //     assert_eq!(b"hello\n", stream.buffer.borrow().as_slice());
+    //     Ok(())
+    // }
+
+    // sanity test for when I was prototyping - visually inspect that the string 'helloJACKSON' is printed to stdout
+    // #[test]
+    // fn test_write_sync() -> Result<()> {
+    //     let stream = SharedStream::default();
+
+    //     let ctx = ContextWrapper::default();
+    //     inject_javy_globals(&ctx, stream.clone(), stream.clone())?;
+
+    //     ctx.eval_global("main", "let encoder = new TextEncoder(); let buffer = encoder.encode('helloJACKSON'); Javy.IO.writeSync(1, buffer);")?;
+    
+    //     Ok(())
+    // }
 
     #[derive(Clone)]
     struct SharedStream {

@@ -297,7 +297,8 @@ impl ContextWrapper {
         } else if val.is_str() {
             QJSValue::String(val.as_str()?.to_string())
         } else if val.is_array_buffer() {
-            QJSValue::ArrayBuffer(val.as_bytes()?.to_vec())
+            let bytes = val.as_bytes_mut()?;
+            QJSValue::MutArrayBuffer(bytes.as_mut_ptr(), bytes.len())
         } else if val.is_array() {
             let array_len = self.deserialize(&val.get_property("length")?)?.as_i32()?;
             let mut result = Vec::new();
@@ -331,21 +332,25 @@ impl ContextWrapper {
             QJSValue::Int(val) => self.value_from_i32(val)?,
             QJSValue::Float(val) => self.value_from_f64(val)?,
             QJSValue::String(val) => self.value_from_str(&val)?,
-            QJSValue::ArrayBuffer(val) => self.value_from_bytecode(&val)?,
+            QJSValue::ArrayBuffer(buffer) => self.array_buffer_value(&buffer)?,
+            QJSValue::MutArrayBuffer(ptr, len) => {
+                let s = unsafe { std::slice::from_raw_parts(ptr, len) };
+                self.array_buffer_value(s)?
+            },
             QJSValue::Array(values) => {
                 let arr = self.array_value()?;
                 for v in values.into_iter() {
                     arr.append_property(self.serialize(v)?)?
                 }
                 arr
-            }
+            },
             QJSValue::Object(hashmap) => {
                 let obj = self.object_value()?;
                 for (key, value) in hashmap {
                     obj.set_property(key, self.serialize(value)?)?
                 }
                 obj
-            }
+            },
         };
         Ok(v)
     }
