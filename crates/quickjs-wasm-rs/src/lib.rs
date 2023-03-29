@@ -1,8 +1,8 @@
-mod qjs_value;
+mod javy_js_value;
 mod js_binding;
 // mod serialize;
 
-pub use crate::qjs_value::QJSValue;
+pub use crate::javy_js_value::JavyJSValue;
 pub use crate::js_binding::context_wrapper::ContextWrapper;
 pub use crate::js_binding::error::JSError;
 pub use crate::js_binding::exception::Exception;

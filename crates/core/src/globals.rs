@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use quickjs_wasm_rs::{ContextWrapper, JSError, QJSValue};
+use quickjs_wasm_rs::{ContextWrapper, JSError, JavyJSValue};
 use std::borrow::Cow;
 use std::io::{Read, Write};
 use std::str;
@@ -40,7 +40,7 @@ where
             let (mut fd, data) = js_args_to_io_writer(args)?;
             let n = fd.write(data)?;
             fd.flush()?;
-            Ok(QJSValue::Int(n as i32))
+            Ok(JavyJSValue::Int(n as i32))
         })?,
     )?;
 
@@ -49,7 +49,7 @@ where
         context.wrap_callback(|_, _this_arg, args| {
             let (mut fd, data) = js_args_to_io_reader(args)?;
             let n = fd.read(data)?;
-            Ok(QJSValue::Int(n as i32))
+            Ok(JavyJSValue::Int(n as i32))
         })?,
     )?;
 
@@ -65,11 +65,11 @@ where
 
 fn console_log_to<T>(
     mut stream: T,
-) -> impl FnMut(&ContextWrapper, &QJSValue, &[QJSValue]) -> anyhow::Result<QJSValue>
+) -> impl FnMut(&ContextWrapper, &JavyJSValue, &[JavyJSValue]) -> anyhow::Result<JavyJSValue>
 where
     T: Write + 'static,
 {
-    move |_: &ContextWrapper, _this: &QJSValue, args: &[QJSValue]| {
+    move |_: &ContextWrapper, _this: &JavyJSValue, args: &[JavyJSValue]| {
         // Write full string to in-memory destination before writing to stream since each write call to the stream
         // will invoke a hostcall.
         let mut log_line = String::new();
@@ -81,13 +81,13 @@ where
             log_line.push_str(&str_arg);
         }
         writeln!(stream, "{log_line}")?;
-        Ok(QJSValue::Undefined)
+        Ok(JavyJSValue::Undefined)
     }
 }
 
 fn decode_utf8_buffer_to_js_string(
-) -> impl FnMut(&ContextWrapper, &QJSValue, &[QJSValue]) -> anyhow::Result<QJSValue> {
-    move |_: &ContextWrapper, _this: &QJSValue, args: &[QJSValue]| {
+) -> impl FnMut(&ContextWrapper, &JavyJSValue, &[JavyJSValue]) -> anyhow::Result<JavyJSValue> {
+    move |_: &ContextWrapper, _this: &JavyJSValue, args: &[JavyJSValue]| {
         if args.len() != 5 {
             return Err(anyhow!("Expecting 5 arguments, received {}", args.len()));
         }
@@ -129,23 +129,23 @@ fn decode_utf8_buffer_to_js_string(
             } else {
                 String::from_utf8_lossy(view)
             };
-        Ok(QJSValue::String(str.to_string()))
+        Ok(JavyJSValue::String(str.to_string()))
     }
 }
 
 fn encode_js_string_to_utf8_buffer(
-) -> impl FnMut(&ContextWrapper, &QJSValue, &[QJSValue]) -> anyhow::Result<QJSValue> {
-    move |_: &ContextWrapper, _this: &QJSValue, args: &[QJSValue]| {
+) -> impl FnMut(&ContextWrapper, &JavyJSValue, &[JavyJSValue]) -> anyhow::Result<JavyJSValue> {
+    move |_: &ContextWrapper, _this: &JavyJSValue, args: &[JavyJSValue]| {
         if args.len() != 1 {
             return Err(anyhow!("Expecting 1 argument, got {}", args.len()));
         }
 
         let js_string = args[0].to_string();
-        Ok(QJSValue::ArrayBuffer(js_string.as_bytes().to_vec()))
+        Ok(JavyJSValue::ArrayBuffer(js_string.as_bytes().to_vec()))
     }
 }
 
-fn js_args_to_io_writer (args: &[QJSValue]) -> anyhow::Result<(Box<dyn Write>, &[u8])> {
+fn js_args_to_io_writer (args: &[JavyJSValue]) -> anyhow::Result<(Box<dyn Write>, &[u8])> {
     // TODO: Should throw an exception
     let [fd, data, offset, length, ..] = args else {
         anyhow::bail!("Invalid number of parameters");
@@ -160,14 +160,14 @@ fn js_args_to_io_writer (args: &[QJSValue]) -> anyhow::Result<(Box<dyn Write>, &
         _ => anyhow::bail!("Only stdout and stderr are supported"),
     };
 
-    if !matches!(data, QJSValue::MutArrayBuffer(_, _)) {
+    if !matches!(data, JavyJSValue::MutArrayBuffer(_, _)) {
         anyhow::bail!("Data needs to be an ArrayBuffer");
     }
     let data = data.as_bytes_mut()?;
     Ok((fd, &data[offset..(offset + length)]))
 }
 
-fn js_args_to_io_reader(args: &[QJSValue]) -> anyhow::Result<(Box<dyn Read>, &mut [u8])> {
+fn js_args_to_io_reader(args: &[JavyJSValue]) -> anyhow::Result<(Box<dyn Read>, &mut [u8])> {
     // TODO: Should throw an exception
     let [fd, data, offset, length, ..] = args else {
         anyhow::bail!("Invalid number of parameters");
@@ -180,7 +180,7 @@ fn js_args_to_io_reader(args: &[QJSValue]) -> anyhow::Result<(Box<dyn Read>, &mu
         _ => anyhow::bail!("Only stdin is supported"),
     };
 
-    if !matches!(data, QJSValue::MutArrayBuffer(_, _)) {
+    if !matches!(data, JavyJSValue::MutArrayBuffer(_, _)) {
         anyhow::bail!("Data needs to be an ArrayBuffer");
     }
     let data = data.as_bytes_mut()?;

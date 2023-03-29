@@ -2,7 +2,7 @@ use super::constants::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER};
 use super::error::JSError;
 use super::exception::Exception;
 use super::value_wrapper::ValueWrapper;
-use crate::qjs_value::QJSValue;
+use crate::javy_js_value::JavyJSValue;
 use anyhow::Result;
 use once_cell::sync::Lazy;
 use quickjs_wasm_sys::{
@@ -283,31 +283,31 @@ impl ContextWrapper {
         Ok(value)
     }
 
-    pub fn deserialize(&self, val: &ValueWrapper) -> Result<QJSValue> {
+    pub fn deserialize(&self, val: &ValueWrapper) -> Result<JavyJSValue> {
         let v = if val.is_null() {
-            QJSValue::Null
+            JavyJSValue::Null
         } else if val.is_undefined() {
-            QJSValue::Undefined
+            JavyJSValue::Undefined
         } else if val.is_bool() {
-            QJSValue::Bool(val.as_bool()?)
+            JavyJSValue::Bool(val.as_bool()?)
         } else if val.is_repr_as_i32() {
-            QJSValue::Int(val.as_i32_unchecked())
+            JavyJSValue::Int(val.as_i32_unchecked())
         } else if val.is_repr_as_f64() {
-            QJSValue::Float(val.as_f64_unchecked())
+            JavyJSValue::Float(val.as_f64_unchecked())
         } else if val.is_str() {
             // need to use as_str_lossy here otherwise a wpt test fails because there is a test case
             // that has a string with invalid utf8
-            QJSValue::String(val.as_str_lossy().to_string())
+            JavyJSValue::String(val.as_str_lossy().to_string())
         } else if val.is_array_buffer() {
             let bytes = val.as_bytes_mut()?;
-            QJSValue::MutArrayBuffer(bytes.as_mut_ptr(), bytes.len())
+            JavyJSValue::MutArrayBuffer(bytes.as_mut_ptr(), bytes.len())
         } else if val.is_array() {
             let array_len = self.deserialize(&val.get_property("length")?)?.as_i32()?;
             let mut result = Vec::new();
             for i in 0..array_len {
                 result.push(self.deserialize(&val.get_indexed_property(i.try_into()?)?)?);
             }
-            QJSValue::Array(result)
+            JavyJSValue::Array(result)
         } else if val.is_object() {
             let mut result = HashMap::new();
             let mut properties = val.properties()?;
@@ -317,7 +317,7 @@ impl ContextWrapper {
                 result.insert(property_key.to_string(), property_value);
             }
             
-            QJSValue::Object(result)
+            JavyJSValue::Object(result)
         } else {
             panic!("IDK WHAT TYPE VAL IS");
         };
@@ -325,28 +325,28 @@ impl ContextWrapper {
     }
 
     // DISCUSSION: I think it makes sense to take ownership of the value that is being serialized here, thoughts?
-    pub fn serialize(&self, qjs_val: QJSValue) -> Result<ValueWrapper> {
+    pub fn serialize(&self, qjs_val: JavyJSValue) -> Result<ValueWrapper> {
         // should this return JSValue or Value?
         let v = match qjs_val {
-            QJSValue::Undefined => self.undefined_value()?,
-            QJSValue::Null => self.null_value()?,
-            QJSValue::Bool(flag) => self.value_from_bool(flag)?,
-            QJSValue::Int(val) => self.value_from_i32(val)?,
-            QJSValue::Float(val) => self.value_from_f64(val)?,
-            QJSValue::String(val) => self.value_from_str(&val)?,
-            QJSValue::ArrayBuffer(buffer) => self.array_buffer_value(&buffer)?,
-            QJSValue::MutArrayBuffer(ptr, len) => {
+            JavyJSValue::Undefined => self.undefined_value()?,
+            JavyJSValue::Null => self.null_value()?,
+            JavyJSValue::Bool(flag) => self.value_from_bool(flag)?,
+            JavyJSValue::Int(val) => self.value_from_i32(val)?,
+            JavyJSValue::Float(val) => self.value_from_f64(val)?,
+            JavyJSValue::String(val) => self.value_from_str(&val)?,
+            JavyJSValue::ArrayBuffer(buffer) => self.array_buffer_value(&buffer)?,
+            JavyJSValue::MutArrayBuffer(ptr, len) => {
                 let s = unsafe { std::slice::from_raw_parts(ptr, len) };
                 self.array_buffer_value(s)?
             },
-            QJSValue::Array(values) => {
+            JavyJSValue::Array(values) => {
                 let arr = self.array_value()?;
                 for v in values.into_iter() {
                     arr.append_property(self.serialize(v)?)?
                 }
                 arr
             },
-            QJSValue::Object(hashmap) => {
+            JavyJSValue::Object(hashmap) => {
                 let obj = self.object_value()?;
                 for (key, value) in hashmap {
                     obj.set_property(key, self.serialize(value)?)?
@@ -365,7 +365,7 @@ impl ContextWrapper {
     /// type to be thrown.
     pub fn wrap_callback<F>(&self, mut f: F) -> Result<ValueWrapper>
     where
-        F: (FnMut(&ContextWrapper, &QJSValue, &[QJSValue]) -> Result<QJSValue>) + 'static,
+        F: (FnMut(&ContextWrapper, &JavyJSValue, &[JavyJSValue]) -> Result<JavyJSValue>) + 'static,
     {
         let wrapped = move |inner, this, argc, argv: *mut JSValue, _| {
             let inner_ctx = ContextWrapper::new(inner);
