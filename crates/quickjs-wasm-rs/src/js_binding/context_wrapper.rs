@@ -295,7 +295,9 @@ impl ContextWrapper {
         } else if val.is_repr_as_f64() {
             QJSValue::Float(val.as_f64_unchecked())
         } else if val.is_str() {
-            QJSValue::String(val.as_str()?.to_string())
+            // need to use as_str_lossy here otherwise a wpt test fails because there is a test case
+            // that has a string with invalid utf8
+            QJSValue::String(val.as_str_lossy().to_string())
         } else if val.is_array_buffer() {
             let bytes = val.as_bytes_mut()?;
             QJSValue::MutArrayBuffer(bytes.as_mut_ptr(), bytes.len())
