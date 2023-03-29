@@ -1,0 +1,40 @@
+name: NPM package publishing
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish_npm:
+    name: Publish ${{ matrix.package }} NPM package
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: [javy, javy-cli]
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install package dependencies
+        run: npm install
+        working-directory: npm/${{ matrix.package }}
+
+      - name: Build NPM package
+        if: matrix.package == 'javy'
+        run: npm run build
+        working-directory: npm/${{ matrix.package }}
+
+      - name: Publish NPM package if new version
+        run: |
+          if [[ $(cat package.json | jq -r .version) == $(npm view ${{ matrix.package }} version) ]]; then
+            echo "Skipping publish because the version is already published"
+          else
+            npm publish
+          fi
+        working-directory: npm/${{ matrix.package }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
