@@ -358,7 +358,7 @@ impl<'a> ValueWrapper<'a> {
         }
     }
 
-    fn get_tag(&self) -> i32 {
+    pub fn get_tag(&self) -> i32 {
         (self.inner >> 32) as i32
     }
 

@@ -14,6 +14,7 @@ use quickjs_wasm_sys::{
     JS_ReadObject, JS_SetOpaque, JS_ThrowInternalError, JS_ThrowRangeError, JS_ThrowReferenceError,
     JS_ThrowSyntaxError, JS_ThrowTypeError, JS_WriteObject, JS_EVAL_FLAG_COMPILE_ONLY,
     JS_EVAL_TYPE_GLOBAL, JS_EVAL_TYPE_MODULE, JS_READ_OBJ_BYTECODE, JS_WRITE_OBJ_BYTECODE,
+    JS_TAG_NULL, JS_TAG_UNDEFINED, JS_TAG_BOOL, JS_TAG_INT, JS_TAG_STRING, JS_TAG_OBJECT,
 };
 use std::any::TypeId;
 use std::cell::RefCell;
@@ -284,43 +285,50 @@ impl ContextWrapper {
     }
 
     pub fn deserialize(&self, val: &ValueWrapper) -> Result<JavyJSValue> {
-        let v = if val.is_null() {
-            JavyJSValue::Null
-        } else if val.is_undefined() {
-            JavyJSValue::Undefined
-        } else if val.is_bool() {
-            JavyJSValue::Bool(val.as_bool()?)
-        } else if val.is_repr_as_i32() {
-            JavyJSValue::Int(val.as_i32_unchecked())
-        } else if val.is_repr_as_f64() {
-            JavyJSValue::Float(val.as_f64_unchecked())
-        } else if val.is_str() {
-            // need to use as_str_lossy here otherwise a wpt test fails because there is a test case
-            // that has a string with invalid utf8
-            JavyJSValue::String(val.as_str_lossy().to_string())
-        } else if val.is_array_buffer() {
-            let bytes = val.as_bytes_mut()?;
-            JavyJSValue::MutArrayBuffer(bytes.as_mut_ptr(), bytes.len())
-        } else if val.is_array() {
-            let array_len = self.deserialize(&val.get_property("length")?)?.as_i32()?;
-            let mut result = Vec::new();
-            for i in 0..array_len {
-                result.push(self.deserialize(&val.get_indexed_property(i.try_into()?)?)?);
+        let tag = val.get_tag();
+        let v = match tag {
+            JS_TAG_NULL => JavyJSValue::Null,
+            JS_TAG_UNDEFINED => JavyJSValue::Undefined,
+            JS_TAG_BOOL => JavyJSValue::Bool(val.as_bool()?),
+            JS_TAG_INT => JavyJSValue::Int(val.as_i32_unchecked()),
+            JS_TAG_STRING => {
+                // need to use as_str_lossy here otherwise a wpt test fails because there is a test case
+                // that has a string with invalid utf8
+                JavyJSValue::String(val.as_str_lossy().to_string())
+            },
+            JS_TAG_OBJECT => {
+                if val.is_array() {
+                    let array_len = self.deserialize(&val.get_property("length")?)?.as_i32()?;
+                    let mut result = Vec::new();
+                    for i in 0..array_len {
+                        result.push(self.deserialize(&val.get_indexed_property(i.try_into()?)?)?);
+                    }
+                    JavyJSValue::Array(result)
+                } else if val.is_array_buffer() {
+                    let bytes = val.as_bytes_mut()?;
+                    JavyJSValue::MutArrayBuffer(bytes.as_mut_ptr(), bytes.len())
+                } else {
+                    let mut result = HashMap::new();
+                    let mut properties = val.properties()?;
+                    while let Some(property_key) = properties.next_key()? {
+                        let property_key = property_key.as_str()?;
+                        let property_value = self.deserialize(&val.get_property(property_key)?)?;
+                        result.insert(property_key.to_string(), property_value);
+                    }
+                    
+                    JavyJSValue::Object(result)
+                }
+            },
+            _ => {
+                // Matching on JS_TAG_FLOAT64 does not seem to catch floats so we have to check for float separately
+                if val.is_repr_as_f64() {
+                    JavyJSValue::Float(val.as_f64_unchecked())
+                } else {
+                    panic!("unhandled tag: {}", tag)
+                }
             }
-            JavyJSValue::Array(result)
-        } else if val.is_object() {
-            let mut result = HashMap::new();
-            let mut properties = val.properties()?;
-            while let Some(property_key) = properties.next_key()? {
-                let property_key = property_key.as_str()?;
-                let property_value = self.deserialize(&val.get_property(property_key)?)?;
-                result.insert(property_key.to_string(), property_value);
-            }
-            
-            JavyJSValue::Object(result)
-        } else {
-            panic!("IDK WHAT TYPE VAL IS");
         };
+        
         Ok(v)
     }
 
