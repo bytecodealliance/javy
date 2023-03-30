@@ -1,7 +1,7 @@
 use super::constants::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER};
 use super::error::JSError;
 use super::exception::Exception;
-use super::value_wrapper::ValueWrapper;
+use super::value_wrapper::{ValueWrapper, LazyValue};
 use crate::javy_js_value::JavyJSValue;
 use anyhow::Result;
 use once_cell::sync::Lazy;
@@ -373,16 +373,16 @@ impl ContextWrapper {
     /// type to be thrown.
     pub fn wrap_callback<F>(&self, mut f: F) -> Result<ValueWrapper>
     where
-        F: (FnMut(&ContextWrapper, &JavyJSValue, &[JavyJSValue]) -> Result<JavyJSValue>) + 'static,
+        F: (FnMut(&ContextWrapper, &LazyValue, &[LazyValue]) -> Result<JavyJSValue>) + 'static,
     {
         let wrapped = move |inner, this, argc, argv: *mut JSValue, _| {
             let inner_ctx = ContextWrapper::new(inner);
             match f(
                 &inner_ctx,
-                &inner_ctx.deserialize(&ValueWrapper::new_unchecked(&inner_ctx, this)).unwrap(),
+                &ValueWrapper::new_unchecked(&inner_ctx, this).into_lazy_value(),
                 &(0..argc)
                     .map(|offset| {
-                        inner_ctx.deserialize(&ValueWrapper::new_unchecked(&inner_ctx, unsafe { *argv.offset(offset as isize) })).unwrap()
+                        ValueWrapper::new_unchecked(&inner_ctx, unsafe { *argv.offset(offset as isize) }).into_lazy_value()
                     })
                     .collect::<Box<[_]>>(),
             ) {

@@ -6,7 +6,7 @@ pub use crate::javy_js_value::JavyJSValue;
 pub use crate::js_binding::context_wrapper::ContextWrapper;
 pub use crate::js_binding::error::JSError;
 pub use crate::js_binding::exception::Exception;
-pub use crate::js_binding::value_wrapper::ValueWrapper;
+pub use crate::js_binding::value_wrapper::{ValueWrapper, LazyValue};
 // pub use crate::serialize::de::Deserializer;
 // pub use crate::serialize::ser::Serializer;
 

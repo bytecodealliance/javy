@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use quickjs_wasm_rs::{ContextWrapper, JSError, JavyJSValue};
+use quickjs_wasm_rs::{ContextWrapper, JSError, JavyJSValue, LazyValue};
 use std::borrow::Cow;
 use std::io::{Read, Write};
 use std::str;
@@ -37,7 +37,20 @@ where
     global.set_property(
         "__javy_io_writeSync",
         context.wrap_callback(|_, _this_arg, args| {
-            let (mut fd, data) = js_args_to_io_writer(args)?;
+            let [fd, data, offset, length, ..] = args else {
+                anyhow::bail!("Invalid number of parameters");
+            };
+
+            let mut fd: Box<dyn Write> = match fd.javy_val()?.as_i32()? {
+                1 => Box::new(std::io::stdout()),
+                2 => Box::new(std::io::stderr()),
+                _ => anyhow::bail!("Only stdout and stderr are supported"),
+            };
+            let data = data.javy_val()?;
+            let offset: usize = offset.javy_val()?.as_i32()?.try_into()?;
+            let length: usize = length.javy_val()?.as_i32()?.try_into()?;
+            let data = data.as_bytes_mut()?;
+            let data = &data[offset..(offset + length)];
             let n = fd.write(data)?;
             fd.flush()?;
             Ok(JavyJSValue::Int(n as i32))
@@ -47,7 +60,22 @@ where
     global.set_property(
         "__javy_io_readSync",
         context.wrap_callback(|_, _this_arg, args| {
-            let (mut fd, data) = js_args_to_io_reader(args)?;
+            let [fd, data, offset, length, ..] = args else {
+                anyhow::bail!("Invalid number of parameters");
+            };
+            let mut fd: Box<dyn Read> = match fd.javy_val()?.as_i32()? {
+                0 => Box::new(std::io::stdin()),
+                _ => anyhow::bail!("Only stdin is supported"),
+            };
+            let data = data.javy_val()?;
+            let offset: usize = offset.javy_val()?.as_i32()?.try_into()?;
+            let length: usize = length.javy_val()?.as_i32()?.try_into()?;
+            if !matches!(data, JavyJSValue::MutArrayBuffer(_, _)) {
+                anyhow::bail!("Data needs to be an ArrayBuffer");
+            }
+            let data = data.as_bytes_mut()?;
+            let data = &mut data[offset..(offset + length)];
+
             let n = fd.read(data)?;
             Ok(JavyJSValue::Int(n as i32))
         })?,
@@ -65,11 +93,11 @@ where
 
 fn console_log_to<T>(
     mut stream: T,
-) -> impl FnMut(&ContextWrapper, &JavyJSValue, &[JavyJSValue]) -> anyhow::Result<JavyJSValue>
+) -> impl FnMut(&ContextWrapper, &LazyValue, &[LazyValue]) -> anyhow::Result<JavyJSValue>
 where
     T: Write + 'static,
 {
-    move |_: &ContextWrapper, _this: &JavyJSValue, args: &[JavyJSValue]| {
+    move |_: &ContextWrapper, _this: &LazyValue, args: &[LazyValue]| {
         // Write full string to in-memory destination before writing to stream since each write call to the stream
         // will invoke a hostcall.
         let mut log_line = String::new();
@@ -77,7 +105,7 @@ where
             if i != 0 {
                 log_line.push(' ');
             }
-            let str_arg = arg.to_string();
+            let str_arg = arg.javy_val()?.to_string();
             log_line.push_str(&str_arg);
         }
         writeln!(stream, "{log_line}")?;
@@ -86,8 +114,8 @@ where
 }
 
 fn decode_utf8_buffer_to_js_string(
-) -> impl FnMut(&ContextWrapper, &JavyJSValue, &[JavyJSValue]) -> anyhow::Result<JavyJSValue> {
-    move |_: &ContextWrapper, _this: &JavyJSValue, args: &[JavyJSValue]| {
+) -> impl FnMut(&ContextWrapper, &LazyValue, &[LazyValue]) -> anyhow::Result<JavyJSValue> {
+    move |_: &ContextWrapper, _this: &LazyValue, args: &[LazyValue]| {
         if args.len() != 5 {
             return Err(anyhow!("Expecting 5 arguments, received {}", args.len()));
         }
@@ -101,11 +129,12 @@ fn decode_utf8_buffer_to_js_string(
         // let fatal: bool = args.remove(0).try_into()?;
         // let ignore_bom: bool = args.remove(0).try_into()?;
 
-        let buffer = args[0].as_bytes_mut()?; // TODO: add a non-mut version of this
-        let byte_offset = args[1].as_i32()? as usize;
-        let byte_length = args[2].as_i32()? as usize;
-        let fatal = args[3].as_bool()?;
-        let ignore_bom = args[4].as_bool()?;
+        let arg0 = args[0].javy_val()?;
+        let buffer = arg0.as_bytes_mut()?; // TODO: add a non-mut version of this
+        let byte_offset = args[1].javy_val()?.as_i32()? as usize;
+        let byte_length = args[2].javy_val()?.as_i32()? as usize;
+        let fatal = args[3].javy_val()?.as_bool()?;
+        let ignore_bom = args[4].javy_val()?.as_bool()?;
 
         let mut view = buffer
             .get(byte_offset..(byte_offset + byte_length))
@@ -134,57 +163,15 @@ fn decode_utf8_buffer_to_js_string(
 }
 
 fn encode_js_string_to_utf8_buffer(
-) -> impl FnMut(&ContextWrapper, &JavyJSValue, &[JavyJSValue]) -> anyhow::Result<JavyJSValue> {
-    move |_: &ContextWrapper, _this: &JavyJSValue, args: &[JavyJSValue]| {
+) -> impl FnMut(&ContextWrapper, &LazyValue, &[LazyValue]) -> anyhow::Result<JavyJSValue> {
+    move |_: &ContextWrapper, _this: &LazyValue, args: &[LazyValue]| {
         if args.len() != 1 {
             return Err(anyhow!("Expecting 1 argument, got {}", args.len()));
         }
 
-        let js_string = args[0].to_string();
+        let js_string = args[0].javy_val()?.to_string();
         Ok(JavyJSValue::ArrayBuffer(js_string.as_bytes().to_vec()))
     }
-}
-
-fn js_args_to_io_writer (args: &[JavyJSValue]) -> anyhow::Result<(Box<dyn Write>, &[u8])> {
-    // TODO: Should throw an exception
-    let [fd, data, offset, length, ..] = args else {
-        anyhow::bail!("Invalid number of parameters");
-    };
-
-    let offset: usize = offset.as_i32()?.try_into()?;
-    let length: usize = length.as_i32()?.try_into()?;
-
-    let fd: Box<dyn Write> = match fd.as_i32()? {
-        1 => Box::new(std::io::stdout()),
-        2 => Box::new(std::io::stderr()),
-        _ => anyhow::bail!("Only stdout and stderr are supported"),
-    };
-
-    if !matches!(data, JavyJSValue::MutArrayBuffer(_, _)) {
-        anyhow::bail!("Data needs to be an ArrayBuffer");
-    }
-    let data = data.as_bytes_mut()?;
-    Ok((fd, &data[offset..(offset + length)]))
-}
-
-fn js_args_to_io_reader(args: &[JavyJSValue]) -> anyhow::Result<(Box<dyn Read>, &mut [u8])> {
-    // TODO: Should throw an exception
-    let [fd, data, offset, length, ..] = args else {
-        anyhow::bail!("Invalid number of parameters");
-    };
-
-    let offset: usize = offset.as_i32()?.try_into()?;
-    let length: usize = length.as_i32()?.try_into()?;
-    let fd: Box<dyn Read> = match fd.as_i32()? {
-        0 => Box::new(std::io::stdin()),
-        _ => anyhow::bail!("Only stdin is supported"),
-    };
-
-    if !matches!(data, JavyJSValue::MutArrayBuffer(_, _)) {
-        anyhow::bail!("Data needs to be an ArrayBuffer");
-    }
-    let data = data.as_bytes_mut()?;
-    Ok((fd, &mut data[offset..(offset + length)]))
 }
 
 #[cfg(test)]

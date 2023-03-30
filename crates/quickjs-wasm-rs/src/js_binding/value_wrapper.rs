@@ -1,3 +1,5 @@
+use crate::JavyJSValue;
+
 use super::context_wrapper::{ContextWrapper, CLASSES};
 use super::exception::Exception;
 use super::properties::Properties;
@@ -15,6 +17,17 @@ use std::borrow::Cow;
 use std::cell::RefCell;
 use std::ffi::CString;
 use std::str;
+
+
+pub struct LazyValue<'a> {
+    pub(super) value: ValueWrapper<'a>,
+}
+
+impl LazyValue<'_> {
+    pub fn javy_val(&self) -> Result<JavyJSValue> {
+        self.value.context.deserialize(&self.value)
+    }
+}
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum BigInt {
@@ -45,6 +58,12 @@ impl<'a> ValueWrapper<'a> {
 
     pub(super) fn new_unchecked(context: &'a ContextWrapper, value: JSValue) -> Self {
         Self { context, inner: value }
+    }
+
+    pub fn into_lazy_value(self) -> LazyValue<'a> {
+        LazyValue {
+            value: self,
+        }
     }
 
     pub(super) fn eval_function(&self) -> Result<Self> {

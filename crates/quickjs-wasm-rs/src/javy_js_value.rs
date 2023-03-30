@@ -4,7 +4,6 @@ use std::{collections::HashMap, fmt};
 
 // Should this type be in a completely separate crate if we plan to have multiple JS engines?
 // That way the spidermonkey engine can also use to serialize to their internal types
-
 #[derive(Debug, Clone)]
 pub enum JavyJSValue {
     Undefined,
