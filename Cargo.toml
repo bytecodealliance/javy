@@ -10,7 +10,7 @@ members = [
 version = "0.6.0"
 authors = ["The Javy Project Developers"]
 edition = "2021"
-license = "MIT"
+license = "Apache-2.0 WITH LLVM-exception"
 
 [workspace.dependencies]
 wasmtime = "0.35.3"
