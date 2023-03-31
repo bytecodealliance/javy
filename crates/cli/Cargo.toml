@@ -15,7 +15,6 @@ experimental_event_loop = []
 
 [dependencies]
 wizer = "1.6.0"
-which = "4.2"
 structopt = "0.3"
 anyhow = { workspace = true }
 binaryen = { git = "https://github.com/pepyakin/binaryen-rs" }

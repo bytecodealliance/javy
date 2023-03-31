@@ -949,7 +949,6 @@ dependencies = [
  "wasmprinter",
  "wasmtime",
  "wasmtime-wasi",
- "which",
  "wizer",
 ]
 
