@@ -4,7 +4,7 @@
 
 ## About this repo
 
-**Introduction**: Run your JavaScript on WebAssembly. Javy takes your JavaScript code, and executes it in a WebAssembly embedded JavaScript runtime. Javy can create _very_ small Wasm modules in the 1 to 16 KB range with use of dynamic linking.
+**Introduction**: Run your JavaScript on WebAssembly. Javy takes your JavaScript code, and executes it in a WebAssembly embedded JavaScript runtime. Javy can create _very_ small Wasm modules in the 1 to 16 KB range with use of dynamic linking. The default static linking produces modules that are at least 869 KB in size.
 
 ## Contributing
 
