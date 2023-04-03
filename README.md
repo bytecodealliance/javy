@@ -10,6 +10,10 @@
 
 We welcome feedback, bug reports and bug fixes. We're also happy to discuss feature development but please discuss the features in an issue before contributing. All contributors will be prompted to sign our CLA.
 
+### Adding additional JS APIs
+
+We will only add JS APIs or accept contributions that add JS APIs that are potentially useful across multiple environments and do not invoke non-[WASI](https://wasi.dev/) hostcalls. If you wish to add or use JS APIs that do not meet these criteria, please use the `quickjs-wasm-rs` crate directly. We may revisit how we support adding new JS APIs to Javy once [the Component Model](https://github.com/WebAssembly/component-model) has stabilized.
+
 ## Build
 
 - [rustup](https://rustup.rs/)
