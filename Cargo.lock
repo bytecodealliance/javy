@@ -962,6 +962,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "javy-embedded"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "quickjs-wasm-rs",
+]
+
+[[package]]
 name = "jobserver"
 version = "0.1.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"

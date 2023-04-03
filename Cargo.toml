@@ -4,6 +4,7 @@ members = [
   "crates/quickjs-wasm-rs",
   "crates/core",
   "crates/cli",
+  "crates/javy-embedded",
 ]
 
 [workspace.package]
