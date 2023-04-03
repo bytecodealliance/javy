@@ -15,7 +15,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 anyhow = { workspace = true }
-quickjs-wasm-rs = { path = "../quickjs-wasm-rs" }
+javy-embedded = { path = "../javy-embedded" }
 once_cell = { workspace = true }
 
 [features]

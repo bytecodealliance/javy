@@ -1,13 +1,9 @@
 use once_cell::sync::OnceCell;
-use quickjs_wasm_rs::Context;
+use javy_embedded::Runtime;
 use std::alloc::{alloc, dealloc, Layout};
-use std::io;
 use std::ptr::copy_nonoverlapping;
 use std::slice;
 use std::str;
-
-mod execution;
-mod globals;
 
 // Unlike C's realloc, zero-length allocations need not have
 // unique addresses, so a zero-length allocation may be passed
@@ -17,14 +13,13 @@ const ZERO_SIZE_ALLOCATION_PTR: *mut u8 = 1 as _;
 
 static mut COMPILE_SRC_RET_AREA: [u32; 2] = [0; 2];
 
-static mut CONTEXT: OnceCell<Context> = OnceCell::new();
+static mut RUNTIME: OnceCell<Runtime> = OnceCell::new();
 
 /// Used by Wizer to preinitialize the module
 #[export_name = "wizer.initialize"]
 pub extern "C" fn init() {
-    let context = Context::default();
-    globals::inject_javy_globals(&context, io::stderr(), io::stderr()).unwrap();
-    unsafe { CONTEXT.set(context).unwrap() };
+    let context = Runtime::default().unwrap();
+    unsafe { RUNTIME.set(context).unwrap() };
 }
 
 /// Compiles JS source code to QuickJS bytecode.
@@ -43,9 +38,9 @@ pub extern "C" fn init() {
 #[export_name = "compile_src"]
 pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -> *const u32 {
     // Use fresh context to avoid depending on Wizened context
-    let context = Context::default();
+    let runtime = Runtime::no_globals();
     let js_src = str::from_utf8(slice::from_raw_parts(js_src_ptr, js_src_len)).unwrap();
-    let bytecode = context.compile_module("function.mjs", js_src).unwrap();
+    let bytecode = runtime.compile_module("function.mjs", js_src).unwrap();
     let bytecode_len = bytecode.len();
     // We need the bytecode buffer to live longer than this function so it can be read from memory
     let bytecode_ptr = Box::leak(bytecode.into_boxed_slice()).as_ptr();
@@ -61,9 +56,9 @@ pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -
 /// * `bytecode_ptr` must reference a valid array of unsigned bytes of `bytecode_len` length
 #[export_name = "eval_bytecode"]
 pub unsafe extern "C" fn eval_bytecode(bytecode_ptr: *const u8, bytecode_len: usize) {
-    let context = CONTEXT.get().unwrap();
+    let runtime = RUNTIME.get().unwrap();
     let bytecode = slice::from_raw_parts(bytecode_ptr, bytecode_len);
-    execution::run_bytecode(context, bytecode).unwrap();
+    runtime.run_bytecode(bytecode).unwrap();
 }
 
 /// 1. Allocate memory of new_size with alignment.

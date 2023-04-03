@@ -957,8 +957,8 @@ name = "javy-core"
 version = "0.2.0"
 dependencies = [
  "anyhow",
+ "javy-embedded",
  "once_cell",
- "quickjs-wasm-rs",
 ]
 
 [[package]]

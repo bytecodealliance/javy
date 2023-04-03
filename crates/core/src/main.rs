@@ -1,31 +1,26 @@
 use once_cell::sync::OnceCell;
-use quickjs_wasm_rs::Context;
+use javy_embedded::Runtime;
 use std::io::{self, Read};
 use std::string::String;
 
-mod execution;
-mod globals;
-
-static mut CONTEXT: OnceCell<Context> = OnceCell::new();
+static mut RUNTIME: OnceCell<Runtime> = OnceCell::new();
 static mut BYTECODE: OnceCell<Vec<u8>> = OnceCell::new();
 
 #[export_name = "wizer.initialize"]
 pub extern "C" fn init() {
-    let context = Context::default();
-    globals::inject_javy_globals(&context, io::stderr(), io::stderr()).unwrap();
-
+    let runtime = Runtime::default().unwrap();
     let mut contents = String::new();
     io::stdin().read_to_string(&mut contents).unwrap();
-    let bytecode = context.compile_module("function.mjs", &contents).unwrap();
+    let bytecode = runtime.compile_module("function.mjs", &contents).unwrap();
 
     unsafe {
-        CONTEXT.set(context).unwrap();
+        RUNTIME.set(runtime).unwrap();
         BYTECODE.set(bytecode).unwrap();
     }
 }
 
 fn main() {
     let bytecode = unsafe { BYTECODE.take().unwrap() };
-    let context = unsafe { CONTEXT.take().unwrap() };
-    execution::run_bytecode(&context, &bytecode).unwrap();
+    let runtime = unsafe { RUNTIME.take().unwrap() };
+    runtime.run_bytecode(&bytecode).unwrap();
 }
