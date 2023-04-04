@@ -4,7 +4,7 @@
 
 ## About this repo
 
-**Introduction**: Run your JavaScript on WebAssembly. Javy takes your JavaScript code, and executes it in a WebAssembly embedded JavaScript runtime.
+**Introduction**: Run your JavaScript on WebAssembly. Javy takes your JavaScript code, and executes it in a WebAssembly embedded JavaScript runtime. Javy can create _very_ small Wasm modules in the 1 to 16 KB range with use of dynamic linking. The default static linking produces modules that are at least 869 KB in size.
 
 ## Contributing
 
@@ -120,7 +120,7 @@ can be used to set the input and retrieve the output.
 
 ## Creating and using dynamically linked modules
 
-In some scenarios, you may want or need to generate much smaller Wasm modules with Javy. Using the `-d` flag when invoking Javy will create a dynamically linked module which will have a much smaller file size than a statically linked module. Statically linked modules embed the JS engine inside the module while dynamically linked modules rely on Wasm imports to provide the JS engine. Dynamically linked modules have special requirements that statically linked modules do not and will not execute in WebAssembly runtimes that do not meet these requirements.
+An important use for Javy is for when you may want or need to generate much smaller Wasm modules. Using the `-d` flag when invoking Javy will create a dynamically linked module which will have a much smaller file size than a statically linked module. Statically linked modules embed the JS engine inside the module while dynamically linked modules rely on Wasm imports to provide the JS engine. Dynamically linked modules have special requirements that statically linked modules do not and will not execute in WebAssembly runtimes that do not meet these requirements.
 
 To successfully instantiate and run a dynamically linked Javy module, the execution environment must provide a `javy_quickjs_provider_v1` namespace for importing that links to the exports provided by the `javy_quickjs_provider.wasm` module. Dynamically linked modules **cannot** be instantiated in environments that do not provide this import.
 
