@@ -13,23 +13,23 @@ pub struct Runtime {
 impl Runtime {
     pub fn default() -> Result<Self> {
         let context= Context::default();
-        globals::inject_javy_globals(&context,io::stdout(), io::stderr())?;
+
+        #[cfg(feature = "console")]
+        globals::console::add(&context)?;
+
         Ok(Self {
            context
         })
-    }
-    
-    pub fn no_globals() -> Self {
-        let context= Context::default();
-        Self {
-           context
-        }
     }
 
     pub fn eval(&self, name: &str, contents: &str) -> Result<Value> {
         self.context.eval_global(name, contents)
     }
 
+    pub fn set_global(&self, name: &str, value: Value) -> Result<()> {
+        self.context.global_object()?.set_property(name, value)
+    }
+    
     pub fn compile_module(&self, name: &str, contents: &str) -> Result<Vec<u8>> {
         self.context.compile_module(name, contents)
     }

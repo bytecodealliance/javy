@@ -8,3 +8,6 @@ edition = "2021"
 [dependencies]
 anyhow.workspace = true
 quickjs-wasm-rs = { version = "0.1.4", path = "../quickjs-wasm-rs" }
+
+[features]
+console = []

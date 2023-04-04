@@ -38,7 +38,7 @@ pub extern "C" fn init() {
 #[export_name = "compile_src"]
 pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -> *const u32 {
     // Use fresh context to avoid depending on Wizened context
-    let runtime = Runtime::no_globals();
+    let runtime = Runtime::default().unwrap();
     let js_src = str::from_utf8(slice::from_raw_parts(js_src_ptr, js_src_len)).unwrap();
     let bytecode = runtime.compile_module("function.mjs", js_src).unwrap();
     let bytecode_len = bytecode.len();
