@@ -1,17 +1,20 @@
 use once_cell::sync::OnceCell;
-use quickjs_wasm_rs::Context;
+use qjs::QJSRuntime;
+use runtime_trait::JsRuntime;
 use std::io::{self, Read};
 use std::string::String;
 
 mod execution;
 mod globals;
+mod runtime_trait;
+mod qjs;
 
-static mut CONTEXT: OnceCell<Context> = OnceCell::new();
+static mut CONTEXT: OnceCell<QJSRuntime> = OnceCell::new();
 static mut BYTECODE: OnceCell<Vec<u8>> = OnceCell::new();
 
 #[export_name = "wizer.initialize"]
 pub extern "C" fn init() {
-    let context = Context::default();
+    let context = QJSRuntime::default();
     globals::inject_javy_globals(&context, io::stderr(), io::stderr()).unwrap();
 
     let mut contents = String::new();

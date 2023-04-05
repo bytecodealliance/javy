@@ -8,6 +8,8 @@ use std::str;
 
 mod execution;
 mod globals;
+mod qjs;
+mod runtime_trait;
 
 // Unlike C's realloc, zero-length allocations need not have
 // unique addresses, so a zero-length allocation may be passed

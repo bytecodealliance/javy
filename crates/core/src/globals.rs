@@ -1,11 +1,13 @@
 use anyhow::anyhow;
-use quickjs_wasm_rs::{Context, JSError, Value};
+use quickjs_wasm_rs::{JSError};
 use std::borrow::Cow;
 use std::io::{Read, Write};
 use std::str;
 
+use super::qjs::{QJSRuntime, QJSValue};
+
 pub fn inject_javy_globals<T1, T2>(
-    context: &Context,
+    context: &QJSRuntime,
     log_stream: T1,
     error_stream: T2,
 ) -> anyhow::Result<()>
