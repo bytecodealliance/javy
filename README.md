@@ -8,7 +8,7 @@
 
 ## Contributing
 
-We welcome feedback, bug reports and bug fixes. We're also happy to discuss feature development but please discuss the features in an issue before contributing. All contributors will be prompted to sign our CLA.
+We welcome feedback, bug reports and bug fixes. We're also happy to discuss feature development but please discuss the features in an issue before contributing.
 
 ### Adding additional JS APIs
 
