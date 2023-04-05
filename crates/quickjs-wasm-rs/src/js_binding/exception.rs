@@ -1,4 +1,4 @@
-use super::value::Value;
+use super::value::JSValueRef;
 use anyhow::{anyhow, Result};
 use quickjs_wasm_sys::{JSContext, JS_GetException, JS_IsError};
 use std::fmt;
@@ -22,10 +22,10 @@ impl fmt::Display for Exception {
 impl Exception {
     pub(super) fn new(context: *mut JSContext) -> Result<Self> {
         let exception_value = unsafe { JS_GetException(context) };
-        Self::from(Value::new_unchecked(context, exception_value))
+        Self::from(JSValueRef::new_unchecked(context, exception_value))
     }
 
-    pub fn from(exception_obj: Value) -> Result<Self> {
+    pub fn from(exception_obj: JSValueRef) -> Result<Self> {
         let msg = exception_obj.as_str().map(ToString::to_string)?;
         let mut stack = None;
 

@@ -2,9 +2,9 @@ pub mod de;
 pub mod err;
 pub mod ser;
 
-use super::js_binding::value::Value;
+use super::js_binding::value::JSValueRef;
 
-fn as_key(v: &Value) -> anyhow::Result<&str> {
+fn as_key(v: &JSValueRef) -> anyhow::Result<&str> {
     if v.is_str() {
         let v = v.as_str()?;
         Ok(v)
@@ -17,7 +17,7 @@ fn as_key(v: &Value) -> anyhow::Result<&str> {
 mod tests {
     use super::de::Deserializer as ValueDeserializer;
     use super::ser::Serializer as ValueSerializer;
-    use crate::js_binding::context::Context;
+    use crate::js_binding::context::JSContextRef;
     use anyhow::Result;
     use quickcheck::quickcheck;
     use serde::de::DeserializeOwned;
@@ -269,7 +269,7 @@ mod tests {
         E: Serialize,
         A: DeserializeOwned,
     {
-        let context = Context::default();
+        let context = JSContextRef::default();
         let mut serializer = ValueSerializer::from_context(&context).unwrap();
         expected.serialize(&mut serializer).unwrap();
         let mut deserializer = ValueDeserializer::from(serializer.value);

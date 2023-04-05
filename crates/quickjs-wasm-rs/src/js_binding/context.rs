@@ -1,7 +1,7 @@
 use super::constants::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER};
 use super::error::JSError;
 use super::exception::Exception;
-use super::value::Value;
+use super::value::JSValueRef;
 use anyhow::Result;
 use once_cell::sync::Lazy;
 use quickjs_wasm_sys::{
@@ -28,11 +28,11 @@ pub(super) static CLASSES: Lazy<Mutex<HashMap<TypeId, JSClassID>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
 #[derive(Debug)]
-pub struct Context {
+pub struct JSContextRef {
     inner: *mut JSContext,
 }
 
-impl Default for Context {
+impl Default for JSContextRef {
     fn default() -> Self {
         let runtime = unsafe { JS_NewRuntime() };
         if runtime.is_null() {
@@ -48,8 +48,8 @@ impl Default for Context {
     }
 }
 
-impl Context {
-    pub fn eval_global(&self, name: &str, contents: &str) -> Result<Value> {
+impl JSContextRef {
+    pub fn eval_global(&self, name: &str, contents: &str) -> Result<JSValueRef> {
         let input = CString::new(contents)?;
         let script_name = CString::new(name)?;
         let len = contents.len() - 1;
@@ -63,7 +63,7 @@ impl Context {
             )
         };
 
-        Value::new(self.inner, raw)
+        JSValueRef::new(self.inner, raw)
     }
 
     pub fn compile_module(&self, name: &str, contents: &str) -> Result<Vec<u8>> {
@@ -92,7 +92,7 @@ impl Context {
             )
         };
         // returns err with details if JS_Eval fails
-        Value::new(self.inner, raw)?;
+        JSValueRef::new(self.inner, raw)?;
 
         let mut output_size = 0;
         unsafe {
@@ -110,7 +110,7 @@ impl Context {
         }
     }
 
-    pub fn eval_binary(&self, bytecode: &[u8]) -> Result<Value> {
+    pub fn eval_binary(&self, bytecode: &[u8]) -> Result<JSValueRef> {
         self.value_from_bytecode(bytecode)?.eval_function()
     }
 
@@ -134,29 +134,29 @@ impl Context {
         }
     }
 
-    pub fn global_object(&self) -> Result<Value> {
+    pub fn global_object(&self) -> Result<JSValueRef> {
         let raw = unsafe { JS_GetGlobalObject(self.inner) };
-        Value::new(self.inner, raw)
+        JSValueRef::new(self.inner, raw)
     }
 
-    pub fn array_value(&self) -> Result<Value> {
+    pub fn array_value(&self) -> Result<JSValueRef> {
         let raw = unsafe { JS_NewArray(self.inner) };
-        Value::new(self.inner, raw)
+        JSValueRef::new(self.inner, raw)
     }
 
-    pub fn array_buffer_value(&self, bytes: &[u8]) -> Result<Value> {
-        Value::new(self.inner, unsafe {
+    pub fn array_buffer_value(&self, bytes: &[u8]) -> Result<JSValueRef> {
+        JSValueRef::new(self.inner, unsafe {
             JS_NewArrayBufferCopy(self.inner, bytes.as_ptr(), bytes.len() as _)
         })
     }
 
-    pub fn object_value(&self) -> Result<Value> {
+    pub fn object_value(&self) -> Result<JSValueRef> {
         let raw = unsafe { JS_NewObject(self.inner) };
-        Value::new(self.inner, raw)
+        JSValueRef::new(self.inner, raw)
     }
 
-    pub(super) fn value_from_bytecode(&self, bytecode: &[u8]) -> Result<Value> {
-        Value::new(self.inner, unsafe {
+    pub(super) fn value_from_bytecode(&self, bytecode: &[u8]) -> Result<JSValueRef> {
+        JSValueRef::new(self.inner, unsafe {
             JS_ReadObject(
                 self.inner,
                 bytecode.as_ptr(),
@@ -166,29 +166,29 @@ impl Context {
         })
     }
 
-    pub fn value_from_f64(&self, val: f64) -> Result<Value> {
+    pub fn value_from_f64(&self, val: f64) -> Result<JSValueRef> {
         let raw = unsafe { JS_NewFloat64_Ext(self.inner, val) };
-        Value::new(self.inner, raw)
+        JSValueRef::new(self.inner, raw)
     }
 
-    pub fn value_from_i32(&self, val: i32) -> Result<Value> {
+    pub fn value_from_i32(&self, val: i32) -> Result<JSValueRef> {
         let raw = unsafe { JS_NewInt32_Ext(self.inner, val) };
-        Value::new(self.inner, raw)
+        JSValueRef::new(self.inner, raw)
     }
 
-    pub fn value_from_i64(&self, val: i64) -> Result<Value> {
+    pub fn value_from_i64(&self, val: i64) -> Result<JSValueRef> {
         let raw = if (MIN_SAFE_INTEGER..=MAX_SAFE_INTEGER).contains(&val) {
             unsafe { JS_NewInt64_Ext(self.inner, val) }
         } else {
             unsafe { JS_NewBigInt64(self.inner, val) }
         };
-        Value::new(self.inner, raw)
+        JSValueRef::new(self.inner, raw)
     }
 
-    pub fn value_from_u64(&self, val: u64) -> Result<Value> {
+    pub fn value_from_u64(&self, val: u64) -> Result<JSValueRef> {
         if val <= MAX_SAFE_INTEGER as u64 {
             let raw = unsafe { JS_NewInt64_Ext(self.inner, val as i64) };
-            Value::new(self.inner, raw)
+            JSValueRef::new(self.inner, raw)
         } else {
             let value = self.value_from_str(&val.to_string())?;
             let bigint = self.global_object()?.get_property("BigInt")?;
@@ -196,28 +196,28 @@ impl Context {
         }
     }
 
-    pub fn value_from_u32(&self, val: u32) -> Result<Value> {
+    pub fn value_from_u32(&self, val: u32) -> Result<JSValueRef> {
         let raw = unsafe { JS_NewUint32_Ext(self.inner, val) };
-        Value::new(self.inner, raw)
+        JSValueRef::new(self.inner, raw)
     }
 
-    pub fn value_from_bool(&self, val: bool) -> Result<Value> {
+    pub fn value_from_bool(&self, val: bool) -> Result<JSValueRef> {
         let raw = unsafe { JS_NewBool_Ext(self.inner, i32::from(val)) };
-        Value::new(self.inner, raw)
+        JSValueRef::new(self.inner, raw)
     }
 
-    pub fn value_from_str(&self, val: &str) -> Result<Value> {
+    pub fn value_from_str(&self, val: &str) -> Result<JSValueRef> {
         let raw =
             unsafe { JS_NewStringLen(self.inner, val.as_ptr() as *const c_char, val.len() as _) };
-        Value::new(self.inner, raw)
+        JSValueRef::new(self.inner, raw)
     }
 
-    pub fn null_value(&self) -> Result<Value> {
-        Value::new(self.inner, unsafe { ext_js_null })
+    pub fn null_value(&self) -> Result<JSValueRef> {
+        JSValueRef::new(self.inner, unsafe { ext_js_null })
     }
 
-    pub fn undefined_value(&self) -> Result<Value> {
-        Value::new(self.inner, unsafe { ext_js_undefined })
+    pub fn undefined_value(&self) -> Result<JSValueRef> {
+        JSValueRef::new(self.inner, unsafe { ext_js_undefined })
     }
 
     /// Get the JS class ID used to wrap instances of the specified Rust type, or else create one if it doesn't
@@ -269,12 +269,12 @@ impl Context {
     /// Wrap the specified Rust value in a JS value
     ///
     /// You can use [Value::get_rust_value] to retrieve the original value.
-    pub fn wrap_rust_value<T: 'static>(&self, value: T) -> Result<Value> {
+    pub fn wrap_rust_value<T: 'static>(&self, value: T) -> Result<JSValueRef> {
         // Note the use of `RefCell` to provide checked unique references.  Since JS values can be arbitrarily
         // aliased, we need `RefCell`'s dynamic borrow checking to prevent unsound access.
         let pointer = Box::into_raw(Box::new(RefCell::new(value)));
 
-        let value = Value::new(self.inner, unsafe {
+        let value = JSValueRef::new(self.inner, unsafe {
             JS_NewObjectClass(self.inner, self.get_class_id::<T>().try_into().unwrap())
         })?;
 
@@ -291,15 +291,17 @@ impl Context {
     /// implemented without using `unsafe` code, unlike [Context::new_callback] which provides a low-level API.
     /// Returning a [JSError] from the callback will cause a JavaScript error with the appropriate
     /// type to be thrown.
-    pub fn wrap_callback<F>(&self, mut f: F) -> Result<Value>
+    pub fn wrap_callback<F>(&self, mut f: F) -> Result<JSValueRef>
     where
-        F: (FnMut(&Self, &Value, &[Value]) -> Result<Value>) + 'static,
+        F: (FnMut(&Self, &JSValueRef, &[JSValueRef]) -> Result<JSValueRef>) + 'static,
     {
         let wrapped = move |inner, this, argc, argv: *mut JSValue, _| match f(
             &Self { inner },
-            &Value::new_unchecked(inner, this),
+            &JSValueRef::new_unchecked(inner, this),
             &(0..argc)
-                .map(|offset| Value::new_unchecked(inner, unsafe { *argv.offset(offset as isize) }))
+                .map(|offset| {
+                    JSValueRef::new_unchecked(inner, unsafe { *argv.offset(offset as isize) })
+                })
                 .collect::<Box<[_]>>(),
         ) {
             Ok(value) => value.value,
@@ -347,7 +349,7 @@ impl Context {
     /// Wrap the specified function in a JS function.
     ///
     /// See also [Context::wrap_callback] for a high-level equivalent.
-    pub fn new_callback<F>(&self, f: F) -> Result<Value>
+    pub fn new_callback<F>(&self, f: F) -> Result<JSValueRef>
     where
         F: FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static,
     {
@@ -358,7 +360,7 @@ impl Context {
         let raw =
             unsafe { JS_NewCFunctionData(self.inner, trampoline, 0, 1, 1, &mut object.value) };
 
-        Value::new(self.inner, raw)
+        JSValueRef::new(self.inner, raw)
     }
 }
 
@@ -379,7 +381,7 @@ where
     where
         F: FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static,
     {
-        (Value::new_unchecked(ctx, *data)
+        (JSValueRef::new_unchecked(ctx, *data)
             .get_rust_value::<F>()
             .unwrap()
             .borrow_mut())(ctx, this, argc, argv, magic)
@@ -395,7 +397,7 @@ enum CompileType {
 
 #[cfg(test)]
 mod tests {
-    use super::Context;
+    use super::JSContextRef;
     use crate::JSError;
     use anyhow::Result;
     use quickjs_wasm_sys::ext_js_undefined;
@@ -405,13 +407,13 @@ mod tests {
 
     #[test]
     fn test_new_returns_a_context() -> Result<()> {
-        let _ = Context::default();
+        let _ = JSContextRef::default();
         Ok(())
     }
 
     #[test]
     fn test_context_evalutes_code_globally() -> Result<()> {
-        let ctx = Context::default();
+        let ctx = JSContextRef::default();
         let contents = "var a = 1;";
         let val = ctx.eval_global(SCRIPT_NAME, contents);
         assert!(val.is_ok());
@@ -420,7 +422,7 @@ mod tests {
 
     #[test]
     fn test_context_reports_invalid_code() -> Result<()> {
-        let ctx = Context::default();
+        let ctx = JSContextRef::default();
         let contents = "a + 1 * z;";
         let val = ctx.eval_global(SCRIPT_NAME, contents);
         assert!(val.is_err());
@@ -429,7 +431,7 @@ mod tests {
 
     #[test]
     fn test_context_allows_access_to_global_object() -> Result<()> {
-        let ctx = Context::default();
+        let ctx = JSContextRef::default();
         let val = ctx.global_object();
         assert!(val.is_ok());
         Ok(())
@@ -437,7 +439,7 @@ mod tests {
 
     #[test]
     fn test_context_allows_calling_a_function() -> Result<()> {
-        let ctx = Context::default();
+        let ctx = JSContextRef::default();
         let contents = "globalThis.foo = function() { return 1; }";
         let _ = ctx.eval_global(SCRIPT_NAME, contents)?;
         let global = ctx.global_object()?;
@@ -449,7 +451,7 @@ mod tests {
 
     #[test]
     fn test_compile_global_compiles_and_evaluates_global_object() -> Result<()> {
-        let ctx = Context::default();
+        let ctx = JSContextRef::default();
         let contents = "var foo = 42;";
         let bytecode = ctx.compile_global(SCRIPT_NAME, contents)?;
         let _ = ctx.eval_binary(&bytecode)?;
@@ -462,7 +464,7 @@ mod tests {
 
     #[test]
     fn test_compile_module_does_not_implicitly_change_global_object() -> Result<()> {
-        let ctx = Context::default();
+        let ctx = JSContextRef::default();
         let contents = "var foo = 42;";
         let bytecode = ctx.compile_module(SCRIPT_NAME, contents)?;
         let _ = ctx.eval_binary(&bytecode)?;
@@ -472,7 +474,7 @@ mod tests {
 
     #[test]
     fn test_compile_module_bytecode_evaluates() -> Result<()> {
-        let ctx = Context::default();
+        let ctx = JSContextRef::default();
         ctx.eval_global("foo.js", "globalThis.foo = 1;")?;
         let bytecode = ctx.compile_module(SCRIPT_NAME, "foo += 1;")?;
         let _ = ctx.eval_binary(&bytecode)?;
@@ -485,7 +487,7 @@ mod tests {
 
     #[test]
     fn test_compile_global_errors_when_invalid_using_syntax() -> Result<()> {
-        let ctx = Context::default();
+        let ctx = JSContextRef::default();
         let contents = "import 'foo';";
         let res = ctx.compile_global(SCRIPT_NAME, contents);
         let err = res.unwrap_err();
@@ -495,7 +497,7 @@ mod tests {
 
     #[test]
     fn test_compile_module_errors_when_importing() -> Result<()> {
-        let ctx = Context::default();
+        let ctx = JSContextRef::default();
         let contents = "import 'foo';";
         let res = ctx.compile_module(SCRIPT_NAME, contents);
         let err = res.unwrap_err();
@@ -508,7 +510,7 @@ mod tests {
 
     #[test]
     fn test_creates_a_value_from_f64() -> Result<()> {
-        let ctx = Context::default();
+        let ctx = JSContextRef::default();
         let val = f64::MIN;
         let val = ctx.value_from_f64(val)?;
         assert!(val.is_repr_as_f64());
@@ -517,7 +519,7 @@ mod tests {
 
     #[test]
     fn test_creates_a_value_from_i32() -> Result<()> {
-        let ctx = Context::default();
+        let ctx = JSContextRef::default();
         let val = i32::MIN;
         let val = ctx.value_from_i32(val)?;
         assert!(val.is_repr_as_i32());
@@ -526,7 +528,7 @@ mod tests {
 
     #[test]
     fn test_creates_a_value_from_u32() -> Result<()> {
-        let ctx = Context::default();
+        let ctx = JSContextRef::default();
         let val = u32::MIN;
         let val = ctx.value_from_u32(val)?;
         assert!(val.is_repr_as_i32());
@@ -535,7 +537,7 @@ mod tests {
 
     #[test]
     fn test_creates_a_value_from_bool() -> Result<()> {
-        let ctx = Context::default();
+        let ctx = JSContextRef::default();
         let val = ctx.value_from_bool(false)?;
         assert!(val.is_bool());
         Ok(())
@@ -543,7 +545,7 @@ mod tests {
 
     #[test]
     fn test_creates_a_value_from_str() -> Result<()> {
-        let ctx = Context::default();
+        let ctx = JSContextRef::default();
         let val = "script.js";
         let val = ctx.value_from_str(val)?;
         assert!(val.is_str());
@@ -552,7 +554,7 @@ mod tests {
 
     #[test]
     fn test_constructs_a_value_as_an_array() -> Result<()> {
-        let ctx = Context::default();
+        let ctx = JSContextRef::default();
         let val = ctx.array_value()?;
         assert!(val.is_array());
         Ok(())
@@ -560,7 +562,7 @@ mod tests {
 
     #[test]
     fn test_constructs_a_value_as_an_object() -> Result<()> {
-        let val = Context::default().object_value()?;
+        let val = JSContextRef::default().object_value()?;
         assert!(val.is_object());
         Ok(())
     }
@@ -569,7 +571,7 @@ mod tests {
     /// correctly.
     #[test]
     fn test_closure() -> Result<()> {
-        let ctx = Context::default();
+        let ctx = JSContextRef::default();
 
         let global = ctx.global_object()?;
 
@@ -611,7 +613,7 @@ mod tests {
     where
         F: Fn() -> JSError + 'static,
     {
-        let ctx = Context::default();
+        let ctx = JSContextRef::default();
         ctx.global_object()?.set_property(
             "foo",
             ctx.wrap_callback(move |_, _, _| Err(error().into()))?,
@@ -635,7 +637,7 @@ mod tests {
 
     #[test]
     fn test_wrap_callback_handles_error_messages_with_null_bytes() -> Result<()> {
-        let ctx = Context::default();
+        let ctx = JSContextRef::default();
         ctx.global_object()?.set_property(
             "foo",
             ctx.wrap_callback(move |_, _, _| anyhow::bail!("Error containing \u{0000} with more"))?,
@@ -651,7 +653,7 @@ mod tests {
 
     #[test]
     fn test_is_pending_returns_false_when_nothing_is_pending() -> Result<()> {
-        let ctx = Context::default();
+        let ctx = JSContextRef::default();
         ctx.eval_global("main", "const x = 42;")?;
         assert!(!ctx.is_pending());
         Ok(())
@@ -659,7 +661,7 @@ mod tests {
 
     #[test]
     fn test_is_pending_returns_true_when_pending() -> Result<()> {
-        let ctx = Context::default();
+        let ctx = JSContextRef::default();
         ctx.eval_global(
             "main",
             "

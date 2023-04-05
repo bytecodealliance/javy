@@ -1,4 +1,4 @@
-use crate::js_binding::{context::Context, value::Value};
+use crate::js_binding::{context::JSContextRef, value::JSValueRef};
 use crate::serialize::err::{Error, Result};
 use anyhow::anyhow;
 
@@ -7,9 +7,9 @@ use serde::{ser, ser::Error as SerError, Serialize};
 use super::as_key;
 
 pub struct Serializer<'c> {
-    pub context: &'c Context,
-    pub value: Value,
-    pub key: Value,
+    pub context: &'c JSContextRef,
+    pub value: JSValueRef,
+    pub key: JSValueRef,
 }
 
 impl SerError for Error {
@@ -19,7 +19,7 @@ impl SerError for Error {
 }
 
 impl<'c> Serializer<'c> {
-    pub fn from_context(context: &'c Context) -> Result<Self> {
+    pub fn from_context(context: &'c JSContextRef) -> Result<Self> {
         Ok(Self {
             context,
             value: context.undefined_value()?,
@@ -360,7 +360,7 @@ mod tests {
     use super::Serializer as ValueSerializer;
     use crate::js_binding::{
         constants::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER},
-        context::Context,
+        context::JSContextRef,
     };
     use anyhow::Result;
     use quickcheck::quickcheck;
@@ -369,21 +369,21 @@ mod tests {
 
     quickcheck! {
         fn test_i16(v: i16) -> Result<bool> {
-            let context = Context::default();
+            let context = JSContextRef::default();
             let mut serializer = ValueSerializer::from_context(&context)?;
             serializer.serialize_i16(v)?;
             Ok(serializer.value.is_repr_as_i32())
         }
 
         fn test_i32(v: i32) -> Result<bool> {
-            let context = Context::default();
+            let context = JSContextRef::default();
             let mut serializer = ValueSerializer::from_context(&context)?;
             serializer.serialize_i32(v)?;
             Ok(serializer.value.is_repr_as_i32())
         }
 
         fn test_i64(v: i64) -> Result<bool> {
-            let context = Context::default();
+            let context = JSContextRef::default();
             let mut serializer = ValueSerializer::from_context(&context)?;
             serializer.serialize_i64(v)?;
             if (MIN_SAFE_INTEGER..=MAX_SAFE_INTEGER).contains(&v) {
@@ -394,7 +394,7 @@ mod tests {
         }
 
         fn test_u64(v: u64) -> Result<bool> {
-            let context = Context::default();
+            let context = JSContextRef::default();
             let mut serializer = ValueSerializer::from_context(&context)?;
             serializer.serialize_u64(v)?;
 
@@ -406,7 +406,7 @@ mod tests {
         }
 
         fn test_u16(v: u16) -> Result<bool> {
-            let context = Context::default();
+            let context = JSContextRef::default();
             let mut serializer = ValueSerializer::from_context(&context)?;
 
             serializer.serialize_u16(v)?;
@@ -415,7 +415,7 @@ mod tests {
         }
 
         fn test_u32(v: u32) -> Result<bool> {
-            let context = Context::default();
+            let context = JSContextRef::default();
             let mut serializer = ValueSerializer::from_context(&context)?;
 
             serializer.serialize_u32(v)?;
@@ -429,7 +429,7 @@ mod tests {
         }
 
         fn test_f32(v: f32) -> Result<bool> {
-            let context = Context::default();
+            let context = JSContextRef::default();
             let mut serializer = ValueSerializer::from_context(&context)?;
             serializer.serialize_f32(v)?;
 
@@ -457,7 +457,7 @@ mod tests {
         }
 
         fn test_f64(v: f64) -> Result<bool> {
-            let context = Context::default();
+            let context = JSContextRef::default();
             let mut serializer = ValueSerializer::from_context(&context)?;
             serializer.serialize_f64(v)?;
 
@@ -485,7 +485,7 @@ mod tests {
         }
 
         fn test_bool(v: bool) -> Result<bool> {
-            let context = Context::default();
+            let context = JSContextRef::default();
             let mut serializer = ValueSerializer::from_context(&context)?;
             serializer.serialize_bool(v)?;
 
@@ -493,7 +493,7 @@ mod tests {
         }
 
         fn test_str(v: String) -> Result<bool> {
-            let context = Context::default();
+            let context = JSContextRef::default();
             let mut serializer = ValueSerializer::from_context(&context)?;
             serializer.serialize_str(v.as_str())?;
 
@@ -503,7 +503,7 @@ mod tests {
 
     #[test]
     fn test_null() -> Result<()> {
-        let context = Context::default();
+        let context = JSContextRef::default();
         let mut serializer = ValueSerializer::from_context(&context)?;
         serializer.serialize_unit()?;
 
@@ -513,7 +513,7 @@ mod tests {
 
     #[test]
     fn test_nan() -> Result<()> {
-        let context = Context::default();
+        let context = JSContextRef::default();
         let mut serializer = ValueSerializer::from_context(&context)?;
         serializer.serialize_f64(f64::NAN)?;
 
@@ -523,7 +523,7 @@ mod tests {
 
     #[test]
     fn test_infinity() -> Result<()> {
-        let context = Context::default();
+        let context = JSContextRef::default();
         let mut serializer = ValueSerializer::from_context(&context)?;
         serializer.serialize_f64(f64::INFINITY)?;
 
@@ -533,7 +533,7 @@ mod tests {
 
     #[test]
     fn test_negative_infinity() -> Result<()> {
-        let context = Context::default();
+        let context = JSContextRef::default();
         let mut serializer = ValueSerializer::from_context(&context)?;
         serializer.serialize_f64(f64::NEG_INFINITY)?;
 
@@ -546,7 +546,7 @@ mod tests {
         // This is technically possible since msgpack supports maps
         // with any other valid msgpack type. However, we try to enforce
         // using `K: String` since it allow transcoding from json<->msgpack.
-        let context = Context::default();
+        let context = JSContextRef::default();
         let mut serializer = ValueSerializer::from_context(&context).unwrap();
 
         let mut map = BTreeMap::new();
@@ -559,7 +559,7 @@ mod tests {
 
     #[test]
     fn test_map() {
-        let context = Context::default();
+        let context = JSContextRef::default();
         let mut serializer = ValueSerializer::from_context(&context).unwrap();
 
         let mut map = BTreeMap::new();
@@ -573,7 +573,7 @@ mod tests {
 
     #[test]
     fn test_struct_into_map() {
-        let context = Context::default();
+        let context = JSContextRef::default();
         let mut serializer = ValueSerializer::from_context(&context).unwrap();
 
         #[derive(serde::Serialize)]
@@ -593,7 +593,7 @@ mod tests {
 
     #[test]
     fn test_sequence() {
-        let context = Context::default();
+        let context = JSContextRef::default();
         let mut serializer = ValueSerializer::from_context(&context).unwrap();
 
         let sequence = vec!["hello", "world"];
@@ -605,7 +605,7 @@ mod tests {
 
     #[test]
     fn test_array_buffer() {
-        let context = Context::default();
+        let context = JSContextRef::default();
         let mut serializer = ValueSerializer::from_context(&context).unwrap();
 
         ByteBuf::from(vec![42u8, 0, 255])

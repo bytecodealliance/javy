@@ -25,7 +25,7 @@ docs:
 	cargo doc --package=javy-core --open --target=wasm32-wasi
 
 test-quickjs-wasm-rs:
-	cargo wasi test --package=quickjs-wasm-rs --features json -- --nocapture
+	cargo wasi test --package=quickjs-wasm-rs --features json,messagepack -- --nocapture
 
 test-core:
 	cargo wasi test --package=javy-core -- --nocapture
