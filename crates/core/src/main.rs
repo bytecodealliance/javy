@@ -1,17 +1,17 @@
 use once_cell::sync::OnceCell;
-use quickjs_wasm_rs::Context;
+use quickjs_wasm_rs::JSContextRef;
 use std::io::{self, Read};
 use std::string::String;
 
 mod execution;
 mod globals;
 
-static mut CONTEXT: OnceCell<Context> = OnceCell::new();
+static mut CONTEXT: OnceCell<JSContextRef> = OnceCell::new();
 static mut BYTECODE: OnceCell<Vec<u8>> = OnceCell::new();
 
 #[export_name = "wizer.initialize"]
 pub extern "C" fn init() {
-    let context = Context::default();
+    let context = JSContextRef::default();
     globals::inject_javy_globals(&context, io::stderr(), io::stderr()).unwrap();
 
     let mut contents = String::new();

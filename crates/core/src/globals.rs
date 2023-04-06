@@ -1,11 +1,11 @@
 use anyhow::anyhow;
-use quickjs_wasm_rs::{Context, JSError, Value};
+use quickjs_wasm_rs::{JSContextRef, JSError, JSValueRef};
 use std::borrow::Cow;
 use std::io::{Read, Write};
 use std::str;
 
 pub fn inject_javy_globals<T1, T2>(
-    context: &Context,
+    context: &JSContextRef,
     log_stream: T1,
     error_stream: T2,
 ) -> anyhow::Result<()>
@@ -65,11 +65,11 @@ where
 
 fn console_log_to<T>(
     mut stream: T,
-) -> impl FnMut(&Context, &Value, &[Value]) -> anyhow::Result<Value>
+) -> impl FnMut(&JSContextRef, &JSValueRef, &[JSValueRef]) -> anyhow::Result<JSValueRef>
 where
     T: Write + 'static,
 {
-    move |ctx: &Context, _this: &Value, args: &[Value]| {
+    move |ctx: &JSContextRef, _this: &JSValueRef, args: &[JSValueRef]| {
         // Write full string to in-memory destination before writing to stream since each write call to the stream
         // will invoke a hostcall.
         let mut log_line = String::new();
@@ -87,8 +87,8 @@ where
 }
 
 fn decode_utf8_buffer_to_js_string(
-) -> impl FnMut(&Context, &Value, &[Value]) -> anyhow::Result<Value> {
-    move |ctx: &Context, _this: &Value, args: &[Value]| {
+) -> impl FnMut(&JSContextRef, &JSValueRef, &[JSValueRef]) -> anyhow::Result<JSValueRef> {
+    move |ctx: &JSContextRef, _this: &JSValueRef, args: &[JSValueRef]| {
         if args.len() != 5 {
             return Err(anyhow!("Expecting 5 arguments, received {}", args.len()));
         }
@@ -140,8 +140,8 @@ fn decode_utf8_buffer_to_js_string(
 }
 
 fn encode_js_string_to_utf8_buffer(
-) -> impl FnMut(&Context, &Value, &[Value]) -> anyhow::Result<Value> {
-    move |ctx: &Context, _this: &Value, args: &[Value]| {
+) -> impl FnMut(&JSContextRef, &JSValueRef, &[JSValueRef]) -> anyhow::Result<JSValueRef> {
+    move |ctx: &JSContextRef, _this: &JSValueRef, args: &[JSValueRef]| {
         if args.len() != 1 {
             return Err(anyhow!("Expecting 1 argument, got {}", args.len()));
         }
@@ -151,7 +151,7 @@ fn encode_js_string_to_utf8_buffer(
     }
 }
 
-fn js_args_to_io_writer(args: &[Value]) -> anyhow::Result<(Box<dyn Write>, &[u8])> {
+fn js_args_to_io_writer(args: &[JSValueRef]) -> anyhow::Result<(Box<dyn Write>, &[u8])> {
     // TODO: Should throw an exception
     let [fd, data, offset, length, ..] = args else {
         anyhow::bail!("Invalid number of parameters");
@@ -173,7 +173,7 @@ fn js_args_to_io_writer(args: &[Value]) -> anyhow::Result<(Box<dyn Write>, &[u8]
     Ok((fd, &data[offset..(offset + length)]))
 }
 
-fn js_args_to_io_reader(args: &[Value]) -> anyhow::Result<(Box<dyn Read>, &mut [u8])> {
+fn js_args_to_io_reader(args: &[JSValueRef]) -> anyhow::Result<(Box<dyn Read>, &mut [u8])> {
     // TODO: Should throw an exception
     let [fd, data, offset, length, ..] = args else {
         anyhow::bail!("Invalid number of parameters");
@@ -198,7 +198,7 @@ fn js_args_to_io_reader(args: &[Value]) -> anyhow::Result<(Box<dyn Read>, &mut [
 mod tests {
     use super::inject_javy_globals;
     use anyhow::Result;
-    use quickjs_wasm_rs::Context;
+    use quickjs_wasm_rs::JSContextRef;
     use std::cell::RefCell;
     use std::rc::Rc;
     use std::{cmp, io};
@@ -207,7 +207,7 @@ mod tests {
     fn test_console_log() -> Result<()> {
         let mut stream = SharedStream::default();
 
-        let ctx = Context::default();
+        let ctx = JSContextRef::default();
         inject_javy_globals(&ctx, stream.clone(), stream.clone())?;
 
         ctx.eval_global("main", "console.log(\"hello world\");")?;
@@ -235,7 +235,7 @@ mod tests {
     fn test_console_error() -> Result<()> {
         let mut stream = SharedStream::default();
 
-        let ctx = Context::default();
+        let ctx = JSContextRef::default();
         inject_javy_globals(&ctx, stream.clone(), stream.clone())?;
 
         ctx.eval_global("main", "console.error(\"hello world\");")?;

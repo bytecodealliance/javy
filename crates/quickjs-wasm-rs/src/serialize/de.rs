@@ -1,5 +1,5 @@
 use crate::js_binding::constants::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER};
-use crate::js_binding::{properties::Properties, value::BigInt, value::Value};
+use crate::js_binding::{properties::Properties, value::BigInt, value::JSValueRef};
 use crate::serialize::err::{Error, Result};
 use anyhow::anyhow;
 use serde::de::{self, Error as SerError};
@@ -14,12 +14,12 @@ impl SerError for Error {
 }
 
 pub struct Deserializer {
-    value: Value,
+    value: JSValueRef,
     map_key: bool,
 }
 
-impl From<Value> for Deserializer {
-    fn from(value: Value) -> Self {
+impl From<JSValueRef> for Deserializer {
+    fn from(value: JSValueRef) -> Self {
         Self {
             value,
             map_key: false,
@@ -200,7 +200,7 @@ impl<'a, 'de> de::MapAccess<'de> for MapAccess<'a> {
 
 struct SeqAccess<'a> {
     de: &'a mut Deserializer,
-    seq: Value,
+    seq: JSValueRef,
     length: u32,
     index: u32,
 }
@@ -228,12 +228,12 @@ mod tests {
 
     use super::Deserializer as ValueDeserializer;
     use crate::js_binding::constants::MAX_SAFE_INTEGER;
-    use crate::js_binding::context::Context;
-    use crate::js_binding::value::Value;
+    use crate::js_binding::context::JSContextRef;
+    use crate::js_binding::value::JSValueRef;
     use serde::de::DeserializeOwned;
     use serde_bytes::ByteBuf;
 
-    fn deserialize_value<T>(v: Value) -> T
+    fn deserialize_value<T>(v: JSValueRef) -> T
     where
         T: DeserializeOwned,
     {
@@ -243,21 +243,21 @@ mod tests {
 
     #[test]
     fn test_null() {
-        let context = Context::default();
+        let context = JSContextRef::default();
         let val = context.null_value().unwrap();
         deserialize_value::<()>(val);
     }
 
     #[test]
     fn test_undefined() {
-        let context = Context::default();
+        let context = JSContextRef::default();
         let val = context.undefined_value().unwrap();
         deserialize_value::<()>(val);
     }
 
     #[test]
     fn test_nan() {
-        let context = Context::default();
+        let context = JSContextRef::default();
         let val = context.value_from_f64(f64::NAN).unwrap();
         let actual = deserialize_value::<f64>(val);
         assert!(actual.is_nan());
@@ -265,7 +265,7 @@ mod tests {
 
     #[test]
     fn test_infinity() {
-        let context = Context::default();
+        let context = JSContextRef::default();
         let val = context.value_from_f64(f64::INFINITY).unwrap();
         let actual = deserialize_value::<f64>(val);
         assert!(actual.is_infinite() && actual.is_sign_positive());
@@ -273,7 +273,7 @@ mod tests {
 
     #[test]
     fn test_negative_infinity() {
-        let context = Context::default();
+        let context = JSContextRef::default();
         let val = context.value_from_f64(f64::NEG_INFINITY).unwrap();
         let actual = deserialize_value::<f64>(val);
         assert!(actual.is_infinite() && actual.is_sign_negative());
@@ -283,7 +283,7 @@ mod tests {
     fn test_map_always_converts_keys_to_string() {
         // Sanity check to make sure the quickjs VM always store object
         // object keys as a string an not a numerical value.
-        let context = Context::default();
+        let context = JSContextRef::default();
         context.eval_global("main", "var a = {1337: 42};").unwrap();
         let val = context.global_object().unwrap().get_property("a").unwrap();
 
@@ -297,7 +297,7 @@ mod tests {
     fn test_map_does_not_support_non_string_keys() {
         // Sanity check to make sure it's not possible to deserialize
         // to a map where keys are not strings (e.g. numerical value).
-        let context = Context::default();
+        let context = JSContextRef::default();
         context.eval_global("main", "var a = {1337: 42};").unwrap();
         let val = context.global_object().unwrap().get_property("a").unwrap();
 
@@ -306,7 +306,7 @@ mod tests {
 
     #[test]
     fn test_u64_bounds() {
-        let context = Context::default();
+        let context = JSContextRef::default();
 
         let max = u64::MAX;
         let val = context.value_from_u64(max).unwrap();
@@ -321,7 +321,7 @@ mod tests {
 
     #[test]
     fn test_i64_bounds() {
-        let context = Context::default();
+        let context = JSContextRef::default();
 
         let max = i64::MAX;
         let val = context.value_from_i64(max).unwrap();
@@ -336,7 +336,7 @@ mod tests {
 
     #[test]
     fn test_float_to_integer_conversion() {
-        let context = Context::default();
+        let context = JSContextRef::default();
 
         let expected = MAX_SAFE_INTEGER - 1;
         let val = context.value_from_f64(expected as _).unwrap();
@@ -351,7 +351,7 @@ mod tests {
 
     #[test]
     fn test_u32_upper_bound() {
-        let context = Context::default();
+        let context = JSContextRef::default();
         let expected = u32::MAX;
         let val = context.value_from_u32(expected).unwrap();
         let actual = deserialize_value::<u32>(val);
@@ -360,7 +360,7 @@ mod tests {
 
     #[test]
     fn test_u32_lower_bound() {
-        let context = Context::default();
+        let context = JSContextRef::default();
         let expected = i32::MAX as u32 + 1;
         let val = context.value_from_u32(expected).unwrap();
         let actual = deserialize_value::<u32>(val);
@@ -369,7 +369,7 @@ mod tests {
 
     #[test]
     fn test_array_buffer() {
-        let context = Context::default();
+        let context = JSContextRef::default();
 
         context
             .eval_global(

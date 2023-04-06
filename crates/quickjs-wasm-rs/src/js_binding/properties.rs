@@ -1,4 +1,4 @@
-use super::{exception::Exception, value::Value};
+use super::{exception::Exception, value::JSValueRef};
 use anyhow::Result;
 use quickjs_wasm_sys::{
     JSAtom, JSContext, JSPropertyEnum, JSValue, JS_AtomToString, JS_GetOwnPropertyNames,
@@ -40,7 +40,7 @@ impl Properties {
         })
     }
 
-    pub fn next_key(&mut self) -> Result<Option<Value>> {
+    pub fn next_key(&mut self) -> Result<Option<JSValueRef>> {
         if self.offset >= self.length {
             Ok(None)
         } else {
@@ -51,28 +51,28 @@ impl Properties {
         }
     }
 
-    pub fn next_value(&self) -> Result<Value> {
+    pub fn next_value(&self) -> Result<JSValueRef> {
         let val = unsafe {
             JS_GetPropertyInternal(self.context, self.value, self.current_key, self.value, 0)
         };
-        Value::new(self.context, val)
+        JSValueRef::new(self.context, val)
     }
 
-    fn atom_to_string(&self, atom: JSAtom) -> Result<Value> {
+    fn atom_to_string(&self, atom: JSAtom) -> Result<JSValueRef> {
         let raw = unsafe { JS_AtomToString(self.context, atom) };
-        Value::new(self.context, raw)
+        JSValueRef::new(self.context, raw)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::super::context::Context;
+    use super::super::context::JSContextRef;
     use anyhow::Result;
 
     #[test]
     fn test_keys() -> Result<()> {
         let contents = "globalThis.o = {a: 1, b: 2, c: [1, 2, 3]};";
-        let context = Context::default();
+        let context = JSContextRef::default();
         context.eval_global("script", contents)?;
         let global = context.global_object()?;
         let o = global.get_property("o")?;
@@ -93,7 +93,7 @@ mod tests {
     #[test]
     fn test_values() -> Result<()> {
         let contents = "globalThis.o = {a: 1, b: 2, c: [1, 2, 3]};";
-        let context = Context::default();
+        let context = JSContextRef::default();
         context.eval_global("script", contents)?;
         let global = context.global_object()?;
         let o = global.get_property("o")?;
@@ -114,7 +114,7 @@ mod tests {
 
     #[test]
     fn test_invalid_access_to_own_props() {
-        let context = Context::default();
+        let context = JSContextRef::default();
         let val = context.value_from_i32(1_i32).unwrap();
         let err = val.properties().unwrap_err();
         assert_eq!(
