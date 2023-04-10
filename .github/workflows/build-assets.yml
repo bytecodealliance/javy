@@ -12,11 +12,13 @@ on:
   release:
     types:
       - published
-  # Test on every CI run too
+  # Test on main and specifically named branches
   push:
     branches:
       - main
   pull_request:
+    branches:
+      - build-assets/**
 
 jobs:
   compile_core:
