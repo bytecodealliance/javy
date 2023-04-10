@@ -49,6 +49,10 @@ impl Default for JSContextRef {
 }
 
 impl JSContextRef {
+    pub fn new(context: *mut JSContext) -> Self {
+        Self { inner: context }
+    }
+
     pub fn eval_global(&self, name: &str, contents: &str) -> Result<JSValueRef> {
         let input = CString::new(contents)?;
         let script_name = CString::new(name)?;

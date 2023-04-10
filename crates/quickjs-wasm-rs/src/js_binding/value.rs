@@ -43,6 +43,11 @@ impl JSValueRef {
         }
     }
 
+pub fn get_context_ref(&self) -> context::JSContextRef {
+        // TODO: This will be removed when I introduce the next PR
+        context::JSContextRef::new(self.context)
+    }
+
     pub(super) fn new_unchecked(context: *mut JSContext, value: JSValue) -> Self {
         Self { context, value }
     }
@@ -361,7 +366,8 @@ impl JSValueRef {
         }
     }
 
-    fn get_tag(&self) -> i32 {
+    pub fn get_tag(&self) -> i32 {
+        // TODO: Add tests for this
         (self.value >> 32) as i32
     }
 
