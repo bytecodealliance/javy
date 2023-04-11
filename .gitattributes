@@ -1,2 +1,1 @@
-crates/quickjs-wasm-sys/vendor/** linguist-generated
-crates/cli/vendor/** linguist-generated
+crates/quickjs-wasm-sys/quickjs/* linguist-vendored
