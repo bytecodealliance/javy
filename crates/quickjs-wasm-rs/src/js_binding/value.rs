@@ -43,7 +43,7 @@ impl JSValueRef {
         }
     }
 
-pub fn get_context_ref(&self) -> context::JSContextRef {
+    pub fn get_context_ref(&self) -> context::JSContextRef {
         // TODO: This will be removed when I introduce the next PR
         context::JSContextRef::new(self.context)
     }

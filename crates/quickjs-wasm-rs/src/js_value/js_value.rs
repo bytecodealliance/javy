@@ -1,4 +1,4 @@
-use std::{fmt, convert::TryInto, collections::HashMap};
+use std::{collections::HashMap, convert::TryInto, fmt};
 
 use anyhow::{anyhow, Result};
 
@@ -88,7 +88,9 @@ impl TryInto<HashMap<String, JSValue>> for JSValue {
     fn try_into(self) -> Result<HashMap<String, JSValue>> {
         match self {
             JSValue::Object(val) => Ok(val),
-            _ => Err(anyhow!("Error: could not convert JSValue to HashMap<String, JSValue>")),
+            _ => Err(anyhow!(
+                "Error: could not convert JSValue to HashMap<String, JSValue>"
+            )),
         }
     }
 }
@@ -114,10 +116,16 @@ impl fmt::Display for JSValue {
             JSValue::Int(i) => write!(f, "{}", i),
             JSValue::Float(n) => write!(f, "{}", n),
             JSValue::String(s) => write!(f, "{}", s),
-            // JSValue::MutArrayBuffer(_, _) => write!(f, "ArrayBuffer"),
             JSValue::ArrayBuffer(buffer) => write!(f, "{:?}", buffer),
             JSValue::Array(arr) => {
-                write!(f, "{}", arr.iter().map(|e| format!("{}", e)).collect::<Vec<String>>().join(","))     
+                write!(
+                    f,
+                    "{}",
+                    arr.iter()
+                        .map(|e| format!("{}", e))
+                        .collect::<Vec<String>>()
+                        .join(",")
+                )
             }
             JSValue::Object(_) => write!(f, "[object Object]"),
         }
@@ -132,16 +140,16 @@ mod tests {
     fn test_js_value_try_into_bool() {
         let js_value = JSValue::Bool(true);
         assert_eq!("true", js_value.to_string());
-        
+
         let result: bool = js_value.try_into().unwrap();
         assert_eq!(result, true);
     }
 
     #[test]
-    fn test_js_value_try_into_f64() {   
+    fn test_js_value_try_into_f64() {
         let js_value = JSValue::Float(2.3);
         assert_eq!("2.3", js_value.to_string());
-        
+
         let result: f64 = js_value.try_into().unwrap();
         assert_eq!(result, 2.3);
     }

@@ -1,18 +1,22 @@
-use std::{fmt, convert::TryInto, collections::HashMap};
+use std::{collections::HashMap, convert::TryInto, fmt};
 
 use anyhow::Result;
 
+use super::{convert::from_qjs_value, js_value::JSValue};
 use crate::js_binding::value::JSValueRef;
-use super::{js_value::JSValue, convert::from_qjs_value};
 
 #[derive(Copy, Clone)]
 pub struct CallbackArg {
-    inner: JSValueRef
+    inner: JSValueRef,
 }
 
 impl CallbackArg {
     pub fn new(inner: JSValueRef) -> Self {
         Self { inner }
+    }
+
+    pub unsafe fn inner_value(&self) -> JSValueRef {
+        self.inner
     }
 
     fn to_js_value(&self) -> Result<JSValue> {

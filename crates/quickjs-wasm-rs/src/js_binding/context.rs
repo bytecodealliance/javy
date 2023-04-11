@@ -2,7 +2,7 @@ use super::constants::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER};
 use super::error::JSError;
 use super::exception::Exception;
 use super::value::JSValueRef;
-use crate::js_value::{convert, js_value, callback_arg::CallbackArg};
+use crate::js_value::{callback_arg::CallbackArg, convert, js_value};
 use anyhow::Result;
 use once_cell::sync::Lazy;
 use quickjs_wasm_sys::{
@@ -307,7 +307,9 @@ impl JSContextRef {
                 &CallbackArg::new(JSValueRef::new_unchecked(inner, this)),
                 &(0..argc)
                     .map(|offset| {
-                        CallbackArg::new(JSValueRef::new_unchecked(inner, unsafe { *argv.offset(offset as isize) }))
+                        CallbackArg::new(JSValueRef::new_unchecked(inner, unsafe {
+                            *argv.offset(offset as isize)
+                        }))
                     })
                     .collect::<Box<[_]>>(),
             ) {
@@ -340,11 +342,15 @@ impl JSContextRef {
                             let message = format!("{e:?}");
                             let message = CString::new(message.as_str()).unwrap_or_else(|err| {
                                 CString::new(format!("{} - truncated due to null byte", unsafe {
-                                    str::from_utf8_unchecked(&message.as_bytes()[..err.nul_position()])
+                                    str::from_utf8_unchecked(
+                                        &message.as_bytes()[..err.nul_position()],
+                                    )
                                 }))
                                 .unwrap()
                             });
-                            unsafe { JS_ThrowInternalError(inner, format.as_ptr(), message.as_ptr()) }
+                            unsafe {
+                                JS_ThrowInternalError(inner, format.as_ptr(), message.as_ptr())
+                            }
                         }
                     }
                 }

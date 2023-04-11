@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use quickjs_wasm_rs::{JSContextRef, JSError, JSValue, CallbackArg};
+use quickjs_wasm_rs::{CallbackArg, JSContextRef, JSError, JSValue};
 use std::borrow::Cow;
 use std::io::{Read, Write};
 use std::str;
@@ -66,14 +66,14 @@ where
                 0 => Box::new(std::io::stdin()),
                 _ => anyhow::bail!("Only stdin is supported"),
             };
-            let mut data: Vec<u8> = data.try_into()?;
             let offset: usize = offset.try_into()?;
             let length: usize = length.try_into()?;
-            // if !matches!(data, JSValue::ArrayBuffer(_)) {
-            //     anyhow::bail!("Data needs to be an ArrayBuffer");
-            // }
+            let data = unsafe { data.inner_value() };
+            if !data.is_array_buffer() {
+                anyhow::bail!("Data needs to be an ArrayBuffer");
+            }
+            let data = data.as_bytes_mut()?;
             let data = &mut data[offset..(offset + length)];
-
             let n = fd.read(data)?;
             Ok(JSValue::Int(n as i32))
         })?,
@@ -108,7 +108,7 @@ where
         }
 
         writeln!(stream, "{log_line}")?;
-        
+
         Ok(JSValue::Undefined)
     }
 }
@@ -244,30 +244,30 @@ mod tests {
     }
 
     // sanity test for when I was prototyping - send 'hello' into stdin to pass test
-    #[test]
-    fn test_read_sync() -> Result<()> {
-        let stream = SharedStream::default();
+    // #[test]
+    // fn test_read_sync() -> Result<()> {
+    //     let stream = SharedStream::default();
 
-        let ctx = JSContextRef::default();
-        inject_javy_globals(&ctx, stream.clone(), stream.clone())?;
+    //     let ctx = JSContextRef::default();
+    //     inject_javy_globals(&ctx, stream.clone(), stream.clone())?;
 
-        ctx.eval_global("main", "const buffer = new Uint8Array(5); Javy.IO.readSync(0, buffer); console.log(new TextDecoder().decode(buffer))")?;
-        assert_eq!(b"hello\n", stream.buffer.borrow().as_slice());
-        Ok(())
-    }    
+    //     ctx.eval_global("main", "const buffer = new Uint8Array(5); Javy.IO.readSync(0, buffer); console.log(new TextDecoder().decode(buffer))")?;
+    //     assert_eq!(b"hello\n", stream.buffer.borrow().as_slice());
+    //     Ok(())
+    // }
 
-    // sanity test for when I was prototyping - visually inspect that the string 'helloJACKSON' is printed to stdout
-    #[test]
-    fn test_write_sync() -> Result<()> {
-        let stream = SharedStream::default();
+    // // sanity test for when I was prototyping - visually inspect that the string 'helloJACKSON' is printed to stdout
+    // #[test]
+    // fn test_write_sync() -> Result<()> {
+    //     let stream = SharedStream::default();
 
-        let ctx = JSContextRef::default();
-        inject_javy_globals(&ctx, stream.clone(), stream.clone())?;
+    //     let ctx = JSContextRef::default();
+    //     inject_javy_globals(&ctx, stream.clone(), stream.clone())?;
 
-        ctx.eval_global("main", "let encoder = new TextEncoder(); let buffer = encoder.encode('helloJACKSON'); Javy.IO.writeSync(1, buffer);")?;
-    
-        Ok(())
-    }
+    //     ctx.eval_global("main", "let encoder = new TextEncoder(); let buffer = encoder.encode('helloJACKSON'); Javy.IO.writeSync(1, buffer);")?;
+
+    //     Ok(())
+    // }
 
     #[derive(Clone)]
     struct SharedStream {
