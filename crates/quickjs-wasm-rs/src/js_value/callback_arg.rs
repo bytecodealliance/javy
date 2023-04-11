@@ -8,6 +8,10 @@ pub struct CallbackArg {
 }
 
 impl CallbackArg {
+    pub fn new(inner: JSValueRef) -> Self {
+        Self { inner }
+    }
+
     pub fn value(&self) -> Result<JSValue> {
         from_qjs_value(&self.inner.get_context_ref(), &self.inner)
     }

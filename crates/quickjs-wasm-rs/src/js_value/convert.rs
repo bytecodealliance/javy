@@ -55,17 +55,56 @@ pub fn from_qjs_value(context: &JSContextRef, val: &JSValueRef) -> Result<JSValu
     Ok(js_val)
 }
 
+pub fn to_qjs_value(context: &JSContextRef, val: &JSValue) -> Result<JSValueRef> {
+    let qjs_val = match val {
+        JSValue::Undefined => context.undefined_value()?,
+        JSValue::Null => context.null_value()?,
+        JSValue::Bool(flag) => context.value_from_bool(*flag)?,
+        JSValue::Int(val) => context.value_from_i32(*val)?,
+        JSValue::Float(val) => context.value_from_f64(*val)?,
+        JSValue::String(val) => context.value_from_str(&val)?,
+        // JSValue::ArrayBuffer(buffer) => context.array_buffer_value(&buffer)?,
+        // JSValue::MutArrayBuffer(ptr, len) => {
+        //     let s = unsafe { std::slice::from_raw_parts(ptr, len) };
+        //     context.array_buffer_value(s)?
+        // },
+        JSValue::Array(values) => {
+            let arr = context.array_value()?;
+            for v in values.into_iter() {
+                arr.append_property(to_qjs_value(context, v)?)?
+            }
+            arr
+        },
+        JSValue::Object(hashmap) => {
+            let obj = context.object_value()?;
+            for (key, value) in hashmap {
+                obj.set_property(key.clone(), to_qjs_value(context, value)?)?
+            }
+            obj
+        },
+    };
+    Ok(qjs_val)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::js_binding::context::JSContextRef;
 
     #[test]
-    fn test_from_int() {
+    fn test_from_qjs_int() {
         let context = JSContextRef::default();
         let qjs_val = context.eval_global("test.js", "42").unwrap();
         let js_val = from_qjs_value(&context, &qjs_val).unwrap();
         assert_eq!(js_val, JSValue::Int(42));
+    }
+
+    #[test]
+    fn test_to_qjs_int() {
+        let context = JSContextRef::default();
+        let js_val = JSValue::Int(42);
+        let qjs_val = to_qjs_value(&context, &js_val).unwrap();
+        assert_eq!(42, qjs_val.as_i32_unchecked());
     }
 
     // TODO: Add full test coverage
