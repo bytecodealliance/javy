@@ -15,96 +15,31 @@ pub enum JSValue {
     Object(HashMap<String, JSValue>),
 }
 
-impl TryInto<bool> for JSValue {
-    type Error = anyhow::Error;
+macro_rules! jsvalue_try_into_impl {
+    ($($t:ty, $variant:ident, $conv:expr),+ $(,)?) => {
+        $(impl TryInto<$t> for JSValue {
+            type Error = anyhow::Error;
 
-    fn try_into(self) -> Result<bool> {
-        match self {
-            JSValue::Bool(val) => Ok(val),
-            _ => Err(anyhow!("Error: could not convert JSValue to bool")),
-        }
-    }
+            fn try_into(self) -> Result<$t> {
+                match self {
+                    JSValue::$variant(val) => Ok($conv(val)),
+                    _ => Err(anyhow!("Error: could not convert JSValue to {}", std::any::type_name::<$t>())),
+                }
+            }
+        })+
+    };
 }
 
-impl TryInto<i32> for JSValue {
-    type Error = anyhow::Error;
-
-    fn try_into(self) -> Result<i32> {
-        match self {
-            JSValue::Int(val) => Ok(val),
-            _ => Err(anyhow!("Error: could not convert JSValue to i32")),
-        }
-    }
-}
-
-impl TryInto<usize> for JSValue {
-    type Error = anyhow::Error;
-
-    fn try_into(self) -> Result<usize> {
-        match self {
-            JSValue::Int(val) => Ok(val as usize),
-            JSValue::Float(val) => Ok(val.floor() as usize),
-            _ => Err(anyhow!("Error: could not convert JSValue to usize")),
-        }
-    }
-}
-
-impl TryInto<f64> for JSValue {
-    type Error = anyhow::Error;
-
-    fn try_into(self) -> Result<f64> {
-        match self {
-            JSValue::Float(val) => Ok(val),
-            _ => Err(anyhow!("Error: could not convert JSValue to f64")),
-        }
-    }
-}
-
-impl TryInto<String> for JSValue {
-    type Error = anyhow::Error;
-
-    fn try_into(self) -> Result<String> {
-        match self {
-            JSValue::String(val) => Ok(val),
-            _ => Err(anyhow!("Error: could not convert JSValue to String")),
-        }
-    }
-}
-
-impl TryInto<Vec<JSValue>> for JSValue {
-    type Error = anyhow::Error;
-
-    fn try_into(self) -> Result<Vec<JSValue>> {
-        match self {
-            JSValue::Array(val) => Ok(val),
-            _ => Err(anyhow!("Error: could not convert JSValue to Vec<JSValue>")),
-        }
-    }
-}
-
-impl TryInto<HashMap<String, JSValue>> for JSValue {
-    type Error = anyhow::Error;
-
-    fn try_into(self) -> Result<HashMap<String, JSValue>> {
-        match self {
-            JSValue::Object(val) => Ok(val),
-            _ => Err(anyhow!(
-                "Error: could not convert JSValue to HashMap<String, JSValue>"
-            )),
-        }
-    }
-}
-
-impl TryInto<Vec<u8>> for JSValue {
-    type Error = anyhow::Error;
-
-    fn try_into(self) -> Result<Vec<u8>> {
-        match self {
-            JSValue::ArrayBuffer(val) => Ok(val),
-            _ => Err(anyhow!("Error: could not convert JSValue to Vec<u8>")),
-        }
-    }
-}
+jsvalue_try_into_impl!(
+    bool, Bool, |x| x,
+    i32, Int, |x| x,
+    usize, Int, |x| x as usize,
+    f64, Float, |x| x,
+    String, String, |x| x,
+    Vec<JSValue>, Array, |x| x,
+    HashMap<String, JSValue>, Object, |x| x,
+    Vec<u8>, ArrayBuffer, |x| x,
+);
 
 // Used http://numcalc.com/ to playaround and determine the default display format for each type
 impl fmt::Display for JSValue {
