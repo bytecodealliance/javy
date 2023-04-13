@@ -59,7 +59,7 @@ pub fn from_qjs_value(context: &JSContextRef, val: &JSValueRef) -> Result<JSValu
     Ok(js_val)
 }
 
-pub fn to_qjs_value(context: &JSContextRef, val: &JSValue) -> Result<JSValueRef> {
+pub fn to_qjs_value<'a>(context: &'a JSContextRef, val: &JSValue) -> Result<JSValueRef<'a>> {
     let qjs_val = match val {
         JSValue::Undefined => context.undefined_value()?,
         JSValue::Null => context.null_value()?,

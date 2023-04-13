@@ -6,12 +6,12 @@ use super::{convert::from_qjs_value, js_value::JSValue};
 use crate::js_binding::value::JSValueRef;
 
 #[derive(Copy, Clone)]
-pub struct CallbackArg {
-    inner: JSValueRef,
+pub struct CallbackArg<'a> {
+    inner: JSValueRef<'a>,
 }
 
-impl CallbackArg {
-    pub fn new(inner: JSValueRef) -> Self {
+impl<'a> CallbackArg<'a> {
+    pub fn new(inner: JSValueRef<'a>) -> CallbackArg<'a> {
         Self { inner }
     }
 
@@ -20,11 +20,11 @@ impl CallbackArg {
     }
 
     fn to_js_value(&self) -> Result<JSValue> {
-        from_qjs_value(&self.inner.get_context_ref(), &self.inner)
+        from_qjs_value(self.inner.context, &self.inner)
     }
 }
 
-impl fmt::Display for CallbackArg {
+impl fmt::Display for CallbackArg<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_js_value().unwrap())
     }
@@ -32,7 +32,7 @@ impl fmt::Display for CallbackArg {
 
 macro_rules! try_into_impl {
     ($($t:ty),+ $(,)?) => {
-        $(impl TryInto<$t> for &CallbackArg {
+        $(impl TryInto<$t> for &CallbackArg<'_> {
             type Error = anyhow::Error;
 
             fn try_into(self) -> Result<$t> {
@@ -40,7 +40,7 @@ macro_rules! try_into_impl {
             }
         }
 
-        impl TryInto<$t> for CallbackArg {
+        impl TryInto<$t> for CallbackArg<'_> {
             type Error = anyhow::Error;
 
             fn try_into(self) -> Result<$t> {

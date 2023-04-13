@@ -1,14 +1,14 @@
-use super::context;
+use super::context::{self, JSContextRef};
 use super::exception::Exception;
 use super::properties::Properties;
 use anyhow::{anyhow, Result};
 use quickjs_wasm_sys::{
-    size_t as JS_size_t, JSContext, JSValue, JS_BigIntSigned, JS_BigIntToInt64, JS_BigIntToUint64,
-    JS_Call, JS_DefinePropertyValueStr, JS_DefinePropertyValueUint32, JS_EvalFunction,
-    JS_GetArrayBuffer, JS_GetOpaque, JS_GetPropertyStr, JS_GetPropertyUint32, JS_IsArray,
-    JS_IsArrayBuffer_Ext, JS_IsFloat64_Ext, JS_IsFunction, JS_ToCStringLen2, JS_ToFloat64,
-    JS_PROP_C_W_E, JS_TAG_BIG_INT, JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_NULL,
-    JS_TAG_OBJECT, JS_TAG_STRING, JS_TAG_UNDEFINED,
+    size_t as JS_size_t, JSValue, JS_BigIntSigned, JS_BigIntToInt64, JS_BigIntToUint64, JS_Call,
+    JS_DefinePropertyValueStr, JS_DefinePropertyValueUint32, JS_EvalFunction, JS_GetArrayBuffer,
+    JS_GetOpaque, JS_GetPropertyStr, JS_GetPropertyUint32, JS_IsArray, JS_IsArrayBuffer_Ext,
+    JS_IsFloat64_Ext, JS_IsFunction, JS_ToCStringLen2, JS_ToFloat64, JS_PROP_C_W_E, JS_TAG_BIG_INT,
+    JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_NULL, JS_TAG_OBJECT, JS_TAG_STRING,
+    JS_TAG_UNDEFINED,
 };
 use std::any::TypeId;
 use std::borrow::Cow;
@@ -23,13 +23,13 @@ pub enum BigInt {
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct JSValueRef {
-    pub(super) context: *mut JSContext,
+pub struct JSValueRef<'a> {
+    pub context: &'a JSContextRef,
     pub(super) value: JSValue,
 }
 
-impl JSValueRef {
-    pub(super) fn new(context: *mut JSContext, raw_value: JSValue) -> Result<Self> {
+impl<'a> JSValueRef<'a> {
+    pub(super) fn new(context: &'a JSContextRef, raw_value: JSValue) -> Result<Self> {
         let value = Self {
             context,
             value: raw_value,
@@ -43,18 +43,13 @@ impl JSValueRef {
         }
     }
 
-    pub fn get_context_ref(&self) -> context::JSContextRef {
-        // TODO: This will be removed when I introduce the next PR
-        context::JSContextRef::new(self.context)
-    }
-
-    pub(super) fn new_unchecked(context: *mut JSContext, value: JSValue) -> Self {
+    pub(super) fn new_unchecked(context: &'a JSContextRef, value: JSValue) -> Self {
         Self { context, value }
     }
 
     pub(super) fn eval_function(&self) -> Result<Self> {
         Self::new(self.context, unsafe {
-            JS_EvalFunction(self.context, self.value)
+            JS_EvalFunction(self.context.inner, self.value)
         })
     }
 
@@ -62,7 +57,7 @@ impl JSValueRef {
         let args: Vec<JSValue> = args.iter().map(|v| v.value).collect();
         let return_val = unsafe {
             JS_Call(
-                self.context,
+                self.context.inner,
                 self.value,
                 receiver.value,
                 args.len() as i32,
@@ -83,7 +78,7 @@ impl JSValueRef {
 
     pub fn as_f64_unchecked(&self) -> f64 {
         let mut ret = 0_f64;
-        unsafe { JS_ToFloat64(self.context, &mut ret, self.value) };
+        unsafe { JS_ToFloat64(self.context.inner, &mut ret, self.value) };
         ret
     }
 
@@ -98,12 +93,12 @@ impl JSValueRef {
     }
 
     fn is_signed_big_int(&self) -> bool {
-        unsafe { JS_BigIntSigned(self.context, self.value) == 1 }
+        unsafe { JS_BigIntSigned(self.context.inner, self.value) == 1 }
     }
 
     fn bigint_as_i64(&self) -> Result<i64> {
         let mut ret = 0_i64;
-        let err = unsafe { JS_BigIntToInt64(self.context, &mut ret, self.value) };
+        let err = unsafe { JS_BigIntToInt64(self.context.inner, &mut ret, self.value) };
         if err < 0 {
             anyhow::bail!("big int underflow, value does not fit in i64");
         }
@@ -112,7 +107,7 @@ impl JSValueRef {
 
     fn bigint_as_u64(&self) -> Result<u64> {
         let mut ret = 0_u64;
-        let err = unsafe { JS_BigIntToUint64(self.context, &mut ret, self.value) };
+        let err = unsafe { JS_BigIntToUint64(self.context.inner, &mut ret, self.value) };
         if err < 0 {
             anyhow::bail!("big int overflow, value does not fit in u64");
         }
@@ -212,7 +207,7 @@ impl JSValueRef {
     fn as_wtf8_str_buffer(&self) -> &[u8] {
         unsafe {
             let mut len: JS_size_t = 0;
-            let ptr = JS_ToCStringLen2(self.context, &mut len, self.value, 0);
+            let ptr = JS_ToCStringLen2(self.context.inner, &mut len, self.value, 0);
             let ptr = ptr as *const u8;
             let len = len as usize;
             std::slice::from_raw_parts(ptr, len)
@@ -221,7 +216,7 @@ impl JSValueRef {
 
     pub fn as_bytes(&self) -> Result<&[u8]> {
         let mut len = 0;
-        let ptr = unsafe { JS_GetArrayBuffer(self.context, &mut len, self.value) };
+        let ptr = unsafe { JS_GetArrayBuffer(self.context.inner, &mut len, self.value) };
         if ptr.is_null() {
             Err(anyhow!(
                 "Can't represent {:?} as an array buffer",
@@ -234,7 +229,7 @@ impl JSValueRef {
 
     pub fn as_bytes_mut(&self) -> Result<&mut [u8]> {
         let mut len = 0;
-        let ptr = unsafe { JS_GetArrayBuffer(self.context, &mut len, self.value) };
+        let ptr = unsafe { JS_GetArrayBuffer(self.context.inner, &mut len, self.value) };
         if ptr.is_null() {
             Err(anyhow!(
                 "Can't represent {:?} as an array buffer",
@@ -266,7 +261,7 @@ impl JSValueRef {
     }
 
     pub fn is_array(&self) -> bool {
-        unsafe { JS_IsArray(self.context, self.value) == 1 }
+        unsafe { JS_IsArray(self.context.inner, self.value) == 1 }
     }
 
     pub fn is_object(&self) -> bool {
@@ -274,7 +269,7 @@ impl JSValueRef {
     }
 
     pub fn is_array_buffer(&self) -> bool {
-        (unsafe { JS_IsArrayBuffer_Ext(self.context, self.value) }) != 0
+        (unsafe { JS_IsArrayBuffer_Ext(self.context.inner, self.value) }) != 0
     }
 
     pub fn is_undefined(&self) -> bool {
@@ -290,12 +285,13 @@ impl JSValueRef {
     }
 
     pub fn is_function(&self) -> bool {
-        unsafe { JS_IsFunction(self.context, self.value) != 0 }
+        unsafe { JS_IsFunction(self.context.inner, self.value) != 0 }
     }
 
     pub fn get_property(&self, key: impl Into<Vec<u8>>) -> Result<Self> {
         let cstring_key = CString::new(key)?;
-        let raw = unsafe { JS_GetPropertyStr(self.context, self.value, cstring_key.as_ptr()) };
+        let raw =
+            unsafe { JS_GetPropertyStr(self.context.inner, self.value, cstring_key.as_ptr()) };
         Self::new(self.context, raw)
     }
 
@@ -303,7 +299,7 @@ impl JSValueRef {
         let cstring_key = CString::new(key)?;
         let ret = unsafe {
             JS_DefinePropertyValueStr(
-                self.context,
+                self.context.inner,
                 self.value,
                 cstring_key.as_ptr(),
                 val.value,
@@ -319,7 +315,7 @@ impl JSValueRef {
     }
 
     pub fn get_indexed_property(&self, index: u32) -> Result<Self> {
-        let raw = unsafe { JS_GetPropertyUint32(self.context, self.value, index) };
+        let raw = unsafe { JS_GetPropertyUint32(self.context.inner, self.value, index) };
         Self::new(self.context, raw)
     }
 
@@ -327,7 +323,7 @@ impl JSValueRef {
         let len = self.get_property("length")?;
         let ret = unsafe {
             JS_DefinePropertyValueUint32(
-                self.context,
+                self.context.inner,
                 self.value,
                 len.value as u32,
                 val.value,
@@ -382,7 +378,7 @@ impl JSValueRef {
 // JSValue is automatically generated and it would result
 // in a cyclic crate dependency.
 #[allow(clippy::from_over_into)]
-impl Into<JSValue> for JSValueRef {
+impl Into<JSValue> for JSValueRef<'_> {
     fn into(self) -> JSValue {
         self.value
     }
