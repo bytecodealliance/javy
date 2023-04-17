@@ -1,4 +1,5 @@
 use anyhow::anyhow;
+use javy2::ApiConfig;
 use quickjs_wasm_rs::{JSContextRef, JSError, JSValueRef};
 use std::borrow::Cow;
 use std::io::{Read, Write};
@@ -13,52 +14,61 @@ where
     T1: Write + 'static,
     T2: Write + 'static,
 {
-    let global = context.global_object()?;
+    // let global = context.global_object()?;
 
-    let console_log_callback = context.wrap_callback(console_log_to(log_stream))?;
-    let console_error_callback = context.wrap_callback(console_log_to(error_stream))?;
-    let console_object = context.object_value()?;
-    console_object.set_property("log", console_log_callback)?;
-    console_object.set_property("error", console_error_callback)?;
-    global.set_property("console", console_object)?;
+    // let console_log_callback = context.wrap_callback(console_log_to(log_stream))?;
+    // let console_error_callback = context.wrap_callback(console_log_to(error_stream))?;
+    // let console_object = context.object_value()?;
+    // console_object.set_property("log", console_log_callback)?;
+    // console_object.set_property("error", console_error_callback)?;
+    // global.set_property("console", console_object)?;
 
-    let javy_object = context.object_value()?;
-    global.set_property("Javy", javy_object)?;
+    // let javy_object = context.object_value()?;
+    // global.set_property("Javy", javy_object)?;
 
-    global.set_property(
-        "__javy_decodeUtf8BufferToString",
-        context.wrap_callback(decode_utf8_buffer_to_js_string())?,
-    )?;
-    global.set_property(
-        "__javy_encodeStringToUtf8Buffer",
-        context.wrap_callback(encode_js_string_to_utf8_buffer())?,
-    )?;
+    // global.set_property(
+    //     "__javy_decodeUtf8BufferToString",
+    //     context.wrap_callback(decode_utf8_buffer_to_js_string())?,
+    // )?;
+    // global.set_property(
+    //     "__javy_encodeStringToUtf8Buffer",
+    //     context.wrap_callback(encode_js_string_to_utf8_buffer())?,
+    // )?;
 
-    global.set_property(
-        "__javy_io_writeSync",
-        context.wrap_callback(|ctx, _this_arg, args| {
-            let (mut fd, data) = js_args_to_io_writer(args)?;
-            let n = fd.write(data)?;
-            fd.flush()?;
-            ctx.value_from_i32(n.try_into()?)
-        })?,
-    )?;
+    // global.set_property(
+    //     "__javy_io_writeSync",
+    //     context.wrap_callback(|ctx, _this_arg, args| {
+    //         let (mut fd, data) = js_args_to_io_writer(args)?;
+    //         let n = fd.write(data)?;
+    //         fd.flush()?;
+    //         ctx.value_from_i32(n.try_into()?)
+    //     })?,
+    // )?;
 
-    global.set_property(
-        "__javy_io_readSync",
-        context.wrap_callback(|ctx, _this_arg, args| {
-            let (mut fd, data) = js_args_to_io_reader(args)?;
-            let n = fd.read(data)?;
-            ctx.value_from_i32(n.try_into()?)
-        })?,
-    )?;
+    // global.set_property(
+    //     "__javy_io_readSync",
+    //     context.wrap_callback(|ctx, _this_arg, args| {
+    //         let (mut fd, data) = js_args_to_io_reader(args)?;
+    //         let n = fd.read(data)?;
+    //         ctx.value_from_i32(n.try_into()?)
+    //     })?,
+    // )?;
 
-    context.eval_global(
-        "text-encoding.js",
-        include_str!("../prelude/text-encoding.js"),
-    )?;
+    // context.eval_global(
+    //     "text-encoding.js",
+    //     include_str!("../prelude/text-encoding.js"),
+    // )?;
 
-    context.eval_global("io.js", include_str!("../prelude/io.js"))?;
+    // context.eval_global("io.js", include_str!("../prelude/io.js"))?;
+
+    let rt = javy2::Runtime { context: &context };
+    javy2::register_apis(
+        &runtime,
+        ApiConfig {
+            log_stream: io::stderr(),
+            error_stream: io::stderr(),
+        },
+    );
 
     Ok(())
 }
