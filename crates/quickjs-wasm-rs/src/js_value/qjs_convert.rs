@@ -8,6 +8,23 @@ use quickjs_wasm_sys::{
 use super::JSValue;
 use crate::js_binding::{context::JSContextRef, value::JSValueRef};
 
+/// Converts a reference to a `quickjs_wasm_rs::JSValueRef` to a `JSValue`.
+///
+/// # Arguments
+///
+/// * `val` - a reference to a `JSValueRef` to be converted to a `JSValue`
+///
+/// # Returns
+///
+/// * `anyhow::Result<JSValue>`
+///
+/// # Example
+///
+/// ```
+/// // Assuming `qjs_val` is a `JSValueRef` pointing to a QuickJS string
+/// let js_val = from_qjs_value(&qjs_val).unwrap();
+/// assert_eq!(js_val, "hello".into());
+/// ```
 pub fn from_qjs_value(val: &JSValueRef) -> Result<JSValue> {
     let tag = val.get_tag();
     let js_val = match tag {
@@ -52,6 +69,24 @@ pub fn from_qjs_value(val: &JSValueRef) -> Result<JSValue> {
     Ok(js_val)
 }
 
+/// Converts a reference to a `JSValue` to a `quickjs_wasm_rs::JSValueRef`.
+///
+/// # Arguments
+///
+/// * `context` - a reference to a `quickjs_wasm_rs::JSContextRef`. The `JSValueRef` is created for this JS context.
+/// * `val` - a reference to a `JSValue` to be converted to a `JSValueRef`
+///
+/// # Returns
+///
+/// * `anyhow::Result<JSValueRef>`
+///
+/// # Example
+///
+/// ```
+/// let context = JSContextRef::default();
+/// let js_val = "hello".into();
+/// let qjs_val = to_qjs_value(&context, &js_val).unwrap();
+/// ```
 pub fn to_qjs_value(context: &JSContextRef, val: &JSValue) -> Result<JSValueRef> {
     let qjs_val = match val {
         JSValue::Undefined => context.undefined_value()?,

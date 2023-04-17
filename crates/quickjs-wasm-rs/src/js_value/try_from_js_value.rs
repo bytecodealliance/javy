@@ -2,6 +2,13 @@ use super::JSValue;
 use anyhow::anyhow;
 use std::collections::HashMap;
 
+/// A macro for implementing `TryFrom<JSValue>` for multiple types at once.
+/// Takes a list of type-variant pairs and generates a `TryFrom<JSValue>` implementation for each type.
+///
+/// # Type-Variant Pairs
+///
+/// * `$t:ty` - The type for which the implementation is generated
+/// * `$variant:ident` - The corresponding variant of `JSValue` that is expected when converting
 macro_rules! impl_try_from_jsvalue {
     ($($t:ty, $variant:ident),+ $(,)?) => {
         $(impl TryFrom<JSValue> for $t {

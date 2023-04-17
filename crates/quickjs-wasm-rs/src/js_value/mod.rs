@@ -4,25 +4,77 @@ pub mod qjs_convert;
 mod to_js_value;
 mod try_from_js_value;
 
+/// A safe and high level representation of a JavaScript value.
+///
+/// This enum implements `From` and `TryFrom` for many types, so it can be used to convert between Rust and JavaScript types.
+///
+/// # Example
+///
+/// ```
+/// // Convert a &str to a JSValue::String
+/// let js_value: JSValue = "hello".into();
+/// assert_eq!("hello", js_value.to_string());
+///
+/// // Convert a JSValue::String to a String
+/// let result: String = js_value.try_into().unwrap();
+/// assert_eq!("hello", result);
+/// ```
 #[derive(Debug, PartialEq, Clone)]
 pub enum JSValue {
+    /// Represents the JavaScript `undefined` value
     Undefined,
+    /// Represents the JavaScript `null` value
     Null,
+    /// Represents a JavaScript boolean value
     Bool(bool),
+    /// Represents a JavaScript integer
     Int(i32),
+    /// Represents a JavaScript floating-point number
     Float(f64),
+    /// Represents a JavaScript string value
     String(String),
+    /// Represents a JavaScript array of `JSValue`s
     Array(Vec<JSValue>),
+    /// Represents a JavaScript ArrayBuffer of bytes
     ArrayBuffer(Vec<u8>),
+    /// Represents a JavaScript object, with string keys and `JSValue` values
     Object(HashMap<String, JSValue>),
 }
 
 impl JSValue {
+    /// Constructs a `JSValue::Array` variant from a vec of items that can be converted to `JSValue`.
+    ///
+    /// # Arguments
+    ///
+    /// * `v` - A vec of items to be converted to `JSValue::Array`
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let vec = vec![1, 2, 3];
+    /// let js_arr = JSValue::from_vec(vec);
+    /// ```
     pub fn from_vec<T: Into<JSValue>>(v: Vec<T>) -> JSValue {
         let js_arr: Vec<JSValue> = v.into_iter().map(|elem| elem.into()).collect();
         JSValue::Array(js_arr)
     }
 
+    /// Constructs a `JSValue::Object` variant from a HashMap of key-value pairs that can be converted to `JSValue`.
+    ///
+    /// # Arguments
+    ///
+    /// * `hm` - A HashMap of key-value pairs to be converted to `JSValue::Object`
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let mut hashmap = std::collections::HashMap::from([
+    ///   ("first_name", "John"),
+    ///   ("last_name", "Smith"),
+    /// ]);
+    ///
+    /// let js_obj = JSValue::from_hashmap(hashmap);
+    /// ```
     pub fn from_hashmap<T: Into<JSValue>>(hm: HashMap<&str, T>) -> JSValue {
         let js_obj: HashMap<String, JSValue> = hm
             .into_iter()
@@ -32,7 +84,9 @@ impl JSValue {
     }
 }
 
-// Used http://numcalc.com/ to determine the default display format for each type
+/// The implementation matches the default JavaScript display format for each value.
+///
+/// Used <http://numcalc.com/> to determine the default display format for each type.
 impl fmt::Display for JSValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

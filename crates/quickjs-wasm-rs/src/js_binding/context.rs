@@ -268,7 +268,7 @@ impl JSContextRef {
 
     /// Wrap the specified Rust value in a JS value
     ///
-    /// You can use [Value::get_rust_value] to retrieve the original value.
+    /// You can use [JSValueRef::get_rust_value] to retrieve the original value.
     pub fn wrap_rust_value<T: 'static>(&self, value: T) -> Result<JSValueRef> {
         // Note the use of `RefCell` to provide checked unique references.  Since JS values can be arbitrarily
         // aliased, we need `RefCell`'s dynamic borrow checking to prevent unsound access.
@@ -288,7 +288,7 @@ impl JSContextRef {
     /// Wrap the specified function in a JS function.
     ///
     /// Since the callback signature accepts parameters as high-level `Context` and `Value` objects, it can be
-    /// implemented without using `unsafe` code, unlike [Context::new_callback] which provides a low-level API.
+    /// implemented without using `unsafe` code, unlike [JSContextRef::new_callback] which provides a low-level API.
     /// Returning a [JSError] from the callback will cause a JavaScript error with the appropriate
     /// type to be thrown.
     pub fn wrap_callback<F>(&self, mut f: F) -> Result<JSValueRef>
@@ -348,7 +348,7 @@ impl JSContextRef {
 
     /// Wrap the specified function in a JS function.
     ///
-    /// See also [Context::wrap_callback] for a high-level equivalent.
+    /// See also [JSContextRef::wrap_callback] for a high-level equivalent.
     pub fn new_callback<F>(&self, f: F) -> Result<JSValueRef>
     where
         F: FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static,
