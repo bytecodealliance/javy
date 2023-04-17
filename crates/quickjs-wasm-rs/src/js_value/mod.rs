@@ -42,7 +42,7 @@ impl fmt::Display for JSValue {
             JSValue::Int(i) => write!(f, "{}", i),
             JSValue::Float(n) => write!(f, "{}", n),
             JSValue::String(s) => write!(f, "{}", s),
-            JSValue::ArrayBuffer(_) => write!(f, "{{  }}"),
+            JSValue::ArrayBuffer(_) => write!(f, "[object ArrayBuffer]"),
             JSValue::Array(arr) => {
                 write!(
                     f,
@@ -136,7 +136,7 @@ mod tests {
     fn test_conversion_between_bytes() {
         let bytes = "hi".as_bytes();
         let js_value: JSValue = bytes.into();
-        assert_eq!("{  }", js_value.to_string());
+        assert_eq!("[object ArrayBuffer]", js_value.to_string());
 
         let result: Vec<u8> = js_value.try_into().unwrap();
         assert_eq!(result, bytes.to_vec());

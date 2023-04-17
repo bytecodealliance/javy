@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use quickjs_wasm_sys::{
     JS_TAG_BOOL, JS_TAG_INT, JS_TAG_NULL, JS_TAG_OBJECT, JS_TAG_STRING, JS_TAG_UNDEFINED,
 };
@@ -23,7 +23,7 @@ pub fn from_qjs_value(val: &JSValueRef) -> Result<JSValue> {
         JS_TAG_OBJECT => {
             if val.is_array() {
                 let array_len = from_qjs_value(&val.get_property("length")?)?.try_into()?;
-                let mut result = Vec::new();
+                let mut result = Vec::with_capacity(array_len);
                 for i in 0..array_len {
                     result.push(from_qjs_value(&val.get_indexed_property(i.try_into()?)?)?);
                 }
@@ -43,14 +43,11 @@ pub fn from_qjs_value(val: &JSValueRef) -> Result<JSValue> {
                 JSValue::Object(result)
             }
         }
-        _ => {
-            // Matching on JS_TAG_FLOAT64 does not seem to catch floats so we have to check for float separately
-            if val.is_repr_as_f64() {
-                JSValue::Float(val.as_f64_unchecked())
-            } else {
-                panic!("unhandled tag: {}", tag)
-            }
+        _ if val.is_repr_as_f64() => {
+            // Matching on JS_TAG_FLOAT64 does not seem to catch floats so we have to check for float separately.
+            JSValue::Float(val.as_f64_unchecked())
         }
+        _ => return Err(anyhow!("unhandled tag: {}", tag)),
     };
     Ok(js_val)
 }
@@ -154,7 +151,7 @@ mod tests {
             .eval_global("test.js", "new ArrayBuffer(8)")
             .unwrap();
         let js_val = from_qjs_value(&qjs_val).unwrap();
-        assert_eq!(js_val, [0 as u8; 8].as_ref().into());
+        assert_eq!(js_val, [0_u8; 8].as_ref().into());
     }
 
     #[test]
@@ -167,7 +164,8 @@ mod tests {
             HashMap::from([
                 ("a".to_string(), JSValue::Int(1)),
                 ("b".to_string(), JSValue::Int(2))
-            ]).into()
+            ])
+            .into()
         )
     }
 
@@ -242,7 +240,8 @@ mod tests {
         let js_val = HashMap::from([
             ("a".to_string(), JSValue::Int(1)),
             ("b".to_string(), JSValue::Int(2)),
-        ]).into();
+        ])
+        .into();
         let qjs_val = to_qjs_value(&context, &js_val).unwrap();
         assert_eq!(1, qjs_val.get_property("a").unwrap().as_i32_unchecked());
         assert_eq!(2, qjs_val.get_property("b").unwrap().as_i32_unchecked());
