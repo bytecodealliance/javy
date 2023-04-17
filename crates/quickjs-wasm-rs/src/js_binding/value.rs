@@ -361,7 +361,7 @@ impl JSValueRef {
         }
     }
 
-    pub fn get_tag(&self) -> i32 {
+    pub(crate) fn get_tag(&self) -> i32 {
         (self.value >> 32) as i32
     }
 
