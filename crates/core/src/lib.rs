@@ -1,3 +1,4 @@
+use javy2::ApiConfig;
 use once_cell::sync::OnceCell;
 use quickjs_wasm_rs::JSContextRef;
 use std::alloc::{alloc, dealloc, Layout};
@@ -7,7 +8,6 @@ use std::slice;
 use std::str;
 
 mod execution;
-mod globals;
 
 // Unlike C's realloc, zero-length allocations need not have
 // unique addresses, so a zero-length allocation may be passed
@@ -23,7 +23,12 @@ static mut CONTEXT: OnceCell<JSContextRef> = OnceCell::new();
 #[export_name = "wizer.initialize"]
 pub extern "C" fn init() {
     let context = JSContextRef::default();
-    globals::inject_javy_globals(&context, io::stderr(), io::stderr()).unwrap();
+    let rt = javy2::Runtime { context: &context };
+    let mut config = ApiConfig {
+        log_stream: io::stderr(),
+        error_stream: io::stderr(),
+    };
+    javy2::register_apis(&rt, &mut config);
     unsafe { CONTEXT.set(context).unwrap() };
 }
 
