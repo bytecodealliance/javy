@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::{cmp, fs};
 use wasi_common::pipe::{ReadPipe, WritePipe};
-use wasmtime::{Config, Engine, Linker, Module, OptLevel, Store, Trap};
+use wasmtime::{Config, Engine, Linker, Module, OptLevel, Store};
 use wasmtime_wasi::sync::WasiCtxBuilder;
 use wasmtime_wasi::WasiCtx;
 
@@ -20,7 +20,7 @@ pub struct Runner {
 pub struct RunnerError {
     pub stdout: Vec<u8>,
     pub stderr: Vec<u8>,
-    pub trap: Trap,
+    pub err: anyhow::Error,
 }
 
 impl Error for RunnerError {}
@@ -29,8 +29,8 @@ impl Display for RunnerError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "trap: {:?}, stdout: {:?}, stderr: {:?}",
-            self.trap, self.stdout, self.stderr
+            "error: {:?}, stdout: {:?}, stderr: {:?}",
+            self.err, self.stdout, self.stderr
         )
     }
 }
@@ -135,10 +135,10 @@ impl Runner {
 
         match res {
             Ok(_) => Ok((output, logs)),
-            Err(trap) => Err(RunnerError {
+            Err(err) => Err(RunnerError {
                 stdout: output,
                 stderr: logs,
-                trap,
+                err,
             }
             .into()),
         }
