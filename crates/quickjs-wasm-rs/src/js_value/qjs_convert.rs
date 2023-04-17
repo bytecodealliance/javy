@@ -107,7 +107,7 @@ mod tests {
         let context = JSContextRef::default();
         let qjs_val = context.eval_global("test.js", "true").unwrap();
         let js_val = from_qjs_value(&qjs_val).unwrap();
-        assert_eq!(js_val, JSValue::Bool(true));
+        assert_eq!(js_val, true.into());
     }
 
     #[test]
@@ -115,7 +115,15 @@ mod tests {
         let context = JSContextRef::default();
         let qjs_val = context.eval_global("test.js", "42").unwrap();
         let js_val = from_qjs_value(&qjs_val).unwrap();
-        assert_eq!(js_val, JSValue::Int(42));
+        assert_eq!(js_val, 42.into());
+    }
+
+    #[test]
+    fn test_from_qjs_float() {
+        let context = JSContextRef::default();
+        let qjs_val = context.eval_global("test.js", "42.5").unwrap();
+        let js_val = from_qjs_value(&qjs_val).unwrap();
+        assert_eq!(js_val, 42.5.into());
     }
 
     #[test]
@@ -125,7 +133,7 @@ mod tests {
             .eval_global("test.js", "const h = 'hello'; h")
             .unwrap();
         let js_val = from_qjs_value(&qjs_val).unwrap();
-        assert_eq!(js_val, JSValue::String("hello".to_string()));
+        assert_eq!(js_val, "hello".into());
     }
 
     #[test]
@@ -135,7 +143,7 @@ mod tests {
         let js_val = from_qjs_value(&qjs_val).unwrap();
         assert_eq!(
             js_val,
-            JSValue::Array(vec![JSValue::Int(1), JSValue::Int(2), JSValue::Int(3)])
+            vec![JSValue::Int(1), JSValue::Int(2), JSValue::Int(3)].into()
         );
     }
 
@@ -146,7 +154,7 @@ mod tests {
             .eval_global("test.js", "new ArrayBuffer(8)")
             .unwrap();
         let js_val = from_qjs_value(&qjs_val).unwrap();
-        assert_eq!(js_val, JSValue::ArrayBuffer(vec![0, 0, 0, 0, 0, 0, 0, 0]));
+        assert_eq!(js_val, [0 as u8; 8].as_ref().into());
     }
 
     #[test]
@@ -156,10 +164,10 @@ mod tests {
         let js_val = from_qjs_value(&qjs_val).unwrap();
         assert_eq!(
             js_val,
-            JSValue::Object(HashMap::from_iter(vec![
+            HashMap::from([
                 ("a".to_string(), JSValue::Int(1)),
                 ("b".to_string(), JSValue::Int(2))
-            ]))
+            ]).into()
         )
     }
 
@@ -182,7 +190,7 @@ mod tests {
     #[test]
     fn test_to_qjs_bool() {
         let context = JSContextRef::default();
-        let js_val = JSValue::Bool(true);
+        let js_val = true.into();
         let qjs_val = to_qjs_value(&context, &js_val).unwrap();
         assert!(qjs_val.as_bool().unwrap());
     }
@@ -190,7 +198,7 @@ mod tests {
     #[test]
     fn test_to_qjs_int() {
         let context = JSContextRef::default();
-        let js_val = JSValue::Int(42);
+        let js_val = 42.into();
         let qjs_val = to_qjs_value(&context, &js_val).unwrap();
         assert_eq!(42, qjs_val.as_i32_unchecked());
     }
@@ -198,15 +206,15 @@ mod tests {
     #[test]
     fn test_to_qjs_float() {
         let context = JSContextRef::default();
-        let js_val = JSValue::Float(42.0);
+        let js_val = 42.3.into();
         let qjs_val = to_qjs_value(&context, &js_val).unwrap();
-        assert_eq!(42.0, qjs_val.as_f64_unchecked());
+        assert_eq!(42.3, qjs_val.as_f64_unchecked());
     }
 
     #[test]
     fn test_to_qjs_string() {
         let context = JSContextRef::default();
-        let js_val = JSValue::String("hello".to_string());
+        let js_val = "hello".into();
         let qjs_val = to_qjs_value(&context, &js_val).unwrap();
         assert_eq!("hello", qjs_val.as_str().unwrap());
     }
@@ -214,15 +222,15 @@ mod tests {
     #[test]
     fn test_to_qjs_array_buffer() {
         let context = JSContextRef::default();
-        let js_val = JSValue::ArrayBuffer(vec![0, 1]);
+        let js_val = "hello".as_bytes().into();
         let qjs_val = to_qjs_value(&context, &js_val).unwrap();
-        assert_eq!([0, 1], qjs_val.as_bytes().unwrap());
+        assert_eq!("hello".as_bytes(), qjs_val.as_bytes().unwrap());
     }
 
     #[test]
     fn test_to_qjs_array() {
         let context = JSContextRef::default();
-        let js_val = JSValue::Array(vec![JSValue::Int(1), JSValue::Int(2)]);
+        let js_val = vec![JSValue::Int(1), JSValue::Int(2)].into();
         let qjs_val = to_qjs_value(&context, &js_val).unwrap();
         assert_eq!(1, qjs_val.get_property("0").unwrap().as_i32_unchecked());
         assert_eq!(2, qjs_val.get_property("1").unwrap().as_i32_unchecked());
@@ -231,10 +239,10 @@ mod tests {
     #[test]
     fn test_to_qjs_object() {
         let context = JSContextRef::default();
-        let js_val = JSValue::Object(HashMap::from_iter(vec![
+        let js_val = HashMap::from([
             ("a".to_string(), JSValue::Int(1)),
             ("b".to_string(), JSValue::Int(2)),
-        ]));
+        ]).into();
         let qjs_val = to_qjs_value(&context, &js_val).unwrap();
         assert_eq!(1, qjs_val.get_property("a").unwrap().as_i32_unchecked());
         assert_eq!(2, qjs_val.get_property("b").unwrap().as_i32_unchecked());
