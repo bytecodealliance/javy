@@ -109,11 +109,12 @@ impl Runner {
         }
     }
 
-    pub fn exec(&mut self, input: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
+    pub fn exec(&mut self, input: &[u8]) -> Result<(Vec<u8>, Vec<u8>, u64)> {
         let mut store = Store::new(
             self.linker.engine(),
             StoreContext::new(input, self.log_capacity),
         );
+        store.add_fuel(u64::MAX)?;
 
         let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
 
@@ -121,6 +122,7 @@ impl Runner {
         let run = instance.get_typed_func::<(), ()>(&mut store, "_start")?;
 
         let res = run.call(&mut store, ());
+        let fuel_consumed = store.fuel_consumed().unwrap();
         let store_context = store.into_data();
         drop(store_context.wasi);
         let logs = store_context
@@ -135,7 +137,7 @@ impl Runner {
             .into_inner();
 
         match res {
-            Ok(_) => Ok((output, logs)),
+            Ok(_) => Ok((output, logs, fuel_consumed)),
             Err(err) => Err(RunnerError {
                 stdout: output,
                 stderr: logs,
@@ -149,6 +151,7 @@ impl Runner {
 fn setup_engine() -> Engine {
     let mut config = Config::new();
     config.cranelift_opt_level(OptLevel::SpeedAndSize);
+    config.consume_fuel(true);
     Engine::new(&config).expect("failed to create engine")
 }
 
