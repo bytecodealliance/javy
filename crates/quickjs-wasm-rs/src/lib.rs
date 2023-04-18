@@ -7,7 +7,7 @@ pub use crate::js_binding::error::JSError;
 pub use crate::js_binding::exception::Exception;
 pub use crate::js_binding::value::JSValueRef;
 pub use crate::js_value::qjs_convert::*;
-pub use crate::js_value::JSValue;
+pub use crate::js_value::{CallbackArg, JSValue};
 pub use crate::serialize::de::Deserializer;
 pub use crate::serialize::ser::Serializer;
 

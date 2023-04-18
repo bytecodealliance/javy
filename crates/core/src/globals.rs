@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use javy::quickjs::{JSContextRef, JSError, JSValueRef};
+use javy::quickjs::{JSContextRef, JSError, JSValue, CallbackArg};
 use std::borrow::Cow;
 use std::io::{Read, Write};
 use std::str;
@@ -36,20 +36,46 @@ where
 
     global.set_property(
         "__javy_io_writeSync",
-        context.wrap_callback(|ctx, _this_arg, args| {
-            let (mut fd, data) = js_args_to_io_writer(args)?;
+        context.wrap_callback(|_, _this_arg, args| {
+            let [fd, data, offset, length, ..] = args else {
+                anyhow::bail!("Invalid number of parameters");
+            };
+
+            let mut fd: Box<dyn Write> = match fd.try_into()? {
+                1 => Box::new(std::io::stdout()),
+                2 => Box::new(std::io::stderr()),
+                _ => anyhow::bail!("Only stdout and stderr are supported"),
+            };
+            let data: Vec<u8> = data.try_into()?;
+            let offset: usize = offset.try_into()?;
+            let length: usize = length.try_into()?;
+            let data = &data[offset..(offset + length)];
             let n = fd.write(data)?;
             fd.flush()?;
-            ctx.value_from_i32(n.try_into()?)
+            Ok(n.into())
         })?,
     )?;
 
     global.set_property(
         "__javy_io_readSync",
-        context.wrap_callback(|ctx, _this_arg, args| {
-            let (mut fd, data) = js_args_to_io_reader(args)?;
+        context.wrap_callback(|_, _this_arg, args| {
+            let [fd, data, offset, length, ..] = args else {
+                anyhow::bail!("Invalid number of parameters");
+            };
+            let mut fd: Box<dyn Read> = match fd.try_into()? {
+                0 => Box::new(std::io::stdin()),
+                _ => anyhow::bail!("Only stdin is supported"),
+            };
+            let offset: usize = offset.try_into()?;
+            let length: usize = length.try_into()?;
+            let data = unsafe { data.inner_value() };
+            if !data.is_array_buffer() {
+                anyhow::bail!("Data needs to be an ArrayBuffer");
+            }
+            let data = data.as_bytes_mut()?;
+            let data = &mut data[offset..(offset + length)];
             let n = fd.read(data)?;
-            ctx.value_from_i32(n.try_into()?)
+            Ok(n.into())
         })?,
     )?;
 
@@ -65,11 +91,11 @@ where
 
 fn console_log_to<T>(
     mut stream: T,
-) -> impl FnMut(&JSContextRef, &JSValueRef, &[JSValueRef]) -> anyhow::Result<JSValueRef>
+) -> impl FnMut(&JSContextRef, &CallbackArg, &[CallbackArg]) -> anyhow::Result<JSValue>
 where
     T: Write + 'static,
 {
-    move |ctx: &JSContextRef, _this: &JSValueRef, args: &[JSValueRef]| {
+    move |_ctx: &JSContextRef, _this: &CallbackArg, args: &[CallbackArg]| {
         // Write full string to in-memory destination before writing to stream since each write call to the stream
         // will invoke a hostcall.
         let mut log_line = String::new();
@@ -77,41 +103,28 @@ where
             if i != 0 {
                 log_line.push(' ');
             }
-
-            log_line.push_str(arg.as_str()?);
+            let line = arg.to_string();
+            log_line.push_str(&line);
         }
 
         writeln!(stream, "{log_line}")?;
-        ctx.undefined_value()
+
+        Ok(JSValue::Undefined)
     }
 }
 
 fn decode_utf8_buffer_to_js_string(
-) -> impl FnMut(&JSContextRef, &JSValueRef, &[JSValueRef]) -> anyhow::Result<JSValueRef> {
-    move |ctx: &JSContextRef, _this: &JSValueRef, args: &[JSValueRef]| {
+) -> impl FnMut(&JSContextRef, &CallbackArg, &[CallbackArg]) -> anyhow::Result<JSValue> {
+    move |_ctx: &JSContextRef, _this: &CallbackArg, args: &[CallbackArg]| {
         if args.len() != 5 {
             return Err(anyhow!("Expecting 5 arguments, received {}", args.len()));
         }
 
-        let buffer = args[0].as_bytes()?;
-        let byte_offset = {
-            let byte_offset_val = &args[1];
-            if !byte_offset_val.is_repr_as_i32() {
-                return Err(anyhow!("byte_offset must be an u32"));
-            }
-            byte_offset_val.as_u32_unchecked()
-        }
-        .try_into()?;
-        let byte_length: usize = {
-            let byte_length_val = &args[2];
-            if !byte_length_val.is_repr_as_i32() {
-                return Err(anyhow!("byte_length must be an u32"));
-            }
-            byte_length_val.as_u32_unchecked()
-        }
-        .try_into()?;
-        let fatal = args[3].as_bool()?;
-        let ignore_bom = args[4].as_bool()?;
+        let buffer: Vec<u8> = args[0].try_into()?;
+        let byte_offset: usize = args[1].try_into()?;
+        let byte_length: usize = args[2].try_into()?;
+        let fatal: bool = args[3].try_into()?;
+        let ignore_bom: bool = args[4].try_into()?;
 
         let mut view = buffer
             .get(byte_offset..(byte_offset + byte_length))
@@ -135,63 +148,20 @@ fn decode_utf8_buffer_to_js_string(
             } else {
                 String::from_utf8_lossy(view)
             };
-        ctx.value_from_str(&str)
+        Ok(str.to_string().into())
     }
 }
 
 fn encode_js_string_to_utf8_buffer(
-) -> impl FnMut(&JSContextRef, &JSValueRef, &[JSValueRef]) -> anyhow::Result<JSValueRef> {
-    move |ctx: &JSContextRef, _this: &JSValueRef, args: &[JSValueRef]| {
+) -> impl FnMut(&JSContextRef, &CallbackArg, &[CallbackArg]) -> anyhow::Result<JSValue> {
+    move |_ctx: &JSContextRef, _this: &CallbackArg, args: &[CallbackArg]| {
         if args.len() != 1 {
             return Err(anyhow!("Expecting 1 argument, got {}", args.len()));
         }
 
-        let js_string = args[0].as_str_lossy();
-        ctx.array_buffer_value(js_string.as_bytes())
+        let js_string: String = args[0].try_into()?;
+        Ok(js_string.into_bytes().into())
     }
-}
-
-fn js_args_to_io_writer(args: &[JSValueRef]) -> anyhow::Result<(Box<dyn Write>, &[u8])> {
-    // TODO: Should throw an exception
-    let [fd, data, offset, length, ..] = args else {
-        anyhow::bail!("Invalid number of parameters");
-    };
-
-    let offset: usize = (offset.as_f64()?.floor() as u64).try_into()?;
-    let length: usize = (length.as_f64()?.floor() as u64).try_into()?;
-
-    let fd: Box<dyn Write> = match fd.try_as_integer()? {
-        1 => Box::new(std::io::stdout()),
-        2 => Box::new(std::io::stderr()),
-        _ => anyhow::bail!("Only stdout and stderr are supported"),
-    };
-
-    if !data.is_array_buffer() {
-        anyhow::bail!("Data needs to be an ArrayBuffer");
-    }
-    let data = data.as_bytes()?;
-    Ok((fd, &data[offset..(offset + length)]))
-}
-
-fn js_args_to_io_reader(args: &[JSValueRef]) -> anyhow::Result<(Box<dyn Read>, &mut [u8])> {
-    // TODO: Should throw an exception
-    let [fd, data, offset, length, ..] = args else {
-        anyhow::bail!("Invalid number of parameters");
-    };
-
-    let offset: usize = (offset.as_f64()?.floor() as u64).try_into()?;
-    let length: usize = (length.as_f64()?.floor() as u64).try_into()?;
-
-    let fd: Box<dyn Read> = match fd.try_as_integer()? {
-        0 => Box::new(std::io::stdin()),
-        _ => anyhow::bail!("Only stdin is supported"),
-    };
-
-    if !data.is_array_buffer() {
-        anyhow::bail!("Data needs to be an ArrayBuffer");
-    }
-    let data = data.as_bytes_mut()?;
-    Ok((fd, &mut data[offset..(offset + length)]))
 }
 
 #[cfg(test)]
@@ -222,10 +192,10 @@ mod tests {
 
         ctx.eval_global(
             "main",
-            "console.log(2.3, true, { foo: 'bar' }, null, undefined)",
+            "console.log(2.3, true, { foo: 'bar' }, null, undefined, [1, 2, 3])",
         )?;
         assert_eq!(
-            b"2.3 true [object Object] null undefined\n",
+            b"2.3 true [object Object] null undefined 1,2,3\n",
             stream.buffer.borrow().as_slice()
         );
         Ok(())
@@ -258,6 +228,46 @@ mod tests {
         );
         Ok(())
     }
+
+    #[test]
+    fn test_text_encoder_decoder() -> Result<()> {
+        let stream = SharedStream::default();
+        let ctx = JSContextRef::default();
+        inject_javy_globals(&ctx, stream.clone(), stream.clone())?;
+        ctx.eval_global(
+            "main",
+            "let encoder = new TextEncoder(); let buffer = encoder.encode('hello'); let decoder = new TextDecoder(); console.log(decoder.decode(buffer));"
+        )?;
+        assert_eq!(b"hello\n", stream.buffer.borrow().as_slice());
+
+        Ok(())
+    }
+
+    // sanity test for when I was prototyping - send 'hello' into stdin to pass test
+    // #[test]
+    // fn test_read_sync() -> Result<()> {
+    //     let stream = SharedStream::default();
+
+    //     let ctx = JSContextRef::default();
+    //     inject_javy_globals(&ctx, stream.clone(), stream.clone())?;
+
+    //     ctx.eval_global("main", "const buffer = new Uint8Array(5); Javy.IO.readSync(0, buffer); console.log(new TextDecoder().decode(buffer))")?;
+    //     assert_eq!(b"hello\n", stream.buffer.borrow().as_slice());
+    //     Ok(())
+    // }
+
+    // // sanity test for when I was prototyping - visually inspect that the string 'helloJACKSON' is printed to stdout
+    // #[test]
+    // fn test_write_sync() -> Result<()> {
+    //     let stream = SharedStream::default();
+
+    //     let ctx = JSContextRef::default();
+    //     inject_javy_globals(&ctx, stream.clone(), stream.clone())?;
+
+    //     ctx.eval_global("main", "let encoder = new TextEncoder(); let buffer = encoder.encode('helloJACKSON'); Javy.IO.writeSync(1, buffer);")?;
+
+    //     Ok(())
+    // }
 
     #[derive(Clone)]
     struct SharedStream {
