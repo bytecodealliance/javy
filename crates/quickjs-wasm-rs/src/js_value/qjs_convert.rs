@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use anyhow::{anyhow, Result};
+use anyhow::{bail, Result};
 use quickjs_wasm_sys::{
     JS_TAG_BOOL, JS_TAG_INT, JS_TAG_NULL, JS_TAG_OBJECT, JS_TAG_STRING, JS_TAG_UNDEFINED,
 };
@@ -64,7 +64,7 @@ pub fn from_qjs_value(val: &JSValueRef) -> Result<JSValue> {
             // Matching on JS_TAG_FLOAT64 does not seem to catch floats so we have to check for float separately.
             JSValue::Float(val.as_f64_unchecked())
         }
-        _ => return Err(anyhow!("unhandled tag: {}", tag)),
+        _ => bail!("unhandled tag: {}", tag),
     };
     Ok(js_val)
 }
