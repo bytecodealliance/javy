@@ -13,9 +13,9 @@ edition = "2021"
 license = "Apache-2.0 WITH LLVM-exception"
 
 [workspace.dependencies]
-wasmtime = "0.35.3"
-wasmtime-wasi = "0.35.3"
-wasi-common = "0.35.3"
+wasmtime = "3.0"
+wasmtime-wasi = "3.0"
+wasi-common = "3.0"
 anyhow = "1.0"
 once_cell = "1.16"
 

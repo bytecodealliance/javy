@@ -94,7 +94,7 @@ impl FunctionCase {
         linker.instance(&mut store, "consumer", consumer_instance)?;
 
         linker
-            .get(&mut store, "consumer", Some("_start"))
+            .get(&mut store, "consumer", "_start")
             .unwrap()
             .into_func()
             .unwrap()
