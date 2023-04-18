@@ -46,9 +46,9 @@ impl FunctionCase {
     ) -> Result<Self> {
         let name = function_dir
             .file_name()
-            .ok_or(anyhow!("Path terminates in .."))?
+            .ok_or_else(|| anyhow!("Path terminates in .."))?
             .to_str()
-            .ok_or(anyhow!("Function file name contains invalid unicode"))?
+            .ok_or_else(|| anyhow!("Function file name contains invalid unicode"))?
             .to_string();
 
         let wasm_path = function_dir.join("index.wasm");

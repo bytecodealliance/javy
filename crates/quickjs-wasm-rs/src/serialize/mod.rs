@@ -264,7 +264,7 @@ mod tests {
         assert_eq!(expected, actual);
     }
 
-    fn do_roundtrip<E, A>(expected: E) -> A
+    fn do_roundtrip<E, A>(expected: &E) -> A
     where
         E: Serialize,
         A: DeserializeOwned,
