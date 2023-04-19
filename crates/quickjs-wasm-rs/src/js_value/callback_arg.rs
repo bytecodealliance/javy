@@ -5,21 +5,40 @@ use anyhow::Result;
 use super::{qjs_convert::from_qjs_value, JSValue};
 use crate::js_binding::value::JSValueRef;
 
+/// `CallbackArg` is given  to callback functions and can then be lazily evaluated to a `JSValue`.
+///
+/// # Example
+/// ```
+/// let context = JSContextRef::default();
+/// context.wrap_callback(|_ctx, _this, args| {
+///     // Convert args[0] to a Rust `String` type
+///     let s: String = args[0].try_into()?;
+///     println!("{}", s);
+///     Ok(JSValue::Undefined)
+/// })?;
+/// ```
 #[derive(Copy, Clone)]
 pub struct CallbackArg {
     inner: JSValueRef,
 }
 
 impl CallbackArg {
+    /// Create a new `CallbackArg` with a `JSValueRef`.
     pub fn new(inner: JSValueRef) -> Self {
         Self { inner }
     }
 
+    /// Get the underlying `JSValueRef` value wrapped by this `CallbackArg`. This is used as an escape hatch to operate directly with the raw pointer to the QuickJS value.
+    ///
+    /// # Safety
+    ///
+    /// This function is marked unsafe because `JSValueRef` contains a raw pointer to the underlying QuickJS value so it is possible to cause undefined behavior if the pointer is used incorrectly.
     pub unsafe fn inner_value(&self) -> JSValueRef {
         self.inner
     }
 
-    fn to_js_value(&self) -> Result<JSValue> {
+    /// Convert the underlying `JSValueRef` to a Rust `JSValue` type.
+    fn to_js_value(self) -> Result<JSValue> {
         from_qjs_value(&self.inner)
     }
 }
@@ -30,6 +49,8 @@ impl fmt::Display for CallbackArg {
     }
 }
 
+/// A macro to implement the `TryFrom<&CallbackArg>` and `TryFrom<CallbackArg>` trait
+/// for various Rust types.
 macro_rules! try_from_impl {
     ($($t:ty),+ $(,)?) => {
         $(impl TryFrom<&CallbackArg> for $t {
@@ -74,11 +95,11 @@ mod tests {
         let callback_arg = CallbackArg::new(val);
         assert_eq!("true", callback_arg.to_string());
         let arg: bool = callback_arg.try_into()?;
-        assert_eq!(true, arg);
+        assert!(arg);
 
         let callback_arg_ref = &callback_arg;
         let arg: bool = callback_arg_ref.try_into()?;
-        assert_eq!(true, arg);
+        assert!(arg);
         Ok(())
     }
 
@@ -133,7 +154,9 @@ mod tests {
     #[test]
     fn test_string() -> Result<()> {
         let context = JSContextRef::default();
-        let val = context.eval_global("test.js", "const h = 'hello'; h").unwrap();
+        let val = context
+            .eval_global("test.js", "const h = 'hello'; h")
+            .unwrap();
 
         let callback_arg = CallbackArg::new(val);
         assert_eq!("hello", callback_arg.to_string());
@@ -152,7 +175,7 @@ mod tests {
         let val = context.eval_global("test.js", "[1, 2, 3]").unwrap();
 
         let expected: Vec<JSValue> = vec![1.into(), 2.into(), 3.into()];
-        
+
         let callback_arg = CallbackArg::new(val);
         assert_eq!("1,2,3", callback_arg.to_string());
         let arg: Vec<JSValue> = callback_arg.try_into()?;
@@ -167,10 +190,12 @@ mod tests {
     #[test]
     fn test_bytes() -> Result<()> {
         let context = JSContextRef::default();
-        let val = context.eval_global("test.js", "new ArrayBuffer(8)").unwrap();
+        let val = context
+            .eval_global("test.js", "new ArrayBuffer(8)")
+            .unwrap();
 
         let expected = [0_u8; 8].to_vec();
-        
+
         let callback_arg = CallbackArg::new(val);
         assert_eq!("[object ArrayBuffer]", callback_arg.to_string());
         let arg: Vec<u8> = callback_arg.try_into()?;
@@ -185,14 +210,16 @@ mod tests {
     #[test]
     fn test_hashmap() -> Result<()> {
         let context = JSContextRef::default();
-        let val = context.eval_global("test.js", "({a: 1, b: 2, c: 3})").unwrap();
+        let val = context
+            .eval_global("test.js", "({a: 1, b: 2, c: 3})")
+            .unwrap();
 
         let expected = HashMap::from([
             ("a".to_string(), 1.into()),
             ("b".to_string(), 2.into()),
             ("c".to_string(), 3.into()),
         ]);
-        
+
         let callback_arg = CallbackArg::new(val);
         assert_eq!("[object Object]", callback_arg.to_string());
         let arg: HashMap<String, JSValue> = callback_arg.try_into()?;

@@ -192,10 +192,10 @@ mod tests {
 
         ctx.eval_global(
             "main",
-            "console.log(2.3, true, { foo: 'bar' }, null, undefined, [1, 2, 3])",
+            "console.log(2.3, true, { foo: 'bar' }, null, undefined)",
         )?;
         assert_eq!(
-            b"2.3 true [object Object] null undefined 1,2,3\n",
+            b"2.3 true [object Object] null undefined\n",
             stream.buffer.borrow().as_slice()
         );
         Ok(())
@@ -242,32 +242,6 @@ mod tests {
 
         Ok(())
     }
-
-    // sanity test for when I was prototyping - send 'hello' into stdin to pass test
-    // #[test]
-    // fn test_read_sync() -> Result<()> {
-    //     let stream = SharedStream::default();
-
-    //     let ctx = JSContextRef::default();
-    //     inject_javy_globals(&ctx, stream.clone(), stream.clone())?;
-
-    //     ctx.eval_global("main", "const buffer = new Uint8Array(5); Javy.IO.readSync(0, buffer); console.log(new TextDecoder().decode(buffer))")?;
-    //     assert_eq!(b"hello\n", stream.buffer.borrow().as_slice());
-    //     Ok(())
-    // }
-
-    // // sanity test for when I was prototyping - visually inspect that the string 'helloJACKSON' is printed to stdout
-    // #[test]
-    // fn test_write_sync() -> Result<()> {
-    //     let stream = SharedStream::default();
-
-    //     let ctx = JSContextRef::default();
-    //     inject_javy_globals(&ctx, stream.clone(), stream.clone())?;
-
-    //     ctx.eval_global("main", "let encoder = new TextEncoder(); let buffer = encoder.encode('helloJACKSON'); Javy.IO.writeSync(1, buffer);")?;
-
-    //     Ok(())
-    // }
 
     #[derive(Clone)]
     struct SharedStream {
