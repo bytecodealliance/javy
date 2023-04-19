@@ -1,13 +1,13 @@
+use javy::Runtime;
 use once_cell::sync::OnceCell;
 use quickjs_wasm_rs::JSContextRef;
 use std::alloc::{alloc, dealloc, Layout};
-use std::io;
 use std::ptr::copy_nonoverlapping;
 use std::slice;
 use std::str;
 
 mod execution;
-mod globals;
+mod runtime;
 
 // Unlike C's realloc, zero-length allocations need not have
 // unique addresses, so a zero-length allocation may be passed
@@ -17,14 +17,12 @@ const ZERO_SIZE_ALLOCATION_PTR: *mut u8 = 1 as _;
 
 static mut COMPILE_SRC_RET_AREA: [u32; 2] = [0; 2];
 
-static mut CONTEXT: OnceCell<JSContextRef> = OnceCell::new();
+static mut RUNTIME: OnceCell<Runtime> = OnceCell::new();
 
 /// Used by Wizer to preinitialize the module
 #[export_name = "wizer.initialize"]
 pub extern "C" fn init() {
-    let context = JSContextRef::default();
-    globals::inject_javy_globals(&context, io::stderr(), io::stderr()).unwrap();
-    unsafe { CONTEXT.set(context).unwrap() };
+    unsafe { RUNTIME.set(runtime::runtime().unwrap()).unwrap() };
 }
 
 /// Compiles JS source code to QuickJS bytecode.
@@ -61,9 +59,9 @@ pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -
 /// * `bytecode_ptr` must reference a valid array of unsigned bytes of `bytecode_len` length
 #[export_name = "eval_bytecode"]
 pub unsafe extern "C" fn eval_bytecode(bytecode_ptr: *const u8, bytecode_len: usize) {
-    let context = CONTEXT.get().unwrap();
+    let runtime = RUNTIME.get().unwrap();
     let bytecode = slice::from_raw_parts(bytecode_ptr, bytecode_len);
-    execution::run_bytecode(context, bytecode).unwrap();
+    execution::run_bytecode(runtime, bytecode).unwrap();
 }
 
 /// 1. Allocate memory of new_size with alignment.

@@ -929,6 +929,23 @@ dependencies = [
 
 [[package]]
 name = "javy"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "quickjs-wasm-rs",
+]
+
+[[package]]
+name = "javy-apis"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "javy",
+ "quickjs-wasm-rs",
+]
+
+[[package]]
+name = "javy-cli"
 version = "0.6.0"
 dependencies = [
  "anyhow",
@@ -957,16 +974,9 @@ name = "javy-core"
 version = "0.2.0"
 dependencies = [
  "anyhow",
- "javy2",
+ "javy",
+ "javy-apis",
  "once_cell",
- "quickjs-wasm-rs",
-]
-
-[[package]]
-name = "javy2"
-version = "0.1.0"
-dependencies = [
- "anyhow",
  "quickjs-wasm-rs",
 ]
 
