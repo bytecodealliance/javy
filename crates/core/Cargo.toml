@@ -17,7 +17,7 @@ crate-type = ["cdylib"]
 anyhow = { workspace = true }
 quickjs-wasm-rs = { path = "../quickjs-wasm-rs" }
 once_cell = { workspace = true }
-javy2 = { path = "../javy2" }
+javy = { path = "../javy", features = ["console", "stream_io", "text_encoding"] }
 
 [features]
 experimental_event_loop = []

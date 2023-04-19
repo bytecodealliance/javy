@@ -4,7 +4,7 @@ members = [
   "crates/quickjs-wasm-rs",
   "crates/core",
   "crates/cli",
-  "crates/javy2",
+  "crates/javy",
 ]
 
 [workspace.package]
