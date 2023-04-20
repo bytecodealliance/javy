@@ -1,6 +1,5 @@
 use javy::Runtime;
 use once_cell::sync::OnceCell;
-use quickjs_wasm_rs::JSContextRef;
 use std::alloc::{alloc, dealloc, Layout};
 use std::ptr::copy_nonoverlapping;
 use std::slice;
@@ -41,7 +40,8 @@ pub extern "C" fn init() {
 #[export_name = "compile_src"]
 pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -> *const u32 {
     // Use fresh context to avoid depending on Wizened context
-    let context = JSContextRef::default();
+    let runtime = runtime::runtime().unwrap();
+    let context = runtime.context();
     let js_src = str::from_utf8(slice::from_raw_parts(js_src_ptr, js_src_len)).unwrap();
     let bytecode = context.compile_module("function.mjs", js_src).unwrap();
     let bytecode_len = bytecode.len();

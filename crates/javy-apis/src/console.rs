@@ -1,7 +1,6 @@
 use anyhow::Result;
+use javy::quickjs::{JSContextRef, JSValueRef};
 use std::io::{self, Write};
-
-use quickjs_wasm_rs::{JSContextRef, JSValueRef};
 
 use crate::JSApiSet;
 

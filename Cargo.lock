@@ -941,7 +941,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "javy",
- "quickjs-wasm-rs",
 ]
 
 [[package]]
@@ -977,7 +976,6 @@ dependencies = [
  "javy",
  "javy-apis",
  "once_cell",
- "quickjs-wasm-rs",
 ]
 
 [[package]]

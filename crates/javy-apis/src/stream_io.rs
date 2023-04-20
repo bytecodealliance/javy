@@ -1,6 +1,6 @@
 use std::io::{Read, Write};
 
-use quickjs_wasm_rs::JSValueRef;
+use javy::quickjs::{JSContextRef, JSValueRef};
 
 use crate::JSApiSet;
 
@@ -13,11 +13,7 @@ impl StreamIO {
 }
 
 impl JSApiSet for StreamIO {
-    fn register(
-        &self,
-        context: &quickjs_wasm_rs::JSContextRef,
-        _config: &crate::APIConfig,
-    ) -> anyhow::Result<()> {
+    fn register(&self, context: &JSContextRef, _config: &crate::APIConfig) -> anyhow::Result<()> {
         let global = context.global_object()?;
         global.set_property("Javy", context.object_value()?)?;
 

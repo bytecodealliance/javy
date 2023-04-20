@@ -1,7 +1,6 @@
 use anyhow::Result;
 pub use api_config::APIConfig;
-use javy::Runtime;
-use quickjs_wasm_rs::JSContextRef;
+use javy::{quickjs::JSContextRef, Runtime};
 
 #[cfg(feature = "console")]
 use console::Console;

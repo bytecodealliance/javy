@@ -12,5 +12,4 @@ text_encoding = []
 
 [dependencies]
 anyhow = { workspace = true }
-quickjs-wasm-rs = { path = "../quickjs-wasm-rs" }
 javy = { path = "../javy" }

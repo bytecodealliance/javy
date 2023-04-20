@@ -1,7 +1,7 @@
 use std::{borrow::Cow, str};
 
 use anyhow::anyhow;
-use quickjs_wasm_rs::{JSContextRef, JSError, JSValueRef};
+use javy::quickjs::{JSContextRef, JSError, JSValueRef};
 
 use crate::JSApiSet;
 
@@ -14,11 +14,7 @@ impl TextEncoding {
 }
 
 impl JSApiSet for TextEncoding {
-    fn register(
-        &self,
-        context: &quickjs_wasm_rs::JSContextRef,
-        _config: &crate::APIConfig,
-    ) -> anyhow::Result<()> {
+    fn register(&self, context: &JSContextRef, _config: &crate::APIConfig) -> anyhow::Result<()> {
         let global = context.global_object()?;
 
         // let mut javy_object = global.get_property("Javy")?;
