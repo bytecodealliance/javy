@@ -1,6 +1,7 @@
 use anyhow::Result;
 pub use api_config::APIConfig;
 use javy::{quickjs::JSContextRef, Runtime};
+pub use runtime_ext::RuntimeExt;
 
 #[cfg(feature = "console")]
 use console::Console;
@@ -15,6 +16,7 @@ pub use console::LogStream;
 mod api_config;
 #[cfg(feature = "console")]
 mod console;
+mod runtime_ext;
 #[cfg(feature = "stream_io")]
 mod stream_io;
 #[cfg(feature = "text_encoding")]

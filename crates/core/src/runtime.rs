@@ -1,13 +1,10 @@
 use anyhow::Result;
 use javy::{Config, Runtime};
-use javy_apis::{APIConfig, LogStream};
+use javy_apis::{APIConfig, LogStream, RuntimeExt};
 
 pub(crate) fn runtime() -> Result<Runtime> {
-    let runtime = Runtime::new(&Config::default())?;
-
     let mut api_config = APIConfig::default();
     api_config.log_stream(LogStream::StdErr);
-    javy_apis::add_to_runtime(&runtime, &api_config)?; // uses `wasmtime_wasi::sync::add_to_linker` approach
-
+    let runtime = Runtime::new_with_apis(&Config::default(), &api_config)?;
     Ok(runtime)
 }
