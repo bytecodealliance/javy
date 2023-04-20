@@ -1,22 +1,31 @@
 use std::env;
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 
 use walkdir::WalkDir;
 
 fn main() {
     let this_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
-    let wasi_sdk_path =
+    let wasi_sdk =
         env::var("QUICKJS_WASM_SYS_WASI_SDK_PATH").unwrap_or(format!("{this_dir}/wasi-sdk"));
-    if !std::path::Path::exists(std::path::Path::new(&wasi_sdk_path)) {
+    let wasi_sdk_path = Path::new(&wasi_sdk);
+    if !Path::exists(wasi_sdk_path) {
         panic!(
             "wasi-sdk not installed in specified path of {}",
-            &wasi_sdk_path
+            &wasi_sdk
         );
     }
-    env::set_var("CC", format!("{}/bin/clang", &wasi_sdk_path));
-    env::set_var("AR", format!("{}/bin/ar", &wasi_sdk_path));
-    let sysroot = format!("--sysroot={}/share/wasi-sysroot", &wasi_sdk_path);
+    env::set_var("CC", format!("{}/bin/clang", &wasi_sdk));
+    env::set_var("AR", format!("{}/bin/ar", &wasi_sdk));
+    let sysroot_path = wasi_sdk_path.join("share").join("wasi-sysroot");
+    let sysroot = format!("--sysroot={}", &sysroot_path.display());
     env::set_var("CFLAGS", &sysroot);
+
+    let libclang_path = sysroot_path.join("lib").join("wasm32-wasi");
+
+    println!("cargo:rustc-link-search=native={}", libclang_path.display());
+    println!("cargo:rustc-link-lib=static=c");
+    println!("cargo:rustc-link-lib=static=c++");
+
 
     // Build quickjs as a static library.
     cc::Build::new()
