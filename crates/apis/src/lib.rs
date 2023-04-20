@@ -1,5 +1,6 @@
 use anyhow::Result;
 pub use api_config::APIConfig;
+pub use javy;
 use javy::{quickjs::JSContextRef, Runtime};
 pub use runtime_ext::RuntimeExt;
 
