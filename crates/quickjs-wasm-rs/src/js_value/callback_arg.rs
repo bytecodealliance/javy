@@ -90,7 +90,7 @@ mod tests {
     #[test]
     fn test_bool() -> Result<()> {
         let context = JSContextRef::default();
-        let val = context.eval_global("test.js", "true").unwrap();
+        let val = context.eval_global("test.js", "true")?;
 
         let callback_arg = CallbackArg::new(val);
         assert_eq!("true", callback_arg.to_string());
@@ -106,7 +106,7 @@ mod tests {
     #[test]
     fn test_i32() -> Result<()> {
         let context = JSContextRef::default();
-        let val = context.eval_global("test.js", "42").unwrap();
+        let val = context.eval_global("test.js", "42")?;
 
         let callback_arg = CallbackArg::new(val);
         assert_eq!("42", callback_arg.to_string());
@@ -122,7 +122,7 @@ mod tests {
     #[test]
     fn test_usize() -> Result<()> {
         let context = JSContextRef::default();
-        let val = context.eval_global("test.js", "42").unwrap();
+        let val = context.eval_global("test.js", "42")?;
 
         let callback_arg = CallbackArg::new(val);
         assert_eq!("42", callback_arg.to_string());
@@ -138,7 +138,7 @@ mod tests {
     #[test]
     fn test_f64() -> Result<()> {
         let context = JSContextRef::default();
-        let val = context.eval_global("test.js", "42.42").unwrap();
+        let val = context.eval_global("test.js", "42.42")?;
 
         let callback_arg = CallbackArg::new(val);
         assert_eq!("42.42", callback_arg.to_string());
@@ -154,9 +154,7 @@ mod tests {
     #[test]
     fn test_string() -> Result<()> {
         let context = JSContextRef::default();
-        let val = context
-            .eval_global("test.js", "const h = 'hello'; h")
-            .unwrap();
+        let val = context.eval_global("test.js", "const h = 'hello'; h")?;
 
         let callback_arg = CallbackArg::new(val);
         assert_eq!("hello", callback_arg.to_string());
@@ -172,7 +170,7 @@ mod tests {
     #[test]
     fn test_vec() -> Result<()> {
         let context = JSContextRef::default();
-        let val = context.eval_global("test.js", "[1, 2, 3]").unwrap();
+        let val = context.eval_global("test.js", "[1, 2, 3]")?;
 
         let expected: Vec<JSValue> = vec![1.into(), 2.into(), 3.into()];
 
@@ -190,9 +188,7 @@ mod tests {
     #[test]
     fn test_bytes() -> Result<()> {
         let context = JSContextRef::default();
-        let val = context
-            .eval_global("test.js", "new ArrayBuffer(8)")
-            .unwrap();
+        let val = context.eval_global("test.js", "new ArrayBuffer(8)")?;
 
         let expected = [0_u8; 8].to_vec();
 
@@ -210,9 +206,7 @@ mod tests {
     #[test]
     fn test_hashmap() -> Result<()> {
         let context = JSContextRef::default();
-        let val = context
-            .eval_global("test.js", "({a: 1, b: 2, c: 3})")
-            .unwrap();
+        let val = context.eval_global("test.js", "({a: 1, b: 2, c: 3})")?;
 
         let expected = HashMap::from([
             ("a".to_string(), 1.into()),

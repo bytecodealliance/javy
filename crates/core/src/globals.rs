@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use javy::quickjs::{JSContextRef, JSError, JSValue, CallbackArg};
+use javy::quickjs::{CallbackArg, JSContextRef, JSError, JSValue};
 use std::borrow::Cow;
 use std::io::{Read, Write};
 use std::str;
