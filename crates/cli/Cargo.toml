@@ -1,5 +1,5 @@
 [package]
-name = "javy"
+name = "javy-cli"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
@@ -8,6 +8,7 @@ build = "build.rs"
 
 [[bin]]
 name = "javy"
+path = "src/main.rs"
 
 [features]
 dump_wat = ["dep:wasmprinter"]
