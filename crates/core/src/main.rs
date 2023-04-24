@@ -1,5 +1,5 @@
+use javy::quickjs::JSContextRef;
 use once_cell::sync::OnceCell;
-use quickjs_wasm_rs::JSContextRef;
 use std::io::{self, Read};
 use std::string::String;
 

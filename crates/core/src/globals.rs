@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use quickjs_wasm_rs::{JSContextRef, JSError, JSValueRef};
+use javy::quickjs::{JSContextRef, JSError, JSValueRef};
 use std::borrow::Cow;
 use std::io::{Read, Write};
 use std::str;
@@ -198,7 +198,7 @@ fn js_args_to_io_reader(args: &[JSValueRef]) -> anyhow::Result<(Box<dyn Read>, &
 mod tests {
     use super::inject_javy_globals;
     use anyhow::Result;
-    use quickjs_wasm_rs::JSContextRef;
+    use javy::quickjs::JSContextRef;
     use std::cell::RefCell;
     use std::rc::Rc;
     use std::{cmp, io};
