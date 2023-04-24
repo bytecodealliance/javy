@@ -136,7 +136,7 @@ jobs:
           path: target/wasm32-wasi/release/
 
       - name: Build CLI ${{ matrix.os }}
-        run: cargo build --release --target ${{ matrix.target }} --package javy
+        run: cargo build --release --target ${{ matrix.target }} --package javy-cli
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
 
