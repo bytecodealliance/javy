@@ -8,20 +8,20 @@ install:
 	cargo install --path crates/cli
 
 bench: cli
-	cargo bench --package=javy
+	cargo bench --package=javy-cli
 
 check-bench:
-	cargo check --package=javy --release --benches
+	cargo check --package=javy-cli --release --benches
 
 cli: core
-	cargo build --package=javy --release
+	cargo build --package=javy-cli --release
 
 core:
 	cargo build --package=javy-core --release --target=wasm32-wasi --features=$(CORE_FEATURES)
 	wizer target/wasm32-wasi/release/javy_quickjs_provider.wasm --allow-wasi --wasm-bulk-memory true -o target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm
 
 docs:
-	cargo doc --package=javy --open
+	cargo doc --package=javy-cli --open
 	cargo doc --package=javy-core --open --target=wasm32-wasi
 
 test-quickjs-wasm-rs:
@@ -33,7 +33,7 @@ test-core:
 # Test in release mode to skip some debug assertions
 # Note: to make this faster, the engine should be optimized beforehand (wasm-strip + wasm-opt).
 test-cli: core
-	cargo test --package=javy --release --features=$(CLI_FEATURES) -- --nocapture
+	cargo test --package=javy-cli --release --features=$(CLI_FEATURES) -- --nocapture
 
 # WPT requires a Javy build with the experimental_event_loop feature to pass
 test-wpt: export CORE_FEATURES ?= experimental_event_loop
@@ -62,8 +62,8 @@ fmt-core:
 # Use `--release` on CLI clippy to align with `test-cli`.
 # This reduces the size of the target directory which improves CI stability.
 fmt-cli:
-	cargo fmt --package=javy -- --check
-	cargo clippy --package=javy --release --all-targets -- -D warnings
+	cargo fmt --package=javy-cli -- --check
+	cargo clippy --package=javy-cli --release --all-targets -- -D warnings
 
 clean: clean-wasi-sdk clean-cargo
 

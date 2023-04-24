@@ -1051,7 +1051,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "javy"
+name = "javy-cli"
 version = "0.6.0"
 dependencies = [
  "anyhow",
