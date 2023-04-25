@@ -23,7 +23,7 @@ fn test_dylib() -> Result<()> {
         let mut store = Store::new(&engine, wasi);
         let instance = linker.instantiate(&mut store, &module)?;
         let eval_bytecode_func =
-            instance.get_typed_func::<(u32, u32), (), _>(&mut store, "eval_bytecode")?;
+            instance.get_typed_func::<(u32, u32), ()>(&mut store, "eval_bytecode")?;
 
         let js_src = "console.log(42);";
         let (bytecode_ptr, bytecode_len) = compile_src(js_src.as_bytes(), &instance, &mut store)?;
@@ -42,8 +42,7 @@ fn compile_src(
     mut store: &mut Store<WasiCtx>,
 ) -> Result<(u32, u32)> {
     let memory = instance.get_memory(&mut store, "memory").unwrap();
-    let compile_src_func =
-        instance.get_typed_func::<(u32, u32), u32, _>(&mut store, "compile_src")?;
+    let compile_src_func = instance.get_typed_func::<(u32, u32), u32>(&mut store, "compile_src")?;
 
     let js_src_ptr = allocate_memory(instance, store, 1, js_src.len().try_into()?)?;
     memory.write(&mut store, js_src_ptr.try_into()?, js_src)?;
@@ -64,7 +63,7 @@ fn allocate_memory(
     new_size: u32,
 ) -> Result<u32> {
     let realloc_func = instance
-        .get_typed_func::<(u32, u32, u32, u32), u32, _>(&mut store, "canonical_abi_realloc")?;
+        .get_typed_func::<(u32, u32, u32, u32), u32>(&mut store, "canonical_abi_realloc")?;
     let orig_ptr = 0;
     let orig_size = 0;
     realloc_func

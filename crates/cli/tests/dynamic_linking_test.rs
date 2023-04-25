@@ -29,7 +29,7 @@ pub fn test_dynamic_linking() -> Result<()> {
             quickjs_provider_instance,
         )?;
         let js_instance = linker.instantiate(&mut store, &js_module)?;
-        let start_func = js_instance.get_typed_func::<(), (), _>(&mut store, "_start")?;
+        let start_func = js_instance.get_typed_func::<(), ()>(&mut store, "_start")?;
         start_func.call(&mut store, ())?;
     }
 
