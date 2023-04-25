@@ -27,6 +27,9 @@ docs:
 test-quickjs-wasm-rs:
 	cargo wasi test --package=quickjs-wasm-rs --features json,messagepack -- --nocapture
 
+test-javy:
+	cargo wasi test --package=javy -- --nocapture
+
 test-core:
 	cargo wasi test --package=javy-core -- --nocapture
 
@@ -43,9 +46,9 @@ test-wpt:
 	npm install --prefix wpt
 	npm test --prefix wpt 
 
-tests: test-quickjs-wasm-rs test-core test-cli test-wpt
+tests: test-quickjs-wasm-rs test-javy test-core test-cli test-wpt
 
-fmt: fmt-quickjs-wasm-sys fmt-quickjs-wasm-rs fmt-core fmt-cli
+fmt: fmt-quickjs-wasm-sys fmt-quickjs-wasm-rs fmt-javy fmt-core fmt-cli
 
 fmt-quickjs-wasm-sys:
 	cargo fmt --package=quickjs-wasm-sys -- --check
@@ -54,6 +57,10 @@ fmt-quickjs-wasm-sys:
 fmt-quickjs-wasm-rs:
 	cargo fmt --package=quickjs-wasm-rs -- --check
 	cargo clippy --package=quickjs-wasm-rs --target=wasm32-wasi --all-targets -- -D warnings
+
+fmt-javy:
+	cargo fmt --package=javy -- --check
+	cargo clippy --package=javy --target=wasm32-wasi --all-targets -- -D warnings
 
 fmt-core:
 	cargo fmt --package=javy-core -- --check

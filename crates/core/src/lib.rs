@@ -1,5 +1,5 @@
+use javy::quickjs::JSContextRef;
 use once_cell::sync::OnceCell;
-use quickjs_wasm_rs::JSContextRef;
 use std::alloc::{alloc, dealloc, Layout};
 use std::io;
 use std::ptr::copy_nonoverlapping;

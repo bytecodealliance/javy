@@ -1,5 +1,5 @@
 use anyhow::{bail, Result};
-use quickjs_wasm_rs::JSContextRef;
+use javy::quickjs::JSContextRef;
 
 pub fn run_bytecode(context: &JSContextRef, bytecode: &[u8]) -> Result<()> {
     context.eval_binary(bytecode)?;
