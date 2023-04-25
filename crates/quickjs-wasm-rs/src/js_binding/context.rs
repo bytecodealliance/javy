@@ -2,6 +2,7 @@ use super::constants::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER};
 use super::error::JSError;
 use super::exception::Exception;
 use super::value::JSValueRef;
+use crate::js_value::{self, qjs_convert, CallbackArg};
 use anyhow::Result;
 use once_cell::sync::Lazy;
 use quickjs_wasm_sys::{
@@ -287,57 +288,66 @@ impl JSContextRef {
 
     /// Wrap the specified function in a JS function.
     ///
-    /// Since the callback signature accepts parameters as high-level `Context` and `Value` objects, it can be
+    /// Since the callback signature accepts parameters as high-level `JSContextRef` and `CallbackArg` objects, it can be
     /// implemented without using `unsafe` code, unlike [JSContextRef::new_callback] which provides a low-level API.
     /// Returning a [JSError] from the callback will cause a JavaScript error with the appropriate
     /// type to be thrown.
     pub fn wrap_callback<F>(&self, mut f: F) -> Result<JSValueRef>
     where
-        F: (FnMut(&Self, &JSValueRef, &[JSValueRef]) -> Result<JSValueRef>) + 'static,
+        F: (FnMut(&Self, &CallbackArg, &[CallbackArg]) -> Result<js_value::JSValue>) + 'static,
     {
-        let wrapped = move |inner, this, argc, argv: *mut JSValue, _| match f(
-            &Self { inner },
-            &JSValueRef::new_unchecked(inner, this),
-            &(0..argc)
-                .map(|offset| {
-                    JSValueRef::new_unchecked(inner, unsafe { *argv.offset(offset as isize) })
-                })
-                .collect::<Box<[_]>>(),
-        ) {
-            Ok(value) => value.value,
-            Err(error) => {
-                let format = CString::new("%s").unwrap();
-                match error.downcast::<JSError>() {
-                    Ok(js_error) => {
-                        let message = CString::new(js_error.to_string())
-                            .unwrap_or_else(|_| CString::new("Unknown error").unwrap());
-                        match js_error {
-                            JSError::Internal(_) => unsafe {
-                                JS_ThrowInternalError(inner, format.as_ptr(), message.as_ptr())
-                            },
-                            JSError::Syntax(_) => unsafe {
-                                JS_ThrowSyntaxError(inner, format.as_ptr(), message.as_ptr())
-                            },
-                            JSError::Type(_) => unsafe {
-                                JS_ThrowTypeError(inner, format.as_ptr(), message.as_ptr())
-                            },
-                            JSError::Reference(_) => unsafe {
-                                JS_ThrowReferenceError(inner, format.as_ptr(), message.as_ptr())
-                            },
-                            JSError::Range(_) => unsafe {
-                                JS_ThrowRangeError(inner, format.as_ptr(), message.as_ptr())
-                            },
+        let wrapped = move |inner, this, argc, argv: *mut JSValue, _| {
+            let inner_ctx = JSContextRef { inner };
+            match f(
+                &inner_ctx,
+                &CallbackArg::new(JSValueRef::new_unchecked(inner, this)),
+                &(0..argc)
+                    .map(|offset| {
+                        CallbackArg::new(JSValueRef::new_unchecked(inner, unsafe {
+                            *argv.offset(offset as isize)
+                        }))
+                    })
+                    .collect::<Box<[_]>>(),
+            ) {
+                Ok(value) => qjs_convert::to_qjs_value(&inner_ctx, &value).unwrap().value,
+                Err(error) => {
+                    let format = CString::new("%s").unwrap();
+                    match error.downcast::<JSError>() {
+                        Ok(js_error) => {
+                            let message = CString::new(js_error.to_string())
+                                .unwrap_or_else(|_| CString::new("Unknown error").unwrap());
+                            match js_error {
+                                JSError::Internal(_) => unsafe {
+                                    JS_ThrowInternalError(inner, format.as_ptr(), message.as_ptr())
+                                },
+                                JSError::Syntax(_) => unsafe {
+                                    JS_ThrowSyntaxError(inner, format.as_ptr(), message.as_ptr())
+                                },
+                                JSError::Type(_) => unsafe {
+                                    JS_ThrowTypeError(inner, format.as_ptr(), message.as_ptr())
+                                },
+                                JSError::Reference(_) => unsafe {
+                                    JS_ThrowReferenceError(inner, format.as_ptr(), message.as_ptr())
+                                },
+                                JSError::Range(_) => unsafe {
+                                    JS_ThrowRangeError(inner, format.as_ptr(), message.as_ptr())
+                                },
+                            }
                         }
-                    }
-                    Err(e) => {
-                        let message = format!("{e:?}");
-                        let message = CString::new(message.as_str()).unwrap_or_else(|err| {
-                            CString::new(format!("{} - truncated due to null byte", unsafe {
-                                str::from_utf8_unchecked(&message.as_bytes()[..err.nul_position()])
-                            }))
-                            .unwrap()
-                        });
-                        unsafe { JS_ThrowInternalError(inner, format.as_ptr(), message.as_ptr()) }
+                        Err(e) => {
+                            let message = format!("{e:?}");
+                            let message = CString::new(message.as_str()).unwrap_or_else(|err| {
+                                CString::new(format!("{} - truncated due to null byte", unsafe {
+                                    str::from_utf8_unchecked(
+                                        &message.as_bytes()[..err.nul_position()],
+                                    )
+                                }))
+                                .unwrap()
+                            });
+                            unsafe {
+                                JS_ThrowInternalError(inner, format.as_ptr(), message.as_ptr())
+                            }
+                        }
                     }
                 }
             }

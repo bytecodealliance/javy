@@ -196,7 +196,7 @@ impl<'a> ser::Serializer for &'a mut Serializer<'_> {
     {
         let object = self.context.object_value()?;
         value.serialize(&mut *self)?;
-        object.set_property(variant, self.value.clone())?;
+        object.set_property(variant, self.value)?;
         self.value = object;
 
         Ok(())

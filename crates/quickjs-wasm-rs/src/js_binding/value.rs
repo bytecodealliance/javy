@@ -22,7 +22,7 @@ pub enum BigInt {
     Unsigned(u64),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct JSValueRef {
     pub(super) context: *mut JSContext,
     pub(super) value: JSValue,
