@@ -33,7 +33,7 @@ fn copy_source_code_into_instance(
     memory: &Memory,
 ) -> Result<(u32, u32)> {
     let realloc_fn = instance
-        .get_typed_func::<(u32, u32, u32, u32), u32, _>(&mut store, "canonical_abi_realloc")?;
+        .get_typed_func::<(u32, u32, u32, u32), u32>(&mut store, "canonical_abi_realloc")?;
     let js_src_len = js_source_code.len().try_into()?;
 
     let original_ptr = 0;
@@ -54,8 +54,7 @@ fn call_compile(
     mut store: &mut Store<WasiCtx>,
     instance: &Instance,
 ) -> Result<u32> {
-    let compile_src_fn =
-        instance.get_typed_func::<(u32, u32), u32, _>(&mut store, "compile_src")?;
+    let compile_src_fn = instance.get_typed_func::<(u32, u32), u32>(&mut store, "compile_src")?;
     let ret_ptr = compile_src_fn
         .call(&mut store, (js_src_ptr, js_src_len))
         .map_err(|_| anyhow!("JS compilation failed"))?;

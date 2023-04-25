@@ -98,7 +98,7 @@ impl FunctionCase {
             .unwrap()
             .into_func()
             .unwrap()
-            .typed::<(), (), _>(&mut store)?
+            .typed::<(), ()>(&mut store)?
             .call(&mut store, ())?;
         Ok(())
     }

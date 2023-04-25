@@ -117,7 +117,7 @@ impl Runner {
         let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
 
         let instance = self.linker.instantiate(&mut store, &module)?;
-        let run = instance.get_typed_func::<(), (), _>(&mut store, "_start")?;
+        let run = instance.get_typed_func::<(), ()>(&mut store, "_start")?;
 
         let res = run.call(&mut store, ());
         let store_context = store.into_data();
