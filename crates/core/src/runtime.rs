@@ -1,6 +1,5 @@
-use anyhow::Result;
-use javy::{Config, Runtime};
+use javy::Runtime;
 
-pub(crate) fn new_runtime() -> Result<Runtime> {
-    Runtime::new(Config::default())
+pub(crate) fn new_runtime() -> Runtime {
+    Runtime::default()
 }
