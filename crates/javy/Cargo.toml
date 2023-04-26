@@ -4,7 +4,11 @@ version = "1.0.0-alpha1"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
+description = "Configurable JavaScript runtime for WebAssembly"
+homepage = "https://github.com/Shopify/javy/tree/main/crates/javy"
+repository = "https://github.com/Shopify/javy/tree/main/crates/javy"
+categories = ["wasm"]
 
 [dependencies]
 anyhow = { workspace = true }
-quickjs-wasm-rs = { path = "../quickjs-wasm-rs" }
+quickjs-wasm-rs = { version = "1.0.0-alpha.2", path = "../quickjs-wasm-rs" }

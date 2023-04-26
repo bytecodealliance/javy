@@ -11,8 +11,17 @@ use crate::Config;
 ///
 /// ```
 /// # use javy::{Config, Runtime};
-/// let runtime = Runtime::new(Config::default()).unwrap();
-/// runtime.context().eval_global("test.js", "console.log('hello world!');").unwrap();
+/// let runtime = Runtime::default();
+/// let context = runtime.context();
+/// context.global_object().unwrap().set_property(
+///     "print",
+///     context.wrap_callback(move |ctx, _this, args| {
+///         let str = args.first().unwrap().to_string();
+///         println!("{str}");
+///         Ok(javy::quickjs::from_qjs_value(&ctx.undefined_value().unwrap()).unwrap())
+///     }).unwrap(),
+/// ).unwrap();
+/// context.eval_global("hello.js", "print('hello!');").unwrap();
 /// ```
 #[derive(Debug)]
 pub struct Runtime {
