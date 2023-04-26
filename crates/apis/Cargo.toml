@@ -1,0 +1,10 @@
+[package]
+name = "javy-apis"
+version = "1.0.0-alpha1"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+javy = { path = "../javy" }

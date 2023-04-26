@@ -180,7 +180,7 @@ mod tests {
     fn test_console_log() -> Result<()> {
         let mut stream = SharedStream::default();
 
-        let runtime = runtime::new_runtime();
+        let runtime = runtime::new_runtime()?;
         let ctx = runtime.context();
         inject_javy_globals(&runtime, stream.clone(), stream.clone())?;
 
@@ -209,7 +209,7 @@ mod tests {
     fn test_console_error() -> Result<()> {
         let mut stream = SharedStream::default();
 
-        let runtime = runtime::new_runtime();
+        let runtime = runtime::new_runtime()?;
         let ctx = runtime.context();
         inject_javy_globals(&runtime, stream.clone(), stream.clone())?;
 
@@ -237,7 +237,7 @@ mod tests {
     #[test]
     fn test_text_encoder_decoder() -> Result<()> {
         let stream = SharedStream::default();
-        let runtime = runtime::new_runtime();
+        let runtime = runtime::new_runtime()?;
         let ctx = runtime.context();
         inject_javy_globals(&runtime, stream.clone(), stream.clone())?;
         ctx.eval_global(

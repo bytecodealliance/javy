@@ -1069,6 +1069,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "javy-apis"
+version = "1.0.0-alpha1"
+dependencies = [
+ "anyhow",
+ "javy",
+]
+
+[[package]]
 name = "javy-cli"
 version = "0.6.0"
 dependencies = [
@@ -1099,6 +1107,7 @@ version = "0.2.0"
 dependencies = [
  "anyhow",
  "javy",
+ "javy-apis",
  "once_cell",
 ]
 
