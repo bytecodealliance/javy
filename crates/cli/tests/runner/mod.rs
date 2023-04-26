@@ -43,12 +43,13 @@ struct StoreContext {
 
 impl StoreContext {
     fn new(input: &[u8], capacity: usize) -> Self {
-        let mut wasi = WasiCtxBuilder::new().inherit_stdio().build();
         let wasi_output = WritePipe::new_in_memory();
         let log_stream = WritePipe::new(LogWriter::new(capacity));
-        wasi.set_stdout(Box::new(wasi_output.clone()));
-        wasi.set_stdin(Box::new(ReadPipe::from(input)));
-        wasi.set_stderr(Box::new(log_stream.clone()));
+        let wasi = WasiCtxBuilder::new()
+            .stdout(Box::new(wasi_output.clone()))
+            .stdin(Box::new(ReadPipe::from(input)))
+            .stderr(Box::new(log_stream.clone()))
+            .build();
         Self {
             wasi,
             wasi_output,
