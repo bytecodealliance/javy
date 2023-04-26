@@ -3,7 +3,7 @@ use anyhow::Result;
 
 use crate::Config;
 
-/// A JavaScript Runtime
+/// A JavaScript Runtime.
 ///
 /// Provides a [`Self::context()`] method for working with the underlying [`JSContextRef`].
 ///
@@ -20,13 +20,13 @@ pub struct Runtime {
 }
 
 impl Runtime {
-    /// Creates a new [`Runtime`]
+    /// Creates a new [`Runtime`].
     pub fn new(_config: Config) -> Result<Self> {
         let context = JSContextRef::default();
         Ok(Self { context })
     }
 
-    /// A reference to a [`JSContextRef`]
+    /// A reference to a [`JSContextRef`].
     pub fn context(&self) -> &JSContextRef {
         &self.context
     }

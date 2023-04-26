@@ -1,4 +1,4 @@
-//! Configurable JavaScript runtime for WebAssembly
+//! Configurable JavaScript runtime for WebAssembly.
 //!
 //! Example usage:
 //! ```
