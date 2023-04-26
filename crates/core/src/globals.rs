@@ -1,11 +1,12 @@
 use anyhow::anyhow;
 use javy::quickjs::{CallbackArg, JSContextRef, JSError, JSValue};
+use javy::Runtime;
 use std::borrow::Cow;
 use std::io::{Read, Write};
 use std::str;
 
 pub fn inject_javy_globals<T1, T2>(
-    context: &JSContextRef,
+    runtime: &Runtime,
     log_stream: T1,
     error_stream: T2,
 ) -> anyhow::Result<()>
@@ -13,6 +14,7 @@ where
     T1: Write + 'static,
     T2: Write + 'static,
 {
+    let context = runtime.context();
     let global = context.global_object()?;
 
     let console_log_callback = context.wrap_callback(console_log_to(log_stream))?;
@@ -166,9 +168,10 @@ fn encode_js_string_to_utf8_buffer(
 
 #[cfg(test)]
 mod tests {
+    use crate::runtime;
+
     use super::inject_javy_globals;
     use anyhow::Result;
-    use javy::quickjs::JSContextRef;
     use std::cell::RefCell;
     use std::rc::Rc;
     use std::{cmp, io};
@@ -177,8 +180,9 @@ mod tests {
     fn test_console_log() -> Result<()> {
         let mut stream = SharedStream::default();
 
-        let ctx = JSContextRef::default();
-        inject_javy_globals(&ctx, stream.clone(), stream.clone())?;
+        let runtime = runtime::new_runtime();
+        let ctx = runtime.context();
+        inject_javy_globals(&runtime, stream.clone(), stream.clone())?;
 
         ctx.eval_global("main", "console.log(\"hello world\");")?;
         assert_eq!(b"hello world\n", stream.buffer.borrow().as_slice());
@@ -205,8 +209,9 @@ mod tests {
     fn test_console_error() -> Result<()> {
         let mut stream = SharedStream::default();
 
-        let ctx = JSContextRef::default();
-        inject_javy_globals(&ctx, stream.clone(), stream.clone())?;
+        let runtime = runtime::new_runtime();
+        let ctx = runtime.context();
+        inject_javy_globals(&runtime, stream.clone(), stream.clone())?;
 
         ctx.eval_global("main", "console.error(\"hello world\");")?;
         assert_eq!(b"hello world\n", stream.buffer.borrow().as_slice());
@@ -232,8 +237,9 @@ mod tests {
     #[test]
     fn test_text_encoder_decoder() -> Result<()> {
         let stream = SharedStream::default();
-        let ctx = JSContextRef::default();
-        inject_javy_globals(&ctx, stream.clone(), stream.clone())?;
+        let runtime = runtime::new_runtime();
+        let ctx = runtime.context();
+        inject_javy_globals(&runtime, stream.clone(), stream.clone())?;
         ctx.eval_global(
             "main",
             "let encoder = new TextEncoder(); let buffer = encoder.encode('hello'); let decoder = new TextDecoder(); console.log(decoder.decode(buffer));"
