@@ -31,3 +31,11 @@ impl Runtime {
         &self.context
     }
 }
+
+impl Default for Runtime {
+    /// Returns a [`Runtime`] with a default configuration. Panics if there's
+    /// an error.
+    fn default() -> Self {
+        Self::new(Config::default()).unwrap()
+    }
+}
