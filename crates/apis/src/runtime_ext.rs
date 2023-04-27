@@ -3,6 +3,17 @@ use javy::{Config, Runtime};
 
 use crate::APIConfig;
 
+/// A extension trait for [`Runtime`] that creates a [`Runtime`] with APIs
+/// provided in this crate.
+///
+/// ## Example
+/// ```
+/// # use anyhow::Error;
+/// use javy::Runtime;
+/// use javy_apis::RuntimeExt;
+/// let runtime = Runtime::new_with_defaults()?;
+/// # Ok::<(), Error>(())
+/// ```
 pub trait RuntimeExt {
     fn new_with_apis(config: Config, api_config: APIConfig) -> Result<Runtime>;
     fn new_with_defaults() -> Result<Runtime>;
