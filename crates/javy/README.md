@@ -7,18 +7,21 @@ Uses QuickJS through the `quickjs-wasm-rs` crate to evalulate JavaScript source 
 ## Example usage
 
 ```rust
-use anyhow::Result;
-use javy::Runtime;
+use anyhow::{anyhow, Result};
+use javy::{quickjs::JSValue, Runtime};
 
 fn main() -> Result<()> {
     let runtime = Runtime::default();
     let context = runtime.context();
     context.global_object()?.set_property(
         "print",
-        context.wrap_callback(move |ctx, _this, args| {
-            let str = args.first().unwrap().to_string();
+        context.wrap_callback(move |_ctx, _this, args| {
+            let str = args
+                .first()
+                .ok_or(anyhow!("Need to pass an argument"))?
+                .to_string();
             println!("{str}");
-            Ok(javy::quickjs::from_qjs_value(&ctx.undefined_value()?)?)
+            Ok(JSValue::Undefined)
         })?,
     )?;
     context.eval_global("hello.js", "print('hello!');")?;

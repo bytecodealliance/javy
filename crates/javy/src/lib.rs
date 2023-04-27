@@ -2,17 +2,27 @@
 //!
 //! Example usage:
 //! ```
-//! # use javy::{Config, Runtime};
+//! # use anyhow::anyhow;
+//! # use javy::{quickjs::JSValue, Runtime};
 //! let runtime = Runtime::default();
 //! let context = runtime.context();
-//! context.global_object().unwrap().set_property(
-//!     "print",
-//!     context.wrap_callback(move |ctx, _this, args| {
-//!         let str = args.first().unwrap().to_string();
-//!         println!("{str}");
-//!         Ok(javy::quickjs::from_qjs_value(&ctx.undefined_value().unwrap()).unwrap())
-//!     }).unwrap(),
-//! ).unwrap();
+//! context
+//!     .global_object()
+//!     .unwrap()
+//!     .set_property(
+//!         "print",
+//!         context
+//!             .wrap_callback(move |_ctx, _this, args| {
+//!                 let str = args
+//!                     .first()
+//!                     .ok_or(anyhow!("Need to pass an argument"))?
+//!                     .to_string();
+//!                 println!("{str}");
+//!                 Ok(JSValue::Undefined)
+//!             })
+//!             .unwrap(),
+//!     )
+//!     .unwrap();
 //! context.eval_global("hello.js", "print('hello!');").unwrap();
 //! ```
 //!
