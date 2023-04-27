@@ -15,7 +15,10 @@ use crate::APIConfig;
 /// # Ok::<(), Error>(())
 /// ```
 pub trait RuntimeExt {
+    /// Creates a [`Runtime`] configured by the provided [`Config`] with JS
+    /// APIs added configured according to the [`APIConfig`].
     fn new_with_apis(config: Config, api_config: APIConfig) -> Result<Runtime>;
+    /// Creates a [`Runtime`] with JS APIs added with a default configuration.
     fn new_with_defaults() -> Result<Runtime>;
 }
 
