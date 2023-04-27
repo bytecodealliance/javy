@@ -65,7 +65,7 @@ fmt-javy:
 	cargo fmt --package=javy -- --check
 	cargo clippy --package=javy --target=wasm32-wasi --all-targets -- -D warnings
 
-fmt-javy-apis:
+fmt-apis:
 	cargo fmt --package=javy-apis -- --check
 	cargo clippy --package=javy-apis --target=wasm32-wasi --all-targets -- -D warnings
 
