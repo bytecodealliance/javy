@@ -25,6 +25,18 @@
 //! # Ok::<(), Error>(())
 //! ```
 
+#![deny(
+    missing_docs,
+    rustdoc::broken_intra_doc_links,
+    rustdoc::private_intra_doc_links,
+    rustdoc::missing_crate_level_docs,
+    rustdoc::private_doc_tests,
+    rustdoc::invalid_codeblock_attributes,
+    rustdoc::invalid_html_tags,
+    rustdoc::invalid_rust_codeblocks,
+    rustdoc::bare_urls
+)]
+
 use anyhow::Result;
 use javy::Runtime;
 
