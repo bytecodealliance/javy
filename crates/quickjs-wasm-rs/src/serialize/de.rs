@@ -13,21 +13,20 @@ impl SerError for Error {
     }
 }
 
-pub struct Deserializer {
-    value: JSValueRef,
+pub struct Deserializer<'de> {
+    value: JSValueRef<'de>,
     map_key: bool,
 }
 
-impl From<JSValueRef> for Deserializer {
-    fn from(value: JSValueRef) -> Self {
+impl<'de> From<JSValueRef<'de>> for Deserializer<'de> {
+    fn from(value: JSValueRef<'de>) -> Self {
         Self {
             value,
             map_key: false,
         }
     }
 }
-
-impl Deserializer {
+impl Deserializer<'_> {
     fn deserialize_number<'de, V>(&mut self, visitor: V) -> Result<V::Value>
     where
         V: de::Visitor<'de>,
@@ -56,7 +55,7 @@ impl Deserializer {
     }
 }
 
-impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
+impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     type Error = Error;
 
     fn deserialize_any<V>(self, visitor: V) -> Result<V::Value>
@@ -168,12 +167,12 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer {
     }
 }
 
-struct MapAccess<'a> {
-    de: &'a mut Deserializer,
-    properties: Properties,
+struct MapAccess<'a, 'de: 'a> {
+    de: &'a mut Deserializer<'de>,
+    properties: Properties<'de>,
 }
 
-impl<'a, 'de> de::MapAccess<'de> for MapAccess<'a> {
+impl<'a, 'de> de::MapAccess<'de> for MapAccess<'a, 'de> {
     type Error = Error;
 
     fn next_key_seed<K>(&mut self, seed: K) -> Result<Option<K::Value>>
@@ -198,14 +197,14 @@ impl<'a, 'de> de::MapAccess<'de> for MapAccess<'a> {
     }
 }
 
-struct SeqAccess<'a> {
-    de: &'a mut Deserializer,
-    seq: JSValueRef,
+struct SeqAccess<'a, 'de: 'a> {
+    de: &'a mut Deserializer<'de>,
+    seq: JSValueRef<'de>,
     length: u32,
     index: u32,
 }
 
-impl<'a, 'de> de::SeqAccess<'de> for SeqAccess<'a> {
+impl<'a, 'de> de::SeqAccess<'de> for SeqAccess<'a, 'de> {
     type Error = Error;
 
     fn next_element_seed<T>(&mut self, seed: T) -> Result<Option<T::Value>>
@@ -388,5 +387,18 @@ mod tests {
         .into_vec();
 
         assert_eq!(vec![42u8, 0, 255], val);
+    }
+
+    #[test]
+    fn test_array() {
+        let context = JSContextRef::default();
+
+        context.eval_global("main", "var a = [1, 2, 3];").unwrap();
+
+        let val = deserialize_value::<Vec<u8>>(
+            context.global_object().unwrap().get_property("a").unwrap(),
+        );
+
+        assert_eq!(vec![1, 2, 3], val);
     }
 }

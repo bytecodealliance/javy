@@ -3,17 +3,18 @@ use super::error::JSError;
 use super::exception::Exception;
 use super::value::JSValueRef;
 use crate::js_value::{self, qjs_convert, CallbackArg};
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use once_cell::sync::Lazy;
 use quickjs_wasm_sys::{
     ext_js_null, ext_js_undefined, JSCFunctionData, JSClassDef, JSClassID, JSContext, JSValue,
-    JS_Eval, JS_ExecutePendingJob, JS_GetGlobalObject, JS_GetRuntime, JS_IsJobPending, JS_NewArray,
-    JS_NewArrayBufferCopy, JS_NewBigInt64, JS_NewBool_Ext, JS_NewCFunctionData, JS_NewClass,
-    JS_NewClassID, JS_NewContext, JS_NewFloat64_Ext, JS_NewInt32_Ext, JS_NewInt64_Ext,
-    JS_NewObject, JS_NewObjectClass, JS_NewRuntime, JS_NewStringLen, JS_NewUint32_Ext,
-    JS_ReadObject, JS_SetOpaque, JS_ThrowInternalError, JS_ThrowRangeError, JS_ThrowReferenceError,
-    JS_ThrowSyntaxError, JS_ThrowTypeError, JS_WriteObject, JS_EVAL_FLAG_COMPILE_ONLY,
-    JS_EVAL_TYPE_GLOBAL, JS_EVAL_TYPE_MODULE, JS_READ_OBJ_BYTECODE, JS_WRITE_OBJ_BYTECODE,
+    JS_Eval, JS_ExecutePendingJob, JS_GetGlobalObject, JS_GetOpaque, JS_GetRuntime,
+    JS_IsJobPending, JS_NewArray, JS_NewArrayBufferCopy, JS_NewBigInt64, JS_NewBool_Ext,
+    JS_NewCFunctionData, JS_NewClass, JS_NewClassID, JS_NewContext, JS_NewFloat64_Ext,
+    JS_NewInt32_Ext, JS_NewInt64_Ext, JS_NewObject, JS_NewObjectClass, JS_NewRuntime,
+    JS_NewStringLen, JS_NewUint32_Ext, JS_ReadObject, JS_SetOpaque, JS_ThrowInternalError,
+    JS_ThrowRangeError, JS_ThrowReferenceError, JS_ThrowSyntaxError, JS_ThrowTypeError,
+    JS_WriteObject, JS_EVAL_FLAG_COMPILE_ONLY, JS_EVAL_TYPE_GLOBAL, JS_EVAL_TYPE_MODULE,
+    JS_READ_OBJ_BYTECODE, JS_WRITE_OBJ_BYTECODE,
 };
 use std::any::TypeId;
 use std::cell::RefCell;
@@ -30,7 +31,7 @@ pub(super) static CLASSES: Lazy<Mutex<HashMap<TypeId, JSClassID>>> =
 
 #[derive(Debug)]
 pub struct JSContextRef {
-    inner: *mut JSContext,
+    pub(super) inner: *mut JSContext,
 }
 
 impl Default for JSContextRef {
@@ -64,7 +65,7 @@ impl JSContextRef {
             )
         };
 
-        JSValueRef::new(self.inner, raw)
+        JSValueRef::new(self, raw)
     }
 
     pub fn compile_module(&self, name: &str, contents: &str) -> Result<Vec<u8>> {
@@ -93,7 +94,7 @@ impl JSContextRef {
             )
         };
         // returns err with details if JS_Eval fails
-        JSValueRef::new(self.inner, raw)?;
+        JSValueRef::new(self, raw)?;
 
         let mut output_size = 0;
         unsafe {
@@ -130,34 +131,34 @@ impl JSContextRef {
             match unsafe { JS_ExecutePendingJob(runtime, &mut ctx) } {
                 0 => break Ok(()),
                 1 => (),
-                _ => break Err(Exception::new(self.inner)?.into_error()),
+                _ => break Err(Exception::new(self)?.into_error()),
             }
         }
     }
 
     pub fn global_object(&self) -> Result<JSValueRef> {
         let raw = unsafe { JS_GetGlobalObject(self.inner) };
-        JSValueRef::new(self.inner, raw)
+        JSValueRef::new(self, raw)
     }
 
     pub fn array_value(&self) -> Result<JSValueRef> {
         let raw = unsafe { JS_NewArray(self.inner) };
-        JSValueRef::new(self.inner, raw)
+        JSValueRef::new(self, raw)
     }
 
     pub fn array_buffer_value(&self, bytes: &[u8]) -> Result<JSValueRef> {
-        JSValueRef::new(self.inner, unsafe {
+        JSValueRef::new(self, unsafe {
             JS_NewArrayBufferCopy(self.inner, bytes.as_ptr(), bytes.len() as _)
         })
     }
 
     pub fn object_value(&self) -> Result<JSValueRef> {
         let raw = unsafe { JS_NewObject(self.inner) };
-        JSValueRef::new(self.inner, raw)
+        JSValueRef::new(self, raw)
     }
 
     pub(super) fn value_from_bytecode(&self, bytecode: &[u8]) -> Result<JSValueRef> {
-        JSValueRef::new(self.inner, unsafe {
+        JSValueRef::new(self, unsafe {
             JS_ReadObject(
                 self.inner,
                 bytecode.as_ptr(),
@@ -169,12 +170,12 @@ impl JSContextRef {
 
     pub fn value_from_f64(&self, val: f64) -> Result<JSValueRef> {
         let raw = unsafe { JS_NewFloat64_Ext(self.inner, val) };
-        JSValueRef::new(self.inner, raw)
+        JSValueRef::new(self, raw)
     }
 
     pub fn value_from_i32(&self, val: i32) -> Result<JSValueRef> {
         let raw = unsafe { JS_NewInt32_Ext(self.inner, val) };
-        JSValueRef::new(self.inner, raw)
+        JSValueRef::new(self, raw)
     }
 
     pub fn value_from_i64(&self, val: i64) -> Result<JSValueRef> {
@@ -183,13 +184,13 @@ impl JSContextRef {
         } else {
             unsafe { JS_NewBigInt64(self.inner, val) }
         };
-        JSValueRef::new(self.inner, raw)
+        JSValueRef::new(self, raw)
     }
 
     pub fn value_from_u64(&self, val: u64) -> Result<JSValueRef> {
         if val <= MAX_SAFE_INTEGER as u64 {
             let raw = unsafe { JS_NewInt64_Ext(self.inner, val as i64) };
-            JSValueRef::new(self.inner, raw)
+            JSValueRef::new(self, raw)
         } else {
             let value = self.value_from_str(&val.to_string())?;
             let bigint = self.global_object()?.get_property("BigInt")?;
@@ -199,26 +200,26 @@ impl JSContextRef {
 
     pub fn value_from_u32(&self, val: u32) -> Result<JSValueRef> {
         let raw = unsafe { JS_NewUint32_Ext(self.inner, val) };
-        JSValueRef::new(self.inner, raw)
+        JSValueRef::new(self, raw)
     }
 
     pub fn value_from_bool(&self, val: bool) -> Result<JSValueRef> {
         let raw = unsafe { JS_NewBool_Ext(self.inner, i32::from(val)) };
-        JSValueRef::new(self.inner, raw)
+        JSValueRef::new(self, raw)
     }
 
     pub fn value_from_str(&self, val: &str) -> Result<JSValueRef> {
         let raw =
             unsafe { JS_NewStringLen(self.inner, val.as_ptr() as *const c_char, val.len() as _) };
-        JSValueRef::new(self.inner, raw)
+        JSValueRef::new(self, raw)
     }
 
     pub fn null_value(&self) -> Result<JSValueRef> {
-        JSValueRef::new(self.inner, unsafe { ext_js_null })
+        JSValueRef::new(self, unsafe { ext_js_null })
     }
 
     pub fn undefined_value(&self) -> Result<JSValueRef> {
-        JSValueRef::new(self.inner, unsafe { ext_js_undefined })
+        JSValueRef::new(self, unsafe { ext_js_undefined })
     }
 
     /// Get the JS class ID used to wrap instances of the specified Rust type, or else create one if it doesn't
@@ -269,13 +270,13 @@ impl JSContextRef {
 
     /// Wrap the specified Rust value in a JS value
     ///
-    /// You can use [JSValueRef::get_rust_value] to retrieve the original value.
+    /// You can use [get_rust_value] to retrieve the original value.
     pub fn wrap_rust_value<T: 'static>(&self, value: T) -> Result<JSValueRef> {
         // Note the use of `RefCell` to provide checked unique references.  Since JS values can be arbitrarily
         // aliased, we need `RefCell`'s dynamic borrow checking to prevent unsound access.
         let pointer = Box::into_raw(Box::new(RefCell::new(value)));
 
-        let value = JSValueRef::new(self.inner, unsafe {
+        let value = JSValueRef::new(self, unsafe {
             JS_NewObjectClass(self.inner, self.get_class_id::<T>().try_into().unwrap())
         })?;
 
@@ -300,10 +301,10 @@ impl JSContextRef {
             let inner_ctx = JSContextRef { inner };
             match f(
                 &inner_ctx,
-                &CallbackArg::new(JSValueRef::new_unchecked(inner, this)),
+                &CallbackArg::new(JSValueRef::new_unchecked(&inner_ctx, this)),
                 &(0..argc)
                     .map(|offset| {
-                        CallbackArg::new(JSValueRef::new_unchecked(inner, unsafe {
+                        CallbackArg::new(JSValueRef::new_unchecked(&inner_ctx, unsafe {
                             *argv.offset(offset as isize)
                         }))
                     })
@@ -370,7 +371,7 @@ impl JSContextRef {
         let raw =
             unsafe { JS_NewCFunctionData(self.inner, trampoline, 0, 1, 1, &mut object.value) };
 
-        JSValueRef::new(self.inner, raw)
+        JSValueRef::new(self, raw)
     }
 }
 
@@ -391,15 +392,26 @@ where
     where
         F: FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static,
     {
-        (JSValueRef::new_unchecked(ctx, *data)
-            .get_rust_value::<F>()
-            .unwrap()
-            .borrow_mut())(ctx, this, argc, argv, magic)
+        (get_rust_value::<F>(*data).unwrap().borrow_mut())(ctx, this, argc, argv, magic)
     }
 
     Some(trampoline::<F>)
 }
 
+pub fn get_rust_value<T: 'static>(raw: JSValue) -> Result<&'static RefCell<T>> {
+    unsafe {
+        let pointer = JS_GetOpaque(
+            raw,
+            *CLASSES.lock().unwrap().get(&TypeId::of::<T>()).unwrap(),
+        ) as *const RefCell<T>;
+
+        if pointer.is_null() {
+            Err(anyhow!("type mismatch"))
+        } else {
+            Ok(&*pointer)
+        }
+    }
+}
 enum CompileType {
     Global,
     Module,
@@ -572,7 +584,8 @@ mod tests {
 
     #[test]
     fn test_constructs_a_value_as_an_object() -> Result<()> {
-        let val = JSContextRef::default().object_value()?;
+        let ctx = JSContextRef::default();
+        let val = ctx.object_value()?;
         assert!(val.is_object());
         Ok(())
     }

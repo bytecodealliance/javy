@@ -1,6 +1,6 @@
-use super::value::JSValueRef;
+use super::{context::JSContextRef, value::JSValueRef};
 use anyhow::{anyhow, Result};
-use quickjs_wasm_sys::{JSContext, JS_GetException, JS_IsError};
+use quickjs_wasm_sys::{JS_GetException, JS_IsError};
 use std::fmt;
 
 #[derive(Debug)]
@@ -20,8 +20,8 @@ impl fmt::Display for Exception {
 }
 
 impl Exception {
-    pub(super) fn new(context: *mut JSContext) -> Result<Self> {
-        let exception_value = unsafe { JS_GetException(context) };
+    pub(super) fn new(context: &JSContextRef) -> Result<Self> {
+        let exception_value = unsafe { JS_GetException(context.inner) };
         Self::from(JSValueRef::new_unchecked(context, exception_value))
     }
 
@@ -29,7 +29,7 @@ impl Exception {
         let msg = exception_obj.as_str().map(ToString::to_string)?;
         let mut stack = None;
 
-        let is_error = unsafe { JS_IsError(exception_obj.context, exception_obj.value) } != 0;
+        let is_error = unsafe { JS_IsError(exception_obj.context.inner, exception_obj.value) } != 0;
         if is_error {
             let stack_value = exception_obj.get_property("stack")?;
             if !stack_value.is_undefined() {

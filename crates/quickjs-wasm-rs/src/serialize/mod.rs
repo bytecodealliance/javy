@@ -4,7 +4,7 @@ pub mod ser;
 
 use super::js_binding::value::JSValueRef;
 
-fn as_key(v: &JSValueRef) -> anyhow::Result<&str> {
+fn as_key<'a>(v: &'a JSValueRef) -> anyhow::Result<&'a str> {
     if v.is_str() {
         let v = v.as_str()?;
         Ok(v)

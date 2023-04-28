@@ -87,7 +87,7 @@ pub fn from_qjs_value(val: &JSValueRef) -> Result<JSValue> {
 /// let js_val = "hello".into();
 /// let qjs_val = to_qjs_value(&context, &js_val).unwrap();
 /// ```
-pub fn to_qjs_value(context: &JSContextRef, val: &JSValue) -> Result<JSValueRef> {
+pub fn to_qjs_value<'a>(context: &'a JSContextRef, val: &JSValue) -> Result<JSValueRef<'a>> {
     let qjs_val = match val {
         JSValue::Undefined => context.undefined_value()?,
         JSValue::Null => context.null_value()?,

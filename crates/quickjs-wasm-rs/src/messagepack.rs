@@ -3,7 +3,7 @@ use crate::serialize::ser::Serializer;
 use crate::{JSContextRef, JSValueRef};
 use anyhow::Result;
 
-pub fn transcode_input(context: &JSContextRef, bytes: &[u8]) -> Result<JSValueRef> {
+pub fn transcode_input<'a>(context: &'a JSContextRef, bytes: &[u8]) -> Result<JSValueRef<'a>> {
     let mut deserializer = rmp_serde::Deserializer::from_read_ref(bytes);
     let mut serializer = Serializer::from_context(context)?;
     serde_transcode::transcode(&mut deserializer, &mut serializer)?;

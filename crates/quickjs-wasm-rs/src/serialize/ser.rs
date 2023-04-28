@@ -8,8 +8,8 @@ use super::as_key;
 
 pub struct Serializer<'c> {
     pub context: &'c JSContextRef,
-    pub value: JSValueRef,
-    pub key: JSValueRef,
+    pub value: JSValueRef<'c>,
+    pub key: JSValueRef<'c>,
 }
 
 impl SerError for Error {

@@ -18,13 +18,13 @@ use crate::js_binding::value::JSValueRef;
 /// })?;
 /// ```
 #[derive(Copy, Clone)]
-pub struct CallbackArg {
-    inner: JSValueRef,
+pub struct CallbackArg<'a> {
+    inner: JSValueRef<'a>,
 }
 
-impl CallbackArg {
+impl<'a> CallbackArg<'a> {
     /// Create a new `CallbackArg` with a `JSValueRef`.
-    pub fn new(inner: JSValueRef) -> Self {
+    pub fn new(inner: JSValueRef<'a>) -> CallbackArg<'a> {
         Self { inner }
     }
 
@@ -43,7 +43,7 @@ impl CallbackArg {
     }
 }
 
-impl fmt::Display for CallbackArg {
+impl fmt::Display for CallbackArg<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_js_value().unwrap())
     }
@@ -53,7 +53,7 @@ impl fmt::Display for CallbackArg {
 /// for various Rust types.
 macro_rules! try_from_impl {
     ($($t:ty),+ $(,)?) => {
-        $(impl TryFrom<&CallbackArg> for $t {
+        $(impl TryFrom<&CallbackArg<'_>> for $t {
             type Error = anyhow::Error;
 
             fn try_from(value: &CallbackArg) -> Result<Self> {
@@ -61,7 +61,7 @@ macro_rules! try_from_impl {
             }
         }
 
-        impl TryFrom<CallbackArg> for $t {
+        impl TryFrom<CallbackArg<'_>> for $t {
             type Error = anyhow::Error;
 
             fn try_from(value: CallbackArg) -> Result<Self> {
