@@ -3,6 +3,19 @@ use anyhow::{anyhow, Result};
 use quickjs_wasm_sys::{JS_GetException, JS_IsError};
 use std::fmt;
 
+/// `Exception` represents a JavaScript exception that occurs within the QuickJS context.
+///
+/// This struct provides a convenient way to capture and handle JavaScript exceptions that
+/// may be thrown during the execution of JavaScript code. It includes the error message and
+/// an optional stack trace to help with debugging and error reporting.
+///
+/// # Example
+///
+/// ```
+/// // Assuming you have a `JSContextRef` where an exception has been thrown.
+/// let exception = Exception::new(context)?;
+/// let err = Err(exception.into_error());
+/// ```
 #[derive(Debug)]
 pub struct Exception {
     msg: String,

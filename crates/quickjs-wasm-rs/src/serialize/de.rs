@@ -13,6 +13,24 @@ impl SerError for Error {
     }
 }
 
+/// `Deserializer` is a deserializer for `JSValueRef` values, implementing the `serde::Deserializer` trait.
+///
+/// This struct is responsible for converting `JSValueRef`, into Rust types using the Serde deserialization framework.
+///
+/// # Lifetime
+///
+/// The lifetime parameter `'de` represents the lifetime of the reference to the `JSValueRef`.
+/// This ensures that the `Deserializer` cannot outlive the JavaScript value it is deserializing.
+///
+/// # Example
+///
+/// ```
+/// // Assuming you have a JSValueRef instance named value containing an i32
+/// let mut deserializer = Deserializer::from(value);
+///
+/// // Use deserializer to deserialize the JavaScript value into a Rust type
+/// let number: i32 = serde::Deserialize::deserialize(deserializer)?;
+/// ```
 pub struct Deserializer<'de> {
     value: JSValueRef<'de>,
     map_key: bool,

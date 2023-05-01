@@ -19,6 +19,16 @@ pub enum BigInt {
     Unsigned(u64),
 }
 
+/// `JSValueRef` is a wrapper around a QuickJS `JSValue` with a reference to its associated `JSContextRef`.
+///
+/// This struct provides a safe interface for interacting with JavaScript values in the context of
+/// their associated QuickJS execution environment.
+///
+/// # Lifetime
+///
+/// The lifetime parameter `'a` represents the lifetime of the reference to the `JSContextRef`.
+/// This ensures that the `JSValueRef` cannot outlive the context it is associated with, preventing
+/// potential use-after-free issues or other unsafe behavior.
 #[derive(Debug, Copy, Clone)]
 pub struct JSValueRef<'a> {
     pub(super) context: &'a JSContextRef,

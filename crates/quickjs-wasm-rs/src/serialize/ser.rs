@@ -6,6 +6,23 @@ use serde::{ser, ser::Error as SerError, Serialize};
 
 use super::as_key;
 
+/// `Serializer` is a serializer for `JSValueRef` values, implementing the `serde::Serializer` trait.
+///
+/// This struct is responsible for converting Rust types into `JSValueRef` using the Serde
+/// serialization framework.
+///
+/// # Lifetime
+///
+/// The lifetime parameter `'c` represents the lifetime of the reference to the `JSContextRef`.
+/// This ensures that the `Serializer` cannot outlive the JavaScript context it is associated with.
+///
+/// # Example
+///
+/// ```
+/// // Assuming you have a JSContextRef instance named context
+/// let serializer = Serializer::from_context(context)?;
+/// let value: JSValueRef = serializer.serialize_u32(42)?;
+/// ```
 pub struct Serializer<'c> {
     pub context: &'c JSContextRef,
     pub value: JSValueRef<'c>,

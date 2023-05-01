@@ -29,6 +29,26 @@ use std::sync::Mutex;
 pub(super) static CLASSES: Lazy<Mutex<HashMap<TypeId, JSClassID>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
+/// `JSContextRef` is a wrapper around a raw pointer to a QuickJS `JSContext`.
+///
+/// This struct provides a safe interface for interacting with the underlying
+/// QuickJS context. It is primarily used for managing the JavaScript execution
+/// environment, such as creating and manipulating JavaScript objects, functions,
+/// and values.
+///
+/// # Safety
+///
+/// The raw pointer to `JSContext` is not exposed publicly, ensuring that
+/// the lifetime of the `JSContextRef` does not outlive the lifetime of the
+/// QuickJS context it refers to.
+///
+/// # Example
+///
+/// ```
+/// // Assuming you have a function to create a new QuickJS context
+/// let context = JSContextRef::default();
+/// context.eval_global("test.js", "1 + 1")?;
+/// ```
 #[derive(Debug)]
 pub struct JSContextRef {
     pub(super) inner: *mut JSContext,
@@ -269,8 +289,6 @@ impl JSContextRef {
     }
 
     /// Wrap the specified Rust value in a JS value
-    ///
-    /// You can use [get_rust_value] to retrieve the original value.
     pub fn wrap_rust_value<T: 'static>(&self, value: T) -> Result<JSValueRef> {
         // Note the use of `RefCell` to provide checked unique references.  Since JS values can be arbitrarily
         // aliased, we need `RefCell`'s dynamic borrow checking to prevent unsound access.
@@ -398,7 +416,7 @@ where
     Some(trampoline::<F>)
 }
 
-pub fn get_rust_value<T: 'static>(raw: JSValue) -> Result<&'static RefCell<T>> {
+fn get_rust_value<T: 'static>(raw: JSValue) -> Result<&'static RefCell<T>> {
     unsafe {
         let pointer = JS_GetOpaque(
             raw,
@@ -412,6 +430,7 @@ pub fn get_rust_value<T: 'static>(raw: JSValue) -> Result<&'static RefCell<T>> {
         }
     }
 }
+
 enum CompileType {
     Global,
     Module,
