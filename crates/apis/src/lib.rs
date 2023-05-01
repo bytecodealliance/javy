@@ -28,14 +28,21 @@
 use anyhow::Result;
 use javy::Runtime;
 
+#[cfg(feature = "console")]
+use console::Console;
+
 pub use api_config::APIConfig;
+#[cfg(feature = "console")]
+pub use api_config::LogStream;
 pub use runtime_ext::RuntimeExt;
 
 mod api_config;
+#[cfg(feature = "console")]
+mod console;
 mod runtime_ext;
 
 pub(crate) trait JSApiSet {
-    fn register(&self, runtime: &Runtime, config: APIConfig) -> Result<()>;
+    fn register(&self, runtime: &Runtime, config: &APIConfig) -> Result<()>;
 }
 
 /// Adds enabled JS APIs to the provided [`Runtime`].
@@ -49,6 +56,8 @@ pub(crate) trait JSApiSet {
 /// javy_apis::add_to_runtime(&runtime, APIConfig::default())?;
 /// # Ok::<(), Error>(())
 /// ```
-pub fn add_to_runtime(_runtime: &Runtime, _config: APIConfig) -> Result<()> {
+pub fn add_to_runtime(runtime: &Runtime, config: APIConfig) -> Result<()> {
+    #[cfg(feature = "console")]
+    Console::new().register(runtime, &config)?;
     Ok(())
 }

@@ -5,6 +5,9 @@ authors.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[features]
+console = []
+
 [dependencies]
 anyhow = { workspace = true }
 javy = { path = "../javy" }

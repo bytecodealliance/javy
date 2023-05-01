@@ -1,7 +1,6 @@
 use javy::Runtime;
 use once_cell::sync::OnceCell;
 use std::alloc::{alloc, dealloc, Layout};
-use std::io;
 use std::ptr::copy_nonoverlapping;
 use std::slice;
 use std::str;
@@ -24,7 +23,7 @@ static mut RUNTIME: OnceCell<Runtime> = OnceCell::new();
 #[export_name = "wizer.initialize"]
 pub extern "C" fn init() {
     let runtime = runtime::new_runtime().unwrap();
-    globals::inject_javy_globals(&runtime, io::stderr(), io::stderr()).unwrap();
+    globals::inject_javy_globals(&runtime).unwrap();
     unsafe { RUNTIME.set(runtime).unwrap() };
 }
 

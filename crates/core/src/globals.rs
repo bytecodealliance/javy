@@ -5,24 +5,9 @@ use std::borrow::Cow;
 use std::io::{Read, Write};
 use std::str;
 
-pub fn inject_javy_globals<T1, T2>(
-    runtime: &Runtime,
-    log_stream: T1,
-    error_stream: T2,
-) -> anyhow::Result<()>
-where
-    T1: Write + 'static,
-    T2: Write + 'static,
-{
+pub fn inject_javy_globals(runtime: &Runtime) -> anyhow::Result<()> {
     let context = runtime.context();
     let global = context.global_object()?;
-
-    let console_log_callback = context.wrap_callback(console_log_to(log_stream))?;
-    let console_error_callback = context.wrap_callback(console_log_to(error_stream))?;
-    let console_object = context.object_value()?;
-    console_object.set_property("log", console_log_callback)?;
-    console_object.set_property("error", console_error_callback)?;
-    global.set_property("console", console_object)?;
 
     let javy_object = context.object_value()?;
     global.set_property("Javy", javy_object)?;
@@ -91,30 +76,6 @@ where
     Ok(())
 }
 
-fn console_log_to<T>(
-    mut stream: T,
-) -> impl FnMut(&JSContextRef, &CallbackArg, &[CallbackArg]) -> anyhow::Result<JSValue>
-where
-    T: Write + 'static,
-{
-    move |_ctx: &JSContextRef, _this: &CallbackArg, args: &[CallbackArg]| {
-        // Write full string to in-memory destination before writing to stream since each write call to the stream
-        // will invoke a hostcall.
-        let mut log_line = String::new();
-        for (i, arg) in args.iter().enumerate() {
-            if i != 0 {
-                log_line.push(' ');
-            }
-            let line = arg.to_string();
-            log_line.push_str(&line);
-        }
-
-        writeln!(stream, "{log_line}")?;
-
-        Ok(JSValue::Undefined)
-    }
-}
-
 fn decode_utf8_buffer_to_js_string(
 ) -> impl FnMut(&JSContextRef, &CallbackArg, &[CallbackArg]) -> anyhow::Result<JSValue> {
     move |_ctx: &JSContextRef, _this: &CallbackArg, args: &[CallbackArg]| {
@@ -172,113 +133,18 @@ mod tests {
 
     use super::inject_javy_globals;
     use anyhow::Result;
-    use std::cell::RefCell;
-    use std::rc::Rc;
-    use std::{cmp, io};
-
-    #[test]
-    fn test_console_log() -> Result<()> {
-        let mut stream = SharedStream::default();
-
-        let runtime = runtime::new_runtime()?;
-        let ctx = runtime.context();
-        inject_javy_globals(&runtime, stream.clone(), stream.clone())?;
-
-        ctx.eval_global("main", "console.log(\"hello world\");")?;
-        assert_eq!(b"hello world\n", stream.buffer.borrow().as_slice());
-
-        stream.clear();
-
-        ctx.eval_global("main", "console.log(\"bonjour\", \"le\", \"monde\")")?;
-        assert_eq!(b"bonjour le monde\n", stream.buffer.borrow().as_slice());
-
-        stream.clear();
-
-        ctx.eval_global(
-            "main",
-            "console.log(2.3, true, { foo: 'bar' }, null, undefined)",
-        )?;
-        assert_eq!(
-            b"2.3 true [object Object] null undefined\n",
-            stream.buffer.borrow().as_slice()
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn test_console_error() -> Result<()> {
-        let mut stream = SharedStream::default();
-
-        let runtime = runtime::new_runtime()?;
-        let ctx = runtime.context();
-        inject_javy_globals(&runtime, stream.clone(), stream.clone())?;
-
-        ctx.eval_global("main", "console.error(\"hello world\");")?;
-        assert_eq!(b"hello world\n", stream.buffer.borrow().as_slice());
-
-        stream.clear();
-
-        ctx.eval_global("main", "console.error(\"bonjour\", \"le\", \"monde\")")?;
-        assert_eq!(b"bonjour le monde\n", stream.buffer.borrow().as_slice());
-
-        stream.clear();
-
-        ctx.eval_global(
-            "main",
-            "console.error(2.3, true, { foo: 'bar' }, null, undefined)",
-        )?;
-        assert_eq!(
-            b"2.3 true [object Object] null undefined\n",
-            stream.buffer.borrow().as_slice()
-        );
-        Ok(())
-    }
 
     #[test]
     fn test_text_encoder_decoder() -> Result<()> {
-        let stream = SharedStream::default();
         let runtime = runtime::new_runtime()?;
         let ctx = runtime.context();
-        inject_javy_globals(&runtime, stream.clone(), stream.clone())?;
+        inject_javy_globals(&runtime)?;
         ctx.eval_global(
             "main",
-            "let encoder = new TextEncoder(); let buffer = encoder.encode('hello'); let decoder = new TextDecoder(); console.log(decoder.decode(buffer));"
+            "let encoder = new TextEncoder(); let buffer = encoder.encode('hello'); let decoder = new TextDecoder(); globalThis.foo = decoder.decode(buffer);"
         )?;
-        assert_eq!(b"hello\n", stream.buffer.borrow().as_slice());
+        assert_eq!("hello", ctx.global_object()?.get_property("foo")?.as_str()?);
 
         Ok(())
-    }
-
-    #[derive(Clone)]
-    struct SharedStream {
-        buffer: Rc<RefCell<Vec<u8>>>,
-        capacity: usize,
-    }
-
-    impl Default for SharedStream {
-        fn default() -> Self {
-            Self {
-                buffer: Default::default(),
-                capacity: usize::MAX,
-            }
-        }
-    }
-
-    impl SharedStream {
-        fn clear(&mut self) {
-            (*self.buffer).borrow_mut().clear();
-        }
-    }
-
-    impl io::Write for SharedStream {
-        fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-            let available_capacity = self.capacity - (*self.buffer).borrow().len();
-            let leftover = cmp::min(available_capacity, buf.len());
-            (*self.buffer).borrow_mut().write(&buf[..leftover])
-        }
-
-        fn flush(&mut self) -> io::Result<()> {
-            (*self.buffer).borrow_mut().flush()
-        }
     }
 }

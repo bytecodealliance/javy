@@ -13,7 +13,7 @@ static mut BYTECODE: OnceCell<Vec<u8>> = OnceCell::new();
 #[export_name = "wizer.initialize"]
 pub extern "C" fn init() {
     let runtime = runtime::new_runtime().unwrap();
-    globals::inject_javy_globals(&runtime, io::stderr(), io::stderr()).unwrap();
+    globals::inject_javy_globals(&runtime).unwrap();
 
     let mut contents = String::new();
     io::stdin().read_to_string(&mut contents).unwrap();
