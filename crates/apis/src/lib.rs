@@ -35,7 +35,7 @@ mod api_config;
 mod runtime_ext;
 
 pub(crate) trait JSApiSet {
-    fn register(&self, runtime: &Runtime, config: APIConfig) -> Result<()>;
+    fn register(&self, runtime: &Runtime, config: &APIConfig) -> Result<()>;
 }
 
 /// Adds enabled JS APIs to the provided [`Runtime`].
