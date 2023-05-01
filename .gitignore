@@ -21,4 +21,5 @@ tests/target/*.wasm
 
 .idea
 .vscode
+
 crates/quickjs-wasm-sys/wasi-sdk
