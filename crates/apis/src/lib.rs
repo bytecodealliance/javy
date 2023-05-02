@@ -33,6 +33,7 @@ pub use runtime_ext::RuntimeExt;
 
 mod api_config;
 mod runtime_ext;
+mod text_codec;
 
 pub(crate) trait JSApiSet {
     fn register(&self, runtime: &Runtime, config: &APIConfig) -> Result<()>;
