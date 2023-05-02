@@ -27,6 +27,7 @@ wasmtime-wasi = { workspace = true }
 wasi-common = { workspace = true }
 wasmparser = "0.101.0"
 leb128 = "0.2.5"
+safir = "0.1.0"
 
 [dev-dependencies]
 serde_json = "1.0"
