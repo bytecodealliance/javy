@@ -25,7 +25,7 @@ impl LogStream {
 ///
 /// Example usage:
 /// ```
-/// # use javy_apis::{APIConfig, LogStream};
+/// # use javy_apis::APIConfig;
 /// let api_config = APIConfig::default();
 /// ```
 #[derive(Debug)]
