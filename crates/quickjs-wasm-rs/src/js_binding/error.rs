@@ -7,22 +7,17 @@ use std::fmt::{self, Display, Formatter};
 /// This enum provides a convenient way to classify and handle different types of JavaScript errors
 /// that may be encountered. Each variant includes an associated error message to help with
 /// debugging and error reporting.
-///
-/// # Variants
-///
-/// - `Syntax(String)`: A syntax error that occurs when parsing or executing invalid JavaScript code.
-/// - `Type(String)`: A type error that occurs when an operation is performed on an incompatible type.
-/// - `Reference(String)`: A reference error that occurs when trying to access an undefined variable or property.
-/// - `Range(String)`: A range error that occurs when a value is outside the allowable range or when an invalid
-///   length is specified for an array or string.
-/// - `Internal(String)`: An internal error that occurs due to an issue within the JavaScript engine or the
-///   Rust-QuickJS integration.
 #[derive(Debug)]
 pub enum JSError {
+    /// A syntax error that occurs when parsing or executing invalid JavaScript code.
     Syntax(String),
+    /// A type error that occurs when an operation is performed on an incompatible type.
     Type(String),
+    /// A reference error that occurs when trying to access an undefined variable or property.
     Reference(String),
+    /// A range error that occurs when a value is outside the allowable range or when an invalid length is specified for an array or string.
     Range(String),
+    /// An internal error that occurs due to an issue within the JavaScript engine or the Rust-QuickJS integration.
     Internal(String),
 }
 
