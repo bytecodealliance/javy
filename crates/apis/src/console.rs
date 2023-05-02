@@ -20,8 +20,8 @@ impl JSApiSet for Console {
     fn register(&self, runtime: &Runtime, config: &APIConfig) -> Result<()> {
         register_console(
             runtime.context(),
-            config.log_stream.as_stream(),
-            config.error_stream.as_stream(),
+            config.log_stream.to_stream(),
+            config.error_stream.to_stream(),
         )
     }
 }

@@ -13,7 +13,7 @@ pub enum LogStream {
 
 #[cfg(feature = "console")]
 impl LogStream {
-    pub(crate) fn as_stream(&self) -> Box<dyn Write + 'static> {
+    pub(crate) fn to_stream(&self) -> Box<dyn Write + 'static> {
         match self {
             Self::StdErr => Box::new(io::stderr()),
             Self::StdOut => Box::new(io::stdout()),
