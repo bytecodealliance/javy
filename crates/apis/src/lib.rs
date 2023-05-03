@@ -28,12 +28,9 @@
 use anyhow::Result;
 use javy::Runtime;
 
-#[cfg(feature = "console")]
-use console::Console;
-
 pub use api_config::APIConfig;
 #[cfg(feature = "console")]
-pub use api_config::LogStream;
+pub use console::{ConsoleConfig, LogStream};
 pub use runtime_ext::RuntimeExt;
 
 mod api_config;
@@ -58,6 +55,6 @@ pub(crate) trait JSApiSet {
 /// ```
 pub fn add_to_runtime(runtime: &Runtime, config: APIConfig) -> Result<()> {
     #[cfg(feature = "console")]
-    Console::new().register(runtime, &config)?;
+    console::Console::new().register(runtime, &config)?;
     Ok(())
 }

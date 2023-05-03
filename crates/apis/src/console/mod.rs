@@ -8,10 +8,14 @@ use javy::{
 
 use crate::{APIConfig, JSApiSet};
 
-pub(crate) struct Console {}
+pub use config::{ConsoleConfig, LogStream};
+
+mod config;
+
+pub(super) struct Console {}
 
 impl Console {
-    pub(crate) fn new() -> Self {
+    pub(super) fn new() -> Self {
         Console {}
     }
 }
@@ -20,8 +24,8 @@ impl JSApiSet for Console {
     fn register(&self, runtime: &Runtime, config: &APIConfig) -> Result<()> {
         register_console(
             runtime.context(),
-            config.log_stream.to_stream(),
-            config.error_stream.to_stream(),
+            config.console.log_stream.to_stream(),
+            config.console.error_stream.to_stream(),
         )
     }
 }
