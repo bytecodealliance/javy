@@ -97,7 +97,7 @@ impl<'a> JSValueRef<'a> {
         ret
     }
 
-    /// Converts the JavaScript value to an `BigInt` without checking its type.
+    /// Converts the JavaScript value to a `BigInt` without checking its type.
     pub fn as_big_int_unchecked(&self) -> Result<BigInt> {
         if self.is_signed_big_int() {
             let v = self.bigint_as_i64()?;

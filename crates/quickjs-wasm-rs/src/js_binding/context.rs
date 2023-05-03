@@ -71,15 +71,15 @@ impl Default for JSContextRef {
 }
 
 impl JSContextRef {
-    /// Evaluates a JavaScript script in the global context.
+    /// Evaluates a JavaScript code in the global scope.
     ///
-    /// This method takes a JavaScript script as a string and evaluates it in the global context of the
-    /// JavaScript runtime.
+    /// This method takes a JavaScript code as a string and evaluates it in the global scope of the
+    /// JavaScript context.
     ///
     /// # Arguments
     ///
     /// * `name`: A string representing the name of the script.
-    /// * `contents`: The JavaScript script to be evaluated as a string.
+    /// * `contents`: The JavaScript code to be evaluated as a string.
     ///
     /// # Example
     ///
@@ -104,22 +104,22 @@ impl JSContextRef {
         JSValueRef::new(self, raw)
     }
 
-    /// Compiles JavaScript to bytecode evaluated as an ECMAScript module.
+    /// Compiles JavaScript to QuickJS bytecode with an ECMAScript module scope.
     ///
     /// # Arguments
     ///
     /// * `name`: A string representing the name of the script.
-    /// * `contents`: The JavaScript script to be compiled as a string.
+    /// * `contents`: The JavaScript code to be compiled as a string.
     pub fn compile_module(&self, name: &str, contents: &str) -> Result<Vec<u8>> {
         self.compile(name, contents, CompileType::Module)
     }
 
-    /// Compiles JavaScript to bytecode evaluated in the global context.
+    /// Compiles JavaScript to bytecode with a global scope.
     ///
     /// # Arguments
     ///
     /// * `name`: A string representing the name of the script.
-    /// * `contents`: The JavaScript script to be compiled as a string.
+    /// * `contents`: The JavaScript code to be compiled as a string.
     pub fn compile_global(&self, name: &str, contents: &str) -> Result<Vec<u8>> {
         self.compile(name, contents, CompileType::Global)
     }
@@ -160,15 +160,15 @@ impl JSContextRef {
         }
     }
 
-    /// Evaluate the bytecode of compiled JavaScript.
+    /// Evaluate QuickJS bytecode.
     pub fn eval_binary(&self, bytecode: &[u8]) -> Result<JSValueRef> {
         self.value_from_bytecode(bytecode)?.eval_function()
     }
 
-    /// Checks if there are any pending jobs in the JavaScript runtime.
+    /// Checks if there are any pending jobs in the JavaScript context.
     ///
-    /// This method returns `true` if there are pending jobs (e.g., promises) in the
-    /// JavaScript runtime, and `false` otherwise.
+    /// This method returns `true` if there are pending jobs (for example, promises) in the
+    /// JavaScript context, and `false` otherwise.
     pub fn is_pending(&self) -> bool {
         unsafe {
             let runtime = JS_GetRuntime(self.inner);
@@ -176,9 +176,9 @@ impl JSContextRef {
         }
     }
 
-    /// Executes all pending jobs in the JavaScript runtime.
+    /// Executes all pending jobs in the JavaScript context.
     ///
-    /// This method executes all pending jobs (e.g., promises) in the JavaScript runtime
+    /// This method executes all pending jobs (e.g., promises) in the JavaScript context
     /// until there are no more pending jobs or an exception occurs. It returns a `Result` indicating
     /// whether the execution was successful or an error if an exception was thrown.
     pub fn execute_pending(&self) -> Result<()> {
@@ -194,7 +194,7 @@ impl JSContextRef {
         }
     }
 
-    /// Retrieves the global object of the JavaScript runtime.
+    /// Retrieves the global object of the JavaScript context.
     pub fn global_object(&self) -> Result<JSValueRef> {
         let raw = unsafe { JS_GetGlobalObject(self.inner) };
         JSValueRef::new(self, raw)
