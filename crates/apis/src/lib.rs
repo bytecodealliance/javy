@@ -37,6 +37,8 @@ mod api_config;
 #[cfg(feature = "console")]
 mod console;
 mod runtime_ext;
+#[cfg(feature = "stream_io")]
+mod stream_io;
 
 pub(crate) trait JSApiSet {
     fn register(&self, runtime: &Runtime, config: &APIConfig) -> Result<()>;
@@ -56,5 +58,7 @@ pub(crate) trait JSApiSet {
 pub fn add_to_runtime(runtime: &Runtime, config: APIConfig) -> Result<()> {
     #[cfg(feature = "console")]
     console::Console::new().register(runtime, &config)?;
+    #[cfg(feature = "stream_io")]
+    stream_io::StreamIO::new().register(runtime, &config)?;
     Ok(())
 }
