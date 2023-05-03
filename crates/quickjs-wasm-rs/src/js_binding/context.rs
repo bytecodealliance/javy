@@ -71,6 +71,22 @@ impl Default for JSContextRef {
 }
 
 impl JSContextRef {
+    /// Evaluates a JavaScript script in the global context.
+    ///
+    /// This method takes a JavaScript script as a string and evaluates it in the global context of the
+    /// JavaScript runtime.
+    ///
+    /// # Arguments
+    ///
+    /// * `name`: A string representing the name of the script.
+    /// * `contents`: The JavaScript script to be evaluated as a string.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let context = JSContextRef::default();
+    /// context.eval_global("test.js", "1 + 1")?;
+    /// ```
     pub fn eval_global(&self, name: &str, contents: &str) -> Result<JSValueRef> {
         let input = CString::new(contents)?;
         let script_name = CString::new(name)?;
@@ -88,10 +104,22 @@ impl JSContextRef {
         JSValueRef::new(self, raw)
     }
 
+    /// Compiles JavaScript to bytecode evaluated as an ECMAScript module.
+    ///
+    /// # Arguments
+    ///
+    /// * `name`: A string representing the name of the script.
+    /// * `contents`: The JavaScript script to be compiled as a string.
     pub fn compile_module(&self, name: &str, contents: &str) -> Result<Vec<u8>> {
         self.compile(name, contents, CompileType::Module)
     }
 
+    /// Compiles JavaScript to bytecode evaluated in the global context.
+    ///
+    /// # Arguments
+    ///
+    /// * `name`: A string representing the name of the script.
+    /// * `contents`: The JavaScript script to be compiled as a string.
     pub fn compile_global(&self, name: &str, contents: &str) -> Result<Vec<u8>> {
         self.compile(name, contents, CompileType::Global)
     }
@@ -132,10 +160,15 @@ impl JSContextRef {
         }
     }
 
+    /// Evaluate the bytecode of compiled JavaScript.
     pub fn eval_binary(&self, bytecode: &[u8]) -> Result<JSValueRef> {
         self.value_from_bytecode(bytecode)?.eval_function()
     }
 
+    /// Checks if there are any pending jobs in the JavaScript runtime.
+    ///
+    /// This method returns `true` if there are pending jobs (e.g., promises) in the
+    /// JavaScript runtime, and `false` otherwise.
     pub fn is_pending(&self) -> bool {
         unsafe {
             let runtime = JS_GetRuntime(self.inner);
@@ -143,6 +176,11 @@ impl JSContextRef {
         }
     }
 
+    /// Executes all pending jobs in the JavaScript runtime.
+    ///
+    /// This method executes all pending jobs (e.g., promises) in the JavaScript runtime
+    /// until there are no more pending jobs or an exception occurs. It returns a `Result` indicating
+    /// whether the execution was successful or an error if an exception was thrown.
     pub fn execute_pending(&self) -> Result<()> {
         let runtime = unsafe { JS_GetRuntime(self.inner) };
 
@@ -156,22 +194,26 @@ impl JSContextRef {
         }
     }
 
+    /// Retrieves the global object of the JavaScript runtime.
     pub fn global_object(&self) -> Result<JSValueRef> {
         let raw = unsafe { JS_GetGlobalObject(self.inner) };
         JSValueRef::new(self, raw)
     }
 
+    /// Creates a new JavaScript Array object.
     pub fn array_value(&self) -> Result<JSValueRef> {
         let raw = unsafe { JS_NewArray(self.inner) };
         JSValueRef::new(self, raw)
     }
 
+    /// Creates a new JavaScript ArrayBuffer object with the specified bytes.
     pub fn array_buffer_value(&self, bytes: &[u8]) -> Result<JSValueRef> {
         JSValueRef::new(self, unsafe {
             JS_NewArrayBufferCopy(self.inner, bytes.as_ptr(), bytes.len() as _)
         })
     }
 
+    /// Creates a new JavaScript Object.
     pub fn object_value(&self) -> Result<JSValueRef> {
         let raw = unsafe { JS_NewObject(self.inner) };
         JSValueRef::new(self, raw)
@@ -188,16 +230,19 @@ impl JSContextRef {
         })
     }
 
+    /// Creates a new JavaScript Number object from a `f64` value.
     pub fn value_from_f64(&self, val: f64) -> Result<JSValueRef> {
         let raw = unsafe { JS_NewFloat64_Ext(self.inner, val) };
         JSValueRef::new(self, raw)
     }
 
+    /// Creates a new JavaScript Number object from an `i32` value.
     pub fn value_from_i32(&self, val: i32) -> Result<JSValueRef> {
         let raw = unsafe { JS_NewInt32_Ext(self.inner, val) };
         JSValueRef::new(self, raw)
     }
 
+    /// Creates a new JavaScript Number or BigInt object from an `i64` value.
     pub fn value_from_i64(&self, val: i64) -> Result<JSValueRef> {
         let raw = if (MIN_SAFE_INTEGER..=MAX_SAFE_INTEGER).contains(&val) {
             unsafe { JS_NewInt64_Ext(self.inner, val) }
@@ -207,6 +252,7 @@ impl JSContextRef {
         JSValueRef::new(self, raw)
     }
 
+    /// Creates a new JavaScript Number or BigInt object from a `u64` value.
     pub fn value_from_u64(&self, val: u64) -> Result<JSValueRef> {
         if val <= MAX_SAFE_INTEGER as u64 {
             let raw = unsafe { JS_NewInt64_Ext(self.inner, val as i64) };
@@ -218,74 +264,33 @@ impl JSContextRef {
         }
     }
 
+    /// Creates a new JavaScript Number object from a `u32` value.
     pub fn value_from_u32(&self, val: u32) -> Result<JSValueRef> {
         let raw = unsafe { JS_NewUint32_Ext(self.inner, val) };
         JSValueRef::new(self, raw)
     }
 
+    /// Creates a new JavaScript Boolean object from a `bool` value.
     pub fn value_from_bool(&self, val: bool) -> Result<JSValueRef> {
         let raw = unsafe { JS_NewBool_Ext(self.inner, i32::from(val)) };
         JSValueRef::new(self, raw)
     }
 
+    /// Creates a new JavaScript String object from a `&str` value.
     pub fn value_from_str(&self, val: &str) -> Result<JSValueRef> {
         let raw =
             unsafe { JS_NewStringLen(self.inner, val.as_ptr() as *const c_char, val.len() as _) };
         JSValueRef::new(self, raw)
     }
 
+    /// Creates a new JavaScript Null object.
     pub fn null_value(&self) -> Result<JSValueRef> {
         JSValueRef::new(self, unsafe { ext_js_null })
     }
 
+    /// Creates a new JavaScript Undefined object.
     pub fn undefined_value(&self) -> Result<JSValueRef> {
         JSValueRef::new(self, unsafe { ext_js_undefined })
-    }
-
-    /// Get the JS class ID used to wrap instances of the specified Rust type, or else create one if it doesn't
-    /// already exist.
-    fn get_class_id<T: 'static>(&self) -> JSClassID {
-        // Since there is no way (as of this writing) to free a `JSValue` wrapped in a `Value` (i.e. they always
-        // leak), there is no need to define a finalizer.  If that changes in the future, this is what the
-        // finalizer might look like:
-        //
-        // ```
-        // unsafe extern "C" fn finalize<T: 'static>(_runtime: *mut JSRuntime, value: JSValue) {
-        //     let pointer = JS_GetOpaque(
-        //         value,
-        //         *CLASSES.lock().unwrap().get(&TypeId::of::<T>()).unwrap(),
-        //     ) as *mut RefCell<T>;
-
-        //     assert!(!pointer.is_null());
-
-        //     drop(Box::from_raw(pointer))
-        // }
-        // ```
-
-        *CLASSES
-            .lock()
-            .unwrap()
-            .entry(TypeId::of::<T>())
-            .or_insert_with(|| unsafe {
-                let mut id = 0;
-                JS_NewClassID(&mut id);
-
-                assert!(
-                    0 == JS_NewClass(
-                        JS_GetRuntime(self.inner),
-                        id,
-                        &JSClassDef {
-                            class_name: b"<rust closure>\0" as *const _ as *const i8,
-                            finalizer: None,
-                            gc_mark: None,
-                            call: None,
-                            exotic: ptr::null_mut(),
-                        },
-                    )
-                );
-
-                id
-            })
     }
 
     /// Wrap the specified Rust value in a JS value
@@ -390,6 +395,52 @@ impl JSContextRef {
             unsafe { JS_NewCFunctionData(self.inner, trampoline, 0, 1, 1, &mut object.value) };
 
         JSValueRef::new(self, raw)
+    }
+
+    /// Get the JS class ID used to wrap instances of the specified Rust type, or else create one if it doesn't
+    /// already exist.
+    fn get_class_id<T: 'static>(&self) -> JSClassID {
+        // Since there is no way (as of this writing) to free a `JSValue` wrapped in a `Value` (i.e. they always
+        // leak), there is no need to define a finalizer.  If that changes in the future, this is what the
+        // finalizer might look like:
+        //
+        // ```
+        // unsafe extern "C" fn finalize<T: 'static>(_runtime: *mut JSRuntime, value: JSValue) {
+        //     let pointer = JS_GetOpaque(
+        //         value,
+        //         *CLASSES.lock().unwrap().get(&TypeId::of::<T>()).unwrap(),
+        //     ) as *mut RefCell<T>;
+
+        //     assert!(!pointer.is_null());
+
+        //     drop(Box::from_raw(pointer))
+        // }
+        // ```
+
+        *CLASSES
+            .lock()
+            .unwrap()
+            .entry(TypeId::of::<T>())
+            .or_insert_with(|| unsafe {
+                let mut id = 0;
+                JS_NewClassID(&mut id);
+
+                assert!(
+                    0 == JS_NewClass(
+                        JS_GetRuntime(self.inner),
+                        id,
+                        &JSClassDef {
+                            class_name: b"<rust closure>\0" as *const _ as *const i8,
+                            finalizer: None,
+                            gc_mark: None,
+                            call: None,
+                            exotic: ptr::null_mut(),
+                        },
+                    )
+                );
+
+                id
+            })
     }
 }
 
