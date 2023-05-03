@@ -60,6 +60,11 @@ impl<'a> JSValueRef<'a> {
         })
     }
 
+    /// Calls a JavaScript function with the specified `receiver` and `args`.
+    ///
+    /// # Arguments
+    /// * `receiver`: The object on which the function is called.
+    /// * `args`: A slice of `JSValueRef` representing the arguments to be passed to the function.
     pub fn call(&self, receiver: &Self, args: &[Self]) -> Result<Self> {
         let args: Vec<JSValue> = args.iter().map(|v| v.value).collect();
         let return_val = unsafe {
@@ -75,20 +80,24 @@ impl<'a> JSValueRef<'a> {
         Self::new(self.context, return_val)
     }
 
+    /// Converts the JavaScript value to an `i32` without checking its type.
     pub fn as_i32_unchecked(&self) -> i32 {
         self.value as i32
     }
 
+    /// Converts the JavaScript value to an `u32` without checking its type.
     pub fn as_u32_unchecked(&self) -> u32 {
         self.value as u32
     }
 
+    /// Converts the JavaScript value to an `f64` without checking its type.
     pub fn as_f64_unchecked(&self) -> f64 {
         let mut ret = 0_f64;
         unsafe { JS_ToFloat64(self.context.inner, &mut ret, self.value) };
         ret
     }
 
+    /// Converts the JavaScript value to an `BigInt` without checking its type.
     pub fn as_big_int_unchecked(&self) -> Result<BigInt> {
         if self.is_signed_big_int() {
             let v = self.bigint_as_i64()?;
@@ -121,14 +130,22 @@ impl<'a> JSValueRef<'a> {
         Ok(ret)
     }
 
+    /// Checks if the JavaScript value is a number.
+    ///
+    /// Returns `true` if the value is a number (either represented as an `f64` or an `i32`),
+    /// otherwise returns `false`.
     pub fn is_number(&self) -> bool {
         self.is_repr_as_f64() || self.is_repr_as_i32()
     }
 
+    /// Checks if the JavaScript value is a `BigInt`.
+    ///
+    /// Returns `true` if the value is a `BigInt`, otherwise returns `false`.
     pub fn is_big_int(&self) -> bool {
         self.get_tag() == JS_TAG_BIG_INT
     }
 
+    /// Converts the JavaScript value to an `f64` if it is a number, otherwise returns an error.
     pub fn as_f64(&self) -> Result<f64> {
         if self.is_repr_as_f64() {
             return Ok(self.as_f64_unchecked());
@@ -139,6 +156,7 @@ impl<'a> JSValueRef<'a> {
         anyhow::bail!("Value is not a number")
     }
 
+    /// Tries to convert the JavaScript value to an `i32` if it is an integer, otherwise returns an error.
     pub fn try_as_integer(&self) -> Result<i32> {
         if self.is_repr_as_f64() {
             let v = self.as_f64_unchecked();
@@ -153,6 +171,7 @@ impl<'a> JSValueRef<'a> {
         anyhow::bail!("Value is not a number")
     }
 
+    /// Converts the JavaScript value to a `bool` if it is a boolean, otherwise returns an error.
     pub fn as_bool(&self) -> Result<bool> {
         if self.is_bool() {
             Ok(self.value as i32 > 0)
@@ -161,11 +180,14 @@ impl<'a> JSValueRef<'a> {
         }
     }
 
+    /// Converts the JavaScript value to a string if it is a string.
     pub fn as_str(&self) -> Result<&str> {
         let buffer = self.as_wtf8_str_buffer();
         str::from_utf8(buffer).map_err(Into::into)
     }
 
+    /// Converts the JavaScript value to a string, replacing any invalid UTF-8 sequences with the
+    /// Unicode replacement character (U+FFFD).
     pub fn as_str_lossy(&self) -> std::borrow::Cow<str> {
         let mut buffer = self.as_wtf8_str_buffer();
         match str::from_utf8(buffer) {
@@ -221,6 +243,7 @@ impl<'a> JSValueRef<'a> {
         }
     }
 
+    /// Converts the JavaScript value to a byte slice if it is an ArrayBuffer, otherwise returns an error.
     pub fn as_bytes(&self) -> Result<&[u8]> {
         let mut len = 0;
         let ptr = unsafe { JS_GetArrayBuffer(self.context.inner, &mut len, self.value) };
@@ -234,6 +257,7 @@ impl<'a> JSValueRef<'a> {
         }
     }
 
+    /// Converts the JavaScript value to a mutable byte slice if it is an ArrayBuffer, otherwise returns an error.
     pub fn as_bytes_mut(&self) -> Result<&mut [u8]> {
         let mut len = 0;
         let ptr = unsafe { JS_GetArrayBuffer(self.context.inner, &mut len, self.value) };
@@ -247,54 +271,67 @@ impl<'a> JSValueRef<'a> {
         }
     }
 
+    /// Retrieves the properties of the JavaScript value.
     pub fn properties(&self) -> Result<Properties<'a>> {
         Properties::new(self.context, self.value)
     }
 
+    /// Checks if the JavaScript value is represented as an `f64`.
     pub fn is_repr_as_f64(&self) -> bool {
         unsafe { JS_IsFloat64_Ext(self.get_tag()) == 1 }
     }
 
+    /// Checks if the JavaScript value is represented as an `i32`.
     pub fn is_repr_as_i32(&self) -> bool {
         self.get_tag() == JS_TAG_INT
     }
 
+    /// Checks if the JavaScript value is a string.
     pub fn is_str(&self) -> bool {
         self.get_tag() == JS_TAG_STRING
     }
 
+    /// Checks if the JavaScript value is a boolean.
     pub fn is_bool(&self) -> bool {
         self.get_tag() == JS_TAG_BOOL
     }
 
+    /// Checks if the JavaScript value is an array.
     pub fn is_array(&self) -> bool {
         unsafe { JS_IsArray(self.context.inner, self.value) == 1 }
     }
 
+    /// Checks if the JavaScript value is an object (excluding arrays).
     pub fn is_object(&self) -> bool {
         !self.is_array() && self.get_tag() == JS_TAG_OBJECT
     }
 
+    /// Checks if the JavaScript value is an ArrayBuffer.
     pub fn is_array_buffer(&self) -> bool {
         (unsafe { JS_IsArrayBuffer_Ext(self.context.inner, self.value) }) != 0
     }
 
+    /// Checks if the JavaScript value is undefined.
     pub fn is_undefined(&self) -> bool {
         self.get_tag() == JS_TAG_UNDEFINED
     }
 
+    /// Checks if the JavaScript value is null.
     pub fn is_null(&self) -> bool {
         self.get_tag() == JS_TAG_NULL
     }
 
+    /// Checks if the JavaScript value is either null or undefined.
     pub fn is_null_or_undefined(&self) -> bool {
         self.is_null() | self.is_undefined()
     }
 
+    /// Checks if the JavaScript value is a function.
     pub fn is_function(&self) -> bool {
         unsafe { JS_IsFunction(self.context.inner, self.value) != 0 }
     }
 
+    /// Retrieves the value of a property with the specified `key` from the JavaScript object.
     pub fn get_property(&self, key: impl Into<Vec<u8>>) -> Result<Self> {
         let cstring_key = CString::new(key)?;
         let raw =
@@ -302,6 +339,7 @@ impl<'a> JSValueRef<'a> {
         Self::new(self.context, raw)
     }
 
+    /// Sets the value of a property with the specified `key` on the JavaScript object to `val`.
     pub fn set_property(&self, key: impl Into<Vec<u8>>, val: JSValueRef) -> Result<()> {
         let cstring_key = CString::new(key)?;
         let ret = unsafe {
@@ -321,11 +359,15 @@ impl<'a> JSValueRef<'a> {
         Ok(())
     }
 
+    /// Retrieves the value of an indexed property from the JavaScript object.
+    /// This is used for arrays.
     pub fn get_indexed_property(&self, index: u32) -> Result<Self> {
         let raw = unsafe { JS_GetPropertyUint32(self.context.inner, self.value, index) };
         Self::new(self.context, raw)
     }
 
+    /// Appends a property with the value `val` to the JavaScript object.
+    /// This is used for arrays.
     pub fn append_property(&self, val: JSValueRef) -> Result<()> {
         let len = self.get_property("length")?;
         let ret = unsafe {
@@ -345,6 +387,7 @@ impl<'a> JSValueRef<'a> {
         Ok(())
     }
 
+    /// Checks if the JavaScript value is an exception.
     pub fn is_exception(&self) -> bool {
         self.get_tag() == JS_TAG_EXCEPTION
     }
