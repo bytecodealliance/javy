@@ -8,5 +8,5 @@
 #[derive(Debug, Default)]
 pub struct APIConfig {
     #[cfg(feature = "console")]
-    pub(crate) console: crate::ConsoleConfig,
+    pub(crate) console: crate::console::ConsoleConfig,
 }

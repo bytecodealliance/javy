@@ -30,7 +30,7 @@ use javy::Runtime;
 
 pub use api_config::APIConfig;
 #[cfg(feature = "console")]
-pub use console::{ConsoleConfig, LogStream};
+pub use console::LogStream;
 pub use runtime_ext::RuntimeExt;
 
 mod api_config;

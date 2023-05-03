@@ -8,7 +8,8 @@ use javy::{
 
 use crate::{APIConfig, JSApiSet};
 
-pub use config::{ConsoleConfig, LogStream};
+pub(super) use config::ConsoleConfig;
+pub use config::LogStream;
 
 mod config;
 

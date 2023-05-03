@@ -21,25 +21,10 @@ impl LogStream {
     }
 }
 
-/// A configuration for the `console` JS API.
 #[derive(Debug)]
-pub struct ConsoleConfig {
+pub(crate) struct ConsoleConfig {
     pub(super) log_stream: LogStream,
     pub(super) error_stream: LogStream,
-}
-
-impl ConsoleConfig {
-    /// Sets the destination stream for `console.log`.
-    pub fn log_stream(&mut self, stream: LogStream) -> &mut Self {
-        self.log_stream = stream;
-        self
-    }
-
-    /// Sets the destination stream for `console.error`.
-    pub fn error_stream(&mut self, stream: LogStream) -> &mut Self {
-        self.error_stream = stream;
-        self
-    }
 }
 
 impl Default for ConsoleConfig {
@@ -53,7 +38,14 @@ impl Default for ConsoleConfig {
 
 impl APIConfig {
     /// Sets the destination stream for `console.log`.
-    pub fn console(&mut self) -> &mut ConsoleConfig {
-        &mut self.console
+    pub fn log_stream(&mut self, stream: LogStream) -> &mut Self {
+        self.console.log_stream = stream;
+        self
+    }
+
+    /// Sets the destination stream for `console.error`.
+    pub fn error_stream(&mut self, stream: LogStream) -> &mut Self {
+        self.console.error_stream = stream;
+        self
     }
 }
