@@ -114,7 +114,7 @@ impl JSContextRef {
         self.compile(name, contents, CompileType::Module)
     }
 
-    /// Compiles JavaScript to bytecode with a global scope.
+    /// Compiles JavaScript to QuickJS bytecode with a global scope.
     ///
     /// # Arguments
     ///
