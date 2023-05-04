@@ -8,9 +8,9 @@ use javy::{
 
 use crate::{APIConfig, JSApiSet};
 
-struct TextCodec;
+pub(super) struct TextEncoding;
 
-impl JSApiSet for TextCodec {
+impl JSApiSet for TextEncoding {
     fn register(&self, runtime: &Runtime, _config: &APIConfig) -> Result<()> {
         let context = runtime.context();
         let global = context.global_object()?;
@@ -85,14 +85,13 @@ mod tests {
     use anyhow::Result;
     use javy::Runtime;
 
-    use super::TextCodec;
+    use super::TextEncoding;
 
     #[test]
     fn test_text_encoder_decoder() -> Result<()> {
         let runtime = Runtime::default();
         let context = runtime.context();
-        let text_codec_api = TextCodec;
-        text_codec_api.register(&runtime, &APIConfig::default())?;
+        TextEncoding.register(&runtime, &APIConfig::default())?;
         let result = context.eval_global(
             "main",
             "let encoder = new TextEncoder(); let buffer = encoder.encode('hello'); let decoder = new TextDecoder(); decoder.decode(buffer) == 'hello';"

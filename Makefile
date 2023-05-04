@@ -31,7 +31,7 @@ test-javy:
 	cargo wasi test --package=javy -- --nocapture
 
 test-apis:
-	cargo wasi test --package=javy-apis --features console -- --nocapture
+	cargo wasi test --package=javy-apis --features console,text_encoding -- --nocapture
 
 test-core:
 	cargo wasi test --package=javy-core -- --nocapture
@@ -67,7 +67,7 @@ fmt-javy:
 
 fmt-apis:
 	cargo fmt --package=javy-apis -- --check
-	cargo clippy --package=javy-apis --features console --target=wasm32-wasi --all-targets -- -D warnings
+	cargo clippy --package=javy-apis --features console,text_encoding --target=wasm32-wasi --all-targets -- -D warnings
 
 fmt-core:
 	cargo fmt --package=javy-core -- --check

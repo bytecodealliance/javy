@@ -7,6 +7,7 @@ license.workspace = true
 
 [features]
 console = []
+text_encoding = []
 
 [dependencies]
 anyhow = { workspace = true }

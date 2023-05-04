@@ -37,7 +37,8 @@ mod api_config;
 #[cfg(feature = "console")]
 mod console;
 mod runtime_ext;
-mod text_codec;
+#[cfg(feature = "text_encoding")]
+mod text_encoding;
 
 pub(crate) trait JSApiSet {
     fn register(&self, runtime: &Runtime, config: &APIConfig) -> Result<()>;
@@ -57,5 +58,7 @@ pub(crate) trait JSApiSet {
 pub fn add_to_runtime(runtime: &Runtime, config: APIConfig) -> Result<()> {
     #[cfg(feature = "console")]
     console::Console::new().register(runtime, &config)?;
+    #[cfg(feature = "text_encoding")]
+    text_encoding::TextEncoding.register(runtime, &config)?;
     Ok(())
 }
