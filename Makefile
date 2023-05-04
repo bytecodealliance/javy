@@ -25,10 +25,10 @@ docs:
 	cargo doc --package=javy-core --open --target=wasm32-wasi
 
 test-quickjs-wasm-rs:
-	cargo wasi test --package=quickjs-wasm-rs --features json,messagepack -- --nocapture
+	cargo wasi test --package=quickjs-wasm-rs -- --nocapture
 
 test-javy:
-	cargo wasi test --package=javy -- --nocapture
+	cargo wasi test --package=javy --features json,messagepack -- --nocapture
 
 test-apis:
 	cargo wasi test --package=javy-apis --features console -- --nocapture

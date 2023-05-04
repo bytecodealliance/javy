@@ -12,3 +12,10 @@ categories = ["wasm"]
 [dependencies]
 anyhow = { workspace = true }
 quickjs-wasm-rs = { version = "1.0.0-alpha.2", path = "../quickjs-wasm-rs" }
+serde_json = { version = "1.0", optional = true }
+serde-transcode = { version = "1.1", optional = true }
+rmp-serde = { version = "^1.1", optional = true }
+
+[features]
+messagepack = ["rmp-serde", "serde-transcode"]
+json = ["serde_json", "serde-transcode"]
