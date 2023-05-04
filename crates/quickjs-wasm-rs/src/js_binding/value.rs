@@ -86,7 +86,7 @@ impl<'a> JSValueRef<'a> {
         self.value as i32
     }
 
-    /// Converts the JavaScript value to an `u32` without checking its type.
+    /// Converts the JavaScript value to a `u32` without checking its type.
     pub fn as_u32_unchecked(&self) -> u32 {
         self.value as u32
     }
