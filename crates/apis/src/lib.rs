@@ -59,6 +59,6 @@ pub fn add_to_runtime(runtime: &Runtime, config: APIConfig) -> Result<()> {
     #[cfg(feature = "console")]
     console::Console::new().register(runtime, &config)?;
     #[cfg(feature = "stream_io")]
-    stream_io::StreamIO::new().register(runtime, &config)?;
+    stream_io::StreamIO.register(runtime, &config)?;
     Ok(())
 }

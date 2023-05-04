@@ -5,13 +5,7 @@ use javy::Runtime;
 
 use crate::{APIConfig, JSApiSet};
 
-pub(super) struct StreamIO {}
-
-impl StreamIO {
-    pub(super) fn new() -> StreamIO {
-        StreamIO {}
-    }
-}
+pub(super) struct StreamIO;
 
 impl JSApiSet for StreamIO {
     fn register(&self, runtime: &Runtime, _config: &APIConfig) -> Result<()> {
