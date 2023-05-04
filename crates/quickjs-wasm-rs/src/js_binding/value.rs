@@ -64,7 +64,8 @@ impl<'a> JSValueRef<'a> {
     ///
     /// # Arguments
     /// * `receiver`: The object on which the function is called.
-    /// * `args`: A slice of `JSValueRef` representing the arguments to be passed to the function.
+    /// * `args`: A slice of [`JSValueRef`] representing the arguments to be
+    ///   passed to the function.
     pub fn call(&self, receiver: &Self, args: &[Self]) -> Result<Self> {
         let args: Vec<JSValue> = args.iter().map(|v| v.value).collect();
         let return_val = unsafe {

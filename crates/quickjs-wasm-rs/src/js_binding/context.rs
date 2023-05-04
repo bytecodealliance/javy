@@ -160,7 +160,8 @@ impl JSContextRef {
         }
     }
 
-    /// Evaluate QuickJS bytecode.
+    /// Evaluate QuickJS bytecode produced by [`Self::compile_module`] or
+    /// [`Self::compile_global`].
     pub fn eval_binary(&self, bytecode: &[u8]) -> Result<JSValueRef> {
         self.value_from_bytecode(bytecode)?.eval_function()
     }
