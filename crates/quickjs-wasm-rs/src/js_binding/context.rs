@@ -71,7 +71,7 @@ impl Default for JSContextRef {
 }
 
 impl JSContextRef {
-    /// Evaluates a JavaScript code in the global scope.
+    /// Evaluates JavaScript code in the global scope.
     ///
     /// This method takes a JavaScript code as a string and evaluates it in the global scope of the
     /// JavaScript context.
