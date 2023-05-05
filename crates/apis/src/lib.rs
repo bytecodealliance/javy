@@ -24,6 +24,11 @@
 //! context.eval_global("hello.js", "print('hello!');")?;
 //! # Ok::<(), Error>(())
 //! ```
+//!
+//! ## Features
+//! * `console` - registers an implementation of the `console` API
+//! * `text_encoding` - registers implementations of `TextEncoder` and `TextDecoder`
+//! * `stream_io` - registers implementations of `Javy.IO.readSync` and `Javy.IO.writeSync`
 
 use anyhow::Result;
 use javy::Runtime;
