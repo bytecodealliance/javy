@@ -25,6 +25,10 @@
 //! # Ok::<(), Error>(())
 //! ```
 //!
+//! If you want to customize the runtime or the APIs, you can use the
+//! [`Runtime::new_with_apis`] method instead to provide a [`javy::Config`]
+//! for the underlying [`Runtime`] or an [`APIConfig`] for the APIs.
+//!
 //! ## Features
 //! * `console` - registers an implementation of the `console` API
 //! * `text_encoding` - registers implementations of `TextEncoder` and `TextDecoder`
