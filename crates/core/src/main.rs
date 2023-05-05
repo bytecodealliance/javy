@@ -4,7 +4,6 @@ use std::io::{self, Read};
 use std::string::String;
 
 mod execution;
-mod globals;
 mod runtime;
 
 static mut RUNTIME: OnceCell<Runtime> = OnceCell::new();
@@ -13,7 +12,6 @@ static mut BYTECODE: OnceCell<Vec<u8>> = OnceCell::new();
 #[export_name = "wizer.initialize"]
 pub extern "C" fn init() {
     let runtime = runtime::new_runtime().unwrap();
-    globals::inject_javy_globals(&runtime).unwrap();
 
     let mut contents = String::new();
     io::stdin().read_to_string(&mut contents).unwrap();

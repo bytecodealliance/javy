@@ -4,8 +4,8 @@ export default {
 	build: {
 		lib: {
 			entry: {
-				main: "index.ts",
-				fs: "fs/index.ts",
+				main: "src/index.ts",
+				fs: "src/fs/index.ts",
 			},
 			fileName: (fmt, name) => {
 				name = name === "main" ? "index" : `${name}/index`;
