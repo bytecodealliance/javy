@@ -1,4 +1,4 @@
-import { writeFileSync } from "../../fs/index.ts";
+import { writeFileSync } from "../../src/fs/index.ts";
 
 // use a stub version of writeSync that returns 0 bytes
 Javy.IO.writeSync = function () {
