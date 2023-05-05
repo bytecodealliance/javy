@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.0.0] - 2023-05-02
+## [1.0.0] - 2023-05-05
 
 ### Added
 - Documentation across the crate.
@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Callback functions now work with `CallbackArg` instead of `JSValueRef` directly. `CallbackArg` can easily convert to Rust types with `try_into`.
 - Relationship of `JSValueRef` and `JSContextRef` is now safer with `JSValueRef` containing a reference to `JSContextRef` instead of a raw pointer to the quickjs `JSContext`.
 
+### Removed
+- `json` and `messagepack` features have been moved to the `javy` crate
 
 [unreleased]: https://github.com/Shopify/javy/compare/quickjs-wasm-rs-1.0.0...HEAD
 [1.0.0]: https://github.com/Shopify/javy/tree/quickjs-wasm-rs-1.0.0/crates/quickjs-wasm-rs
