@@ -36,6 +36,7 @@ We will only add JS APIs or accept contributions that add JS APIs that are poten
   `cargo-wasi`)
 - cargo-wasi, can be installed via `cargo install cargo-wasi`
 - wizer, can be installed via `cargo install wizer --all-features`
+- cargo-hack, can be installed via `cargo +stable install cargo-hack --locked`
 
 ## Building
 
