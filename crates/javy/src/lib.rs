@@ -29,6 +29,12 @@
 //! ## Core concepts
 //! * [`Runtime`] - The entrypoint for using the JavaScript runtime. Use a
 //!   [`Config`] to configure behavior.
+//!
+//! ## Features
+//! * `json` - functions for converting between [`JSValueRef`] and JSON byte
+//!   slices
+//! * `messagepack` - functions for converting between [`JSValueRef`] and
+//!   MessagePack byte slices
 
 pub use config::Config;
 pub use quickjs_wasm_rs as quickjs;
