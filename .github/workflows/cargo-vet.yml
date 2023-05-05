@@ -7,7 +7,7 @@ on:
 
 jobs:
   cargo-vet:
-    name: Vet Dependencies
+    name: cargo_vet
     runs-on: ubuntu-latest
     env:
       CARGO_VET_VERSION: 0.6.1

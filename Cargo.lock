@@ -1066,6 +1066,9 @@ version = "1.0.0-alpha1"
 dependencies = [
  "anyhow",
  "quickjs-wasm-rs",
+ "rmp-serde",
+ "serde-transcode",
+ "serde_json",
 ]
 
 [[package]]
@@ -1450,11 +1453,8 @@ dependencies = [
  "once_cell",
  "quickcheck",
  "quickjs-wasm-sys",
- "rmp-serde",
  "serde",
- "serde-transcode",
  "serde_bytes",
- "serde_json",
 ]
 
 [[package]]

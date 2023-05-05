@@ -25,13 +25,13 @@ docs:
 	cargo doc --package=javy-core --open --target=wasm32-wasi
 
 test-quickjs-wasm-rs:
-	cargo wasi test --package=quickjs-wasm-rs --features json,messagepack -- --nocapture
+	cargo wasi test --package=quickjs-wasm-rs -- --nocapture
 
 test-javy:
-	cargo wasi test --package=javy -- --nocapture
+	cargo wasi test --package=javy --features json,messagepack -- --nocapture
 
 test-apis:
-	cargo wasi test --package=javy-apis -- --nocapture
+	cargo wasi test --package=javy-apis --all-features -- --nocapture
 
 test-core:
 	cargo wasi test --package=javy-core -- --nocapture
@@ -67,7 +67,7 @@ fmt-javy:
 
 fmt-apis:
 	cargo fmt --package=javy-apis -- --check
-	cargo clippy --package=javy-apis --target=wasm32-wasi --all-targets -- -D warnings
+	cargo clippy --package=javy-apis --all-features --target=wasm32-wasi --all-targets -- -D warnings
 
 fmt-core:
 	cargo fmt --package=javy-core -- --check

@@ -1,7 +1,5 @@
-use crate::serialize::de::Deserializer;
-use crate::serialize::ser::Serializer;
-use crate::{JSContextRef, JSValueRef};
 use anyhow::Result;
+use quickjs_wasm_rs::{Deserializer, JSContextRef, JSValueRef, Serializer};
 
 pub fn transcode_input<'a>(context: &'a JSContextRef, bytes: &[u8]) -> Result<JSValueRef<'a>> {
     let mut deserializer = serde_json::Deserializer::from_slice(bytes);
