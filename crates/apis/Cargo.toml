@@ -4,6 +4,10 @@ version = "1.0.0-alpha1"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
+description = "Configurable JavaScript runtime for WebAssembly"
+homepage = "https://github.com/Shopify/javy/tree/main/crates/apis"
+repository = "https://github.com/Shopify/javy/tree/main/crates/apis"
+categories = ["wasm"]
 
 [features]
 console = []
