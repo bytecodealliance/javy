@@ -31,6 +31,10 @@ fn main() -> Result<()> {
 
 Create a `Runtime` and use the reference returned by `context()` to add functions and evaluate source code.
 
+## Features
+- `json` - transcoding functions for converting between `JSValueRef` and JSON
+- `messagepack` - transcoding functions for converting between `JSValueRef` and MessagePack
+
 ## Building a project using this crate
 
 - Install the [wasi-sdk](https://github.com/WebAssembly/wasi-sdk#install) for your platform
