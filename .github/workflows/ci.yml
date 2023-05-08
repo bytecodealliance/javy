@@ -45,6 +45,9 @@ jobs:
       - name: Install cargo-wasi
         run: cargo install cargo-wasi
 
+      - name: Install cargo-hack
+        uses: taiki-e/install-action@cargo-hack
+
       - name: Install wizer
         run: cargo install wizer --all-features
 
