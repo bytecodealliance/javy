@@ -14,9 +14,7 @@ When running the official Javy binary on Linux, `glibc` 2.31 or greater must be 
 
 We welcome feedback, bug reports and bug fixes. We're also happy to discuss feature development but please discuss the features in an issue before contributing.
 
-### Adding additional JS APIs
-
-We will only add JS APIs or accept contributions that add JS APIs that are potentially useful across multiple environments and do not invoke non-[WASI](https://wasi.dev/) hostcalls. If you wish to add or use JS APIs that do not meet these criteria, please use the `quickjs-wasm-rs` crate directly. We may revisit how we support importing and exporting custom functionality from Javy once [the Component Model](https://github.com/WebAssembly/component-model) has stabilized.
+Read our [contribution documentation](docs/contributing.md) for additional information on contributing to Javy.
 
 ## Build
 
