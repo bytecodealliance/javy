@@ -31,7 +31,7 @@ test-javy:
 	cargo wasi test --package=javy --features json,messagepack -- --nocapture
 
 test-apis:
-	cargo wasi test --package=javy-apis --all-features -- --nocapture
+	cargo hack wasi test --package=javy-apis --each-feature -- --nocapture
 
 test-core:
 	cargo wasi test --package=javy-core -- --nocapture

@@ -6,7 +6,6 @@ use std::slice;
 use std::str;
 
 mod execution;
-mod globals;
 mod runtime;
 
 // Unlike C's realloc, zero-length allocations need not have
@@ -23,7 +22,6 @@ static mut RUNTIME: OnceCell<Runtime> = OnceCell::new();
 #[export_name = "wizer.initialize"]
 pub extern "C" fn init() {
     let runtime = runtime::new_runtime().unwrap();
-    globals::inject_javy_globals(&runtime).unwrap();
     unsafe { RUNTIME.set(runtime).unwrap() };
 }
 

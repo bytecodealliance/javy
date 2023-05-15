@@ -9,7 +9,12 @@ on:
 jobs:
   checks:
     name: tests_and_lint
-    runs-on: ubuntu-latest
+    # We test on `macos-latest` to accurately reflect
+    # the core Wasm binary that we attach to the releases,
+    # which is built on the latest macOS too.
+    # This is also helpful for testing fuel
+    # consumption in tests.
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
         with:
@@ -35,15 +40,18 @@ jobs:
 
       - name: Install wasmtime-cli
         env:
-          WASMTIME_VERSION: 0.34.1
+          WASMTIME_VERSION: 8.0.0
         run: |
-          wget -nv 'https://github.com/bytecodealliance/wasmtime/releases/download/v${{ env.WASMTIME_VERSION }}/wasmtime-v${{ env.WASMTIME_VERSION }}-x86_64-linux.tar.xz' -O /tmp/wasmtime.tar.xz
+          wget -nv 'https://github.com/bytecodealliance/wasmtime/releases/download/v${{ env.WASMTIME_VERSION }}/wasmtime-v${{ env.WASMTIME_VERSION }}-x86_64-macos.tar.xz' -O /tmp/wasmtime.tar.xz
           mkdir /tmp/wasmtime
           tar xvf /tmp/wasmtime.tar.xz --strip-components=1 -C /tmp/wasmtime
           echo "/tmp/wasmtime" >> $GITHUB_PATH
 
       - name: Install cargo-wasi
         run: cargo install cargo-wasi
+
+      - name: Install cargo-hack
+        uses: taiki-e/install-action@cargo-hack
 
       - name: Install wizer
         run: cargo install wizer --all-features
