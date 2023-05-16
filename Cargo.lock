@@ -1447,7 +1447,7 @@ dependencies = [
 
 [[package]]
 name = "quickjs-wasm-rs"
-version = "1.0.0-alpha.4"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "once_cell",

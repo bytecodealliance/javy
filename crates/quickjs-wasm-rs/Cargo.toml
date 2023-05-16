@@ -1,6 +1,6 @@
 [package]
 name = "quickjs-wasm-rs"
-version = "1.0.0-alpha.4"
+version = "1.0.0"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
