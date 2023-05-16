@@ -22,6 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - `json` and `messagepack` features have been moved to the `javy` crate
 
-[unreleased]: https://github.com/Shopify/javy/compare/quickjs-wasm-rs-1.0.0...HEAD
-[1.0.0]: https://github.com/Shopify/javy/tree/quickjs-wasm-rs-1.0.0/crates/quickjs-wasm-rs
+[unreleased]: https://github.com/bytecodealliance/javy/compare/quickjs-wasm-rs-1.0.0...HEAD
+[1.0.0]: https://github.com/bytecodealliance/javy/tree/quickjs-wasm-rs-1.0.0/crates/quickjs-wasm-rs
 
