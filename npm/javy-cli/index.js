@@ -8,7 +8,7 @@ import * as stream from "stream";
 import fetch from "node-fetch";
 import cachedir from "cachedir";
 
-const REPO = "Shopify/javy";
+const REPO = "bytecodealliance/javy";
 const NAME = "javy";
 
 async function main() {
