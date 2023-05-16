@@ -31,10 +31,10 @@
 //!   [`Config`] to configure behavior.
 //!
 //! ## Features
-//! * `json` - functions for converting between [`JSValueRef`] and JSON byte
-//!   slices
-//! * `messagepack` - functions for converting between [`JSValueRef`] and
-//!   MessagePack byte slices
+//! * `json` - functions for converting between [`quickjs::JSValueRef`] and JSON
+//!   byte slices
+//! * `messagepack` - functions for converting between [`quickjs::JSValueRef`]
+//!   and MessagePack byte slices
 
 pub use config::Config;
 pub use quickjs_wasm_rs as quickjs;
