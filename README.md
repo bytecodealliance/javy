@@ -1,6 +1,6 @@
 # Javy: A *Jav*aScript to WebAssembl*y* toolchain
 
-![Build status](https://github.com/Shopify/javy/actions/workflows/ci.yml/badge.svg?branch=main)
+![Build status](https://github.com/bytecodealliance/javy/actions/workflows/ci.yml/badge.svg?branch=main)
 
 ## About this repo
 
@@ -158,5 +158,5 @@ The `quickjs-wasm-rs` crate that is part of this project can be used as part of 
 git tag v0.2.0
 git push origin --tags
 ```
-2. Create a new release from the new tag in github [here](https://github.com/Shopify/javy/releases/new).
+2. Create a new release from the new tag in github [here](https://github.com/bytecodealliance/javy/releases/new).
 3. A GitHub Action will trigger for `publish.yml` when a release is published ([i.e. it doesn't run on drafts](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#:~:text=created%2C%20edited%2C%20or%20deleted%20activity%20types%20for%20draft%20releases)), creating the artifacts for downloading.

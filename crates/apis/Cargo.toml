@@ -5,8 +5,8 @@ authors.workspace = true
 edition.workspace = true
 license.workspace = true
 description = "Configurable JavaScript runtime for WebAssembly"
-homepage = "https://github.com/Shopify/javy/tree/main/crates/apis"
-repository = "https://github.com/Shopify/javy/tree/main/crates/apis"
+homepage = "https://github.com/bytecodealliance/javy/tree/main/crates/apis"
+repository = "https://github.com/bytecodealliance/javy/tree/main/crates/apis"
 categories = ["wasm"]
 
 [features]

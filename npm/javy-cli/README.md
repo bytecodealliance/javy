@@ -38,6 +38,6 @@ Please note that for this to work you must have all prerequisites of Javy
 (listed in the [README]) installed. (That is CMake, Rust, Rust for wasm32-wasi
 target, cargo wasi, wasmtime-cli and Rosetta on Mac M1).
 
-[README]: https://github.com/Shopify/javy/blob/main/README.md
+[README]: https://github.com/bytecodealliance/javy/blob/main/README.md
 
 
