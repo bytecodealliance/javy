@@ -1,6 +1,17 @@
-# Javy: A *Jav*aScript to WebAssembl*y* toolchain
+<div align="center">
+  <h1><code>Javy</code></h1>
 
-![Build status](https://github.com/bytecodealliance/javy/actions/workflows/ci.yml/badge.svg?branch=main)
+  <p>
+    <strong>A <i>Jav</i>aScript to Webassembl<i>y</i> toolchain</strong>
+  </p>
+
+  <strong>A <a href="https://bytecodealliance.org/">Bytecode Alliance</a> project</strong>
+
+  <p>
+    <a href="https://github.com/bytecodealliance/javy/actions/workflows/ci.yml"><img alt="Build status" src="https://github.com/bytecodealliance/javy/actions/workflows/ci.yml/badge.svg?branch=main" /></a>
+    <a href="https://bytecodealliance.zulipchat.com/#narrow/stream/370816-javy"><img src="https://img.shields.io/badge/zulip-join_chat-brightgreen.svg" alt="zulip chat" /></a>
+  </p>
+</div>
 
 ## About this repo
 
