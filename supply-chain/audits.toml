@@ -1,4 +1,7 @@
 
 # cargo-vet audits file
 
-[audits]
+[[audits.quickjs-wasm-sys]]
+who = "Jeff Charles <jeff.charles@shopify.com>"
+criteria = "safe-to-deploy"
+version = "1.0.0"
