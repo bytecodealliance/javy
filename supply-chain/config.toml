@@ -461,7 +461,7 @@ version = "1.0.3"
 criteria = "safe-to-run"
 
 [[exemptions.quickjs-wasm-sys]]
-version = "1.0.0"
+version = "0.1.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.quote]]
