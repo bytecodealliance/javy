@@ -716,6 +716,16 @@ criteria = "safe-to-run"
 delta = "0.9.3 -> 0.8.4"
 aggregated-from = "https://chromium.googlesource.com/chromiumos/third_party/rust_crates/+/main/cargo-vet/audits.toml?format=TEXT"
 
+[[audits.google.audits.fastrand]]
+who = "George Burgess IV <gbiv@google.com>"
+criteria = "safe-to-deploy"
+version = "1.9.0"
+notes = """
+`does-not-implement-crypto` is certified because this crate explicitly says
+that the RNG here is not cryptographically secure.
+"""
+aggregated-from = "https://chromium.googlesource.com/chromiumos/third_party/rust_crates/+/main/cargo-vet/audits.toml?format=TEXT"
+
 [[audits.google.audits.proc-macro-error-attr]]
 who = "George Burgess IV <gbiv@google.com>"
 criteria = "safe-to-deploy"

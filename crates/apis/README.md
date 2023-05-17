@@ -24,6 +24,7 @@ If you want to customize the runtime or the APIs, you can use the `Runtime::new_
 ## Features
 * `console` - registers an implementation of the `console` API
 * `text_encoding` - registers implementations of `TextEncoder` and `TextDecoder`
+* `random` - overrides implementation of `Math.random` to one that seeds the RNG on first call to `Math.random`
 * `stream_io` - registers implementations of `Javy.IO.readSync` and `Javy.IO.writeSync`
 
 ## Building a project using this crate

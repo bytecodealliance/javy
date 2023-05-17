@@ -265,10 +265,6 @@ criteria = "safe-to-deploy"
 version = "0.2.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.fastrand]]
-version = "1.7.0"
-criteria = "safe-to-run"
-
 [[exemptions.fs-set-times]]
 version = "0.15.0"
 criteria = "safe-to-deploy"
@@ -311,7 +307,7 @@ criteria = "safe-to-deploy"
 
 [[exemptions.instant]]
 version = "0.1.12"
-criteria = "safe-to-run"
+criteria = "safe-to-deploy"
 
 [[exemptions.io-extras]]
 version = "0.13.2"

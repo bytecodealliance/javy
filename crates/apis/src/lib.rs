@@ -32,6 +32,8 @@
 //! ## Features
 //! * `console` - registers an implementation of the `console` API
 //! * `text_encoding` - registers implementations of `TextEncoder` and `TextDecoder`
+//! * `random` - overrides implementation of `Math.random` to one that seeds the
+//!   RNG on first call to `Math.random`
 //! * `stream_io` - registers implementations of `Javy.IO.readSync` and `Javy.IO.writeSync`
 
 use anyhow::Result;
@@ -45,6 +47,8 @@ pub use runtime_ext::RuntimeExt;
 mod api_config;
 #[cfg(feature = "console")]
 mod console;
+#[cfg(feature = "random")]
+mod random;
 mod runtime_ext;
 #[cfg(feature = "stream_io")]
 mod stream_io;
@@ -69,6 +73,8 @@ pub(crate) trait JSApiSet {
 pub fn add_to_runtime(runtime: &Runtime, config: APIConfig) -> Result<()> {
     #[cfg(feature = "console")]
     console::Console::new().register(runtime, &config)?;
+    #[cfg(feature = "random")]
+    random::Random.register(runtime, &config)?;
     #[cfg(feature = "stream_io")]
     stream_io::StreamIO.register(runtime, &config)?;
     #[cfg(feature = "text_encoding")]
