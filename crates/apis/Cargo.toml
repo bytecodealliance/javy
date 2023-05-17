@@ -1,6 +1,6 @@
 [package]
 name = "javy-apis"
-version = "1.0.0-alpha1"
+version = "1.0.0"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
