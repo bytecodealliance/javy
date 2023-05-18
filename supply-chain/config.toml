@@ -25,6 +25,15 @@ url = "https://raw.githubusercontent.com/mozilla/supply-chain/main/audits.toml"
 [policy.binaryen]
 audit-as-crates-io = true
 
+[policy.javy]
+audit-as-crates-io = true
+
+[policy.javy-apis]
+audit-as-crates-io = true
+
+[policy.quickjs-wasm-rs]
+audit-as-crates-io = true
+
 [policy.quickjs-wasm-sys]
 audit-as-crates-io = true
 
@@ -239,10 +248,6 @@ criteria = "safe-to-deploy"
 [[exemptions.dirs-sys-next]]
 version = "0.1.2"
 criteria = "safe-to-deploy"
-
-[[exemptions.env_logger]]
-version = "0.8.4"
-criteria = "safe-to-run"
 
 [[exemptions.env_logger]]
 version = "0.9.0"
@@ -460,10 +465,6 @@ criteria = "safe-to-deploy"
 version = "1.0.3"
 criteria = "safe-to-run"
 
-[[exemptions.quickjs-wasm-sys]]
-version = "0.1.2"
-criteria = "safe-to-deploy"
-
 [[exemptions.quote]]
 version = "1.0.15"
 criteria = "safe-to-deploy"
@@ -494,10 +495,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.redox_users]]
 version = "0.4.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.regalloc2]]
-version = "0.6.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.regex]]
@@ -654,18 +651,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.unicode-ident]]
 version = "1.0.6"
-criteria = "safe-to-deploy"
-
-[[exemptions.unicode-segmentation]]
-version = "1.9.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.unicode-width]]
-version = "0.1.9"
-criteria = "safe-to-deploy"
-
-[[exemptions.unicode-xid]]
-version = "0.2.4"
 criteria = "safe-to-deploy"
 
 [[exemptions.uuid]]
