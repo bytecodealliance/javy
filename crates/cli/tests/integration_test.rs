@@ -115,6 +115,16 @@ fn test_producers_section_present() {
     assert!(producers_string.contains("Javy"));
 }
 
+#[test]
+fn test_same_module_outputs_different_random_result() {
+    let mut runner = Runner::new("random.js");
+    let (output, _, fuel_consumed) = runner.exec(&[]).unwrap();
+    let (output2, _, _) = runner.exec(&[]).unwrap();
+    // In theory these could be equal with a correct implementation but it's very unlikely.
+    assert!(output != output2);
+    assert_fuel_consumed_within_threshold(100_543, fuel_consumed);
+}
+
 fn run_with_u8s(r: &mut Runner, stdin: u8) -> (u8, String, u64) {
     let (output, logs, fuel_consumed) = run(r, &stdin.to_le_bytes());
     assert_eq!(1, output.len());

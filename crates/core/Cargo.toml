@@ -16,7 +16,7 @@ crate-type = ["cdylib"]
 [dependencies]
 anyhow = { workspace = true }
 javy = { workspace = true }
-javy-apis = { path = "../apis", features = ["console", "text_encoding", "stream_io"] }
+javy-apis = { path = "../apis", features = ["console", "text_encoding", "random", "stream_io"] }
 once_cell = { workspace = true }
 
 [features]
