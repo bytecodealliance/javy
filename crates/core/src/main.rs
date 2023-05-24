@@ -29,5 +29,10 @@ pub extern "C" fn init() {
 fn main() {
     let bytecode = unsafe { BYTECODE.take().unwrap() };
     let runtime = unsafe { RUNTIME.take().unwrap() };
-    execution::run_bytecode(&runtime, &bytecode).unwrap();
+    match execution::run_bytecode(&runtime, &bytecode) {
+        Ok(_) => {}
+        Err(e) => {
+            eprintln!("Error while running JS: {}", e);
+        }
+    }
 }

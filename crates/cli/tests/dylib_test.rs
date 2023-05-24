@@ -36,6 +36,36 @@ fn test_dylib() -> Result<()> {
     Ok(())
 }
 
+#[test]
+fn test_dylib_with_error() -> Result<()> {
+    let engine = Engine::default();
+    let mut linker = Linker::new(&engine);
+    wasmtime_wasi::add_to_linker(&mut linker, |s| s)?;
+    let stderr = WritePipe::new_in_memory();
+    let wasi = WasiCtxBuilder::new()
+        .stderr(Box::new(stderr.clone()))
+        .build();
+    let module = common::create_quickjs_provider_module(&engine)?;
+
+    // scope is needed to ensure `store` is dropped before trying to read from `stderr` below
+    {
+        let mut store = Store::new(&engine, wasi);
+        let instance = linker.instantiate(&mut store, &module)?;
+        let eval_bytecode_func =
+            instance.get_typed_func::<(u32, u32), ()>(&mut store, "eval_bytecode")?;
+
+        let js_src = "function foo() { throw new Error('foo error'); } foo();";
+        let (bytecode_ptr, bytecode_len) = compile_src(js_src.as_bytes(), &instance, &mut store)?;
+        eval_bytecode_func.call(&mut store, (bytecode_ptr, bytecode_len))?;
+    }
+
+    let log_output = stderr.try_into_inner().unwrap().into_inner();
+    let expected_log_output = "Error while running JS: Uncaught Error: foo error\n    at foo (function.mjs)\n    at <anonymous> (function.mjs:1)\n\n";
+    assert_eq!(expected_log_output, str::from_utf8(&log_output)?);
+
+    Ok(())
+}
+
 fn compile_src(
     js_src: &[u8],
     instance: &Instance,
