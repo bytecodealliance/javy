@@ -22,9 +22,10 @@ fn main() -> Result<()> {
 If you want to customize the runtime or the APIs, you can use the `Runtime::new_with_apis` method instead to provide a `javy::Config` for the underlying `Runtime` or an `APIConfig` for the APIs.
 
 ## Features
-* `console` - registers an implementation of the `console` API
-* `text_encoding` - registers implementations of `TextEncoder` and `TextDecoder`
-* `stream_io` - registers implementations of `Javy.IO.readSync` and `Javy.IO.writeSync`
+* `console` - Registers an implementation of the `console` API.
+* `text_encoding` - Registers implementations of `TextEncoder` and `TextDecoder`.
+* `random` - Overrides the implementation of `Math.random` to one that seeds the RNG on first call to `Math.random`. This is helpful to enable when using Wizer to snapshot a Javy Runtime so that the output of `Math.random` relies on the WASI context used at runtime and not the WASI context used when Wizening. Enabling this feature will increase the size of the Wasm module that includes the Javy Runtime and will introduce an additional hostcall invocation when `Math.random` is invoked for the first time.
+* `stream_io` - Registers implementations of `Javy.IO.readSync` and `Javy.IO.writeSync`.
 
 ## Building a project using this crate
 

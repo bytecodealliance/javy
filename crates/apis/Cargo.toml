@@ -1,6 +1,6 @@
 [package]
 name = "javy-apis"
-version = "1.0.0"
+version = "1.1.0-alpha.1"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -11,9 +11,11 @@ categories = ["wasm"]
 
 [features]
 console = []
+random = ["dep:fastrand"]
 stream_io = []
 text_encoding = []
 
 [dependencies]
 anyhow = { workspace = true }
+fastrand = { version = "1.9.0", optional = true }
 javy = { workspace = true }
