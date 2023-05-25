@@ -29,5 +29,5 @@ pub extern "C" fn init() {
 fn main() {
     let bytecode = unsafe { BYTECODE.take().unwrap() };
     let runtime = unsafe { RUNTIME.take().unwrap() };
-    execution::run_bytecode(&runtime, &bytecode).unwrap();
+    execution::run_bytecode(&runtime, &bytecode)
 }

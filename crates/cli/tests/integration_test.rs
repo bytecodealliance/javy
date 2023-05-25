@@ -1,6 +1,6 @@
 mod runner;
 
-use runner::Runner;
+use runner::{Runner, RunnerError};
 use std::str;
 
 #[test]
@@ -113,6 +113,17 @@ fn test_producers_section_present() {
     let producers_string = str::from_utf8(producers_section).unwrap();
     assert!(producers_string.contains("JavaScript"));
     assert!(producers_string.contains("Javy"));
+}
+
+#[test]
+fn test_error_handling() {
+    let mut runner = Runner::new("error.js");
+    let result = runner.exec(&[]);
+    let err = result.err().unwrap().downcast::<RunnerError>().unwrap();
+
+    let expected_log_output = "Error while running JS: Uncaught Error: error\n    at error (function.mjs:2)\n    at <anonymous> (function.mjs:5)\n\n";
+
+    assert_eq!(expected_log_output, str::from_utf8(&err.stderr).unwrap());
 }
 
 #[test]

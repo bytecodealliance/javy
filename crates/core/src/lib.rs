@@ -64,7 +64,7 @@ pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -
 pub unsafe extern "C" fn eval_bytecode(bytecode_ptr: *const u8, bytecode_len: usize) {
     let runtime = RUNTIME.get().unwrap();
     let bytecode = slice::from_raw_parts(bytecode_ptr, bytecode_len);
-    execution::run_bytecode(runtime, bytecode).unwrap();
+    execution::run_bytecode(runtime, bytecode)
 }
 
 /// 1. Allocate memory of new_size with alignment.

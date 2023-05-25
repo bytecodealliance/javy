@@ -1,7 +1,7 @@
 use anyhow::Result;
 use std::boxed::Box;
 use std::str;
-use wasi_common::pipe::WritePipe;
+use wasi_common::{pipe::WritePipe, WasiFile};
 use wasmtime::{Engine, Instance, Linker, Store};
 use wasmtime_wasi::{sync::WasiCtxBuilder, WasiCtx};
 
@@ -9,10 +9,35 @@ mod common;
 
 #[test]
 fn test_dylib() -> Result<()> {
+    let js_src = "console.log(42);";
+    let stderr = WritePipe::new_in_memory();
+    run_js_src(js_src, &stderr)?;
+
+    let output = stderr.try_into_inner().unwrap().into_inner();
+    assert_eq!("42\n", str::from_utf8(&output)?);
+
+    Ok(())
+}
+
+#[test]
+fn test_dylib_with_error() -> Result<()> {
+    let js_src = "function foo() { throw new Error('foo error'); } foo();";
+    let stderr = WritePipe::new_in_memory();
+    let result = run_js_src(js_src, &stderr);
+
+    assert!(result.is_err());
+    let output = stderr.try_into_inner().unwrap().into_inner();
+
+    let expected_log_output = "Error while running JS: Uncaught Error: foo error\n    at foo (function.mjs)\n    at <anonymous> (function.mjs:1)\n\n";
+    assert_eq!(expected_log_output, str::from_utf8(&output)?);
+
+    Ok(())
+}
+
+fn run_js_src<T: WasiFile + Clone + 'static>(js_src: &str, stderr: &T) -> Result<()> {
     let engine = Engine::default();
     let mut linker = Linker::new(&engine);
     wasmtime_wasi::add_to_linker(&mut linker, |s| s)?;
-    let stderr = WritePipe::new_in_memory();
     let wasi = WasiCtxBuilder::new()
         .stderr(Box::new(stderr.clone()))
         .build();
@@ -25,13 +50,9 @@ fn test_dylib() -> Result<()> {
         let eval_bytecode_func =
             instance.get_typed_func::<(u32, u32), ()>(&mut store, "eval_bytecode")?;
 
-        let js_src = "console.log(42);";
         let (bytecode_ptr, bytecode_len) = compile_src(js_src.as_bytes(), &instance, &mut store)?;
         eval_bytecode_func.call(&mut store, (bytecode_ptr, bytecode_len))?;
     }
-
-    let log_output = stderr.try_into_inner().unwrap().into_inner();
-    assert_eq!("42\n", str::from_utf8(&log_output)?);
 
     Ok(())
 }
