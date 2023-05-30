@@ -22,7 +22,7 @@ set -u
 PATH_TO_SDK="crates/quickjs-wasm-sys/wasi-sdk"
 if [[ ! -d $PATH_TO_SDK ]]; then
     TMPGZ=$(mktemp)
-    VERSION_MAJOR="19"
+    VERSION_MAJOR="20"
     VERSION_MINOR="0"
     if [[ "$(uname -s)" == "Darwin" ]]; then
         curl --fail --location --silent https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-${VERSION_MAJOR}/wasi-sdk-${VERSION_MAJOR}.${VERSION_MINOR}-macos.tar.gz --output $TMPGZ
