@@ -11,6 +11,11 @@ who = "Jeff Charles <jeff.charles@shopify.com>"
 criteria = "safe-to-deploy"
 version = "1.0.0"
 
+[[audits.proc-macro2]]
+who = "Surma <surma@surma.dev>"
+criteria = "safe-to-deploy"
+version = "1.0.59"
+
 [[audits.quickjs-wasm-rs]]
 who = "Jeff Charles <jeff.charles@shopify.com>"
 criteria = "safe-to-deploy"
@@ -20,3 +25,8 @@ version = "1.0.0"
 who = "Jeff Charles <jeff.charles@shopify.com>"
 criteria = "safe-to-deploy"
 version = "1.0.0"
+
+[[audits.quote]]
+who = "Surma <surma@surma.dev>"
+criteria = "safe-to-deploy"
+version = "1.0.28"

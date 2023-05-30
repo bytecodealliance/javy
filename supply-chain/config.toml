@@ -77,10 +77,6 @@ criteria = "safe-to-deploy"
 version = "1.3.3"
 criteria = "safe-to-deploy"
 
-[[exemptions.bindgen]]
-version = "0.60.1"
-criteria = "safe-to-deploy"
-
 [[exemptions.bitflags]]
 version = "1.3.2"
 criteria = "safe-to-deploy"
@@ -139,14 +135,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.clap]]
 version = "2.34.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.clap]]
-version = "3.2.23"
-criteria = "safe-to-deploy"
-
-[[exemptions.clap_lex]]
-version = "0.2.4"
 criteria = "safe-to-deploy"
 
 [[exemptions.cmake]]
@@ -421,10 +409,6 @@ criteria = "safe-to-deploy"
 version = "11.1.3"
 criteria = "safe-to-run"
 
-[[exemptions.os_str_bytes]]
-version = "6.4.1"
-criteria = "safe-to-deploy"
-
 [[exemptions.paste]]
 version = "1.0.6"
 criteria = "safe-to-deploy"
@@ -460,10 +444,6 @@ criteria = "safe-to-deploy"
 [[exemptions.quickcheck]]
 version = "1.0.3"
 criteria = "safe-to-run"
-
-[[exemptions.quote]]
-version = "1.0.15"
-criteria = "safe-to-deploy"
 
 [[exemptions.rand]]
 version = "0.8.5"
@@ -581,10 +561,6 @@ criteria = "safe-to-deploy"
 version = "0.8.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.strsim]]
-version = "0.10.0"
-criteria = "safe-to-deploy"
-
 [[exemptions.structopt]]
 version = "0.3.26"
 criteria = "safe-to-deploy"
@@ -607,10 +583,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.textwrap]]
 version = "0.11.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.textwrap]]
-version = "0.16.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.thiserror]]
