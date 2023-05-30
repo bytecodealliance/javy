@@ -4,6 +4,9 @@ use std::{env, fs, process};
 
 use walkdir::WalkDir;
 
+const WASI_SDK_VERSION_MAJOR: usize = 20;
+const WASI_SDK_VERSION_MINOR: usize = 0;
+
 fn download_wasi_sdk() -> Result<PathBuf> {
     let mut wasi_sdk_dir: PathBuf = env::var("CARGO_MANIFEST_DIR")?.into();
     wasi_sdk_dir.push("wasi-sdk");
@@ -24,7 +27,7 @@ fn download_wasi_sdk() -> Result<PathBuf> {
         };
 
         let mut archive = fs::File::create(&archive_path)?;
-        reqwest::blocking::get(&format!("https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-19/wasi-sdk-19.0-{}.tar.gz", file_suffix))?.copy_to(&mut archive)?;
+        reqwest::blocking::get(&format!("https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-{}/wasi-sdk-{}.{}-{}.tar.gz", WASI_SDK_VERSION_MAJOR, WASI_SDK_VERSION_MAJOR, WASI_SDK_VERSION_MINOR, file_suffix))?.copy_to(&mut archive)?;
     }
 
     let mut test_binary = wasi_sdk_dir.clone();
