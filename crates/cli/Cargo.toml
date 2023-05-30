@@ -15,10 +15,10 @@ dump_wat = ["dep:wasmprinter"]
 experimental_event_loop = []
 
 [dependencies]
-wizer = { git = "https://github.com/bytecodealliance/wizer" }
+wizer = { git = "https://github.com/bytecodealliance/wizer", rev = "3acc39cc561e7f985f163a2c8e89259a0dfc2f2f" }
 structopt = "0.3"
 anyhow = { workspace = true }
-binaryen = { git = "https://github.com/pepyakin/binaryen-rs" }
+binaryen = { git = "https://github.com/pepyakin/binaryen-rs", rev = "00c98174843f957681ba0bc5cdcc9d15f5d0cb23" }
 brotli = "3.3.4"
 wasm-encoder = "0.20"
 wasmprinter = { version = "0.2.45", optional = true }
