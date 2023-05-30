@@ -111,6 +111,7 @@ fn main() -> Result<()> {
         .header("wrapper.h")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
         .clang_args(&["-fvisibility=default", "--target=wasm32-wasi", &sysroot])
+        .size_t_is_usize(false)
         .generate()?;
 
     println!("cargo:rerun-if-changed=extensions/value.c");
