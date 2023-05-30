@@ -9,11 +9,10 @@ homepage = "https://github.com/bytecodealliance/javy/tree/main/crates/quickjs-wa
 repository = "https://github.com/bytecodealliance/javy/tree/main/crates/quickjs-wasm-sys"
 categories = ["external-ffi-bindings"]
 
-[dependencies]
-
 [build-dependencies]
 cc = "1.0"
 bindgen = "0.64.0"
 walkdir = "2"
-anyhow = "1.0.71"
-reqwest = { version = "0.11.18", features = ["blocking"] }
+anyhow.workspace = true
+tokio = { version = "1.28.2", features = ["rt", "macros"] }
+hyper = { version = "0.14.26", features = ["http1", "client", "tcp"] }

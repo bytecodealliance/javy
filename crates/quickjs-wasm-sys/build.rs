@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+use std::io::Write;
 use std::path::PathBuf;
 use std::{env, fs, process};
 
@@ -7,7 +8,7 @@ use walkdir::WalkDir;
 const WASI_SDK_VERSION_MAJOR: usize = 20;
 const WASI_SDK_VERSION_MINOR: usize = 0;
 
-fn download_wasi_sdk() -> Result<PathBuf> {
+async fn download_wasi_sdk() -> Result<PathBuf> {
     let mut wasi_sdk_dir: PathBuf = env::var("CARGO_MANIFEST_DIR")?.into();
     wasi_sdk_dir.push("wasi-sdk");
 
@@ -26,8 +27,27 @@ fn download_wasi_sdk() -> Result<PathBuf> {
             other => return Err(anyhow!("Unsupported platform tuple {:?}", other)),
         };
 
-        let mut archive = fs::File::create(&archive_path)?;
-        reqwest::blocking::get(format!("https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-{}/wasi-sdk-{}.{}-{}.tar.gz", WASI_SDK_VERSION_MAJOR, WASI_SDK_VERSION_MAJOR, WASI_SDK_VERSION_MINOR, file_suffix))?.copy_to(&mut archive)?;
+        // FIXME: Make this HTTPS!
+        let mut uri =  format!("http://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-{}/wasi-sdk-{}.{}-{}.tar.gz", WASI_SDK_VERSION_MAJOR, WASI_SDK_VERSION_MAJOR, WASI_SDK_VERSION_MINOR, file_suffix);
+        let client = hyper::Client::new();
+        loop {
+            let resp = client.get(uri.parse()?).await?;
+            if resp.status().is_redirection() {
+                let target = resp
+                    .headers()
+                    .get("Location")
+                    .ok_or(anyhow!("Redirect without `Location` header"))?;
+                uri = target.to_str()?.to_string();
+                uri = uri.replace("https:", "http:");
+                continue;
+            }
+            if !resp.status().is_success() {
+                return Err(anyhow!("Could not download WASI SDK: {:?}", resp.status()));
+            }
+            let bytes = hyper::body::to_bytes(resp.into_body()).await?;
+            fs::File::create(&archive_path)?.write_all(&bytes)?;
+            break;
+        }
     }
 
     let mut test_binary = wasi_sdk_dir.clone();
@@ -54,15 +74,16 @@ fn download_wasi_sdk() -> Result<PathBuf> {
     Ok(wasi_sdk_dir)
 }
 
-fn get_wasi_sdk_path() -> Result<PathBuf> {
+async fn get_wasi_sdk_path() -> Result<PathBuf> {
     if let Ok(path) = env::var("QUICKJS_WASM_SYS_WASI_SDK_PATH") {
         return Ok(path.into());
     }
-    download_wasi_sdk()
+    download_wasi_sdk().await
 }
 
-fn main() -> Result<()> {
-    let wasi_sdk_path = get_wasi_sdk_path()?;
+#[tokio::main(flavor = "current_thread")]
+async fn main() -> Result<()> {
+    let wasi_sdk_path = get_wasi_sdk_path().await?;
     if !wasi_sdk_path.try_exists()? {
         return Err(anyhow!(
             "wasi-sdk not installed in specified path of {}",
