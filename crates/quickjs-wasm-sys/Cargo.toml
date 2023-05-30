@@ -13,5 +13,5 @@ categories = ["external-ffi-bindings"]
 
 [build-dependencies]
 cc = "1.0"
-bindgen = "0.60"
+bindgen = "0.65.1"
 walkdir = "2"
