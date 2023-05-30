@@ -27,7 +27,7 @@ fn download_wasi_sdk() -> Result<PathBuf> {
         };
 
         let mut archive = fs::File::create(&archive_path)?;
-        reqwest::blocking::get(&format!("https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-{}/wasi-sdk-{}.{}-{}.tar.gz", WASI_SDK_VERSION_MAJOR, WASI_SDK_VERSION_MAJOR, WASI_SDK_VERSION_MINOR, file_suffix))?.copy_to(&mut archive)?;
+        reqwest::blocking::get(format!("https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-{}/wasi-sdk-{}.{}-{}.tar.gz", WASI_SDK_VERSION_MAJOR, WASI_SDK_VERSION_MAJOR, WASI_SDK_VERSION_MINOR, file_suffix))?.copy_to(&mut archive)?;
     }
 
     let mut test_binary = wasi_sdk_dir.clone();

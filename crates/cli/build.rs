@@ -1,7 +1,7 @@
 use std::env;
 use std::fs;
 use std::io::{Read, Write};
-use std::os::unix::prelude::FileExt;
+
 use std::path::{Path, PathBuf};
 
 use anyhow::Result;
