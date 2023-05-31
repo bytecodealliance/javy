@@ -116,7 +116,7 @@ checksum = "a4a4ddaa51a5bc52a6948f74c06d20aaaddb71924eab79b8c97a8c556e942d6a"
 [[package]]
 name = "binaryen"
 version = "0.12.1"
-source = "git+https://github.com/pepyakin/binaryen-rs#00c98174843f957681ba0bc5cdcc9d15f5d0cb23"
+source = "git+https://github.com/pepyakin/binaryen-rs?rev=00c98174843f957681ba0bc5cdcc9d15f5d0cb23#00c98174843f957681ba0bc5cdcc9d15f5d0cb23"
 dependencies = [
  "binaryen-sys",
 ]
@@ -124,7 +124,7 @@ dependencies = [
 [[package]]
 name = "binaryen-sys"
 version = "0.12.1"
-source = "git+https://github.com/pepyakin/binaryen-rs#00c98174843f957681ba0bc5cdcc9d15f5d0cb23"
+source = "git+https://github.com/pepyakin/binaryen-rs?rev=00c98174843f957681ba0bc5cdcc9d15f5d0cb23#00c98174843f957681ba0bc5cdcc9d15f5d0cb23"
 dependencies = [
  "cc",
  "cmake",
@@ -3133,7 +3133,7 @@ dependencies = [
 [[package]]
 name = "wizer"
 version = "1.6.1-beta.4"
-source = "git+https://github.com/bytecodealliance/wizer#3acc39cc561e7f985f163a2c8e89259a0dfc2f2f"
+source = "git+https://github.com/bytecodealliance/wizer?rev=3acc39cc561e7f985f163a2c8e89259a0dfc2f2f#3acc39cc561e7f985f163a2c8e89259a0dfc2f2f"
 dependencies = [
  "anyhow",
  "cap-std 0.24.4",
