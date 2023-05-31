@@ -4,12 +4,27 @@ use std::path::PathBuf;
 use std::{env, fs, process};
 
 use http_body_util::BodyExt;
-use hyper::body::{Body, Buf};
+use hyper::{
+    body::{Body, Buf},
+    Uri,
+};
+use tokio::io::{AsyncRead, AsyncWrite};
 
 use walkdir::WalkDir;
 
 const WASI_SDK_VERSION_MAJOR: usize = 20;
 const WASI_SDK_VERSION_MINOR: usize = 0;
+
+async fn tls_connect(url: &Uri) -> Result<impl AsyncRead + AsyncWrite + Unpin> {
+    let connector: tokio_native_tls::TlsConnector =
+        tokio_native_tls::native_tls::TlsConnector::new()
+            .unwrap()
+            .into();
+    let addr = format!("{}:{}", url.host().unwrap(), url.port_u16().unwrap_or(443));
+    let stream = tokio::net::TcpStream::connect(addr).await?;
+    let stream = connector.connect(url.host().unwrap(), stream).await?;
+    Ok(stream)
+}
 
 // Mostly taken from the hyper examples:
 // https://github.com/hyperium/hyper/blob/4cf38a12ce7cc5dfd3af356a0cef61ace4ce82b9/examples/client.rs
@@ -18,9 +33,8 @@ async fn get_uri(url_str: impl AsRef<str>) -> Result<impl Body> {
     // This loop will follow redirects and will return when a status code
     // is a success (200-299) or a non-redirect (300-399).
     loop {
-        let url: hyper::Uri = url_string.parse()?;
-        let addr = format!("{}:{}", url.host().unwrap(), url.port_u16().unwrap_or(80));
-        let stream = tokio::net::TcpStream::connect(addr).await?;
+        let url: Uri = url_string.parse()?;
+        let stream = tls_connect(&url).await?;
         let (mut sender, conn) = hyper::client::conn::http1::handshake(stream).await?;
 
         tokio::task::spawn(async move {

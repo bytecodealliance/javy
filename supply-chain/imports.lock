@@ -222,6 +222,17 @@ are only created when requested by the application, however, and otherwise
 only does its stated purpose.
 """
 
+[[audits.bytecode-alliance.audits.foreign-types]]
+who = "Pat Hickey <phickey@fastly.com>"
+criteria = "safe-to-deploy"
+version = "0.3.2"
+notes = "This crate defined a macro-rules which creates wrappers working with FFI types. The implementation of this crate appears to be safe, but each use of this macro would need to be vetted for correctness as well."
+
+[[audits.bytecode-alliance.audits.foreign-types-shared]]
+who = "Pat Hickey <phickey@fastly.com>"
+criteria = "safe-to-deploy"
+version = "0.1.1"
+
 [[audits.bytecode-alliance.audits.form_urlencoded]]
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
@@ -380,6 +391,23 @@ criteria = "safe-to-deploy"
 delta = "0.7.1 -> 0.8.0"
 notes = "This was a small update to the crate which has to do with Rust language features and compiler versions, no substantial changes."
 
+[[audits.bytecode-alliance.audits.native-tls]]
+who = "Pat Hickey <phickey@fastly.com>"
+criteria = "safe-to-deploy"
+version = "0.2.11"
+notes = "build is only looking for environment variables to set cfg. only two minor uses of unsafe,on macos, with ffi bindings to digest primitives and libc atexit. otherwise, this is an abstraction over three very complex systems (schannel, security-framework, and openssl) which may end up having subtle differences, but none of those are apparent from the implementation of this crate"
+
+[[audits.bytecode-alliance.audits.openssl-macros]]
+who = "Pat Hickey <phickey@fastly.com>"
+criteria = "safe-to-deploy"
+version = "0.1.0"
+
+[[audits.bytecode-alliance.audits.openssl-probe]]
+who = "Pat Hickey <phickey@fastly.com>"
+criteria = "safe-to-deploy"
+version = "0.1.5"
+notes = "IO is only checking for the existence of paths in the filesystem"
+
 [[audits.bytecode-alliance.audits.peeking_take_while]]
 who = "Nick Fitzgerald <fitzgen@gmail.com>"
 criteria = "safe-to-deploy"
@@ -478,6 +506,12 @@ This is a trivial crate which only contains a singular macro definition which is
 intended to multiplex across the internal representation of a tinyvec,
 presumably. This trivially doesn't contain anything bad.
 """
+
+[[audits.bytecode-alliance.audits.tokio-native-tls]]
+who = "Pat Hickey <phickey@fastly.com>"
+criteria = "safe-to-deploy"
+version = "0.3.1"
+notes = "unsafety is used for smuggling std::task::Context as a raw pointer. Lifetime and type safety appears to be taken care of correctly."
 
 [[audits.bytecode-alliance.audits.try-lock]]
 who = "Pat Hickey <phickey@fastly.com>"
