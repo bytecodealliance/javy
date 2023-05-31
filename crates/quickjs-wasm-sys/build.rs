@@ -95,12 +95,6 @@ async fn download_wasi_sdk() -> Result<PathBuf> {
                 archive.write_all(chunk.chunk())?;
             }
         }
-        // let resp = client.get(uri.parse()?).await?;
-        // if !resp.status().is_success() {
-        //     return Err(anyhow!("Could not download WASI SDK: {:?}", resp.status()));
-        // }
-        // let bytes = hyper::body::to_bytes(resp.into_body()).await?;
-        // break;
     }
 
     let mut test_binary = wasi_sdk_dir.clone();
