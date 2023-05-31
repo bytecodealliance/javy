@@ -3,10 +3,52 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::{env, fs, process};
 
+use http_body_util::BodyExt;
+use hyper::body::{Body, Buf};
+
 use walkdir::WalkDir;
 
 const WASI_SDK_VERSION_MAJOR: usize = 20;
 const WASI_SDK_VERSION_MINOR: usize = 0;
+
+// Mostly taken from the hyper examples:
+// https://github.com/hyperium/hyper/blob/4cf38a12ce7cc5dfd3af356a0cef61ace4ce82b9/examples/client.rs
+async fn get_uri(url_str: impl AsRef<str>) -> Result<impl Body> {
+    let mut url_string = url_str.as_ref().to_string();
+    // This loop will follow redirects and will return when a status code
+    // is a success (200-299) or a non-redirect (300-399).
+    loop {
+        let url: hyper::Uri = url_string.parse()?;
+        let addr = format!("{}:{}", url.host().unwrap(), url.port_u16().unwrap_or(80));
+        let stream = tokio::net::TcpStream::connect(addr).await?;
+        let (mut sender, conn) = hyper::client::conn::http1::handshake(stream).await?;
+
+        tokio::task::spawn(async move {
+            if let Err(err) = conn.await {
+                println!("Connection failed: {:?}", err);
+            }
+        });
+
+        let authority = url.authority().unwrap().clone();
+        let req = hyper::Request::builder()
+            .uri(&url)
+            .header(hyper::header::HOST, authority.as_str())
+            .body("".to_string())?;
+
+        let res = sender.send_request(req).await?;
+        if res.status().is_success() {
+            return Ok(res.into_body());
+        } else if res.status().is_redirection() {
+            let target = res
+                .headers()
+                .get("Location")
+                .ok_or(anyhow!("Redirect without `Location` header"))?;
+            url_string = target.to_str()?.to_string();
+        } else {
+            return Err(anyhow!("Could not request URL {:?}", url));
+        }
+    }
+}
 
 async fn download_wasi_sdk() -> Result<PathBuf> {
     let mut wasi_sdk_dir: PathBuf = env::var("CARGO_MANIFEST_DIR")?.into();
@@ -28,26 +70,23 @@ async fn download_wasi_sdk() -> Result<PathBuf> {
         };
 
         // FIXME: Make this HTTPS!
-        let mut uri =  format!("http://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-{}/wasi-sdk-{}.{}-{}.tar.gz", WASI_SDK_VERSION_MAJOR, WASI_SDK_VERSION_MAJOR, WASI_SDK_VERSION_MINOR, file_suffix);
-        let client = hyper::Client::new();
-        loop {
-            let resp = client.get(uri.parse()?).await?;
-            if resp.status().is_redirection() {
-                let target = resp
-                    .headers()
-                    .get("Location")
-                    .ok_or(anyhow!("Redirect without `Location` header"))?;
-                uri = target.to_str()?.to_string();
-                uri = uri.replace("https:", "http:");
-                continue;
+        let uri = format!("https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-{}/wasi-sdk-{}.{}-{}.tar.gz", WASI_SDK_VERSION_MAJOR, WASI_SDK_VERSION_MAJOR, WASI_SDK_VERSION_MINOR, file_suffix);
+        let mut body = get_uri(uri).await?;
+        let mut archive = fs::File::create(&archive_path)?;
+        while let Some(frame) = body.frame().await {
+            if let Some(chunk) = frame
+                .map_err(|_err| anyhow!("Something went wrong"))?
+                .data_ref()
+            {
+                archive.write_all(chunk.chunk())?;
             }
-            if !resp.status().is_success() {
-                return Err(anyhow!("Could not download WASI SDK: {:?}", resp.status()));
-            }
-            let bytes = hyper::body::to_bytes(resp.into_body()).await?;
-            fs::File::create(&archive_path)?.write_all(&bytes)?;
-            break;
         }
+        // let resp = client.get(uri.parse()?).await?;
+        // if !resp.status().is_success() {
+        //     return Err(anyhow!("Could not download WASI SDK: {:?}", resp.status()));
+        // }
+        // let bytes = hyper::body::to_bytes(resp.into_body()).await?;
+        // break;
     }
 
     let mut test_binary = wasi_sdk_dir.clone();
