@@ -37,7 +37,6 @@ Read our [contribution documentation](docs/contributing.md) for additional infor
   install cmake`
 - Rosetta 2 if running MacOS on Apple Silicon, can be installed via
   `softwareupdate --install-rosetta`
-- Install the `wasi-sdk` by running `make download-wasi-sdk` in the top-level directory in this repository
 
 ## Development
 
@@ -49,12 +48,12 @@ Read our [contribution documentation](docs/contributing.md) for additional infor
 
 ## Building
 
-After all the dependencies are installed, run `make` in the top-level directory of this repository. You
-should now have access to the executable in `target/release/javy`.
+```
+$ cargo build -p javy-core --target=wasm32-wasi -r
+$ cargo build -p javy-cli -r
+```
 
-Alternatively you can run `make && cargo install --path crates/cli`.
-After running the previous command you'll have a global installation of the
-executable.
+Alternatively you can run `cargo install --path crates/cli` to install the Javy CLI globally.
 
 ## Compiling to WebAssembly
 

@@ -37,6 +37,10 @@ criterion = "0.3"
 num-format = "0.4.3"
 tempfile = "3.4.0"
 
+[build-dependencies]
+anyhow = "1.0.71"
+wizer = { git = "https://github.com/bytecodealliance/wizer", rev = "3acc39cc561e7f985f163a2c8e89259a0dfc2f2f" }
+
 [[bench]]
 name = "benchmark"
 harness = false

@@ -101,6 +101,10 @@ criteria = "safe-to-run"
 version = "1.4.3"
 criteria = "safe-to-deploy"
 
+[[exemptions.bytes]]
+version = "1.1.0"
+criteria = "safe-to-deploy"
+
 [[exemptions.cap-fs-ext]]
 version = "1.0.10"
 criteria = "safe-to-deploy"
@@ -257,6 +261,16 @@ criteria = "safe-to-deploy"
 version = "0.15.0"
 criteria = "safe-to-deploy"
 
+[[exemptions.futures-task]]
+version = "0.3.27"
+criteria = "safe-to-deploy"
+notes = "deferring this vetting until Alex gets back from vacation"
+
+[[exemptions.futures-util]]
+version = "0.3.27"
+criteria = "safe-to-deploy"
+notes = "this is 25k lines and contains over 149 uses of the substring unsafe. it is a huge grab bag of complexity with no practical way to audit it"
+
 [[exemptions.generic-array]]
 version = "0.14.5"
 criteria = "safe-to-deploy"
@@ -285,9 +299,24 @@ criteria = "safe-to-deploy"
 version = "0.3.1"
 criteria = "safe-to-deploy"
 
+[[exemptions.http]]
+version = "0.2.9"
+criteria = "safe-to-deploy"
+notes = "we are exempting tokio, hyper, and their tightly coupled dependencies by the same authors, expecting that the authors at aws will publish attestions we can import at some point soon"
+
+[[exemptions.httparse]]
+version = "1.8.0"
+criteria = "safe-to-deploy"
+notes = "we are exempting tokio, hyper, and their tightly coupled dependencies by the same authors, expecting that the authors at aws will publish attestions we can import at some point soon"
+
 [[exemptions.humantime]]
 version = "2.1.0"
 criteria = "safe-to-deploy"
+
+[[exemptions.hyper]]
+version = "1.0.0-rc.3"
+criteria = "safe-to-deploy"
+notes = "we are exempting tokio, hyper, and their tightly coupled dependencies by the same authors, expecting that the authors at aws will publish attestions we can import at some point soon"
 
 [[exemptions.indexmap]]
 version = "1.9.2"
@@ -319,14 +348,6 @@ criteria = "safe-to-run"
 
 [[exemptions.itoa]]
 version = "1.0.4"
-criteria = "safe-to-deploy"
-
-[[exemptions.ittapi]]
-version = "0.3.3"
-criteria = "safe-to-deploy"
-
-[[exemptions.ittapi-sys]]
-version = "0.3.3"
 criteria = "safe-to-deploy"
 
 [[exemptions.jobserver]]
@@ -381,6 +402,11 @@ criteria = "safe-to-deploy"
 version = "0.2.1"
 criteria = "safe-to-deploy"
 
+[[exemptions.mio]]
+version = "0.8.6"
+criteria = "safe-to-deploy"
+notes = "we are exempting tokio, hyper, and their tightly coupled dependencies by the same authors, expecting that the authors at aws will publish attestions we can import at some point soon"
+
 [[exemptions.nom]]
 version = "7.1.0"
 criteria = "safe-to-deploy"
@@ -408,6 +434,14 @@ criteria = "safe-to-deploy"
 [[exemptions.oorandom]]
 version = "11.1.3"
 criteria = "safe-to-run"
+
+[[exemptions.openssl]]
+version = "0.10.53"
+criteria = "safe-to-deploy"
+
+[[exemptions.openssl-sys]]
+version = "0.9.88"
+criteria = "safe-to-deploy"
 
 [[exemptions.paste]]
 version = "1.0.6"
@@ -509,8 +543,20 @@ criteria = "safe-to-deploy"
 version = "1.0.6"
 criteria = "safe-to-deploy"
 
+[[exemptions.schannel]]
+version = "0.1.21"
+criteria = "safe-to-deploy"
+
 [[exemptions.scopeguard]]
 version = "1.1.0"
+criteria = "safe-to-deploy"
+
+[[exemptions.security-framework]]
+version = "2.9.1"
+criteria = "safe-to-deploy"
+
+[[exemptions.security-framework-sys]]
+version = "2.9.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.serde]]
@@ -553,6 +599,10 @@ criteria = "safe-to-deploy"
 version = "1.8.0"
 criteria = "safe-to-deploy"
 
+[[exemptions.socket2]]
+version = "0.4.9"
+criteria = "safe-to-deploy"
+
 [[exemptions.stable_deref_trait]]
 version = "1.2.0"
 criteria = "safe-to-deploy"
@@ -577,6 +627,10 @@ criteria = "safe-to-deploy"
 version = "0.12.3"
 criteria = "safe-to-deploy"
 
+[[exemptions.tempfile]]
+version = "3.4.0"
+criteria = "safe-to-deploy"
+
 [[exemptions.termcolor]]
 version = "1.1.2"
 criteria = "safe-to-deploy"
@@ -596,6 +650,15 @@ criteria = "safe-to-deploy"
 [[exemptions.tinytemplate]]
 version = "1.2.1"
 criteria = "safe-to-run"
+
+[[exemptions.tokio]]
+version = "1.26.0"
+criteria = "safe-to-deploy"
+notes = "we are exempting tokio, hyper, and their tightly coupled dependencies by the same authors, expecting that the authors at aws will publish attestions we can import at some point soon"
+
+[[exemptions.tokio-macros]]
+version = "1.7.0"
+criteria = "safe-to-deploy"
 
 [[exemptions.toml]]
 version = "0.5.8"
@@ -625,16 +688,16 @@ criteria = "safe-to-deploy"
 version = "0.8.2"
 criteria = "safe-to-run"
 
-[[exemptions.vec_map]]
-version = "0.8.2"
-criteria = "safe-to-deploy"
-
 [[exemptions.walkdir]]
 version = "2.3.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.wasi]]
 version = "0.10.2+wasi-snapshot-preview1"
+criteria = "safe-to-deploy"
+
+[[exemptions.wasi]]
+version = "0.11.0+wasi-snapshot-preview1"
 criteria = "safe-to-deploy"
 
 [[exemptions.wasi-cap-std-sync]]
