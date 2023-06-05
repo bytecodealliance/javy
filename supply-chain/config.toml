@@ -287,11 +287,6 @@ criteria = "safe-to-deploy"
 version = "0.3.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.h2]]
-version = "0.3.19"
-criteria = "safe-to-deploy"
-notes = "we are exempting tokio, hyper, and their tightly coupled dependencies by the same authors, expecting that the authors at aws will publish attestions we can import at some point soon"
-
 [[exemptions.heck]]
 version = "0.3.3"
 criteria = "safe-to-deploy"
@@ -353,14 +348,6 @@ criteria = "safe-to-run"
 
 [[exemptions.itoa]]
 version = "1.0.4"
-criteria = "safe-to-deploy"
-
-[[exemptions.ittapi]]
-version = "0.3.3"
-criteria = "safe-to-deploy"
-
-[[exemptions.ittapi-sys]]
-version = "0.3.3"
 criteria = "safe-to-deploy"
 
 [[exemptions.jobserver]]
@@ -556,8 +543,20 @@ criteria = "safe-to-deploy"
 version = "1.0.6"
 criteria = "safe-to-deploy"
 
+[[exemptions.schannel]]
+version = "0.1.21"
+criteria = "safe-to-deploy"
+
 [[exemptions.scopeguard]]
 version = "1.1.0"
+criteria = "safe-to-deploy"
+
+[[exemptions.security-framework]]
+version = "2.9.1"
+criteria = "safe-to-deploy"
+
+[[exemptions.security-framework-sys]]
+version = "2.9.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.serde]]
@@ -600,6 +599,10 @@ criteria = "safe-to-deploy"
 version = "1.8.0"
 criteria = "safe-to-deploy"
 
+[[exemptions.socket2]]
+version = "0.4.9"
+criteria = "safe-to-deploy"
+
 [[exemptions.stable_deref_trait]]
 version = "1.2.0"
 criteria = "safe-to-deploy"
@@ -622,6 +625,10 @@ criteria = "safe-to-deploy"
 
 [[exemptions.target-lexicon]]
 version = "0.12.3"
+criteria = "safe-to-deploy"
+
+[[exemptions.tempfile]]
+version = "3.4.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.termcolor]]
@@ -680,10 +687,6 @@ criteria = "safe-to-deploy"
 [[exemptions.uuid]]
 version = "0.8.2"
 criteria = "safe-to-run"
-
-[[exemptions.vec_map]]
-version = "0.8.2"
-criteria = "safe-to-deploy"
 
 [[exemptions.walkdir]]
 version = "2.3.2"
