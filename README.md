@@ -27,18 +27,19 @@ We welcome feedback, bug reports and bug fixes. We're also happy to discuss feat
 
 Read our [contribution documentation](docs/contributing.md) for additional information on contributing to Javy.
 
-## Build
+## Requirements to build
 
+- On Ubuntu, `sudo apt-get install curl pkg-config libssl-dev clang`
 - [rustup](https://rustup.rs/)
-- Stable Rust (`rustup install stable && rustup default stable`)
+- Stable Rust, installed via `rustup install stable && rustup default stable`
 - wasm32-wasi, can be installed via `rustup target add wasm32-wasi`
 - cmake, depending on your operating system and architecture, it might not be
-  installed by default. On Mac it can be installed with `homebrew` via `brew
-  install cmake`
+  installed by default. On MacOS it can be installed with `homebrew` via `brew
+  install cmake`. On Ubuntu, `sudo apt-get install cmake`.
 - Rosetta 2 if running MacOS on Apple Silicon, can be installed via
   `softwareupdate --install-rosetta`
 
-## Development
+## Development requirements
 
 - wasmtime-cli, can be installed via `cargo install wasmtime-cli` (required for
   `cargo-wasi`)
@@ -46,16 +47,21 @@ Read our [contribution documentation](docs/contributing.md) for additional infor
 - wizer, can be installed via `cargo install wizer --all-features`
 - cargo-hack, can be installed via `cargo +stable install cargo-hack --locked`
 
-## Building
+## How to build
 
+Inside the Javy repository, run:
 ```
 $ cargo build -p javy-core --target=wasm32-wasi -r
 $ cargo build -p javy-cli -r
 ```
 
-Alternatively you can run `cargo install --path crates/cli` to install the Javy CLI globally.
+Alternatively you can run `cargo install --path crates/cli` from the root of the Javy repository to install the Javy CLI globally.
 
-## Compiling to WebAssembly
+## Using Javy
+
+Pre-compiled binaries of the Javy CLI can be found on [the releases page](https://github.com/bytecodealliance/javy/releases).
+
+### Compiling to WebAssembly
 
 Define your JavaScript like:
 
@@ -135,7 +141,7 @@ In a runtime like Wasmtime, [wasmtime-wasi](
 https://docs.rs/wasmtime-wasi/latest/wasmtime_wasi/struct.WasiCtx.html#method.set_stdin)
 can be used to set the input and retrieve the output.
 
-## Creating and using dynamically linked modules
+### Creating and using dynamically linked modules
 
 An important use for Javy is for when you may want or need to generate much smaller Wasm modules. Using the `-d` flag when invoking Javy will create a dynamically linked module which will have a much smaller file size than a statically linked module. Statically linked modules embed the JS engine inside the module while dynamically linked modules rely on Wasm imports to provide the JS engine. Dynamically linked modules have special requirements that statically linked modules do not and will not execute in WebAssembly runtimes that do not meet these requirements.
 
@@ -143,11 +149,11 @@ To successfully instantiate and run a dynamically linked Javy module, the execut
 
 Dynamically linked Javy modules are tied to QuickJS since they use QuickJS's bytecode representation.
 
-### Obtaining the QuickJS provider module
+#### Obtaining the QuickJS provider module
 
 The `javy_quickjs_provider.wasm` module is available as an asset on the Javy release you are using. It can also be obtained by running `javy emit-provider -o <path>` to write the module into `<path>`.
 
-### Creating and running a dynamically linked module on the CLI
+#### Creating and running a dynamically linked module on the CLI
 
 ```
 $ echo 'console.log("hello world!");' > my_code.js
