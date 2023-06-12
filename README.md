@@ -55,7 +55,11 @@ $ cargo build -p javy-core --target=wasm32-wasi -r
 $ cargo build -p javy-cli -r
 ```
 
-Alternatively you can run `cargo install --path crates/cli` from the root of the Javy repository to install the Javy CLI globally.
+Alternatively if you want to install the Javy CLI globally, inside the Javy repository run:
+```
+$ cargo build -p javy-core --target=wasm32-wasi -r
+$ cargo install --path crates/cli
+```
 
 ## Using Javy
 
