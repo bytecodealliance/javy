@@ -2,11 +2,8 @@ use std::{collections::HashMap, fmt};
 
 pub mod qjs_convert;
 
-mod callback_arg;
 mod to_js_value;
 mod try_from_js_value;
-
-pub use callback_arg::CallbackArg;
 
 /// A safe and high level representation of a JavaScript value.
 ///

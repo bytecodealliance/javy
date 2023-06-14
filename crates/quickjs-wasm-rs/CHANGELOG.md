@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Callback functions now work with `JSContextRef` again and the `CallbackArg::try_into` conversions are implemented for it instead.
+
 ## [1.0.0] - 2023-05-05
 
 ### Added

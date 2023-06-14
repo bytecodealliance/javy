@@ -29,7 +29,7 @@
 //! ### Converting to and from Rust types
 //! When working with callbacks, it is often useful to convert to Rust types.
 //!
-//! `_this` and `args` in the callback function are of type `CallbackArg` which is a wrapper around `JSValue`.
+//! `_this` and `args` in the callback function are of type `JSValueRef` which can be converted into `JSValue`.
 //! `JSValue` supports `try_into` to convert to Rust types.
 //!
 //! Rust types can then be converted back to `JSValue` using `try_into`.
@@ -71,6 +71,6 @@ pub use crate::js_binding::error::JSError;
 pub use crate::js_binding::exception::Exception;
 pub use crate::js_binding::value::JSValueRef;
 pub use crate::js_value::qjs_convert::*;
-pub use crate::js_value::{CallbackArg, JSValue};
+pub use crate::js_value::JSValue;
 pub use crate::serialize::de::Deserializer;
 pub use crate::serialize::ser::Serializer;

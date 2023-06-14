@@ -52,7 +52,6 @@ impl JSApiSet for StreamIO {
                 };
                 let offset: usize = offset.try_into()?;
                 let length: usize = length.try_into()?;
-                let data = unsafe { data.inner_value() };
                 if !data.is_array_buffer() {
                     anyhow::bail!("Data needs to be an ArrayBuffer");
                 }
