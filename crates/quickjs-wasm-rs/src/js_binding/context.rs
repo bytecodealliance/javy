@@ -313,7 +313,7 @@ impl JSContextRef {
 
     /// Wrap the specified function in a JS function.
     ///
-    /// Since the callback signature accepts parameters as high-level `JSContextRef` objects, it can be
+    /// Since the callback signature accepts parameters as high-level `JSContextRef` and `JSValueRef` objects, it can be
     /// implemented without using `unsafe` code, unlike [JSContextRef::new_callback] which provides a low-level API.
     /// Returning a [JSError] from the callback will cause a JavaScript error with the appropriate
     /// type to be thrown.

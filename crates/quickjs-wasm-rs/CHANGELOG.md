@@ -7,8 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `JSValueRef` can convert to Rust types with `try_into` (previously this was implemented on `CallbackArg`)
+
 ### Changed
-- Callback functions now work with `JSContextRef` again and the `CallbackArg::try_into` conversions are implemented for it instead.
+- Callback functions registered with `context.wrap_callback` now pass `JSValueRef` into the closure instead of `CallbackArg`
+- `from_qjs_value` now takes `JSValueRef` by value
+
+### Removed
+- `CallbackArg` type
 
 ## [1.0.0] - 2023-05-05
 

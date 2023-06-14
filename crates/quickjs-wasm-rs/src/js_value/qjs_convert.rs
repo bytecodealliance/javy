@@ -8,11 +8,11 @@ use quickjs_wasm_sys::{
 use super::JSValue;
 use crate::js_binding::{context::JSContextRef, value::JSValueRef};
 
-/// Converts a reference to a `quickjs_wasm_rs::JSValueRef` to a `JSValue`.
+/// Converts a reference to QuickJS value represented by `quickjs_wasm_rs::JSValueRef` to a `JSValue`.
 ///
 /// # Arguments
 ///
-/// * `val` - a reference to a `JSValueRef` to be converted to a `JSValue`
+/// * `val` - a `JSValueRef` to be converted to a `JSValue`
 ///
 /// # Returns
 ///
