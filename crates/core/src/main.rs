@@ -6,6 +6,8 @@ use std::string::String;
 mod execution;
 mod runtime;
 
+const FUNCTION_MODULE_NAME: &str = "function.mjs";
+
 static mut RUNTIME: OnceCell<Runtime> = OnceCell::new();
 static mut BYTECODE: OnceCell<Vec<u8>> = OnceCell::new();
 
@@ -17,7 +19,7 @@ pub extern "C" fn init() {
     io::stdin().read_to_string(&mut contents).unwrap();
     let bytecode = runtime
         .context()
-        .compile_module("function.mjs", &contents)
+        .compile_module(FUNCTION_MODULE_NAME, &contents)
         .unwrap();
 
     unsafe {
@@ -27,7 +29,18 @@ pub extern "C" fn init() {
 }
 
 fn main() {
-    let bytecode = unsafe { BYTECODE.take().unwrap() };
     let runtime = unsafe { RUNTIME.take().unwrap() };
-    execution::run_bytecode(&runtime, &bytecode)
+    invoke(&runtime, "foo");
+}
+
+fn invoke(runtime: &Runtime, function_name: &str) {
+    let context = runtime.context();
+    context
+        .eval_module(
+            "runtime.mjs",
+            &format!(
+                "import {{ {function_name} }} from '{FUNCTION_MODULE_NAME}'; {function_name}();"
+            ),
+        )
+        .unwrap();
 }

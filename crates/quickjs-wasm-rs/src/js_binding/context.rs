@@ -104,6 +104,23 @@ impl JSContextRef {
         JSValueRef::new(self, raw)
     }
 
+    pub fn eval_module(&self, name: &str, contents: &str) -> Result<JSValueRef> {
+        let input = CString::new(contents)?;
+        let script_name = CString::new(name)?;
+        let len = contents.len() - 1;
+        let raw = unsafe {
+            JS_Eval(
+                self.inner,
+                input.as_ptr(),
+                len as _,
+                script_name.as_ptr(),
+                JS_EVAL_TYPE_MODULE as i32,
+            )
+        };
+
+        JSValueRef::new(self, raw)
+    }
+
     /// Compiles JavaScript to QuickJS bytecode with an ECMAScript module scope.
     ///
     /// # Arguments
