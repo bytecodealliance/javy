@@ -2,7 +2,7 @@ use std::{borrow::Cow, str};
 
 use anyhow::{anyhow, Result};
 use javy::{
-    quickjs::{CallbackArg, JSContextRef, JSError, JSValue},
+    quickjs::{JSContextRef, JSError, JSValue, JSValueRef},
     Runtime,
 };
 
@@ -29,8 +29,8 @@ impl JSApiSet for TextEncoding {
 }
 
 fn decode_utf8_buffer_to_js_string(
-) -> impl FnMut(&JSContextRef, &CallbackArg, &[CallbackArg]) -> anyhow::Result<JSValue> {
-    move |_ctx: &JSContextRef, _this: &CallbackArg, args: &[CallbackArg]| {
+) -> impl FnMut(&JSContextRef, JSValueRef, &[JSValueRef]) -> anyhow::Result<JSValue> {
+    move |_ctx: &JSContextRef, _this: JSValueRef, args: &[JSValueRef]| {
         if args.len() != 5 {
             return Err(anyhow!("Expecting 5 arguments, received {}", args.len()));
         }
@@ -68,8 +68,8 @@ fn decode_utf8_buffer_to_js_string(
 }
 
 fn encode_js_string_to_utf8_buffer(
-) -> impl FnMut(&JSContextRef, &CallbackArg, &[CallbackArg]) -> anyhow::Result<JSValue> {
-    move |_ctx: &JSContextRef, _this: &CallbackArg, args: &[CallbackArg]| {
+) -> impl FnMut(&JSContextRef, JSValueRef, &[JSValueRef]) -> anyhow::Result<JSValue> {
+    move |_ctx: &JSContextRef, _this: JSValueRef, args: &[JSValueRef]| {
         if args.len() != 1 {
             return Err(anyhow!("Expecting 1 argument, got {}", args.len()));
         }

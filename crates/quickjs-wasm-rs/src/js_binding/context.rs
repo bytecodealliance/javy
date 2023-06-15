@@ -2,7 +2,7 @@ use super::constants::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER};
 use super::error::JSError;
 use super::exception::Exception;
 use super::value::JSValueRef;
-use crate::js_value::{self, qjs_convert, CallbackArg};
+use crate::js_value::{self, qjs_convert};
 use anyhow::{anyhow, Result};
 use once_cell::sync::Lazy;
 use quickjs_wasm_sys::{
@@ -313,24 +313,24 @@ impl JSContextRef {
 
     /// Wrap the specified function in a JS function.
     ///
-    /// Since the callback signature accepts parameters as high-level `JSContextRef` and `CallbackArg` objects, it can be
+    /// Since the callback signature accepts parameters as high-level `JSContextRef` and `JSValueRef` objects, it can be
     /// implemented without using `unsafe` code, unlike [JSContextRef::new_callback] which provides a low-level API.
     /// Returning a [JSError] from the callback will cause a JavaScript error with the appropriate
     /// type to be thrown.
     pub fn wrap_callback<F>(&self, mut f: F) -> Result<JSValueRef>
     where
-        F: (FnMut(&Self, &CallbackArg, &[CallbackArg]) -> Result<js_value::JSValue>) + 'static,
+        F: (FnMut(&Self, JSValueRef, &[JSValueRef]) -> Result<js_value::JSValue>) + 'static,
     {
         let wrapped = move |inner, this, argc, argv: *mut JSValue, _| {
             let inner_ctx = JSContextRef { inner };
             match f(
                 &inner_ctx,
-                &CallbackArg::new(JSValueRef::new_unchecked(&inner_ctx, this)),
+                JSValueRef::new_unchecked(&inner_ctx, this),
                 &(0..argc)
                     .map(|offset| {
-                        CallbackArg::new(JSValueRef::new_unchecked(&inner_ctx, unsafe {
+                        JSValueRef::new_unchecked(&inner_ctx, unsafe {
                             *argv.offset(offset as isize)
-                        }))
+                        })
                     })
                     .collect::<Box<[_]>>(),
             ) {

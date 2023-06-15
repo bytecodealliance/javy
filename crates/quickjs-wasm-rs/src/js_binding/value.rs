@@ -1,13 +1,17 @@
+use std::{convert::TryInto, fmt};
+
 use super::context::JSContextRef;
 use super::exception::Exception;
 use super::properties::Properties;
+use crate::js_value::{qjs_convert::from_qjs_value, JSValue};
 use anyhow::{anyhow, Result};
 use quickjs_wasm_sys::{
-    size_t as JS_size_t, JSValue, JS_BigIntSigned, JS_BigIntToInt64, JS_BigIntToUint64, JS_Call,
-    JS_DefinePropertyValueStr, JS_DefinePropertyValueUint32, JS_EvalFunction, JS_GetArrayBuffer,
-    JS_GetPropertyStr, JS_GetPropertyUint32, JS_IsArray, JS_IsArrayBuffer_Ext, JS_IsFloat64_Ext,
-    JS_IsFunction, JS_ToCStringLen2, JS_ToFloat64, JS_PROP_C_W_E, JS_TAG_BIG_INT, JS_TAG_BOOL,
-    JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_NULL, JS_TAG_OBJECT, JS_TAG_STRING, JS_TAG_UNDEFINED,
+    size_t as JS_size_t, JSValue as JSValueRaw, JS_BigIntSigned, JS_BigIntToInt64,
+    JS_BigIntToUint64, JS_Call, JS_DefinePropertyValueStr, JS_DefinePropertyValueUint32,
+    JS_EvalFunction, JS_GetArrayBuffer, JS_GetPropertyStr, JS_GetPropertyUint32, JS_IsArray,
+    JS_IsArrayBuffer_Ext, JS_IsFloat64_Ext, JS_IsFunction, JS_ToCStringLen2, JS_ToFloat64,
+    JS_PROP_C_W_E, JS_TAG_BIG_INT, JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_NULL,
+    JS_TAG_OBJECT, JS_TAG_STRING, JS_TAG_UNDEFINED,
 };
 use std::borrow::Cow;
 use std::ffi::CString;
@@ -32,11 +36,11 @@ pub enum BigInt {
 #[derive(Debug, Copy, Clone)]
 pub struct JSValueRef<'a> {
     pub(super) context: &'a JSContextRef,
-    pub(super) value: JSValue,
+    pub(super) value: JSValueRaw,
 }
 
 impl<'a> JSValueRef<'a> {
-    pub(super) fn new(context: &'a JSContextRef, raw_value: JSValue) -> Result<Self> {
+    pub(super) fn new(context: &'a JSContextRef, raw_value: JSValueRaw) -> Result<Self> {
         let value = Self {
             context,
             value: raw_value,
@@ -50,7 +54,7 @@ impl<'a> JSValueRef<'a> {
         }
     }
 
-    pub(super) fn new_unchecked(context: &'a JSContextRef, value: JSValue) -> Self {
+    pub(super) fn new_unchecked(context: &'a JSContextRef, value: JSValueRaw) -> Self {
         Self { context, value }
     }
 
@@ -67,14 +71,14 @@ impl<'a> JSValueRef<'a> {
     /// * `args`: A slice of [`JSValueRef`] representing the arguments to be
     ///   passed to the function.
     pub fn call(&self, receiver: &Self, args: &[Self]) -> Result<Self> {
-        let args: Vec<JSValue> = args.iter().map(|v| v.value).collect();
+        let args: Vec<JSValueRaw> = args.iter().map(|v| v.value).collect();
         let return_val = unsafe {
             JS_Call(
                 self.context.inner,
                 self.value,
                 receiver.value,
                 args.len() as i32,
-                args.as_slice().as_ptr() as *mut JSValue,
+                args.as_slice().as_ptr() as *mut JSValueRaw,
             )
         };
 
@@ -402,25 +406,70 @@ impl<'a> JSValueRef<'a> {
     fn as_exception(&self) -> Result<Exception> {
         Exception::new(self.context)
     }
+
+    /// Convert the `JSValueRef` to a Rust `JSValue` type.
+    fn to_js_value(self) -> Result<JSValue> {
+        from_qjs_value(self)
+    }
 }
 
-// We can't implement From<JSValueRef> for JSValue, as
-// JSValue is automatically generated and it would result
+// We can't implement From<JSValueRef> for JSValueRaw, as
+// JSValueRaw is automatically generated and it would result
 // in a cyclic crate dependency.
 #[allow(clippy::from_over_into)]
-impl Into<JSValue> for JSValueRef<'_> {
-    fn into(self) -> JSValue {
+impl Into<JSValueRaw> for JSValueRef<'_> {
+    fn into(self) -> JSValueRaw {
         self.value
     }
 }
 
+impl fmt::Display for JSValueRef<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.to_js_value().unwrap())
+    }
+}
+
+/// A macro to implement the `TryFrom<&JSValueRef>` and `TryFrom<JSValueRef>` trait
+/// for various Rust types.
+macro_rules! try_from_impl {
+    ($($t:ty),+ $(,)?) => {
+        $(impl TryFrom<&JSValueRef<'_>> for $t {
+            type Error = anyhow::Error;
+
+            fn try_from(value: &JSValueRef) -> Result<Self> {
+                value.to_js_value()?.try_into()
+            }
+        }
+
+        impl TryFrom<JSValueRef<'_>> for $t {
+            type Error = anyhow::Error;
+
+            fn try_from(value: JSValueRef) -> Result<Self> {
+                value.to_js_value()?.try_into()
+            }
+        })+
+    };
+}
+try_from_impl!(
+    bool,
+    i32,
+    usize,
+    f64,
+    String,
+    Vec<JSValue>,
+    Vec<u8>,
+    std::collections::HashMap<String, JSValue>,
+);
+
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use crate::js_binding::constants::MAX_SAFE_INTEGER;
     use crate::js_binding::constants::MIN_SAFE_INTEGER;
 
-    use super::super::context::JSContextRef;
     use super::BigInt;
+    use super::{JSContextRef, JSValue};
     use anyhow::Result;
     const SCRIPT_NAME: &str = "value.js";
 
@@ -765,5 +814,135 @@ mod tests {
                 .try_as_integer()
                 .unwrap()
         );
+    }
+
+    #[test]
+    fn test_convert_bool() -> Result<()> {
+        let context = JSContextRef::default();
+        let val = context.eval_global("test.js", "true")?;
+
+        assert_eq!("true", val.to_string());
+        let arg: bool = val.try_into()?;
+        assert!(arg);
+
+        let val_ref = &val;
+        let arg: bool = val_ref.try_into()?;
+        assert!(arg);
+        Ok(())
+    }
+
+    #[test]
+    fn test_convert_i32() -> Result<()> {
+        let context = JSContextRef::default();
+        let val = context.eval_global("test.js", "42")?;
+
+        assert_eq!("42", val.to_string());
+        let arg: i32 = val.try_into()?;
+        assert_eq!(42, arg);
+
+        let val_ref = &val;
+        let arg: i32 = val_ref.try_into()?;
+        assert_eq!(42, arg);
+        Ok(())
+    }
+
+    #[test]
+    fn test_convert_usize() -> Result<()> {
+        let context = JSContextRef::default();
+        let val = context.eval_global("test.js", "42")?;
+
+        assert_eq!("42", val.to_string());
+        let arg: usize = val.try_into()?;
+        assert_eq!(42, arg);
+
+        let val_ref = &val;
+        let arg: usize = val_ref.try_into()?;
+        assert_eq!(42, arg);
+        Ok(())
+    }
+
+    #[test]
+    fn test_convert_f64() -> Result<()> {
+        let context = JSContextRef::default();
+        let val = context.eval_global("test.js", "42.42")?;
+
+        assert_eq!("42.42", val.to_string());
+        let arg: f64 = val.try_into()?;
+        assert_eq!(42.42, arg);
+
+        let val_ref = &val;
+        let arg: f64 = val_ref.try_into()?;
+        assert_eq!(42.42, arg);
+        Ok(())
+    }
+
+    #[test]
+    fn test_convert_string() -> Result<()> {
+        let context = JSContextRef::default();
+        let val = context.eval_global("test.js", "const h = 'hello'; h")?;
+
+        assert_eq!("hello", val.to_string());
+        let arg: String = val.try_into()?;
+        assert_eq!("hello", arg);
+
+        let val_ref = &val;
+        let arg: String = val_ref.try_into()?;
+        assert_eq!("hello", arg);
+        Ok(())
+    }
+
+    #[test]
+    fn test_convert_vec() -> Result<()> {
+        let context = JSContextRef::default();
+        let val = context.eval_global("test.js", "[1, 2, 3]")?;
+
+        let expected: Vec<JSValue> = vec![1.into(), 2.into(), 3.into()];
+
+        assert_eq!("1,2,3", val.to_string());
+        let arg: Vec<JSValue> = val.try_into()?;
+        assert_eq!(expected, arg);
+
+        let val_ref = &val;
+        let arg: Vec<JSValue> = val_ref.try_into()?;
+        assert_eq!(expected, arg);
+        Ok(())
+    }
+
+    #[test]
+    fn test_convert_bytes() -> Result<()> {
+        let context = JSContextRef::default();
+        let val = context.eval_global("test.js", "new ArrayBuffer(8)")?;
+
+        let expected = [0_u8; 8].to_vec();
+
+        assert_eq!("[object ArrayBuffer]", val.to_string());
+        let arg: Vec<u8> = val.try_into()?;
+        assert_eq!(expected, arg);
+
+        let val_ref = &val;
+        let arg: Vec<u8> = val_ref.try_into()?;
+        assert_eq!(expected, arg);
+        Ok(())
+    }
+
+    #[test]
+    fn test_convert_hashmap() -> Result<()> {
+        let context = JSContextRef::default();
+        let val = context.eval_global("test.js", "({a: 1, b: 2, c: 3})")?;
+
+        let expected = HashMap::from([
+            ("a".to_string(), 1.into()),
+            ("b".to_string(), 2.into()),
+            ("c".to_string(), 3.into()),
+        ]);
+
+        assert_eq!("[object Object]", val.to_string());
+        let arg: HashMap<String, JSValue> = val.try_into()?;
+        assert_eq!(expected, arg);
+
+        let val_ref = &val;
+        let arg: HashMap<String, JSValue> = val_ref.try_into()?;
+        assert_eq!(expected, arg);
+        Ok(())
     }
 }

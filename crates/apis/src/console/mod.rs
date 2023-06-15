@@ -2,7 +2,7 @@ use std::io::Write;
 
 use anyhow::Result;
 use javy::{
-    quickjs::{CallbackArg, JSContextRef, JSValue},
+    quickjs::{JSContextRef, JSValue, JSValueRef},
     Runtime,
 };
 
@@ -49,11 +49,11 @@ where
 
 fn console_log_to<T>(
     mut stream: T,
-) -> impl FnMut(&JSContextRef, &CallbackArg, &[CallbackArg]) -> Result<JSValue>
+) -> impl FnMut(&JSContextRef, JSValueRef, &[JSValueRef]) -> Result<JSValue>
 where
     T: Write + 'static,
 {
-    move |_ctx: &JSContextRef, _this: &CallbackArg, args: &[CallbackArg]| {
+    move |_ctx: &JSContextRef, _this: JSValueRef, args: &[JSValueRef]| {
         // Write full string to in-memory destination before writing to stream since each write call to the stream
         // will invoke a hostcall.
         let mut log_line = String::new();

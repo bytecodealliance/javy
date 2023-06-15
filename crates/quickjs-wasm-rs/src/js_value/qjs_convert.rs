@@ -8,11 +8,11 @@ use quickjs_wasm_sys::{
 use super::JSValue;
 use crate::js_binding::{context::JSContextRef, value::JSValueRef};
 
-/// Converts a reference to a `quickjs_wasm_rs::JSValueRef` to a `JSValue`.
+/// Converts a reference to QuickJS value represented by `quickjs_wasm_rs::JSValueRef` to a `JSValue`.
 ///
 /// # Arguments
 ///
-/// * `val` - a reference to a `JSValueRef` to be converted to a `JSValue`
+/// * `val` - a `JSValueRef` to be converted to a `JSValue`
 ///
 /// # Returns
 ///
@@ -22,10 +22,10 @@ use crate::js_binding::{context::JSContextRef, value::JSValueRef};
 ///
 /// ```
 /// // Assuming `qjs_val` is a `JSValueRef` pointing to a QuickJS string
-/// let js_val = from_qjs_value(&qjs_val).unwrap();
+/// let js_val = from_qjs_value(qjs_val).unwrap();
 /// assert_eq!(js_val, "hello".into());
 /// ```
-pub fn from_qjs_value(val: &JSValueRef) -> Result<JSValue> {
+pub fn from_qjs_value(val: JSValueRef) -> Result<JSValue> {
     let tag = val.get_tag();
     let js_val = match tag {
         JS_TAG_NULL => JSValue::Null,
@@ -39,10 +39,10 @@ pub fn from_qjs_value(val: &JSValueRef) -> Result<JSValue> {
         }
         JS_TAG_OBJECT => {
             if val.is_array() {
-                let array_len = from_qjs_value(&val.get_property("length")?)?.try_into()?;
+                let array_len = from_qjs_value(val.get_property("length")?)?.try_into()?;
                 let mut result = Vec::with_capacity(array_len);
                 for i in 0..array_len {
-                    result.push(from_qjs_value(&val.get_indexed_property(i.try_into()?)?)?);
+                    result.push(from_qjs_value(val.get_indexed_property(i.try_into()?)?)?);
                 }
                 JSValue::Array(result)
             } else if val.is_array_buffer() {
@@ -53,7 +53,7 @@ pub fn from_qjs_value(val: &JSValueRef) -> Result<JSValue> {
                 let mut properties = val.properties()?;
                 while let Some(property_key) = properties.next_key()? {
                     let property_key = property_key.as_str()?;
-                    let property_value = from_qjs_value(&val.get_property(property_key)?)?;
+                    let property_value = from_qjs_value(val.get_property(property_key)?)?;
                     result.insert(property_key.to_string(), property_value);
                 }
 
@@ -122,7 +122,7 @@ mod tests {
     fn test_from_qjs_null() {
         let context = JSContextRef::default();
         let qjs_val = context.eval_global("test.js", "null").unwrap();
-        let js_val = from_qjs_value(&qjs_val).unwrap();
+        let js_val = from_qjs_value(qjs_val).unwrap();
         assert_eq!(js_val, JSValue::Null);
     }
 
@@ -130,7 +130,7 @@ mod tests {
     fn test_from_qjs_undefined() {
         let context = JSContextRef::default();
         let qjs_val = context.eval_global("test.js", "undefined").unwrap();
-        let js_val = from_qjs_value(&qjs_val).unwrap();
+        let js_val = from_qjs_value(qjs_val).unwrap();
         assert_eq!(js_val, JSValue::Undefined);
     }
 
@@ -138,7 +138,7 @@ mod tests {
     fn test_from_qjs_bool() {
         let context = JSContextRef::default();
         let qjs_val = context.eval_global("test.js", "true").unwrap();
-        let js_val = from_qjs_value(&qjs_val).unwrap();
+        let js_val = from_qjs_value(qjs_val).unwrap();
         assert_eq!(js_val, true.into());
     }
 
@@ -146,7 +146,7 @@ mod tests {
     fn test_from_qjs_int() {
         let context = JSContextRef::default();
         let qjs_val = context.eval_global("test.js", "42").unwrap();
-        let js_val = from_qjs_value(&qjs_val).unwrap();
+        let js_val = from_qjs_value(qjs_val).unwrap();
         assert_eq!(js_val, 42.into());
     }
 
@@ -154,7 +154,7 @@ mod tests {
     fn test_from_qjs_float() {
         let context = JSContextRef::default();
         let qjs_val = context.eval_global("test.js", "42.5").unwrap();
-        let js_val = from_qjs_value(&qjs_val).unwrap();
+        let js_val = from_qjs_value(qjs_val).unwrap();
         assert_eq!(js_val, 42.5.into());
     }
 
@@ -164,7 +164,7 @@ mod tests {
         let qjs_val = context
             .eval_global("test.js", "const h = 'hello'; h")
             .unwrap();
-        let js_val = from_qjs_value(&qjs_val).unwrap();
+        let js_val = from_qjs_value(qjs_val).unwrap();
         assert_eq!(js_val, "hello".into());
     }
 
@@ -172,7 +172,7 @@ mod tests {
     fn test_from_qjs_array() {
         let context = JSContextRef::default();
         let qjs_val = context.eval_global("test.js", "[1, 2, 3]").unwrap();
-        let js_val = from_qjs_value(&qjs_val).unwrap();
+        let js_val = from_qjs_value(qjs_val).unwrap();
         assert_eq!(
             js_val,
             vec![JSValue::Int(1), JSValue::Int(2), JSValue::Int(3)].into()
@@ -185,7 +185,7 @@ mod tests {
         let qjs_val = context
             .eval_global("test.js", "new ArrayBuffer(8)")
             .unwrap();
-        let js_val = from_qjs_value(&qjs_val).unwrap();
+        let js_val = from_qjs_value(qjs_val).unwrap();
         assert_eq!(js_val, [0_u8; 8].as_ref().into());
     }
 
@@ -193,7 +193,7 @@ mod tests {
     fn test_from_qjs_object() {
         let context = JSContextRef::default();
         let qjs_val = context.eval_global("test.js", "({a: 1, b: 2})").unwrap();
-        let js_val = from_qjs_value(&qjs_val).unwrap();
+        let js_val = from_qjs_value(qjs_val).unwrap();
         assert_eq!(
             js_val,
             HashMap::from([
