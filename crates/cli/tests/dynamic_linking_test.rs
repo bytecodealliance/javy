@@ -42,16 +42,7 @@ pub fn test_dynamic_linking() -> Result<()> {
 #[test]
 fn test_producers_section_present() -> Result<()> {
     let js_wasm = create_dynamically_linked_wasm_module("console.log(42)")?;
-    let producers_section = wasmparser::Parser::new(0)
-        .parse_all(&js_wasm)
-        .find_map(|payload| match payload {
-            Ok(wasmparser::Payload::CustomSection(c)) if c.name() == "producers" => Some(c.data()),
-            _ => None,
-        })
-        .unwrap();
-    let producers_string = str::from_utf8(producers_section)?;
-    assert!(producers_string.contains("JavaScript"));
-    assert!(producers_string.contains("Javy"));
+    common::assert_producers_section_is_correct(&js_wasm)?;
     Ok(())
 }
 
