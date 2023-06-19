@@ -129,11 +129,12 @@ fn test_error_handling() {
 #[test]
 fn test_same_module_outputs_different_random_result() {
     let mut runner = Runner::new("random.js");
-    let (output, _, fuel_consumed) = runner.exec(&[]).unwrap();
+    let (output, _, _) = runner.exec(&[]).unwrap();
     let (output2, _, _) = runner.exec(&[]).unwrap();
     // In theory these could be equal with a correct implementation but it's very unlikely.
     assert!(output != output2);
-    assert_fuel_consumed_within_threshold(100_543, fuel_consumed);
+    // Don't check fuel consumed because fuel consumed can be different from run to run. See
+    // https://github.com/bytecodealliance/javy/issues/401 for investigating the cause.
 }
 
 fn run_with_u8s(r: &mut Runner, stdin: u8) -> (u8, String, u64) {
