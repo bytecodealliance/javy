@@ -1,3 +1,4 @@
+mod common;
 mod runner;
 
 use runner::{Runner, RunnerError};
@@ -103,16 +104,7 @@ fn test_promises() {
 #[test]
 fn test_producers_section_present() {
     let runner = Runner::new("readme.js");
-    let producers_section = wasmparser::Parser::new(0)
-        .parse_all(&runner.wasm)
-        .find_map(|payload| match payload {
-            Ok(wasmparser::Payload::CustomSection(c)) if c.name() == "producers" => Some(c.data()),
-            _ => None,
-        })
-        .unwrap();
-    let producers_string = str::from_utf8(producers_section).unwrap();
-    assert!(producers_string.contains("JavaScript"));
-    assert!(producers_string.contains("Javy"));
+    common::assert_producers_section_is_correct(&runner.wasm).unwrap();
 }
 
 #[test]
