@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `JSValueRef` can convert to Rust types with `try_into` (previously this was implemented on `CallbackArg`)
+- Added `eval_module` method on `JSContextRef` that evaluates JS code in a ECMAScript module scope
 
 ### Changed
 - Callback functions registered with `context.wrap_callback` now pass `JSValueRef` into the closure instead of `CallbackArg`
