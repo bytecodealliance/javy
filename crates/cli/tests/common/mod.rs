@@ -3,6 +3,8 @@ use std::path::{Path, PathBuf};
 use wasmparser::ProducersSectionReader;
 use wasmtime::{Engine, Module};
 
+// Allows dead code b/c each integration test suite is considered its own
+// application and this function is used by 2 of 3 suites.
 #[allow(dead_code)]
 pub fn create_quickjs_provider_module(engine: &Engine) -> Result<Module> {
     let mut lib_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -17,6 +19,8 @@ pub fn create_quickjs_provider_module(engine: &Engine) -> Result<Module> {
     Module::from_file(engine, lib_path)
 }
 
+// Allows dead code b/c each integration test suite is considered its own
+// application and this function is used by 2 of 3 suites.
 #[allow(dead_code)]
 pub fn assert_producers_section_is_correct(wasm: &[u8]) -> Result<()> {
     let producers_section = wasmparser::Parser::new(0)
