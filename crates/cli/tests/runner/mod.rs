@@ -110,6 +110,10 @@ impl Runner {
     }
 
     pub fn exec(&mut self, input: &[u8]) -> Result<(Vec<u8>, Vec<u8>, u64)> {
+        self.exec_func("_start", input)
+    }
+
+    pub fn exec_func(&mut self, func: &str, input: &[u8]) -> Result<(Vec<u8>, Vec<u8>, u64)> {
         let mut store = Store::new(
             self.linker.engine(),
             StoreContext::new(input, self.log_capacity),
@@ -119,7 +123,7 @@ impl Runner {
         let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
 
         let instance = self.linker.instantiate(&mut store, &module)?;
-        let run = instance.get_typed_func::<(), ()>(&mut store, "_start")?;
+        let run = instance.get_typed_func::<(), ()>(&mut store, func)?;
 
         let res = run.call(&mut store, ());
         let fuel_consumed = store.fuel_consumed().unwrap();

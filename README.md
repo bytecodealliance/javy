@@ -137,6 +137,28 @@ $ echo '{ "n": 2, "bar": "baz" }' | wasmtime index.wasm
 {"foo":3,"newBar":"baz!"}%   
 ```
 
+### Exporting functions
+
+For each exported JavaScript function, Javy will add an additional function export to the WebAssembly module. Exported functions with arguments and generators are not supported. Return values will also be dropped and not returned.
+
+An example would look like:
+
+```javascript
+export function foo() {
+  console.log("Hello from foo!");
+}
+
+console.log("Hello world!");
+```
+
+In the terminal:
+```bash
+$ javy compile index.js -o index.wasm
+$ wasmtime run --invoke foo index.wasm
+Hello world!
+Hello from foo!
+```
+
 ### Invoking Javy-generated modules programatically
 
 Javy-generated modules are by design WASI only and follow the [command pattern](https://github.com/WebAssembly/WASI/blob/snapshot-01/design/application-abi.md#current-unstable-abi). Any input must be passed via `stdin` and any output will be placed in `stdout`. This is especially important when invoking Javy modules from a custom embedding. 
