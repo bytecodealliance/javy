@@ -27,16 +27,6 @@ If you want to customize the runtime or the APIs, you can use the `Runtime::new_
 * `random` - Overrides the implementation of `Math.random` to one that seeds the RNG on first call to `Math.random`. This is helpful to enable when using Wizer to snapshot a Javy Runtime so that the output of `Math.random` relies on the WASI context used at runtime and not the WASI context used when Wizening. Enabling this feature will increase the size of the Wasm module that includes the Javy Runtime and will introduce an additional hostcall invocation when `Math.random` is invoked for the first time.
 * `stream_io` - Registers implementations of `Javy.IO.readSync` and `Javy.IO.writeSync`.
 
-## Building a project using this crate
-
-- Install the [wasi-sdk](https://github.com/WebAssembly/wasi-sdk#install) for your platform
-- Set the `QUICKJS_WASM_SYS_WASI_SDK_PATH` environment variable to the absolute path where you installed the `wasi-sdk`
-
-For example, if you install the `wasi-sdk` in `/opt/wasi-sdk`, you can run:
-```bash
-export QUICKJS_WASM_SYS_WASI_SDK_PATH=/opt/wasi-sdk
-```
-
 ## Publishing to crates.io
 
 To publish this crate to crates.io, run `./publish.sh`.
