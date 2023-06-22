@@ -443,8 +443,16 @@ criteria = "safe-to-run"
 version = "0.10.53"
 criteria = "safe-to-deploy"
 
+[[exemptions.openssl]]
+version = "0.10.55"
+criteria = "safe-to-deploy"
+
 [[exemptions.openssl-sys]]
 version = "0.9.88"
+criteria = "safe-to-deploy"
+
+[[exemptions.openssl-sys]]
+version = "0.9.90"
 criteria = "safe-to-deploy"
 
 [[exemptions.paste]]
