@@ -1,3 +1,8 @@
+/// Higher-level representation of JavaScript.
+///
+/// This is intended to be used to derive different representations of source
+/// code. For example, as a byte array, a string, QuickJS bytecode, compressed
+/// bytes, or attributes of the source code like what it exports.
 use anyhow::{Context, Result};
 use brotli::enc::{self, BrotliEncoderParams};
 use std::{
