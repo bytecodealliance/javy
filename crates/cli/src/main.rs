@@ -1,22 +1,18 @@
 mod bytecode;
 mod commands;
 mod js;
-mod module_generator;
-mod opt;
-mod transform;
+mod wasm_generator;
 
 use crate::commands::{Command, CompileCommandOpts, EmitProviderCommandOpts};
+use crate::wasm_generator::r#static::{Generator, Refiner};
 use anyhow::{bail, Result};
 use js::JS;
 use std::env;
 use std::fs::File;
 use std::io::Write;
-use std::path::Path;
 use std::process::Stdio;
 use std::{fs, process::Command as OsCommand};
 use structopt::StructOpt;
-use transform::SourceCodeSection;
-use walrus::Module;
 
 fn main() -> Result<()> {
     let cmd = Command::from_args();
@@ -24,11 +20,14 @@ fn main() -> Result<()> {
     match &cmd {
         Command::EmitProvider(opts) => emit_provider(opts),
         Command::Compile(opts) => {
+            let js = JS::from_file(&opts.input)?;
             if opts.dynamic {
-                create_dynamically_linked_module(opts)
+                let wasm = wasm_generator::Dynamic::new(&js).generate()?;
+                fs::write(&opts.output, wasm)?;
             } else {
-                create_statically_linked_module(opts)
+                create_statically_linked_module(opts)?;
             }
+            Ok(())
         }
     }
 }
@@ -43,30 +42,26 @@ fn emit_provider(opts: &EmitProviderCommandOpts) -> Result<()> {
 }
 
 fn create_statically_linked_module(opts: &CompileCommandOpts) -> Result<()> {
-    let wizen = env::var("JAVY_WIZEN");
+    // The javy-core `main.rs` pre-initializer uses WASI to read the JS source
+    // code from stdin. Wizer doesn't let us customize its WASI context so we
+    // don't have a better option right now. Since we can't set the content of
+    // the stdin stream for the main Javy process, we create a subprocess and
+    // set the content of the subprocess's stdin stream, and we run Wizer
+    // within that subprocess. The subprocess runs the same Javy command but
+    // with an env var set, in both cases we end up in this method, and we
+    // can use the env var to tell if we're not in the subprocess and we need
+    // to start the subprocess or we are in the subprocess and we can run Wizer.
+    const IN_SUBPROCESS_KEY: &str = "JAVY_WIZEN";
+    const IN_SUBPROCESS_VAL: &str = "1";
+    let in_subprocess = env::var(IN_SUBPROCESS_KEY).is_ok_and(|v| v == IN_SUBPROCESS_VAL);
+    let wasm = if !in_subprocess {
+        let js = JS::from_file(&opts.input)?;
 
-    if wizen.eq(&Ok("1".into())) {
-        let wasm: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/engine.wasm"));
-        opt::Optimizer::new(wasm)
-            .optimize(true)
-            .write_optimized_wasm(&opts.output)?;
-
-        env::remove_var("JAVY_WIZEN");
-
-        return Ok(());
-    }
-
-    let js = JS::from_file(&opts.input)?;
-
-    let self_cmd = env::args().next().unwrap();
-
-    {
-        env::set_var("JAVY_WIZEN", "1");
+        let mut args = env::args();
+        let self_cmd = args.next().unwrap();
         let mut command = OsCommand::new(self_cmd)
-            .arg("compile")
-            .arg(&opts.input)
-            .arg("-o")
-            .arg(&opts.output)
+            .args(args)
+            .env(IN_SUBPROCESS_KEY, IN_SUBPROCESS_VAL)
             .stdin(Stdio::piped())
             .spawn()?;
         command.stdin.take().unwrap().write_all(js.as_bytes())?;
@@ -74,25 +69,14 @@ fn create_statically_linked_module(opts: &CompileCommandOpts) -> Result<()> {
         if !status.success() {
             bail!("Couldn't create wasm from input");
         }
-    }
 
-    add_producers_and_source_code_sections(&opts.output, &js)?;
+        // The subprocess should have written some Wasm so we can refine it now.
+        let wizened_wasm = fs::read(&opts.output)?;
+        Refiner::new(&js).optimize(true).refine(wizened_wasm)?
+    } else {
+        Generator::new().generate()?
+    };
 
-    Ok(())
-}
-
-fn add_producers_and_source_code_sections<P: AsRef<Path>>(file: P, js: &JS) -> Result<()> {
-    let mut module = Module::from_file_with_config(&file, &transform::module_config())?;
-    transform::add_producers_section(&mut module.producers);
-    module.customs.add(SourceCodeSection::new(js)?);
-    module.emit_wasm_file(&file)?;
-    Ok(())
-}
-
-fn create_dynamically_linked_module(opts: &CompileCommandOpts) -> Result<()> {
-    let js = JS::from_file(&opts.input)?;
-    let wasm_module = module_generator::generate_module(&js)?;
-    let mut output_file = fs::File::create(&opts.output)?;
-    output_file.write_all(&wasm_module)?;
+    fs::write(&opts.output, wasm)?;
     Ok(())
 }
