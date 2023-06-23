@@ -1,14 +1,16 @@
 mod bytecode;
 mod commands;
+mod js;
 mod module_generator;
 mod opt;
 mod transform;
 
 use crate::commands::{Command, CompileCommandOpts, EmitProviderCommandOpts};
-use anyhow::{bail, Context, Result};
+use anyhow::{bail, Result};
+use js::JS;
 use std::env;
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io::Write;
 use std::path::Path;
 use std::process::Stdio;
 use std::{fs, process::Command as OsCommand};
@@ -54,7 +56,7 @@ fn create_statically_linked_module(opts: &CompileCommandOpts) -> Result<()> {
         return Ok(());
     }
 
-    let contents = read_input_file(&opts.input)?;
+    let js = JS::from_file(&opts.input)?;
 
     let self_cmd = env::args().next().unwrap();
 
@@ -67,39 +69,30 @@ fn create_statically_linked_module(opts: &CompileCommandOpts) -> Result<()> {
             .arg(&opts.output)
             .stdin(Stdio::piped())
             .spawn()?;
-        command.stdin.take().unwrap().write_all(&contents)?;
+        command.stdin.take().unwrap().write_all(js.as_bytes())?;
         let status = command.wait()?;
         if !status.success() {
             bail!("Couldn't create wasm from input");
         }
     }
 
-    add_producers_and_source_code_sections(&opts.output, &contents)?;
+    add_producers_and_source_code_sections(&opts.output, &js)?;
 
     Ok(())
 }
 
-fn add_producers_and_source_code_sections<P: AsRef<Path>>(file: P, contents: &[u8]) -> Result<()> {
+fn add_producers_and_source_code_sections<P: AsRef<Path>>(file: P, js: &JS) -> Result<()> {
     let mut module = Module::from_file_with_config(&file, &transform::module_config())?;
     transform::add_producers_section(&mut module.producers);
-    module.customs.add(SourceCodeSection::new(contents)?);
+    module.customs.add(SourceCodeSection::new(js)?);
     module.emit_wasm_file(&file)?;
     Ok(())
 }
 
 fn create_dynamically_linked_module(opts: &CompileCommandOpts) -> Result<()> {
-    let js_source_code = read_input_file(&opts.input)?;
-    let quickjs_bytecode = bytecode::compile_source(&js_source_code)?;
-    let wasm_module = module_generator::generate_module(quickjs_bytecode, &js_source_code)?;
+    let js = JS::from_file(&opts.input)?;
+    let wasm_module = module_generator::generate_module(&js)?;
     let mut output_file = fs::File::create(&opts.output)?;
     output_file.write_all(&wasm_module)?;
     Ok(())
-}
-
-fn read_input_file(path: &Path) -> Result<Vec<u8>> {
-    let mut input_file = fs::File::open(path)
-        .with_context(|| format!("Failed to open input file {}", path.display()))?;
-    let mut contents: Vec<u8> = vec![];
-    input_file.read_to_end(&mut contents)?;
-    Ok(contents)
 }

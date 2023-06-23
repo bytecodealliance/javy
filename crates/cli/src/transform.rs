@@ -1,8 +1,9 @@
-use std::{borrow::Cow, io::Cursor};
+use std::borrow::Cow;
 
 use anyhow::Result;
-use brotli::enc::{self, BrotliEncoderParams};
 use walrus::{CustomSection, IdsToIndices, ModuleConfig, ModuleProducers};
+
+use crate::js::JS;
 
 #[derive(Debug)]
 pub struct SourceCodeSection {
@@ -10,18 +11,9 @@ pub struct SourceCodeSection {
 }
 
 impl SourceCodeSection {
-    pub fn new(source_code: &[u8]) -> Result<SourceCodeSection> {
-        let mut compressed_source_code: Vec<u8> = vec![];
-        enc::BrotliCompress(
-            &mut Cursor::new(source_code),
-            &mut compressed_source_code,
-            &BrotliEncoderParams {
-                quality: 11,
-                ..Default::default()
-            },
-        )?;
+    pub fn new(js: &JS) -> Result<SourceCodeSection> {
         Ok(SourceCodeSection {
-            compressed_source_code,
+            compressed_source_code: js.compress()?,
         })
     }
 }
