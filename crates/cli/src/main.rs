@@ -4,7 +4,7 @@ mod js;
 mod wasm_generator;
 
 use crate::commands::{Command, CompileCommandOpts, EmitProviderCommandOpts};
-use crate::wasm_generator::r#static::{Generator, Refiner};
+use crate::wasm_generator::r#static as static_generator;
 use anyhow::{bail, Result};
 use js::JS;
 use std::env;
@@ -13,6 +13,7 @@ use std::io::Write;
 use std::process::Stdio;
 use std::{fs, process::Command as OsCommand};
 use structopt::StructOpt;
+use wasm_generator::dynamic as dynamic_generator;
 
 fn main() -> Result<()> {
     let cmd = Command::from_args();
@@ -22,7 +23,7 @@ fn main() -> Result<()> {
         Command::Compile(opts) => {
             let js = JS::from_file(&opts.input)?;
             if opts.dynamic {
-                let wasm = wasm_generator::Dynamic::new(&js).generate()?;
+                let wasm = dynamic_generator::generate(&js)?;
                 fs::write(&opts.output, wasm)?;
             } else {
                 create_statically_linked_module(opts)?;
@@ -72,9 +73,9 @@ fn create_statically_linked_module(opts: &CompileCommandOpts) -> Result<()> {
 
         // The subprocess should have written some Wasm so we can refine it now.
         let wizened_wasm = fs::read(&opts.output)?;
-        Refiner::new(&js).optimize(true).refine(wizened_wasm)?
+        static_generator::refine(wizened_wasm, &js)?
     } else {
-        Generator::new().generate()?
+        static_generator::generate()?
     };
 
     fs::write(&opts.output, wasm)?;
