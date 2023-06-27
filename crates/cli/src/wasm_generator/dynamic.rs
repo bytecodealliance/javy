@@ -1,10 +1,8 @@
+use crate::js::JS;
+
+use super::transform::{self, SourceCodeSection};
 use anyhow::Result;
 use walrus::{DataKind, FunctionBuilder, Module, ValType};
-
-use crate::{
-    js::JS,
-    transform::{self, SourceCodeSection},
-};
 
 // Run the calling code with the `dump_wat` feature enabled to print the WAT to stdout
 //
@@ -34,7 +32,7 @@ use crate::{
 //     (export "_start" (func 2))
 //     (data (;0;) "\02\04\18function.mjs\0econsole\06log\18Hello world!\0f\bc\03\00\00\00\00\0e\00\06\01\a0\01\00\00\00\03\00\00\17\00\08\ea\02)8\df\00\00\00B\e0\00\00\00\04\e1\00\00\00$\01\00)\bc\03\01\02\01\17")
 // )
-pub fn generate_module(js: &JS) -> Result<Vec<u8>> {
+pub fn generate(js: &JS) -> Result<Vec<u8>> {
     let mut module = Module::with_config(transform::module_config());
 
     const IMPORT_NAMESPACE: &str = "javy_quickjs_provider_v1";
