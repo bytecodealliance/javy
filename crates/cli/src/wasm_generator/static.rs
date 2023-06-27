@@ -35,7 +35,7 @@ pub fn refine(mut wasm: Vec<u8>, js: &JS) -> Result<Vec<u8>> {
     module.optimize(&codegen_cfg);
     module
         .run_optimization_passes(vec!["strip"], &codegen_cfg)
-        .unwrap();
+        .map_err(|_| anyhow!("Running wasm-opt optimization passes failed"))?;
     wasm = module.write();
 
     let mut module = transform::module_config().parse(&wasm)?;
