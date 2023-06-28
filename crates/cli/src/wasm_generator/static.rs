@@ -24,8 +24,24 @@ pub fn generate() -> Result<Vec<u8>> {
 /// Takes Wasm created by `Generator` and makes additional changes.
 ///
 /// This is intended to be run in the parent process after generating the Wasm.
-pub fn refine(wasm: Vec<u8>, js: &JS) -> Result<Vec<u8>> {
-    let wasm = export_exported_js_functions(&wasm, js.exports()?)?;
+pub fn refine(wasm: Vec<u8>, js: &JS, export_functions: bool) -> Result<Vec<u8>> {
+    let mut module = transform::module_config().parse(&wasm)?;
+    let exports = get_useful_exports(&module);
+    let Exports {
+        realloc_export,
+        invoke_export,
+        ..
+    } = exports;
+
+    // We no longer need these exports so remove them.
+    module.exports.delete(realloc_export);
+    module.exports.delete(invoke_export);
+
+    if export_functions {
+        export_exported_js_functions(&mut module, exports, js.exports()?);
+    }
+
+    let wasm = module.emit_wasm();
 
     let codegen_cfg = CodegenConfig {
         optimization_level: 3, // Aggressively optimize for speed.
@@ -47,21 +63,16 @@ pub fn refine(wasm: Vec<u8>, js: &JS) -> Result<Vec<u8>> {
     Ok(module.emit_wasm())
 }
 
-fn export_exported_js_functions(wasm: &[u8], js_exports: Vec<String>) -> Result<Vec<u8>> {
-    let mut module = transform::module_config().parse(wasm)?;
-
-    let Exports {
-        realloc_export,
+fn export_exported_js_functions(
+    module: &mut walrus::Module,
+    Exports {
         realloc_fn,
-        invoke_export,
         invoke_fn,
         memory,
-    } = get_useful_exports(&module);
-
-    // We no longer need these exports so remove them.
-    module.exports.delete(realloc_export);
-    module.exports.delete(invoke_export);
-
+        ..
+    }: Exports,
+    js_exports: Vec<String>,
+) {
     let ptr_local = module.locals.add(ValType::I32);
     for js_export in js_exports {
         // For each JS function export, add an export that copies the name of the function into memory and invokes it.
@@ -88,9 +99,6 @@ fn export_exported_js_functions(wasm: &[u8], js_exports: Vec<String>) -> Result<
         let export_fn = export_fn.finish(vec![], &mut module.funcs);
         module.exports.add(&js_export, export_fn);
     }
-    let finished_wasm = module.emit_wasm();
-
-    Ok(finished_wasm)
 }
 
 struct Exports {

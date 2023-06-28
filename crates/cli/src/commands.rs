@@ -25,6 +25,11 @@ pub struct CompileCommandOpts {
     /// Creates a smaller module that requires a dynamically linked QuickJS provider Wasm
     /// module to execute (see `emit-provider` command).
     pub dynamic: bool,
+
+    #[structopt(long = "with-exports")]
+    /// Experimental flag to export exported JS functions. Does not support
+    /// functions that have parameters or return values.
+    pub export_functions: bool,
 }
 
 #[derive(Debug, StructOpt)]

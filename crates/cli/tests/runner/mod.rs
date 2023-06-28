@@ -66,10 +66,18 @@ impl Default for Runner {
 
 impl Runner {
     pub fn new(js_file: impl AsRef<Path>) -> Self {
-        Self::new_with_fixed_logging_capacity(js_file, usize::MAX)
+        Self::new_with_fixed_logging_capacity(js_file, false, usize::MAX)
     }
 
-    pub fn new_with_fixed_logging_capacity(js_file: impl AsRef<Path>, capacity: usize) -> Self {
+    pub fn new_with_exports(js_file: impl AsRef<Path>) -> Self {
+        Self::new_with_fixed_logging_capacity(js_file, true, usize::MAX)
+    }
+
+    fn new_with_fixed_logging_capacity(
+        js_file: impl AsRef<Path>,
+        with_exports: bool,
+        capacity: usize,
+    ) -> Self {
         let wasm_file_name = format!("{}.wasm", uuid::Uuid::new_v4());
 
         let root = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
@@ -81,12 +89,18 @@ impl Runner {
         let wasm_file = tempdir.path().join(wasm_file_name);
         let js_file = root.join("tests").join("sample-scripts").join(js_file);
 
+        let mut args = vec![
+            "compile",
+            &js_file.to_str().unwrap(),
+            "-o",
+            &wasm_file.to_str().unwrap(),
+        ];
+        if with_exports {
+            args.push("--with-exports")
+        }
         let output = Command::new(env!("CARGO_BIN_EXE_javy"))
             .current_dir(root)
-            .arg("compile")
-            .arg(&js_file)
-            .arg("-o")
-            .arg(&wasm_file)
+            .args(args)
             .output()
             .expect("failed to run command");
 

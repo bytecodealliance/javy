@@ -23,7 +23,7 @@ fn main() -> Result<()> {
         Command::Compile(opts) => {
             let js = JS::from_file(&opts.input)?;
             if opts.dynamic {
-                let wasm = dynamic_generator::generate(&js)?;
+                let wasm = dynamic_generator::generate(&js, opts.export_functions)?;
                 fs::write(&opts.output, wasm)?;
             } else {
                 create_statically_linked_module(opts)?;
@@ -73,7 +73,7 @@ fn create_statically_linked_module(opts: &CompileCommandOpts) -> Result<()> {
 
         // The subprocess should have written some Wasm so we can refine it now.
         let wizened_wasm = fs::read(&opts.output)?;
-        static_generator::refine(wizened_wasm, &js)?
+        static_generator::refine(wizened_wasm, &js, opts.export_functions)?
     } else {
         static_generator::generate()?
     };

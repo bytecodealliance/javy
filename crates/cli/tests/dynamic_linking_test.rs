@@ -13,7 +13,7 @@ mod common;
 #[test]
 pub fn test_dynamic_linking() -> Result<()> {
     let js_src = "console.log(42);";
-    let log_output = invoke_fn_on_generated_module(js_src, "_start")?;
+    let log_output = invoke_fn_on_generated_module(js_src, "_start", false)?;
     assert_eq!("42\n", &log_output);
     Ok(())
 }
@@ -21,19 +21,30 @@ pub fn test_dynamic_linking() -> Result<()> {
 #[test]
 pub fn test_dynamic_linking_with_func() -> Result<()> {
     let js_src = "export function foo() { console.log('In foo'); }; console.log('Toplevel');";
-    let log_output = invoke_fn_on_generated_module(js_src, "foo")?;
+    let log_output = invoke_fn_on_generated_module(js_src, "foo", true)?;
     assert_eq!("Toplevel\nIn foo\n", &log_output);
     Ok(())
 }
 
 #[test]
+pub fn test_dynamic_linking_with_func_without_flag() -> Result<()> {
+    let js_src = "export function foo() { console.log('In foo'); }; console.log('Toplevel');";
+    let res = invoke_fn_on_generated_module(js_src, "foo", false);
+    assert_eq!(
+        "failed to find function export `foo`",
+        res.err().unwrap().to_string()
+    );
+    Ok(())
+}
+
+#[test]
 fn test_producers_section_present() -> Result<()> {
-    let js_wasm = create_dynamically_linked_wasm_module("console.log(42)")?;
+    let js_wasm = create_dynamically_linked_wasm_module("console.log(42)", false)?;
     common::assert_producers_section_is_correct(&js_wasm)?;
     Ok(())
 }
 
-fn create_dynamically_linked_wasm_module(js_src: &str) -> Result<Vec<u8>> {
+fn create_dynamically_linked_wasm_module(js_src: &str, with_exports: bool) -> Result<Vec<u8>> {
     let Ok(tempdir) = tempfile::tempdir() else {
         panic!("Could not create temporary directory for .wasm test artifacts");
     };
@@ -42,12 +53,18 @@ fn create_dynamically_linked_wasm_module(js_src: &str) -> Result<Vec<u8>> {
 
     let mut js_file = File::create(&js_path)?;
     js_file.write_all(js_src.as_bytes())?;
+    let mut args = vec![
+        "compile",
+        js_path.to_str().unwrap(),
+        "-o",
+        wasm_path.to_str().unwrap(),
+        "-d",
+    ];
+    if with_exports {
+        args.push("--with-exports");
+    }
     let output = Command::new(env!("CARGO_BIN_EXE_javy"))
-        .arg("compile")
-        .arg(js_path.to_str().unwrap())
-        .arg("-o")
-        .arg(wasm_path.to_str().unwrap())
-        .arg("-d")
+        .args(args)
         .output()?;
     assert!(output.status.success());
 
@@ -57,8 +74,8 @@ fn create_dynamically_linked_wasm_module(js_src: &str) -> Result<Vec<u8>> {
     Ok(contents)
 }
 
-fn invoke_fn_on_generated_module(js_src: &str, func: &str) -> Result<String> {
-    let js_wasm = create_dynamically_linked_wasm_module(js_src)?;
+fn invoke_fn_on_generated_module(js_src: &str, func: &str, with_exports: bool) -> Result<String> {
+    let js_wasm = create_dynamically_linked_wasm_module(js_src, with_exports)?;
 
     let stderr = WritePipe::new_in_memory();
     let (engine, mut linker, mut store) = create_wasm_env(stderr.clone())?;
