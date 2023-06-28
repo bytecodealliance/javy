@@ -1,6 +1,8 @@
+use std::collections::HashMap;
+
 use anyhow::{anyhow, Result};
 use binaryen::{CodegenConfig, Module};
-use walrus::{DataKind, ExportId, ExportItem, FunctionBuilder, FunctionId, MemoryId, ValType};
+use walrus::{DataKind, ExportItem, FunctionBuilder, FunctionId, MemoryId, ValType};
 use wizer::Wizer;
 
 use crate::js::JS;
@@ -26,20 +28,32 @@ pub fn generate() -> Result<Vec<u8>> {
 /// This is intended to be run in the parent process after generating the Wasm.
 pub fn refine(wasm: Vec<u8>, js: &JS, export_functions: bool) -> Result<Vec<u8>> {
     let mut module = transform::module_config().parse(&wasm)?;
-    let exports = get_useful_exports(&module);
-    let Exports {
-        realloc_export,
-        invoke_export,
-        ..
-    } = exports;
+
+    let (realloc, invoke, memory) = {
+        let mut exports = HashMap::new();
+        for export in module.exports.iter() {
+            exports.insert(export.name.as_str(), export);
+        }
+        (
+            *exports.get("canonical_abi_realloc").unwrap(),
+            *exports.get("javy.invoke").unwrap(),
+            *exports.get("memory").unwrap(),
+        )
+    };
+
+    let realloc_export = realloc.id();
+    let invoke_export = invoke.id();
+
+    if export_functions {
+        let ExportItem::Function(realloc_fn) = realloc.item else { unreachable!() };
+        let ExportItem::Function(invoke_fn) = invoke.item else { unreachable!() };
+        let ExportItem::Memory(memory) = memory.item else { unreachable!() };
+        export_exported_js_functions(&mut module, realloc_fn, invoke_fn, memory, js.exports()?);
+    }
 
     // We no longer need these exports so remove them.
     module.exports.delete(realloc_export);
     module.exports.delete(invoke_export);
-
-    if export_functions {
-        export_exported_js_functions(&mut module, exports, js.exports()?);
-    }
 
     let wasm = module.emit_wasm();
 
@@ -65,12 +79,9 @@ pub fn refine(wasm: Vec<u8>, js: &JS, export_functions: bool) -> Result<Vec<u8>>
 
 fn export_exported_js_functions(
     module: &mut walrus::Module,
-    Exports {
-        realloc_fn,
-        invoke_fn,
-        memory,
-        ..
-    }: Exports,
+    realloc_fn: FunctionId,
+    invoke_fn: FunctionId,
+    memory: MemoryId,
     js_exports: Vec<String>,
 ) {
     let ptr_local = module.locals.add(ValType::I32);
@@ -98,43 +109,5 @@ fn export_exported_js_functions(
             .call(invoke_fn);
         let export_fn = export_fn.finish(vec![], &mut module.funcs);
         module.exports.add(&js_export, export_fn);
-    }
-}
-
-struct Exports {
-    realloc_export: ExportId,
-    realloc_fn: FunctionId,
-    invoke_export: ExportId,
-    invoke_fn: FunctionId,
-    memory: MemoryId,
-}
-
-fn get_useful_exports(module: &walrus::Module) -> Exports {
-    let mut realloc_export = None;
-    let mut invoke_export = None;
-    let mut memory_export = None;
-    for export in module.exports.iter() {
-        match export.item {
-            ExportItem::Function(func_id) if export.name == "canonical_abi_realloc" => {
-                realloc_export = Some((export.id(), func_id));
-            }
-            ExportItem::Function(func_id) if export.name == "javy.invoke" => {
-                invoke_export = Some((export.id(), func_id));
-            }
-            ExportItem::Memory(memory_id) if export.name == "memory" => {
-                memory_export = Some(memory_id)
-            }
-            _ => continue,
-        }
-    }
-    let (realloc_export, realloc_fn) = realloc_export.unwrap();
-    let (invoke_export, invoke_fn) = invoke_export.unwrap();
-    let memory = memory_export.unwrap();
-    Exports {
-        realloc_export,
-        realloc_fn,
-        invoke_export,
-        invoke_fn,
-        memory,
     }
 }
