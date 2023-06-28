@@ -91,9 +91,9 @@ impl Runner {
 
         let mut args = vec![
             "compile",
-            &js_file.to_str().unwrap(),
+            js_file.to_str().unwrap(),
             "-o",
-            &wasm_file.to_str().unwrap(),
+            wasm_file.to_str().unwrap(),
         ];
         if with_exports {
             args.push("--with-exports")
