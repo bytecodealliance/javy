@@ -65,6 +65,8 @@ $ cargo install --path crates/cli
 
 Pre-compiled binaries of the Javy CLI can be found on [the releases page](https://github.com/bytecodealliance/javy/releases).
 
+Javy supports ECMA2020 JavaScript. Javy does _not_ provide support for NodeJS or CommonJS APIs.
+
 ### Compiling to WebAssembly
 
 Define your JavaScript like:
@@ -139,7 +141,7 @@ $ echo '{ "n": 2, "bar": "baz" }' | wasmtime index.wasm
 
 ### Exporting functions
 
-For each exported JavaScript function, Javy will add an additional function export to the WebAssembly module. Exported functions with arguments and generators are not supported. Return values will also be dropped and not returned.
+To export exported JavaScript functions, pass the `--with-exports` flag when running `javy compile`. Only ESM exports are supported (that is, Node.js/CommonJS exports are _not_ supported). For each exported JavaScript function, Javy will add an additional function export to the WebAssembly module. Exported functions with arguments and generators are not supported. Return values will also be dropped and not returned.
 
 An example would look like:
 
