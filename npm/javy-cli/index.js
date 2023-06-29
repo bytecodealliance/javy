@@ -23,7 +23,7 @@ async function main() {
 	const result = childProcess.spawnSync(binaryPath(version), getArgs(), {
 		stdio: "inherit",
 	});
-	process.exitCode = result.status || 1;
+	process.exitCode = result.status === null ? 1 : result.status;
 	if (result.error?.code === "ENOENT") {
 		console.error("Failed to start Javy. If on Linux, check if glibc is installed.");
 	}
