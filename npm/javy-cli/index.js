@@ -20,13 +20,12 @@ async function main() {
 			await downloadBinary(version);
 		}
 	}
-	try {
-		childProcess.spawnSync(binaryPath(version), getArgs(), {
-			stdio: "inherit",
-		});
-	} catch (e) {
-		if (typeof e?.status === "number") return;
-		console.error(e);
+	const result = childProcess.spawnSync(binaryPath(version), getArgs(), {
+		stdio: "inherit",
+	});
+	process.exitCode = result.status || 1;
+	if (result.error?.code === "ENOENT") {
+		console.error("Failed to start Javy. If on Linux, check if glibc is installed.");
 	}
 }
 main();
