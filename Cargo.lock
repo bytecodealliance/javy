@@ -1349,6 +1349,7 @@ dependencies = [
  "wasmprinter",
  "wasmtime",
  "wasmtime-wasi",
+ "wit-parser 0.8.0",
  "wizer",
 ]
 
@@ -2169,7 +2170,7 @@ version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "138e3e0acb6c9fb258b19b67cb8abd63c00679d2851805ea151465464fe9030a"
 dependencies = [
- "semver",
+ "semver 0.9.0",
 ]
 
 [[package]]
@@ -2291,6 +2292,12 @@ checksum = "1d7eb9ef2c18661902cc47e535f9bc51b78acd254da71d375c2f6720d9a40403"
 dependencies = [
  "semver-parser",
 ]
+
+[[package]]
+name = "semver"
+version = "1.0.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bebd363326d05ec3e2f532ab7660680f3b02130d780c299bca73469d521bc0ed"
 
 [[package]]
 name = "semver-parser"
@@ -3392,7 +3399,7 @@ dependencies = [
  "syn 1.0.109",
  "wasmtime-component-util",
  "wasmtime-wit-bindgen",
- "wit-parser",
+ "wit-parser 0.6.4",
 ]
 
 [[package]]
@@ -3576,7 +3583,7 @@ checksum = "796fdb0983ac1b3da4509169f49eea5e902b5641324466dc6f158c6e4ea693f5"
 dependencies = [
  "anyhow",
  "heck 0.4.1",
- "wit-parser",
+ "wit-parser 0.6.4",
 ]
 
 [[package]]
@@ -3883,6 +3890,22 @@ dependencies = [
  "indexmap",
  "log",
  "pulldown-cmark",
+ "unicode-xid",
+ "url",
+]
+
+[[package]]
+name = "wit-parser"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6daec9f093dbaea0e94043eeb92ece327bbbe70c86b1f41aca9bbfefd7f050f0"
+dependencies = [
+ "anyhow",
+ "id-arena",
+ "indexmap",
+ "log",
+ "pulldown-cmark",
+ "semver 1.0.17",
  "unicode-xid",
  "url",
 ]

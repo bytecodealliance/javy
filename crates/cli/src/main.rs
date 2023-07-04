@@ -2,10 +2,11 @@ mod bytecode;
 mod commands;
 mod js;
 mod wasm_generator;
+mod wit;
 
 use crate::commands::{Command, CompileCommandOpts, EmitProviderCommandOpts};
 use crate::wasm_generator::r#static as static_generator;
-use anyhow::{bail, Result};
+use anyhow::{anyhow, bail, Result};
 use js::JS;
 use std::env;
 use std::fs::File;
@@ -22,11 +23,12 @@ fn main() -> Result<()> {
         Command::EmitProvider(opts) => emit_provider(opts),
         Command::Compile(opts) => {
             let js = JS::from_file(&opts.input)?;
+            let exports = determine_js_exports(&js, opts)?;
             if opts.dynamic {
-                let wasm = dynamic_generator::generate(&js, opts.export_functions)?;
+                let wasm = dynamic_generator::generate(&js, exports)?;
                 fs::write(&opts.output, wasm)?;
             } else {
-                create_statically_linked_module(opts)?;
+                create_statically_linked_module(opts, exports)?;
             }
             Ok(())
         }
@@ -42,7 +44,7 @@ fn emit_provider(opts: &EmitProviderCommandOpts) -> Result<()> {
     Ok(())
 }
 
-fn create_statically_linked_module(opts: &CompileCommandOpts) -> Result<()> {
+fn create_statically_linked_module(opts: &CompileCommandOpts, exports: Vec<String>) -> Result<()> {
     // The javy-core `main.rs` pre-initializer uses WASI to read the JS source
     // code from stdin. Wizer doesn't let us customize its WASI context so we
     // don't have a better option right now. Since we can't set the content of
@@ -73,11 +75,30 @@ fn create_statically_linked_module(opts: &CompileCommandOpts) -> Result<()> {
 
         // The subprocess should have written some Wasm so we can refine it now.
         let wizened_wasm = fs::read(&opts.output)?;
-        static_generator::refine(wizened_wasm, &js, opts.export_functions)?
+        static_generator::refine(wizened_wasm, &js, exports)?
     } else {
         static_generator::generate()?
     };
 
     fs::write(&opts.output, wasm)?;
     Ok(())
+}
+
+fn determine_js_exports(js: &JS, opts: &CompileCommandOpts) -> Result<Vec<String>> {
+    let js_exports = js.exports()?;
+    match (&opts.wit, &opts.wit_world) {
+        (None, None) => Ok(vec![]),
+        (None, Some(_)) => Ok(vec![]),
+        (Some(_), None) => bail!("Must provide WIT world when providing WIT file"),
+        (Some(path), Some(world)) => wit::parse_exports(path, world)?
+            .into_iter()
+            .map(|wit_export| {
+                if !js_exports.contains(&wit_export) {
+                    Err(anyhow!("JS module does not export {wit_export}"))
+                } else {
+                    Ok(wit_export)
+                }
+            })
+            .collect::<Result<Vec<String>>>(),
+    }
 }

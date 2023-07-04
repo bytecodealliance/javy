@@ -103,7 +103,7 @@ fn test_promises() {
 
 #[test]
 fn test_exported_functions() {
-    let mut runner = Runner::new_with_exports("exported-fn.js");
+    let mut runner = Runner::new_with_exports("exported-fn.js", "exported-fn.wit", "exported-fn");
     let (_, logs, fuel_consumed) = run_fn(&mut runner, "foo", &[]);
     assert_eq!("Hello from top-level\nHello from foo\n", logs);
     assert_fuel_consumed_within_threshold(54610, fuel_consumed);
@@ -112,7 +112,11 @@ fn test_exported_functions() {
 #[cfg(feature = "experimental_event_loop")]
 #[test]
 fn test_exported_promises() {
-    let mut runner = Runner::new_with_exports("exported-promise-fn.js");
+    let mut runner = Runner::new_with_exports(
+        "exported-promise-fn.js",
+        "exported-promise-fn.wit",
+        "exported-promise-fn",
+    );
     let (_, logs, _) = run_fn(&mut runner, "foo", &[]);
     assert_eq!("Top-level\ninside foo\n", logs);
 }

@@ -3,6 +3,7 @@ javy.wat
 javy.wasm
 /index.js
 index.wasm
+index.wit
 
 .DS_Store
 

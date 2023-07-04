@@ -66,38 +66,55 @@ impl Default for Runner {
 
 impl Runner {
     pub fn new(js_file: impl AsRef<Path>) -> Self {
-        Self::new_with_fixed_logging_capacity(js_file, false, usize::MAX)
+        Self::new_with_fixed_logging_capacity(js_file, None, None, usize::MAX)
     }
 
-    pub fn new_with_exports(js_file: impl AsRef<Path>) -> Self {
-        Self::new_with_fixed_logging_capacity(js_file, true, usize::MAX)
+    pub fn new_with_exports(
+        js_file: impl AsRef<Path>,
+        wit_path: impl AsRef<Path>,
+        world: &str,
+    ) -> Self {
+        Self::new_with_fixed_logging_capacity(
+            js_file,
+            Some(wit_path.as_ref()),
+            Some(world),
+            usize::MAX,
+        )
     }
 
     fn new_with_fixed_logging_capacity(
         js_file: impl AsRef<Path>,
-        with_exports: bool,
+        wit_path: Option<&Path>,
+        wit_world: Option<&str>,
         capacity: usize,
     ) -> Self {
         let wasm_file_name = format!("{}.wasm", uuid::Uuid::new_v4());
 
         let root = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
+        let sample_scripts = root.join("tests").join("sample-scripts");
         // This directory is unique and will automatically get deleted
         // when `tempdir` goes out of scope.
         let Ok(tempdir) = tempfile::tempdir() else {
             panic!("Could not create temporary directory for .wasm test artifacts");
         };
         let wasm_file = tempdir.path().join(wasm_file_name);
-        let js_file = root.join("tests").join("sample-scripts").join(js_file);
+        let js_file = sample_scripts.join(js_file);
+        let wit_file = wit_path.map(|p| sample_scripts.join(p));
 
         let mut args = vec![
-            "compile",
-            js_file.to_str().unwrap(),
-            "-o",
-            wasm_file.to_str().unwrap(),
+            "compile".to_string(),
+            js_file.to_str().unwrap().to_string(),
+            "-o".to_string(),
+            wasm_file.to_str().unwrap().to_string(),
         ];
-        if with_exports {
-            args.push("--with-exports")
+
+        if let (Some(wit_file), Some(world)) = (wit_file, wit_world) {
+            args.push("--wit".to_string());
+            args.push(wit_file.to_str().unwrap().to_string());
+            args.push("-n".to_string());
+            args.push(world.to_string());
         }
+
         let output = Command::new(env!("CARGO_BIN_EXE_javy"))
             .current_dir(root)
             .args(args)

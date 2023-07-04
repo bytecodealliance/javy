@@ -26,10 +26,14 @@ pub struct CompileCommandOpts {
     /// module to execute (see `emit-provider` command).
     pub dynamic: bool,
 
-    #[structopt(long = "with-exports")]
-    /// Experimental flag to export exported JS functions. Does not support
-    /// functions that have parameters or return values.
-    pub export_functions: bool,
+    #[structopt(long = "wit")]
+    /// Optional path to WIT file describing exported functions.
+    /// Only supports function exports with no arguments and no return values.
+    pub wit: Option<PathBuf>,
+
+    #[structopt(short = "n")]
+    /// Optional WIT world name for WIT file. Must be specified if WIT is file path is specified.
+    pub wit_world: Option<String>,
 }
 
 #[derive(Debug, StructOpt)]

@@ -26,7 +26,7 @@ pub fn generate() -> Result<Vec<u8>> {
 /// Takes Wasm created by `Generator` and makes additional changes.
 ///
 /// This is intended to be run in the parent process after generating the Wasm.
-pub fn refine(wasm: Vec<u8>, js: &JS, export_functions: bool) -> Result<Vec<u8>> {
+pub fn refine(wasm: Vec<u8>, js: &JS, exports: Vec<String>) -> Result<Vec<u8>> {
     let mut module = transform::module_config().parse(&wasm)?;
 
     let (realloc, invoke, memory) = {
@@ -44,11 +44,11 @@ pub fn refine(wasm: Vec<u8>, js: &JS, export_functions: bool) -> Result<Vec<u8>>
     let realloc_export = realloc.id();
     let invoke_export = invoke.id();
 
-    if export_functions {
+    if !exports.is_empty() {
         let ExportItem::Function(realloc_fn) = realloc.item else { unreachable!() };
         let ExportItem::Function(invoke_fn) = invoke.item else { unreachable!() };
         let ExportItem::Memory(memory) = memory.item else { unreachable!() };
-        export_exported_js_functions(&mut module, realloc_fn, invoke_fn, memory, js.exports()?);
+        export_exported_js_functions(&mut module, realloc_fn, invoke_fn, memory, exports);
     }
 
     // We no longer need these exports so remove them.
