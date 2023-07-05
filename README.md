@@ -141,7 +141,7 @@ $ echo '{ "n": 2, "bar": "baz" }' | wasmtime index.wasm
 
 ### Exporting functions
 
-To export exported JavaScript functions, you can pass a WIT file and WIT world when running `javy compile`. Only ESM exports are supported (that is, Node.js/CommonJS exports are _not_ supported). For each exported JavaScript function, Javy will add an additional function export to the WebAssembly module. Exported functions with arguments and generators are not supported. Return values will also be dropped and not returned.
+To export exported JavaScript functions, you can pass a WIT file and WIT world when running `javy compile`. Only ESM exports are supported (that is, Node.js/CommonJS exports are _not_ supported). For each exported JavaScript function, Javy will add an additional function export to the WebAssembly module. Exported functions with arguments and generators are not supported. Return values will also be dropped and not returned. The Wasm module generated is a core Wasm module, **not** a Wasm component.
 
 An example looks like:
 
