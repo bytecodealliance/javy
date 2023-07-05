@@ -25,6 +25,15 @@ pub struct CompileCommandOpts {
     /// Creates a smaller module that requires a dynamically linked QuickJS provider Wasm
     /// module to execute (see `emit-provider` command).
     pub dynamic: bool,
+
+    #[structopt(long = "wit")]
+    /// Optional path to WIT file describing exported functions.
+    /// Only supports function exports with no arguments and no return values.
+    pub wit: Option<PathBuf>,
+
+    #[structopt(short = "n")]
+    /// Optional WIT world name for WIT file. Must be specified if WIT is file path is specified.
+    pub wit_world: Option<String>,
 }
 
 #[derive(Debug, StructOpt)]

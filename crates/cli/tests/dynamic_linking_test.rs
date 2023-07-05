@@ -1,5 +1,5 @@
 use anyhow::Result;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::{Cursor, Read, Write};
 use std::process::Command;
 use std::str;
@@ -13,54 +13,75 @@ mod common;
 #[test]
 pub fn test_dynamic_linking() -> Result<()> {
     let js_src = "console.log(42);";
-    let js_wasm = create_dynamically_linked_wasm_module(js_src)?;
+    let log_output = invoke_fn_on_generated_module(js_src, "_start", None)?;
+    assert_eq!("42\n", &log_output);
+    Ok(())
+}
 
-    let stderr = WritePipe::new_in_memory();
-    // scope is needed to ensure `store` is dropped before trying to read from `stderr` below
-    {
-        let (engine, mut linker, mut store) = create_wasm_env(stderr.clone())?;
-        let quickjs_provider_module = common::create_quickjs_provider_module(&engine)?;
-        let js_module = Module::from_binary(&engine, &js_wasm)?;
+#[test]
+pub fn test_dynamic_linking_with_func() -> Result<()> {
+    let js_src = "export function foo() { console.log('In foo'); }; console.log('Toplevel');";
+    let wit = "
+        package local:main
 
-        let quickjs_provider_instance = linker.instantiate(&mut store, &quickjs_provider_module)?;
-        linker.instance(
-            &mut store,
-            "javy_quickjs_provider_v1",
-            quickjs_provider_instance,
-        )?;
-        let js_instance = linker.instantiate(&mut store, &js_module)?;
-        let start_func = js_instance.get_typed_func::<(), ()>(&mut store, "_start")?;
-        start_func.call(&mut store, ())?;
-    }
+        world foo-test {
+            export foo: func()
+        }
+    ";
+    let log_output = invoke_fn_on_generated_module(js_src, "foo", Some((wit, "foo-test")))?;
+    assert_eq!("Toplevel\nIn foo\n", &log_output);
+    Ok(())
+}
 
-    let log_output = stderr.try_into_inner().unwrap().into_inner();
-    assert_eq!("42\n", str::from_utf8(&log_output)?);
-
+#[test]
+pub fn test_dynamic_linking_with_func_without_flag() -> Result<()> {
+    let js_src = "export function foo() { console.log('In foo'); }; console.log('Toplevel');";
+    let res = invoke_fn_on_generated_module(js_src, "foo", None);
+    assert_eq!(
+        "failed to find function export `foo`",
+        res.err().unwrap().to_string()
+    );
     Ok(())
 }
 
 #[test]
 fn test_producers_section_present() -> Result<()> {
-    let js_wasm = create_dynamically_linked_wasm_module("console.log(42)")?;
+    let js_wasm = create_dynamically_linked_wasm_module("console.log(42)", None)?;
     common::assert_producers_section_is_correct(&js_wasm)?;
     Ok(())
 }
 
-fn create_dynamically_linked_wasm_module(js_src: &str) -> Result<Vec<u8>> {
+fn create_dynamically_linked_wasm_module(
+    js_src: &str,
+    wit: Option<(&str, &str)>,
+) -> Result<Vec<u8>> {
     let Ok(tempdir) = tempfile::tempdir() else {
         panic!("Could not create temporary directory for .wasm test artifacts");
     };
     let js_path = tempdir.path().join(Uuid::new_v4().to_string());
+    let wit_path = tempdir.path().join(Uuid::new_v4().to_string());
     let wasm_path = tempdir.path().join(Uuid::new_v4().to_string());
 
     let mut js_file = File::create(&js_path)?;
     js_file.write_all(js_src.as_bytes())?;
+    if let Some((wit, _)) = wit {
+        fs::write(&wit_path, wit)?;
+    }
+    let mut args = vec![
+        "compile",
+        js_path.to_str().unwrap(),
+        "-o",
+        wasm_path.to_str().unwrap(),
+        "-d",
+    ];
+    if let Some((_, world)) = wit {
+        args.push("--wit");
+        args.push(wit_path.to_str().unwrap());
+        args.push("-n");
+        args.push(world);
+    }
     let output = Command::new(env!("CARGO_BIN_EXE_javy"))
-        .arg("compile")
-        .arg(js_path.to_str().unwrap())
-        .arg("-o")
-        .arg(wasm_path.to_str().unwrap())
-        .arg("-d")
+        .args(args)
         .output()?;
     assert!(output.status.success());
 
@@ -68,6 +89,34 @@ fn create_dynamically_linked_wasm_module(js_src: &str) -> Result<Vec<u8>> {
     let mut contents = vec![];
     wasm_file.read_to_end(&mut contents)?;
     Ok(contents)
+}
+
+fn invoke_fn_on_generated_module(
+    js_src: &str,
+    func: &str,
+    wit: Option<(&str, &str)>,
+) -> Result<String> {
+    let js_wasm = create_dynamically_linked_wasm_module(js_src, wit)?;
+
+    let stderr = WritePipe::new_in_memory();
+    let (engine, mut linker, mut store) = create_wasm_env(stderr.clone())?;
+    let quickjs_provider_module = common::create_quickjs_provider_module(&engine)?;
+    let js_module = Module::from_binary(&engine, &js_wasm)?;
+
+    let quickjs_provider_instance = linker.instantiate(&mut store, &quickjs_provider_module)?;
+    linker.instance(
+        &mut store,
+        "javy_quickjs_provider_v1",
+        quickjs_provider_instance,
+    )?;
+    let js_instance = linker.instantiate(&mut store, &js_module)?;
+    let func = js_instance.get_typed_func::<(), ()>(&mut store, func)?;
+    func.call(&mut store, ())?;
+
+    drop(store); // Need to drop store to access contents of stderr.
+    let log_output = stderr.try_into_inner().unwrap().into_inner();
+
+    Ok(String::from_utf8(log_output)?)
 }
 
 fn create_wasm_env(

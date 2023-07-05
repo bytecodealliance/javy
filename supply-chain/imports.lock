@@ -272,6 +272,13 @@ when = "2023-04-20"
 user-id = 73222
 user-login = "wasmtime-publish"
 
+[[publisher.wit-parser]]
+version = "0.8.0"
+when = "2023-05-26"
+user-id = 1
+user-login = "alexcrichton"
+user-name = "Alex Crichton"
+
 [[audits.bytecode-alliance.wildcard-audits.cranelift-bforest]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
@@ -571,6 +578,19 @@ user-id = 73222
 start = "2021-10-29"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
+
+[[audits.bytecode-alliance.wildcard-audits.wit-parser]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+user-id = 1
+start = "2019-12-02"
+end = "2024-04-14"
+notes = """
+This is a Bytecode Alliance authored crate maintained in the `wasm-tools`
+repository of which I'm one of the primary maintainers and publishers for.
+I am employed by a member of the Bytecode Alliance and plan to continue doing
+so and will actively maintain this crate over time.
+"""
 
 [[audits.bytecode-alliance.audits.ambient-authority]]
 who = "Dan Gohman <dev@sunfishcode.online>"
@@ -935,6 +955,12 @@ criteria = "safe-to-deploy"
 delta = "0.36.7 -> 0.36.8"
 notes = "The Bytecode Alliance is the author of this crate."
 
+[[audits.bytecode-alliance.audits.semver]]
+who = "Pat Hickey <phickey@fastly.com>"
+criteria = "safe-to-deploy"
+version = "1.0.17"
+notes = "plenty of unsafe pointer and vec tricks, but in well-structured and commented code that appears to be correct"
+
 [[audits.bytecode-alliance.audits.system-interface]]
 who = "Dan Gohman <dev@sunfishcode.online>"
 criteria = "safe-to-deploy"
@@ -1125,6 +1151,18 @@ Builds C/asm dependency which this review has not audited in detail, but is well
 Exposes FFI types & functions generated through bindgen. No other logic.
 No ambient capabilities
 """
+
+[[audits.embark-studios.audits.thiserror]]
+who = "Johan Andersson <opensource@embark-studios.com>"
+criteria = "safe-to-deploy"
+version = "1.0.40"
+notes = "Wrapper over implementation crate, found no unsafe or ambient capabilities used"
+
+[[audits.embark-studios.audits.thiserror-impl]]
+who = "Johan Andersson <opensource@embark-studios.com>"
+criteria = "safe-to-deploy"
+version = "1.0.40"
+notes = "Found no unsafe or ambient capabilities used"
 
 [[audits.embark-studios.audits.vec_map]]
 who = "Johan Andersson <opensource@embark-studios.com>"
@@ -1351,6 +1389,27 @@ criteria = "safe-to-deploy"
 delta = "0.6.5 -> 0.7.1"
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
+[[audits.mozilla.audits.new_debug_unreachable]]
+who = "Bobby Holley <bobbyholley@gmail.com>"
+criteria = "safe-to-deploy"
+version = "1.0.4"
+notes = "This is a trivial crate."
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.num-bigint]]
+who = "Josh Stone <jistone@redhat.com>"
+criteria = "safe-to-deploy"
+version = "0.4.3"
+notes = "All code written or reviewed by Josh Stone."
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.num-integer]]
+who = "Josh Stone <jistone@redhat.com>"
+criteria = "safe-to-deploy"
+version = "0.1.45"
+notes = "All code written or reviewed by Josh Stone."
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
 [[audits.mozilla.audits.peeking_take_while]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
@@ -1362,6 +1421,19 @@ aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-ch
 who = "Mike Hommey <mh+mozilla@glandium.org>"
 criteria = "safe-to-deploy"
 delta = "0.3.25 -> 0.3.26"
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.precomputed-hash]]
+who = "Bobby Holley <bobbyholley@gmail.com>"
+criteria = "safe-to-deploy"
+version = "0.1.1"
+notes = "This is a trivial crate."
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.proc-macro-hack]]
+who = "Mike Hommey <mh+mozilla@glandium.org>"
+criteria = "safe-to-deploy"
+delta = "0.5.19 -> 0.5.20+deprecated"
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
 [[audits.mozilla.audits.rustc-hash]]

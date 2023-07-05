@@ -84,7 +84,7 @@ fn test_readme_script() {
 fn test_promises() {
     let mut runner = Runner::new("promise.js");
 
-    let (output, _, fuel_consumed) = run(&mut runner, &[]);
+    let (output, _, _) = run(&mut runner, &[]);
     assert_eq!("\"foo\"\"bar\"".as_bytes(), output);
 }
 
@@ -99,6 +99,36 @@ fn test_promises() {
     assert!(str::from_utf8(&err.stderr)
         .unwrap()
         .contains("Adding tasks to the event queue is not supported"));
+}
+
+#[test]
+fn test_exported_functions() {
+    let mut runner = Runner::new_with_exports("exported-fn.js", "exported-fn.wit", "exported-fn");
+    let (_, logs, fuel_consumed) = run_fn(&mut runner, "foo", &[]);
+    assert_eq!("Hello from top-level\nHello from foo\n", logs);
+    assert_fuel_consumed_within_threshold(54610, fuel_consumed);
+}
+
+#[cfg(feature = "experimental_event_loop")]
+#[test]
+fn test_exported_promises() {
+    let mut runner = Runner::new_with_exports(
+        "exported-promise-fn.js",
+        "exported-promise-fn.wit",
+        "exported-promise-fn",
+    );
+    let (_, logs, _) = run_fn(&mut runner, "foo", &[]);
+    assert_eq!("Top-level\ninside foo\n", logs);
+}
+
+#[test]
+fn test_exported_functions_without_flag() {
+    let mut runner = Runner::new("exported-fn.js");
+    let res = runner.exec_func("foo", &[]);
+    assert_eq!(
+        "failed to find function export `foo`",
+        res.err().unwrap().to_string()
+    );
 }
 
 #[test]
@@ -136,7 +166,11 @@ fn run_with_u8s(r: &mut Runner, stdin: u8) -> (u8, String, u64) {
 }
 
 fn run(r: &mut Runner, stdin: &[u8]) -> (Vec<u8>, String, u64) {
-    let (output, logs, fuel_consumed) = r.exec(stdin).unwrap();
+    run_fn(r, "_start", stdin)
+}
+
+fn run_fn(r: &mut Runner, func: &str, stdin: &[u8]) -> (Vec<u8>, String, u64) {
+    let (output, logs, fuel_consumed) = r.exec_func(func, stdin).unwrap();
     let logs = String::from_utf8(logs).unwrap();
     (output, logs, fuel_consumed)
 }
