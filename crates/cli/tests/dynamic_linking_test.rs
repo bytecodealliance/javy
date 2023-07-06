@@ -45,6 +45,17 @@ pub fn test_dynamic_linking_with_func_without_flag() -> Result<()> {
 }
 
 #[test]
+pub fn test_dynamic_linking_with_no_exports_does_not_import_invoke() -> Result<()> {
+    let js_src = "console.log(42);";
+    let wasm = create_dynamically_linked_wasm_module(js_src, None)?;
+    let (engine, _linker, _store) = create_wasm_env(WritePipe::new_in_memory())?;
+    let module = Module::from_binary(&engine, &wasm)?;
+    let invoke_import = module.imports().find(|import| import.name() == "invoke");
+    assert!(invoke_import.is_none());
+    Ok(())
+}
+
+#[test]
 fn test_producers_section_present() -> Result<()> {
     let js_wasm = create_dynamically_linked_wasm_module("console.log(42)", None)?;
     common::assert_producers_section_is_correct(&js_wasm)?;
