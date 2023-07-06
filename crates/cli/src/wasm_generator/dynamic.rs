@@ -115,52 +115,54 @@ pub fn generate(js: &JS, exported_functions: Vec<String>) -> Result<Vec<u8>> {
 
     module.exports.add("_start", main);
 
-    let invoke_type = module.types.add(
-        &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
-        &[],
-    );
-    let (invoke_fn, _) = module.add_import_func(IMPORT_NAMESPACE, "invoke", invoke_type);
+    if !exported_functions.is_empty() {
+        let invoke_type = module.types.add(
+            &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
+            &[],
+        );
+        let (invoke_fn, _) = module.add_import_func(IMPORT_NAMESPACE, "invoke", invoke_type);
 
-    let fn_name_ptr_local = module.locals.add(ValType::I32);
-    for js_export in exported_functions {
-        // For each JS function export, add an export that copies the name of the function into memory and invokes it.
-        let js_export_bytes = js_export.as_bytes();
-        let js_export_len: i32 = js_export_bytes.len().try_into().unwrap();
-        let fn_name_data = module.data.add(DataKind::Passive, js_export_bytes.to_vec());
+        let fn_name_ptr_local = module.locals.add(ValType::I32);
+        for js_export in exported_functions {
+            // For each JS function export, add an export that copies the name of the function into memory and invokes it.
+            let js_export_bytes = js_export.as_bytes();
+            let js_export_len: i32 = js_export_bytes.len().try_into().unwrap();
+            let fn_name_data = module.data.add(DataKind::Passive, js_export_bytes.to_vec());
 
-        let mut export_fn = FunctionBuilder::new(&mut module.types, &[], &[]);
-        export_fn
-            .func_body()
-            // Copy bytecode.
-            .i32_const(0) // orig ptr
-            .i32_const(0) // orig len
-            .i32_const(1) // alignment
-            .i32_const(bytecode_len) // size to copy
-            .call(canonical_abi_realloc_fn)
-            .local_tee(bytecode_ptr_local)
-            .i32_const(0) // offset into data segment
-            .i32_const(bytecode_len) // size to copy
-            .memory_init(memory, bytecode_data) // copy bytecode into allocated memory
-            .data_drop(bytecode_data)
-            // Copy function name.
-            .i32_const(0) // orig ptr
-            .i32_const(0) // orig len
-            .i32_const(1) // alignment
-            .i32_const(js_export_len) // new size
-            .call(canonical_abi_realloc_fn)
-            .local_tee(fn_name_ptr_local)
-            .i32_const(0) // offset into data segment
-            .i32_const(js_export_len) // size to copy
-            .memory_init(memory, fn_name_data) // copy fn name into allocated memory
-            .data_drop(fn_name_data)
-            // Call invoke.
-            .local_get(bytecode_ptr_local)
-            .i32_const(bytecode_len)
-            .local_get(fn_name_ptr_local)
-            .i32_const(js_export_len)
-            .call(invoke_fn);
-        let export_fn = export_fn.finish(vec![], &mut module.funcs);
-        module.exports.add(&js_export, export_fn);
+            let mut export_fn = FunctionBuilder::new(&mut module.types, &[], &[]);
+            export_fn
+                .func_body()
+                // Copy bytecode.
+                .i32_const(0) // orig ptr
+                .i32_const(0) // orig len
+                .i32_const(1) // alignment
+                .i32_const(bytecode_len) // size to copy
+                .call(canonical_abi_realloc_fn)
+                .local_tee(bytecode_ptr_local)
+                .i32_const(0) // offset into data segment
+                .i32_const(bytecode_len) // size to copy
+                .memory_init(memory, bytecode_data) // copy bytecode into allocated memory
+                .data_drop(bytecode_data)
+                // Copy function name.
+                .i32_const(0) // orig ptr
+                .i32_const(0) // orig len
+                .i32_const(1) // alignment
+                .i32_const(js_export_len) // new size
+                .call(canonical_abi_realloc_fn)
+                .local_tee(fn_name_ptr_local)
+                .i32_const(0) // offset into data segment
+                .i32_const(js_export_len) // size to copy
+                .memory_init(memory, fn_name_data) // copy fn name into allocated memory
+                .data_drop(fn_name_data)
+                // Call invoke.
+                .local_get(bytecode_ptr_local)
+                .i32_const(bytecode_len)
+                .local_get(fn_name_ptr_local)
+                .i32_const(js_export_len)
+                .call(invoke_fn);
+            let export_fn = export_fn.finish(vec![], &mut module.funcs);
+            module.exports.add(&js_export, export_fn);
+        }
     }
 
     let wasm = module.emit_wasm();
