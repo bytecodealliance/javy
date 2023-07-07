@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use std::error::Error;
 use std::fmt::{self, Display, Formatter};
 use std::io::{self, Cursor, Write};
@@ -82,12 +82,11 @@ impl Runner {
         )
     }
 
-    fn new_with_fixed_logging_capacity(
+    pub fn compile(
         js_file: impl AsRef<Path>,
         wit_path: Option<&Path>,
         wit_world: Option<&str>,
-        capacity: usize,
-    ) -> Self {
+    ) -> Result<Vec<u8>, RunnerError> {
         let wasm_file_name = format!("{}.wasm", uuid::Uuid::new_v4());
 
         let root = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
@@ -121,14 +120,28 @@ impl Runner {
             .output()
             .expect("failed to run command");
 
-        io::stdout().write_all(&output.stdout).unwrap();
-        io::stderr().write_all(&output.stderr).unwrap();
-
         if !output.status.success() {
-            panic!("terminated with status = {}", output.status);
+            Err(RunnerError {
+                stderr: output.stderr,
+                stdout: output.stdout,
+                err: anyhow!("terminated with status = {}", output.status),
+            })
+        } else {
+            Ok(fs::read(&wasm_file).expect("failed to read wasm module"))
         }
+    }
 
-        let wasm = fs::read(&wasm_file).expect("failed to read wasm module");
+    fn new_with_fixed_logging_capacity(
+        js_file: impl AsRef<Path>,
+        wit_path: Option<&Path>,
+        wit_world: Option<&str>,
+        capacity: usize,
+    ) -> Self {
+        let wasm = Self::compile(js_file, wit_path, wit_world).unwrap_or_else(|e| {
+            io::stdout().write_all(&e.stdout).unwrap();
+            io::stderr().write_all(&e.stderr).unwrap();
+            panic!("{}", e.to_string());
+        });
 
         let engine = setup_engine();
         let linker = setup_linker(&engine);

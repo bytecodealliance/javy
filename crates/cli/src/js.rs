@@ -105,6 +105,9 @@ impl JS {
                         }
                     }
                 }
+                ModuleItem::ModuleDecl(ModuleDecl::ExportDefaultExpr(e)) if e.expr.is_arrow() => {
+                    bail!("Exported default arrow functions are not supported");
+                }
                 ModuleItem::Stmt(Stmt::Decl(Decl::Fn(f))) => {
                     functions.insert(
                         f.ident.sym,

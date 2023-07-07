@@ -2,7 +2,7 @@ mod common;
 mod runner;
 
 use runner::{Runner, RunnerError};
-use std::str;
+use std::{path::Path, str};
 
 #[test]
 fn test_identity() {
@@ -129,6 +129,19 @@ fn test_exported_functions_without_flag() {
         "failed to find function export `foo`",
         res.err().unwrap().to_string()
     );
+}
+
+#[test]
+fn test_exported_default_arrow_function() {
+    let res = Runner::compile(
+        "exported-default.js",
+        Some(Path::new("exported-default.wit")),
+        Some("exported-default"),
+    );
+    assert_eq!(
+        "Error: Exported default arrow functions are not supported\n",
+        str::from_utf8(&res.unwrap_err().stderr).unwrap()
+    )
 }
 
 #[test]
