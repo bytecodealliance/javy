@@ -8,20 +8,24 @@ parameters given.
 
 ```
 # Install javy globally
-$ npm install -g javy
+$ npm install -g javy-cli
 
 # Directly invoke it via npm
-$ npx javy
+$ npx javy-cli@latest
 ```
 
 ## Updating javy
 
-The npm package won't download Javy again once its downloaded. If a new
-version of the javy npm package has been published, you can use the following
-invocation to update to the latest release:
+The npm package will automatically download the newest version of Javy if a
+newer version is available.
+
+## Using a specific version of javy
+
+To use a specific version of Javy, set the environment variable
+`FORCE_RELEASE` to the version you would like to use.
 
 ```
-REFRESH_JAVY=1 npx javy
+FORCE_RELEASE=v1.1.0 npx javy-cli@latest
 ```
 
 ## Building from source
@@ -31,7 +35,7 @@ don't work for you for some reason, the npm package can also build Javy from
 source.
 
 ```
-BUILD_JAVY=1 npx javy
+FORCE_FROM_SOURCE=1 npx javy-cli@latest
 ```
 
 Please note that for this to work you must have all prerequisites of Javy

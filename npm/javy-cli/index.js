@@ -15,7 +15,7 @@ async function main() {
 	const version = await getDesiredVersionNumber();
 	if (!(await isBinaryDownloaded(version))) {
 		if (process.env.FORCE_FROM_SOURCE) {
-			await buildBinary();
+			await buildBinary(version);
 		} else {
 			await downloadBinary(version);
 		}
@@ -51,7 +51,7 @@ async function downloadBinary(version) {
 	const targetPath = binaryPath(version);
 	const compressedStream = await new Promise(async (resolve) => {
 		const url = binaryUrl(version);
-		console.log(`Downloading ${NAME} ${version} to ${targetPath}...`);
+		console.log(`Downloading ${NAME} ${version} to ${targetPath}`);
 		const resp = await fetch(url);
 		resolve(resp.body);
 	});
@@ -150,10 +150,11 @@ function getArgs() {
 	return args;
 }
 
-async function buildBinary() {
+async function buildBinary(version) {
 	const repoDir = cacheDir("build", NAME);
 	try {
 		console.log(`Downloading ${NAME}'s source code...`);
+		fs.rmSync(repoDir, { recursive: true });
 		childProcess.execSync(
 			`git clone https://github.com/${REPO} ${repoDir}`
 		);
@@ -172,6 +173,6 @@ async function buildBinary() {
 	}
 	await fs.promises.rename(
 		path.join(repoDir, "target", "release", NAME),
-		binaryPath()
+		binaryPath(version)
 	);
 }
