@@ -1,4 +1,4 @@
-use crate::js::JS;
+use crate::{exports::Export, js::JS};
 
 use super::transform::{self, SourceCodeSection};
 use anyhow::Result;
@@ -64,7 +64,7 @@ use walrus::{DataKind, FunctionBuilder, Module, ValType};
 //    (data (;0;) "\02\05\18function.mjs\06foo\0econsole\06log\06bar\0f\bc\03\00\01\00\00\be\03\00\00\0e\00\06\01\a0\01\00\00\00\03\01\01\1a\00\be\03\00\01\08\ea\05\c0\00\e1)8\e0\00\00\00B\e1\00\00\00\04\e2\00\00\00$\01\00)\bc\03\01\04\01\00\07\0a\0eC\06\01\be\03\00\00\00\03\00\00\13\008\e0\00\00\00B\e1\00\00\00\04\df\00\00\00$\01\00)\bc\03\01\02\03]")
 //    (data (;1;) "foo")
 //  )
-pub fn generate(js: &JS, exported_functions: Vec<String>) -> Result<Vec<u8>> {
+pub fn generate(js: &JS, exported_functions: Vec<Export>) -> Result<Vec<u8>> {
     let mut module = Module::with_config(transform::module_config());
 
     const IMPORT_NAMESPACE: &str = "javy_quickjs_provider_v1";
@@ -123,9 +123,9 @@ pub fn generate(js: &JS, exported_functions: Vec<String>) -> Result<Vec<u8>> {
         let (invoke_fn, _) = module.add_import_func(IMPORT_NAMESPACE, "invoke", invoke_type);
 
         let fn_name_ptr_local = module.locals.add(ValType::I32);
-        for js_export in exported_functions {
+        for export in exported_functions {
             // For each JS function export, add an export that copies the name of the function into memory and invokes it.
-            let js_export_bytes = js_export.as_bytes();
+            let js_export_bytes = export.js.as_bytes();
             let js_export_len: i32 = js_export_bytes.len().try_into().unwrap();
             let fn_name_data = module.data.add(DataKind::Passive, js_export_bytes.to_vec());
 
@@ -161,7 +161,7 @@ pub fn generate(js: &JS, exported_functions: Vec<String>) -> Result<Vec<u8>> {
                 .i32_const(js_export_len)
                 .call(invoke_fn);
             let export_fn = export_fn.finish(vec![], &mut module.funcs);
-            module.exports.add(&js_export, export_fn);
+            module.exports.add(&export.wit, export_fn);
         }
     }
 

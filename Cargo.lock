@@ -439,6 +439,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "convert_case"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
+
+[[package]]
 name = "core-foundation"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1334,6 +1340,7 @@ dependencies = [
  "anyhow",
  "binaryen",
  "brotli",
+ "convert_case",
  "criterion",
  "lazy_static",
  "num-format",
