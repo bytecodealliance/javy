@@ -105,6 +105,12 @@ impl JS {
                         }
                     }
                 }
+                ModuleItem::ModuleDecl(ModuleDecl::ExportDefaultDecl(e)) if e.decl.is_fn_expr() => {
+                    exported_functions.push("default".into())
+                }
+                ModuleItem::ModuleDecl(ModuleDecl::ExportDefaultExpr(e)) if e.expr.is_arrow() => {
+                    exported_functions.push("default".into())
+                }
                 ModuleItem::Stmt(Stmt::Decl(Decl::Fn(f))) => {
                     functions.insert(
                         f.ident.sym,
@@ -288,6 +294,20 @@ mod tests {
     fn parse_hoisted_exports_with_func_and_const() -> Result<()> {
         let exports = parse("export { foo, bar }; function foo() {}; const bar = 1;")?;
         assert_eq!(vec!["foo"], exports);
+        Ok(())
+    }
+
+    #[test]
+    fn parse_default_arrow_export() -> Result<()> {
+        let exports = parse("export default () => {}")?;
+        assert_eq!(vec!["default"], exports);
+        Ok(())
+    }
+
+    #[test]
+    fn parse_default_function_export() -> Result<()> {
+        let exports = parse("export default function() {}")?;
+        assert_eq!(vec!["default"], exports);
         Ok(())
     }
 

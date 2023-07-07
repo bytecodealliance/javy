@@ -56,6 +56,22 @@ pub fn test_dynamic_linking_with_no_exports_does_not_import_invoke() -> Result<(
 }
 
 #[test]
+pub fn test_dynamic_linking_with_arrow_fn() -> Result<()> {
+    let js_src = "export default () => console.log(42)";
+    let wit = "
+        package local:test
+
+        world exported-arrow {
+            export default: func()
+        }
+    ";
+    let log_output =
+        invoke_fn_on_generated_module(js_src, "default", Some((wit, "exported-arrow")))?;
+    assert_eq!("42\n", log_output);
+    Ok(())
+}
+
+#[test]
 fn test_producers_section_present() -> Result<()> {
     let js_wasm = create_dynamically_linked_wasm_module("console.log(42)", None)?;
     common::assert_producers_section_is_correct(&js_wasm)?;

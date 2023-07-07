@@ -13,11 +13,13 @@ pub fn run_bytecode(runtime: &Runtime, bytecode: &[u8]) {
 
 pub fn invoke_function(runtime: &Runtime, fn_module: &str, fn_name: &str) {
     let context = runtime.context();
+    let js = if fn_name == "default" {
+        format!("import {{ default as defaultFn }} from '{fn_module}'; defaultFn();")
+    } else {
+        format!("import {{ {fn_name} }} from '{fn_module}'; {fn_name}();")
+    };
     context
-        .eval_module(
-            "runtime.mjs",
-            &format!("import {{ {fn_name} }} from '{fn_module}'; {fn_name}();"),
-        )
+        .eval_module("runtime.mjs", &js)
         .and_then(|_| process_event_loop(context))
         .unwrap_or_else(handle_error);
 }
