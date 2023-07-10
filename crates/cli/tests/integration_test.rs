@@ -159,6 +159,30 @@ fn test_same_module_outputs_different_random_result() {
     // https://github.com/bytecodealliance/javy/issues/401 for investigating the cause.
 }
 
+#[test]
+fn test_exported_default_arrow_fn() {
+    let mut runner = Runner::new_with_exports(
+        "exported-default-arrow-fn.js",
+        "exported-default-arrow-fn.wit",
+        "exported-arrow",
+    );
+    let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", &[]);
+    assert_eq!(logs, "42\n");
+    assert_fuel_consumed_within_threshold(48_628, fuel_consumed);
+}
+
+#[test]
+fn test_exported_default_fn() {
+    let mut runner = Runner::new_with_exports(
+        "exported-default-fn.js",
+        "exported-default-fn.wit",
+        "exported-default",
+    );
+    let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", &[]);
+    assert_eq!(logs, "42\n");
+    assert_fuel_consumed_within_threshold(49_748, fuel_consumed);
+}
+
 fn run_with_u8s(r: &mut Runner, stdin: u8) -> (u8, String, u64) {
     let (output, logs, fuel_consumed) = run(r, &stdin.to_le_bytes());
     assert_eq!(1, output.len());

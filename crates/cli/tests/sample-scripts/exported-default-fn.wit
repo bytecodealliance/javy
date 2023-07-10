@@ -1,0 +1,5 @@
+package local:test
+
+world exported-default {
+  export default: func()
+}
