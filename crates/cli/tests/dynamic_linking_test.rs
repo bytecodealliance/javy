@@ -5,7 +5,7 @@ use std::process::Command;
 use std::str;
 use uuid::Uuid;
 use wasi_common::pipe::WritePipe;
-use wasmtime::{Config, Engine, Linker, Module, Store};
+use wasmtime::{Config, Engine, ExternType, Linker, Module, Store, ValType};
 use wasmtime_wasi::{sync::WasiCtxBuilder, WasiCtx};
 
 mod common;
@@ -45,13 +45,57 @@ pub fn test_dynamic_linking_with_func_without_flag() -> Result<()> {
 }
 
 #[test]
-pub fn test_dynamic_linking_with_no_exports_does_not_import_invoke() -> Result<()> {
+pub fn check_for_new_imports() -> Result<()> {
+    // If you need to change this test, then you've likely made a breaking change.
     let js_src = "console.log(42);";
     let wasm = create_dynamically_linked_wasm_module(js_src, None)?;
     let (engine, _linker, _store) = create_wasm_env(WritePipe::new_in_memory())?;
     let module = Module::from_binary(&engine, &wasm)?;
-    let invoke_import = module.imports().find(|import| import.name() == "invoke");
-    assert!(invoke_import.is_none());
+    for import in module.imports() {
+        match (import.module(), import.name(), import.ty()) {
+            ("javy_quickjs_provider_v1", "canonical_abi_realloc", ExternType::Func(f))
+                if f.params()
+                    .eq([ValType::I32, ValType::I32, ValType::I32, ValType::I32])
+                    && f.results().eq([ValType::I32]) => {}
+            ("javy_quickjs_provider_v1", "eval_bytecode", ExternType::Func(f))
+                if f.params().eq([ValType::I32, ValType::I32]) && f.results().eq([]) => {}
+            ("javy_quickjs_provider_v1", "memory", ExternType::Memory(_)) => (),
+            _ => panic!("Unknown import {:?}", import),
+        }
+    }
+    Ok(())
+}
+
+#[test]
+pub fn check_for_new_imports_for_exports() -> Result<()> {
+    // If you need to change this test, then you've likely made a breaking change.
+    let js_src = "export function foo() { console.log('In foo'); }; console.log('Toplevel');";
+    let wit = "
+        package local:main
+
+        world foo-test {
+            export foo: func()
+        }
+    ";
+    let wasm = create_dynamically_linked_wasm_module(js_src, Some((wit, "foo-test")))?;
+    let (engine, _linker, _store) = create_wasm_env(WritePipe::new_in_memory())?;
+    let module = Module::from_binary(&engine, &wasm)?;
+    for import in module.imports() {
+        match (import.module(), import.name(), import.ty()) {
+            ("javy_quickjs_provider_v1", "canonical_abi_realloc", ExternType::Func(f))
+                if f.params()
+                    .eq([ValType::I32, ValType::I32, ValType::I32, ValType::I32])
+                    && f.results().eq([ValType::I32]) => {}
+            ("javy_quickjs_provider_v1", "eval_bytecode", ExternType::Func(f))
+                if f.params().eq([ValType::I32, ValType::I32]) && f.results().eq([]) => {}
+            ("javy_quickjs_provider_v1", "invoke", ExternType::Func(f))
+                if f.params()
+                    .eq([ValType::I32, ValType::I32, ValType::I32, ValType::I32])
+                    && f.results().eq([]) => {}
+            ("javy_quickjs_provider_v1", "memory", ExternType::Memory(_)) => (),
+            _ => panic!("Unknown import {:?}", import),
+        }
+    }
     Ok(())
 }
 
