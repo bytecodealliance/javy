@@ -1,0 +1,46 @@
+name: WPT CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  wpt:
+    name: wpt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Cargo Cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
+            ${{ runner.os }}-cargo
+
+      - name: Cargo Target Cache
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
+            ${{ runner.os }}-cargo-target
+
+      - name: Install wasmtime-cli
+        env:
+          WASMTIME_VERSION: 8.0.0
+        run: |
+          wget -nv 'https://github.com/bytecodealliance/wasmtime/releases/download/v${{ env.WASMTIME_VERSION }}/wasmtime-v${{ env.WASMTIME_VERSION }}-x86_64-linux.tar.xz' -O /tmp/wasmtime.tar.xz
+          mkdir /tmp/wasmtime
+          tar xvf /tmp/wasmtime.tar.xz --strip-components=1 -C /tmp/wasmtime
+          echo "/tmp/wasmtime" >> $GITHUB_PATH
+
+      - name: WPT
+        run: make test-wpt

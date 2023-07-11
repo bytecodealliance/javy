@@ -18,7 +18,6 @@ cli: core
 
 core:
 	cargo build --package=javy-core --release --target=wasm32-wasi --features=$(CORE_FEATURES)
-	wizer target/wasm32-wasi/release/javy_quickjs_provider.wasm --allow-wasi --wasm-bulk-memory true -o target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm
 
 docs:
 	cargo doc --package=javy-cli --open
