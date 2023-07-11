@@ -9,7 +9,7 @@ pub struct Export {
     pub js: String,
 }
 
-pub fn determine_js_exports(js: &JS, wit: &Path, wit_world: &str) -> Result<Vec<Export>> {
+pub fn process_exports(js: &JS, wit: &Path, wit_world: &str) -> Result<Vec<Export>> {
     let js_exports = js.exports()?;
     wit::parse_exports(wit, wit_world)?
         .into_iter()

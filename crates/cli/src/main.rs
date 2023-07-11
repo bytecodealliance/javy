@@ -29,7 +29,7 @@ fn main() -> Result<()> {
                 (None, None) => Ok(vec![]),
                 (None, Some(_)) => Ok(vec![]),
                 (Some(_), None) => bail!("Must provide WIT world when providing WIT file"),
-                (Some(wit), Some(world)) => exports::determine_js_exports(&js, wit, world),
+                (Some(wit), Some(world)) => exports::process_exports(&js, wit, world),
             }?;
             if opts.dynamic {
                 let wasm = dynamic_generator::generate(&js, exports)?;
