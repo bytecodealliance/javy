@@ -5,7 +5,7 @@ use binaryen::{CodegenConfig, Module};
 use walrus::{DataKind, ExportItem, FunctionBuilder, FunctionId, MemoryId, ValType};
 use wizer::Wizer;
 
-use crate::js::JS;
+use crate::{exports::Export, js::JS};
 
 use super::transform::{self, SourceCodeSection};
 
@@ -26,7 +26,7 @@ pub fn generate() -> Result<Vec<u8>> {
 /// Takes Wasm created by `Generator` and makes additional changes.
 ///
 /// This is intended to be run in the parent process after generating the Wasm.
-pub fn refine(wasm: Vec<u8>, js: &JS, exports: Vec<String>) -> Result<Vec<u8>> {
+pub fn refine(wasm: Vec<u8>, js: &JS, exports: Vec<Export>) -> Result<Vec<u8>> {
     let mut module = transform::module_config().parse(&wasm)?;
 
     let (realloc, invoke, memory) = {
@@ -82,12 +82,12 @@ fn export_exported_js_functions(
     realloc_fn: FunctionId,
     invoke_fn: FunctionId,
     memory: MemoryId,
-    js_exports: Vec<String>,
+    js_exports: Vec<Export>,
 ) {
     let ptr_local = module.locals.add(ValType::I32);
-    for js_export in js_exports {
+    for export in js_exports {
         // For each JS function export, add an export that copies the name of the function into memory and invokes it.
-        let js_export_bytes = js_export.as_bytes();
+        let js_export_bytes = export.js.as_bytes();
         let js_export_len: i32 = js_export_bytes.len().try_into().unwrap();
         let fn_name_data = module.data.add(DataKind::Passive, js_export_bytes.to_vec());
 
@@ -108,6 +108,6 @@ fn export_exported_js_functions(
             .i32_const(js_export_len)
             .call(invoke_fn);
         let export_fn = export_fn.finish(vec![], &mut module.funcs);
-        module.exports.add(&js_export, export_fn);
+        module.exports.add(&export.wit, export_fn);
     }
 }

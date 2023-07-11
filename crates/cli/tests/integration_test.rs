@@ -107,6 +107,8 @@ fn test_exported_functions() {
     let (_, logs, fuel_consumed) = run_fn(&mut runner, "foo", &[]);
     assert_eq!("Hello from top-level\nHello from foo\n", logs);
     assert_fuel_consumed_within_threshold(54610, fuel_consumed);
+    let (_, logs, _) = run_fn(&mut runner, "foo-bar", &[]);
+    assert_eq!("Hello from top-level\nHello from fooBar\n", logs);
 }
 
 #[cfg(feature = "experimental_event_loop")]

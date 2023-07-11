@@ -20,15 +20,15 @@ pub fn test_dynamic_linking() -> Result<()> {
 
 #[test]
 pub fn test_dynamic_linking_with_func() -> Result<()> {
-    let js_src = "export function foo() { console.log('In foo'); }; console.log('Toplevel');";
+    let js_src = "export function fooBar() { console.log('In foo'); }; console.log('Toplevel');";
     let wit = "
         package local:main
 
         world foo-test {
-            export foo: func()
+            export foo-bar: func()
         }
     ";
-    let log_output = invoke_fn_on_generated_module(js_src, "foo", Some((wit, "foo-test")))?;
+    let log_output = invoke_fn_on_generated_module(js_src, "foo-bar", Some((wit, "foo-test")))?;
     assert_eq!("Toplevel\nIn foo\n", &log_output);
     Ok(())
 }

@@ -6,4 +6,8 @@ export function foo() {
     console.log("Hello from foo");
 }
 
+export function fooBar() {
+    console.log("Hello from fooBar");
+}
+
 console.log("Hello from top-level");
