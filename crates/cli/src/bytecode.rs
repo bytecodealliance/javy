@@ -18,7 +18,7 @@ fn create_wasm_env() -> Result<(Store<WasiCtx>, Instance, Memory)> {
     let engine = Engine::default();
     let module = Module::new(&engine, QUICKJS_PROVIDER_MODULE)?;
     let mut linker = Linker::new(&engine);
-    wasmtime_wasi::add_to_linker(&mut linker, |s| s)?;
+    wasmtime_wasi::snapshots::preview_1::add_wasi_snapshot_preview1_to_linker(&mut linker, |s| s)?;
     let wasi = WasiCtxBuilder::new().inherit_stderr().build();
     let mut store = Store::new(&engine, wasi);
     let instance = linker.instantiate(&mut store, &module)?;
