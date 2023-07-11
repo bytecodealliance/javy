@@ -44,7 +44,6 @@ Read our [contribution documentation](docs/contributing.md) for additional infor
 - wasmtime-cli, can be installed via `cargo install wasmtime-cli` (required for
   `cargo-wasi`)
 - cargo-wasi, can be installed via `cargo install cargo-wasi`
-- wizer, can be installed via `cargo install wizer --all-features`
 - cargo-hack, can be installed via `cargo +stable install cargo-hack --locked`
 
 ## How to build

@@ -53,15 +53,6 @@ jobs:
       - name: Install cargo-hack
         uses: taiki-e/install-action@cargo-hack
 
-      - name: Install wizer
-        env:
-          WIZER_VERSION: 3.0.1
-        run: |
-          wget -nv https://github.com/bytecodealliance/wizer/releases/download/v${{ env.WIZER_VERSION }}/wizer-v${{ env.WIZER_VERSION }}-x86_64-macos.tar.xz -O /tmp/wizer.tar.xz
-          mkdir /tmp/wizer
-          tar xvf /tmp/wizer.tar.xz --strip-components=1 -C /tmp/wizer
-          echo "/tmp/wizer" >> $GITHUB_PATH
-
       - name: Install wasi-sdk
         run: make download-wasi-sdk
 
