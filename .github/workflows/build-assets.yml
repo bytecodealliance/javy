@@ -24,9 +24,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install wasi-sdk
-        run: make download-wasi-sdk
-
       - name: Install wizer
         run: cargo install wizer --all-features
 

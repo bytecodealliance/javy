@@ -62,9 +62,6 @@ jobs:
           tar xvf /tmp/wizer.tar.xz --strip-components=1 -C /tmp/wizer
           echo "/tmp/wizer" >> $GITHUB_PATH
 
-      - name: Install wasi-sdk
-        run: make download-wasi-sdk
-
       - name: Tests
         run: make tests
 
