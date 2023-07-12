@@ -70,8 +70,17 @@ async fn download_wasi_sdk() -> Result<PathBuf> {
 
     fs::create_dir_all(&wasi_sdk_dir)?;
 
+    const MAJOR_VERSION_ENV_VAR: &str = "QUICKJS_WASM_SYS_WASI_SDK_MAJOR_VERSION";
+    const MINOR_VERSION_ENV_VAR: &str = "QUICKJS_WASM_SYS_WASI_SDK_MINOR_VERSION";
+    println!("cargo:rerun-if-env-changed={MAJOR_VERSION_ENV_VAR}");
+    println!("cargo:rerun-if-env-changed={MINOR_VERSION_ENV_VAR}");
+    let major_version =
+        env::var(MAJOR_VERSION_ENV_VAR).unwrap_or(WASI_SDK_VERSION_MAJOR.to_string());
+    let minor_version =
+        env::var(MINOR_VERSION_ENV_VAR).unwrap_or(WASI_SDK_VERSION_MINOR.to_string());
+
     let mut archive_path = wasi_sdk_dir.clone();
-    archive_path.push("wasi-sdk.tar.gz");
+    archive_path.push(format!("wasi-sdk-{major_version}-{minor_version}.tar.gz"));
 
     // Download archive if necessary
     if !archive_path.try_exists()? {
@@ -83,8 +92,7 @@ async fn download_wasi_sdk() -> Result<PathBuf> {
             other => return Err(anyhow!("Unsupported platform tuple {:?}", other)),
         };
 
-        // FIXME: Make this HTTPS!
-        let uri = format!("https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-{}/wasi-sdk-{}.{}-{}.tar.gz", WASI_SDK_VERSION_MAJOR, WASI_SDK_VERSION_MAJOR, WASI_SDK_VERSION_MINOR, file_suffix);
+        let uri = format!("https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-{major_version}/wasi-sdk-{major_version}.{minor_version}-{file_suffix}.tar.gz");
         let mut body = get_uri(uri).await?;
         let mut archive = fs::File::create(&archive_path)?;
         while let Some(frame) = body.frame().await {
@@ -122,7 +130,9 @@ async fn download_wasi_sdk() -> Result<PathBuf> {
 }
 
 async fn get_wasi_sdk_path() -> Result<PathBuf> {
-    if let Ok(path) = env::var("QUICKJS_WASM_SYS_WASI_SDK_PATH") {
+    const WASI_SDK_PATH_ENV_VAR: &str = "QUICKJS_WASM_SYS_WASI_SDK_PATH";
+    println!("cargo:rerun-if-env-changed={WASI_SDK_PATH_ENV_VAR}");
+    if let Ok(path) = env::var(WASI_SDK_PATH_ENV_VAR) {
         return Ok(path.into());
     }
     download_wasi_sdk().await
