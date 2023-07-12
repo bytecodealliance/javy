@@ -158,8 +158,6 @@ async function buildBinary(version) {
 		childProcess.execSync(
 			`git clone https://github.com/${REPO} ${repoDir}`
 		);
-		console.log("Downloading WASI SDK...");
-		childProcess.execSync("make download-wasi-sdk", { cwd: repoDir });
 		console.log(`Building ${NAME}...`);
 		childProcess.execSync("make", { cwd: repoDir });
 	} catch (e) {

@@ -53,9 +53,6 @@ jobs:
       - name: Install cargo-hack
         uses: taiki-e/install-action@cargo-hack
 
-      - name: Install wasi-sdk
-        run: make download-wasi-sdk
-
       - name: Tests
         # Everything but WPT
         run: make test-quickjs-wasm-rs test-javy test-apis test-core test-cli
