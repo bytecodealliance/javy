@@ -13,8 +13,9 @@ bench: cli
 check-bench:
 	cargo check --package=javy-cli --release --benches
 
+# Disabling LTO substantially improves compile time
 cli: core
-	cargo build --package=javy-cli --release
+	CARGO_PROFILE_RELEASE_LTO=off cargo build --package=javy-cli --release
 
 core:
 	cargo build --package=javy-core --release --target=wasm32-wasi --features=$(CORE_FEATURES)
@@ -37,8 +38,9 @@ test-core:
 
 # Test in release mode to skip some debug assertions
 # Note: to make this faster, the engine should be optimized beforehand (wasm-strip + wasm-opt).
+# Disabling LTO substantially improves compile time
 test-cli: core
-	cargo test --package=javy-cli --release --features=$(CLI_FEATURES) -- --nocapture
+	CARGO_PROFILE_RELEASE_LTO=off cargo test --package=javy-cli --release --features=$(CLI_FEATURES) -- --nocapture
 
 # WPT requires a Javy build with the experimental_event_loop feature to pass
 test-wpt: export CORE_FEATURES ?= experimental_event_loop
