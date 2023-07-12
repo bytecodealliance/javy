@@ -25,7 +25,13 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Install wizer
-        run: cargo install wizer --all-features
+        env:
+          WIZER_VERSION: 3.0.1
+        run: |
+          wget -nv https://github.com/bytecodealliance/wizer/releases/download/v${{ env.WIZER_VERSION }}/wizer-v${{ env.WIZER_VERSION }}-x86_64-macos.tar.xz -O /tmp/wizer.tar.xz
+          mkdir /tmp/wizer
+          tar xvf /tmp/wizer.tar.xz --strip-components=1 -C /tmp/wizer
+          echo "/tmp/wizer" >> $GITHUB_PATH
 
       - name: Make core
         run: make core
@@ -42,8 +48,10 @@ jobs:
           name: provider
           path: target/wasm32-wasi/release/javy_quickjs_provider.wasm
 
-      - name: Archive wizened quickjs_provider
-        run: gzip -k -f target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm && mv target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm.gz javy-quickjs_provider.wasm.gz
+      - name: Wizen and archive wizened quickjs_provider
+        run: |
+          wizer target/wasm32-wasi/release/javy_quickjs_provider.wasm --allow-wasi --wasm-bulk-memory true -o target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm
+          gzip -k -f target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm && mv target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm.gz javy-quickjs_provider.wasm.gz
 
       - name: Upload archived quickjs_provider to artifacts
         uses: actions/upload-artifact@v3
