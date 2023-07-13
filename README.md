@@ -60,6 +60,8 @@ $ cargo build -p javy-core --target=wasm32-wasi -r
 $ cargo install --path crates/cli
 ```
 
+If you are going to recompile frequently, you may want to prepend `CARGO_PROFILE_RELEASE_LTO=off` to cargo build for the CLI to speed up the build.
+
 ## Using Javy
 
 Pre-compiled binaries of the Javy CLI can be found on [the releases page](https://github.com/bytecodealliance/javy/releases).
