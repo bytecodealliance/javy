@@ -11,7 +11,7 @@ bench: cli
 	cargo bench --package=javy-cli
 
 check-bench:
-	cargo check --package=javy-cli --release --benches
+	CARGO_PROFILE_RELEASE_LTO=off cargo check --package=javy-cli --release --benches
 
 # Disabling LTO substantially improves compile time
 cli: core
