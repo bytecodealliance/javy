@@ -11,11 +11,6 @@ who = "Jeff Charles <jeff.charles@shopify.com>"
 criteria = "safe-to-deploy"
 version = "1.0.0"
 
-[[audits.proc-macro2]]
-who = "Surma <surma@surma.dev>"
-criteria = "safe-to-deploy"
-version = "1.0.59"
-
 [[audits.quickjs-wasm-rs]]
 who = "Jeff Charles <jeff.charles@shopify.com>"
 criteria = "safe-to-deploy"
@@ -26,7 +21,98 @@ who = "Jeff Charles <jeff.charles@shopify.com>"
 criteria = "safe-to-deploy"
 version = "1.0.0"
 
-[[audits.quote]]
-who = "Surma <surma@surma.dev>"
+[[trusted.async-trait]]
 criteria = "safe-to-deploy"
-version = "1.0.28"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-07-23"
+end = "2024-07-12"
+
+[[trusted.itoa]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-05-02"
+end = "2024-07-12"
+
+[[trusted.num-traits]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2019-05-20"
+end = "2024-07-12"
+
+[[trusted.paste]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-03-19"
+end = "2024-07-12"
+
+[[trusted.proc-macro-hack]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-04-16"
+end = "2024-07-12"
+
+[[trusted.rayon]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2019-06-13"
+end = "2024-07-12"
+
+[[trusted.rayon-core]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2019-06-13"
+end = "2024-07-12"
+
+[[trusted.rustversion]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-07-08"
+end = "2024-07-12"
+
+[[trusted.ryu]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-05-02"
+end = "2024-07-12"
+
+[[trusted.scopeguard]]
+criteria = "safe-to-deploy"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2020-02-16"
+end = "2024-07-12"
+
+[[trusted.serde]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-03-01"
+end = "2024-07-12"
+
+[[trusted.serde_bytes]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-02-25"
+end = "2024-07-12"
+
+[[trusted.serde_derive]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-03-01"
+end = "2024-07-12"
+
+[[trusted.serde_json]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-02-28"
+end = "2024-07-12"
+
+[[trusted.syn]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-03-01"
+end = "2024-07-12"
+
+[[trusted.unicode-ident]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2021-10-02"
+end = "2024-07-12"

@@ -1,6 +1,13 @@
 
 # cargo-vet imports lock
 
+[[publisher.async-trait]]
+version = "0.1.52"
+when = "2021-12-09"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
 [[publisher.cexpr]]
 version = "0.6.0"
 when = "2021-10-11"
@@ -76,12 +83,131 @@ when = "2023-04-20"
 user-id = 73222
 user-login = "wasmtime-publish"
 
+[[publisher.itoa]]
+version = "0.4.8"
+when = "2021-08-22"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
+[[publisher.itoa]]
+version = "1.0.4"
+when = "2022-10-06"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
+[[publisher.num-traits]]
+version = "0.2.14"
+when = "2020-10-29"
+user-id = 539
+user-login = "cuviper"
+user-name = "Josh Stone"
+
+[[publisher.paste]]
+version = "1.0.6"
+when = "2021-11-07"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
+[[publisher.proc-macro-hack]]
+version = "0.5.20+deprecated"
+when = "2022-12-19"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
+[[publisher.rayon]]
+version = "1.5.1"
+when = "2021-05-18"
+user-id = 539
+user-login = "cuviper"
+user-name = "Josh Stone"
+
+[[publisher.rayon-core]]
+version = "1.9.1"
+when = "2021-05-18"
+user-id = 539
+user-login = "cuviper"
+user-name = "Josh Stone"
+
 [[publisher.regalloc2]]
 version = "0.6.1"
 when = "2023-02-16"
 user-id = 3726
 user-login = "cfallin"
 user-name = "Chris Fallin"
+
+[[publisher.rustversion]]
+version = "1.0.12"
+when = "2023-03-05"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
+[[publisher.ryu]]
+version = "1.0.9"
+when = "2021-12-12"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
+[[publisher.scopeguard]]
+version = "1.1.0"
+when = "2020-02-16"
+user-id = 2915
+user-login = "Amanieu"
+user-name = "Amanieu d'Antras"
+
+[[publisher.serde]]
+version = "1.0.136"
+when = "2022-01-25"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
+[[publisher.serde_bytes]]
+version = "0.11.7"
+when = "2022-08-03"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
+[[publisher.serde_derive]]
+version = "1.0.136"
+when = "2022-01-25"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
+[[publisher.serde_json]]
+version = "1.0.79"
+when = "2022-02-12"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
+[[publisher.syn]]
+version = "1.0.109"
+when = "2023-02-24"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
+[[publisher.syn]]
+version = "2.0.22"
+when = "2023-06-24"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
+[[publisher.unicode-ident]]
+version = "1.0.6"
+when = "2022-12-17"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
 
 [[publisher.unicode-segmentation]]
 version = "1.9.0"
@@ -282,7 +408,7 @@ user-name = "Alex Crichton"
 [[audits.bytecode-alliance.wildcard-audits.cranelift-bforest]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2021-10-29"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -290,7 +416,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.cranelift-codegen]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2021-10-29"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -298,7 +424,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.cranelift-codegen-meta]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2021-10-29"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -306,7 +432,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.cranelift-codegen-shared]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2021-10-29"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -314,7 +440,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.cranelift-entity]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2021-10-29"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -322,7 +448,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.cranelift-frontend]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2021-10-29"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -330,7 +456,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.cranelift-isle]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2021-12-13"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -338,7 +464,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.cranelift-native]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2021-10-29"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -346,7 +472,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.cranelift-wasm]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2021-10-29"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -354,7 +480,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.regalloc2]]
 who = "Chris Fallin <chris@cfallin.org>"
 criteria = "safe-to-deploy"
-user-id = 3726
+user-id = 3726 # Chris Fallin (cfallin)
 start = "2021-12-03"
 end = "2024-05-02"
 notes = "We (Bytecode Alliance) are the primary authors of regalloc2 and co-develop it with Cranelift/Wasmtime, with the same code-review, testing/fuzzing, and security standards."
@@ -362,7 +488,7 @@ notes = "We (Bytecode Alliance) are the primary authors of regalloc2 and co-deve
 [[audits.bytecode-alliance.wildcard-audits.wasi-cap-std-sync]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2021-10-29"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -370,7 +496,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.wasi-common]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2021-10-29"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -378,7 +504,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.wasm-encoder]]
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
-user-id = 1
+user-id = 1 # Alex Crichton (alexcrichton)
 start = "2020-12-11"
 end = "2024-04-14"
 notes = """
@@ -391,7 +517,7 @@ so and will actively maintain this crate over time.
 [[audits.bytecode-alliance.wildcard-audits.wasmparser]]
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
-user-id = 1
+user-id = 1 # Alex Crichton (alexcrichton)
 start = "2020-07-13"
 end = "2024-04-14"
 notes = """
@@ -404,7 +530,7 @@ so and will actively maintain this crate over time.
 [[audits.bytecode-alliance.wildcard-audits.wasmtime]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2021-10-29"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -412,7 +538,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.wasmtime-asm-macros]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2022-08-22"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -420,7 +546,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.wasmtime-cache]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2021-10-29"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -428,7 +554,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.wasmtime-component-macro]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2022-07-20"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -436,7 +562,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.wasmtime-component-util]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2022-08-22"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -444,7 +570,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.wasmtime-cranelift]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2021-10-29"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -452,7 +578,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.wasmtime-cranelift-shared]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2023-04-20"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -460,7 +586,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.wasmtime-environ]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2021-10-29"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -468,7 +594,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.wasmtime-fiber]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2021-10-29"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -476,7 +602,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.wasmtime-jit]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2021-10-29"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -484,7 +610,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.wasmtime-jit-debug]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2022-03-07"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -492,7 +618,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.wasmtime-jit-icache-coherence]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2022-11-21"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -500,7 +626,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.wasmtime-runtime]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2021-10-29"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -508,7 +634,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.wasmtime-types]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2021-10-29"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -516,7 +642,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.wasmtime-wasi]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2021-10-29"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -524,7 +650,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.wasmtime-wit-bindgen]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2023-01-20"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -532,7 +658,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.wast]]
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
-user-id = 1
+user-id = 1 # Alex Crichton (alexcrichton)
 start = "2019-10-16"
 end = "2024-04-14"
 notes = """
@@ -545,7 +671,7 @@ so and will actively maintain this crate over time.
 [[audits.bytecode-alliance.wildcard-audits.wat]]
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
-user-id = 1
+user-id = 1 # Alex Crichton (alexcrichton)
 start = "2019-10-18"
 end = "2024-04-14"
 notes = """
@@ -558,7 +684,7 @@ so and will actively maintain this crate over time.
 [[audits.bytecode-alliance.wildcard-audits.wiggle]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2021-10-29"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -566,7 +692,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.wiggle-generate]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2021-10-29"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -574,7 +700,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.wiggle-macro]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 73222
+user-id = 73222 # wasmtime-publish
 start = "2021-10-29"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
@@ -582,7 +708,7 @@ notes = "The Bytecode Alliance is the author of this crate."
 [[audits.bytecode-alliance.wildcard-audits.wit-parser]]
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
-user-id = 1
+user-id = 1 # Alex Crichton (alexcrichton)
 start = "2019-12-02"
 end = "2024-04-14"
 notes = """
@@ -927,6 +1053,20 @@ criteria = "safe-to-deploy"
 version = "0.3.25"
 notes = "This crate shells out to the pkg-config executable, but it appears to sanitize inputs reasonably."
 
+[[audits.bytecode-alliance.audits.proc-macro2]]
+who = "Pat Hickey <phickey@fastly.com>"
+criteria = "safe-to-deploy"
+delta = "1.0.51 -> 1.0.57"
+
+[[audits.bytecode-alliance.audits.proc-macro2]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "1.0.59 -> 1.0.63"
+notes = """
+This is a routine update for new nightly features and new syntax popping up on
+nightly, nothing out of the ordinary.
+"""
+
 [[audits.bytecode-alliance.audits.pulldown-cmark]]
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
@@ -936,6 +1076,11 @@ This crate has `unsafe` blocks and they're all related to SIMD-acceleration and
 are otherwise not doing other `unsafe` operations. Additionally the crate does
 not do anything other than markdown rendering as is expected.
 """
+
+[[audits.bytecode-alliance.audits.quote]]
+who = "Pat Hickey <phickey@fastly.com>"
+criteria = "safe-to-deploy"
+delta = "1.0.23 -> 1.0.27"
 
 [[audits.bytecode-alliance.audits.rustc-demangle]]
 who = "Alex Crichton <alex@alexcrichton.com>"
@@ -1136,12 +1281,6 @@ criteria = "safe-to-deploy"
 version = "0.4.0"
 notes = "No unsafe usage or ambient capabilities"
 
-[[audits.embark-studios.audits.epaint]]
-who = "Johan Andersson <opensource@embark-studios.com>"
-criteria = "safe-to-deploy"
-violation = "<0.20.0"
-notes = "Specified crate license does not include licenses of embedded fonts if using default features or the `default_fonts` feature. Tracked in: https://github.com/emilk/egui/issues/2321"
-
 [[audits.embark-studios.audits.ittapi]]
 who = "Johan Andersson <opensource@embark-studios.com>"
 criteria = "safe-to-deploy"
@@ -1224,7 +1363,7 @@ version = "1.6.1"
 [[audits.mozilla.wildcard-audits.cexpr]]
 who = "Emilio Cobos Álvarez <emilio@crisal.io>"
 criteria = "safe-to-deploy"
-user-id = 3788
+user-id = 3788 # Emilio Cobos Álvarez (emilio)
 start = "2021-06-21"
 end = "2024-04-21"
 notes = "No unsafe code, rather straight-forward parser."
@@ -1233,25 +1372,27 @@ aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-ch
 [[audits.mozilla.wildcard-audits.core-foundation]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 5946
+user-id = 5946 # Jeff Muizelaar (jrmuizel)
 start = "2019-03-29"
 end = "2023-05-04"
+renew = false
 notes = "I've reviewed every source contribution that was neither authored nor reviewed by Mozilla."
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
 [[audits.mozilla.wildcard-audits.core-foundation-sys]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 5946
+user-id = 5946 # Jeff Muizelaar (jrmuizel)
 start = "2020-10-14"
 end = "2023-05-04"
+renew = false
 notes = "I've reviewed every source contribution that was neither authored nor reviewed by Mozilla."
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
 [[audits.mozilla.wildcard-audits.unicode-segmentation]]
 who = "Manish Goregaokar <manishsmail@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 1139
+user-id = 1139 # Manish Goregaokar (Manishearth)
 start = "2019-05-15"
 end = "2024-05-03"
 notes = "All code written or reviewed by Manish"
@@ -1260,7 +1401,7 @@ aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-ch
 [[audits.mozilla.wildcard-audits.unicode-width]]
 who = "Manish Goregaokar <manishsmail@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 1139
+user-id = 1139 # Manish Goregaokar (Manishearth)
 start = "2019-12-05"
 end = "2024-05-03"
 notes = "All code written or reviewed by Manish"
@@ -1269,7 +1410,7 @@ aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-ch
 [[audits.mozilla.wildcard-audits.unicode-xid]]
 who = "Manish Goregaokar <manishsmail@gmail.com>"
 criteria = "safe-to-deploy"
-user-id = 1139
+user-id = 1139 # Manish Goregaokar (Manishearth)
 start = "2019-07-25"
 end = "2024-05-03"
 notes = "All code written or reviewed by Manish"
@@ -1436,11 +1577,95 @@ version = "0.1.1"
 notes = "This is a trivial crate."
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
-[[audits.mozilla.audits.proc-macro-hack]]
+[[audits.mozilla.audits.proc-macro2]]
+who = "Nika Layzell <nika@thelayzells.com>"
+criteria = "safe-to-deploy"
+version = "1.0.39"
+notes = """
+`proc-macro2` acts as either a thin(-ish) wrapper around the std-provided
+`proc_macro` crate, or as a fallback implementation of the crate, depending on
+where it is used.
+
+If using this crate on older versions of rustc (1.56 and earlier), it will
+temporarily replace the panic handler while initializing in order to detect if
+it is running within a `proc_macro`, which could lead to surprising behaviour.
+This should not be an issue for more recent compiler versions, which support
+`proc_macro::is_available()`.
+
+The `proc-macro2` crate's fallback behaviour is not identical to the complex
+behaviour of the rustc compiler (e.g. it does not perform unicode normalization
+for identifiers), however it behaves well enough for its intended use-case
+(tests and scripts processing rust code).
+
+`proc-macro2` does not use unsafe code, however exposes one `unsafe` API to
+allow bypassing checks in the fallback implementation when constructing
+`Literal` using `from_str_unchecked`. This was intended to only be used by the
+`quote!` macro, however it has been removed
+(https://github.com/dtolnay/quote/commit/f621fe64a8a501cae8e95ebd6848e637bbc79078),
+and is likely completely unused. Even when used, this API shouldn't be able to
+cause unsoundness.
+"""
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.proc-macro2]]
 who = "Mike Hommey <mh+mozilla@glandium.org>"
 criteria = "safe-to-deploy"
-delta = "0.5.19 -> 0.5.20+deprecated"
+delta = "1.0.39 -> 1.0.43"
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.proc-macro2]]
+who = "Mike Hommey <mh+mozilla@glandium.org>"
+criteria = "safe-to-deploy"
+delta = "1.0.43 -> 1.0.49"
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.proc-macro2]]
+who = "Mike Hommey <mh+mozilla@glandium.org>"
+criteria = "safe-to-deploy"
+delta = "1.0.49 -> 1.0.51"
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.proc-macro2]]
+who = "Jan-Erik Rediger <jrediger@mozilla.com>"
+criteria = "safe-to-deploy"
+delta = "1.0.57 -> 1.0.59"
+notes = "Enabled on Wasm"
+aggregated-from = "https://raw.githubusercontent.com/mozilla/glean/main/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.quote]]
+who = "Nika Layzell <nika@thelayzells.com>"
+criteria = "safe-to-deploy"
+version = "1.0.18"
+notes = """
+`quote` is a utility crate used by proc-macros to generate TokenStreams
+conveniently from source code. The bulk of the logic is some complex
+interlocking `macro_rules!` macros which are used to parse and build the
+`TokenStream` within the proc-macro.
+
+This crate contains no unsafe code, and the internal logic, while difficult to
+read, is generally straightforward. I have audited the the quote macros, ident
+formatter, and runtime logic.
+"""
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.quote]]
+who = "Mike Hommey <mh+mozilla@glandium.org>"
+criteria = "safe-to-deploy"
+delta = "1.0.18 -> 1.0.21"
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.quote]]
+who = "Mike Hommey <mh+mozilla@glandium.org>"
+criteria = "safe-to-deploy"
+delta = "1.0.21 -> 1.0.23"
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.quote]]
+who = "Jan-Erik Rediger <jrediger@mozilla.com>"
+criteria = "safe-to-deploy"
+delta = "1.0.27 -> 1.0.28"
+notes = "Enabled on wasm targets"
+aggregated-from = "https://raw.githubusercontent.com/mozilla/glean/main/supply-chain/audits.toml"
 
 [[audits.mozilla.audits.rustc-hash]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
