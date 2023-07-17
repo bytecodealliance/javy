@@ -1,9 +1,6 @@
 .PHONY: cli core test fmt clean
 .DEFAULT_GOAL := cli
 
-download-wasi-sdk:
-	./install-wasi-sdk.sh
-
 install:
 	cargo install --path crates/cli
 
