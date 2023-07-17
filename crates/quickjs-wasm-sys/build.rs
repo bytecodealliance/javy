@@ -1,13 +1,11 @@
 use anyhow::{anyhow, Result};
+use hyper::body::Incoming;
 use std::io::Write;
 use std::path::PathBuf;
 use std::{env, fs, process};
 
 use http_body_util::BodyExt;
-use hyper::{
-    body::{Body, Buf},
-    Uri,
-};
+use hyper::{body::Buf, Uri};
 use tokio::io::{AsyncRead, AsyncWrite};
 
 use walkdir::WalkDir;
@@ -28,7 +26,7 @@ async fn tls_connect(url: &Uri) -> Result<impl AsyncRead + AsyncWrite + Unpin> {
 
 // Mostly taken from the hyper examples:
 // https://github.com/hyperium/hyper/blob/4cf38a12ce7cc5dfd3af356a0cef61ace4ce82b9/examples/client.rs
-async fn get_uri(url_str: impl AsRef<str>) -> Result<impl Body> {
+async fn get_uri(url_str: impl AsRef<str>) -> Result<Incoming> {
     let mut url_string = url_str.as_ref().to_string();
     // This loop will follow redirects and will return when a status code
     // is a success (200-299) or a non-redirect (300-399).
@@ -97,7 +95,12 @@ async fn download_wasi_sdk() -> Result<PathBuf> {
         let mut archive = fs::File::create(&archive_path)?;
         while let Some(frame) = body.frame().await {
             if let Some(chunk) = frame
-                .map_err(|_err| anyhow!("Something went wrong"))?
+                .map_err(|err| {
+                    anyhow!(
+                        "Something went wrong when downloading the WASI SDK: {}",
+                        err
+                    )
+                })?
                 .data_ref()
             {
                 archive.write_all(chunk.chunk())?;
