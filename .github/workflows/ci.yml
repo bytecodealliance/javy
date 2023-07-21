@@ -54,11 +54,16 @@ jobs:
         uses: taiki-e/install-action@cargo-hack
 
       - name: Tests
-        # Everything but WPT
-        run: make test-quickjs-wasm-rs test-javy test-apis test-core test-cli
+        run: |
+          cargo hack wasi test --workspace --exclude=javy-cli --each-feature -- --nocapture
+          cargo build --package=javy-core --release --target=wasm32-wasi
+          CARGO_PROFILE_RELEASE_LTO=off cargo test --package=javy-cli --release -- --nocapture
 
       - name: Check benchmarks
-        run: make check-bench
+        run: CARGO_PROFILE_RELEASE_LTO=off cargo check --package=javy-cli --release --benches
 
       - name: Lint
-        run: make fmt
+        run: |
+          cargo fmt -- --check
+          cargo clippy --workspace --exclude=javy-cli --target=wasm32-wasi --all-targets -- -D warnings
+          CARGO_PROFILE_RELEASE_LTO=off cargo clippy --package=javy-cli --release --all-targets -- -D warnings

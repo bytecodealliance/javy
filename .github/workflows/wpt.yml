@@ -43,4 +43,8 @@ jobs:
           echo "/tmp/wasmtime" >> $GITHUB_PATH
 
       - name: WPT
-        run: make test-wpt
+        run: |
+          cargo build --package=javy-core --release --target=wasm32-wasi --features=experimental_event_loop
+          CARGO_PROFILE_RELEASE_LTO=off cargo build --package=javy-cli --release
+          npm install --prefix wpt
+          npm test --prefix wpt
