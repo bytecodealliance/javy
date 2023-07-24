@@ -1,32 +1,47 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc, sync::OnceLock};
 
 use anyhow::{anyhow, Result};
 use binaryen::{CodegenConfig, Module};
 use walrus::{DataKind, ExportItem, FunctionBuilder, FunctionId, MemoryId, ValType};
+use wasi_common::{pipe::ReadPipe, WasiCtx};
+use wasmtime::Linker;
+use wasmtime_wasi::WasiCtxBuilder;
 use wizer::Wizer;
 
 use crate::{exports::Export, js::JS};
 
 use super::transform::{self, SourceCodeSection};
 
-/// Generates Wasm for a static Javy module within a subprocess.
-///
-/// We assume stdin contains the JS source code.
-pub fn generate() -> Result<Vec<u8>> {
+static mut WASI: OnceLock<WasiCtx> = OnceLock::new();
+
+pub fn generate(js: &JS, exports: Vec<Export>) -> Result<Vec<u8>> {
     let wasm = include_bytes!(concat!(env!("OUT_DIR"), "/engine.wasm"));
+
+    let wasi = WasiCtxBuilder::new()
+        .stdin(Box::new(ReadPipe::from(js.as_bytes())))
+        .inherit_stdout()
+        .inherit_stderr()
+        .build();
+    // We can't move the WasiCtx into `make_linker` since WasiCtx doesn't implement the `Copy` trait.
+    // So we move the WasiCtx into a mutable static OnceLock instead.
+    // Setting the value in the `OnceLock` and getting the reference back from it should be safe given
+    // we're never executing this code concurrently.
+    if unsafe { WASI.set(wasi) }.is_err() {
+        panic!("Failed to set WASI static variable")
+    }
+
     let wasm = Wizer::new()
-        .allow_wasi(true)?
-        .inherit_stdio(true)
+        .make_linker(Some(Rc::new(|engine| {
+            let mut linker = Linker::new(engine);
+            wasmtime_wasi::add_to_linker(&mut linker, |ctx: &mut Option<WasiCtx>| {
+                ctx.as_mut().or_else(|| unsafe { WASI.get_mut() }).unwrap()
+            })?;
+            Ok(linker)
+        })))?
         .wasm_bulk_memory(true)
         .run(wasm)
         .map_err(|_| anyhow!("JS compilation failed"))?;
-    Ok(wasm)
-}
 
-/// Takes Wasm created by `Generator` and makes additional changes.
-///
-/// This is intended to be run in the parent process after generating the Wasm.
-pub fn refine(wasm: Vec<u8>, js: &JS, exports: Vec<Export>) -> Result<Vec<u8>> {
     let mut module = transform::module_config().parse(&wasm)?;
 
     let (realloc, invoke, memory) = {
