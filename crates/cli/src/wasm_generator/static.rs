@@ -25,7 +25,8 @@ pub fn generate(js: &JS, exports: Vec<Export>) -> Result<Vec<u8>> {
     // We can't move the WasiCtx into `make_linker` since WasiCtx doesn't implement the `Copy` trait.
     // So we move the WasiCtx into a mutable static OnceLock instead.
     // Setting the value in the `OnceLock` and getting the reference back from it should be safe given
-    // we're never executing this code concurrently.
+    // we're never executing this code concurrently. This code will also fail if `generate` is invoked
+    // more than once per execution.
     if unsafe { WASI.set(wasi) }.is_err() {
         panic!("Failed to set WASI static variable")
     }
