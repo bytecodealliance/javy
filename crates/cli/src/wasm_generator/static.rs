@@ -33,8 +33,8 @@ pub fn generate(js: &JS, exports: Vec<Export>) -> Result<Vec<u8>> {
     let wasm = Wizer::new()
         .make_linker(Some(Rc::new(|engine| {
             let mut linker = Linker::new(engine);
-            wasmtime_wasi::add_to_linker(&mut linker, |ctx: &mut Option<WasiCtx>| {
-                ctx.as_mut().or_else(|| unsafe { WASI.get_mut() }).unwrap()
+            wasmtime_wasi::add_to_linker(&mut linker, |_ctx: &mut Option<WasiCtx>| {
+                unsafe { WASI.get_mut() }.unwrap()
             })?;
             Ok(linker)
         })))?
