@@ -63,7 +63,7 @@ async fn get_uri(url_str: impl AsRef<str>) -> Result<Incoming> {
 }
 
 async fn download_wasi_sdk() -> Result<PathBuf> {
-    let mut wasi_sdk_dir: PathBuf = env::var("CARGO_MANIFEST_DIR")?.into();
+    let mut wasi_sdk_dir: PathBuf = env::var("OUT_DIR")?.into();
     wasi_sdk_dir.push("wasi-sdk");
 
     fs::create_dir_all(&wasi_sdk_dir)?;
