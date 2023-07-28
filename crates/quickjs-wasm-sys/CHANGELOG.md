@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 1.1.0 - 2023-07-24
+
 - Added: `QUICKJS_WASM_SYS_WASI_SDK_MAJOR_VERSION` and `QUICKJS_WASM_SYS_WASI_SDK_MINOR_VERSION` build-time environment variables to control which version of the WASI SDK to use.
 - Fixed: Changing the `QUICKJS_WASM_SYS_WASI_SDK_PATH` build time environment variable will trigger a rebuild of the crate.
+- Changed: Crate now automatically downloads WASI SDK if `QUICKJS_WASM_SYS_WASI_SDK_PATH` is not set at build time
 
 ## 1.0.0 - 2023-05-16
 

@@ -2018,7 +2018,7 @@ dependencies = [
 
 [[package]]
 name = "quickjs-wasm-sys"
-version = "1.1.0-alpha.1"
+version = "1.1.0"
 dependencies = [
  "anyhow",
  "bindgen",
