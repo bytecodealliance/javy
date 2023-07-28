@@ -1,12 +1,68 @@
 
 # cargo-vet imports lock
 
+[[publisher.ambient-authority]]
+version = "0.0.1"
+when = "2021-07-13"
+user-id = 6825
+user-login = "sunfishcode"
+user-name = "Dan Gohman"
+
+[[publisher.arbitrary]]
+version = "1.3.0"
+when = "2023-03-13"
+user-id = 696
+user-login = "fitzgen"
+user-name = "Nick Fitzgerald"
+
 [[publisher.async-trait]]
 version = "0.1.52"
 when = "2021-12-09"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
+
+[[publisher.cap-fs-ext]]
+version = "1.0.10"
+when = "2023-04-06"
+user-id = 6825
+user-login = "sunfishcode"
+user-name = "Dan Gohman"
+
+[[publisher.cap-primitives]]
+version = "0.24.1"
+when = "2022-02-09"
+user-id = 6825
+user-login = "sunfishcode"
+user-name = "Dan Gohman"
+
+[[publisher.cap-primitives]]
+version = "1.0.10"
+when = "2023-04-06"
+user-id = 6825
+user-login = "sunfishcode"
+user-name = "Dan Gohman"
+
+[[publisher.cap-std]]
+version = "0.24.4"
+when = "2022-05-26"
+user-id = 6825
+user-login = "sunfishcode"
+user-name = "Dan Gohman"
+
+[[publisher.cap-std]]
+version = "1.0.10"
+when = "2023-04-06"
+user-id = 6825
+user-login = "sunfishcode"
+user-name = "Dan Gohman"
+
+[[publisher.cap-time-ext]]
+version = "1.0.10"
+when = "2023-04-06"
+user-id = 6825
+user-login = "sunfishcode"
+user-name = "Dan Gohman"
 
 [[publisher.cexpr]]
 version = "0.6.0"
@@ -35,9 +91,21 @@ when = "2023-04-20"
 user-id = 73222
 user-login = "wasmtime-publish"
 
+[[publisher.cranelift-bforest]]
+version = "0.96.4"
+when = "2023-06-13"
+user-id = 73222
+user-login = "wasmtime-publish"
+
 [[publisher.cranelift-codegen]]
 version = "0.95.0"
 when = "2023-04-20"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.cranelift-codegen]]
+version = "0.96.4"
+when = "2023-06-13"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -47,9 +115,27 @@ when = "2023-04-20"
 user-id = 73222
 user-login = "wasmtime-publish"
 
+[[publisher.cranelift-codegen-meta]]
+version = "0.96.4"
+when = "2023-06-13"
+user-id = 73222
+user-login = "wasmtime-publish"
+
 [[publisher.cranelift-codegen-shared]]
 version = "0.95.0"
 when = "2023-04-20"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.cranelift-codegen-shared]]
+version = "0.96.4"
+when = "2023-06-13"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.cranelift-control]]
+version = "0.96.4"
+when = "2023-06-13"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -59,9 +145,21 @@ when = "2023-04-20"
 user-id = 73222
 user-login = "wasmtime-publish"
 
+[[publisher.cranelift-entity]]
+version = "0.96.4"
+when = "2023-06-13"
+user-id = 73222
+user-login = "wasmtime-publish"
+
 [[publisher.cranelift-frontend]]
 version = "0.95.0"
 when = "2023-04-20"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.cranelift-frontend]]
+version = "0.96.4"
+when = "2023-06-13"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -71,9 +169,21 @@ when = "2023-04-20"
 user-id = 73222
 user-login = "wasmtime-publish"
 
+[[publisher.cranelift-isle]]
+version = "0.96.4"
+when = "2023-06-13"
+user-id = 73222
+user-login = "wasmtime-publish"
+
 [[publisher.cranelift-native]]
 version = "0.95.0"
 when = "2023-04-20"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.cranelift-native]]
+version = "0.96.4"
+when = "2023-06-13"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -82,6 +192,40 @@ version = "0.95.0"
 when = "2023-04-20"
 user-id = 73222
 user-login = "wasmtime-publish"
+
+[[publisher.cranelift-wasm]]
+version = "0.96.4"
+when = "2023-06-13"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.fs-set-times]]
+version = "0.15.0"
+when = "2022-01-31"
+user-id = 6825
+user-login = "sunfishcode"
+user-name = "Dan Gohman"
+
+[[publisher.io-extras]]
+version = "0.13.2"
+when = "2022-02-01"
+user-id = 6825
+user-login = "sunfishcode"
+user-name = "Dan Gohman"
+
+[[publisher.io-lifetimes]]
+version = "0.5.3"
+when = "2022-02-15"
+user-id = 6825
+user-login = "sunfishcode"
+user-name = "Dan Gohman"
+
+[[publisher.io-lifetimes]]
+version = "1.0.11"
+when = "2023-05-24"
+user-id = 6825
+user-login = "sunfishcode"
+user-name = "Dan Gohman"
 
 [[publisher.itoa]]
 version = "0.4.8"
@@ -96,6 +240,34 @@ when = "2022-10-06"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
+
+[[publisher.libc]]
+version = "0.2.146"
+when = "2023-06-06"
+user-id = 2915
+user-login = "Amanieu"
+user-name = "Amanieu d'Antras"
+
+[[publisher.linux-raw-sys]]
+version = "0.0.42"
+when = "2022-02-11"
+user-id = 6825
+user-login = "sunfishcode"
+user-name = "Dan Gohman"
+
+[[publisher.linux-raw-sys]]
+version = "0.1.4"
+when = "2022-12-13"
+user-id = 6825
+user-login = "sunfishcode"
+user-name = "Dan Gohman"
+
+[[publisher.linux-raw-sys]]
+version = "0.3.8"
+when = "2023-05-19"
+user-id = 6825
+user-login = "sunfishcode"
+user-name = "Dan Gohman"
 
 [[publisher.num-traits]]
 version = "0.2.14"
@@ -139,6 +311,27 @@ user-id = 3726
 user-login = "cfallin"
 user-name = "Chris Fallin"
 
+[[publisher.regalloc2]]
+version = "0.8.1"
+when = "2023-05-01"
+user-id = 3726
+user-login = "cfallin"
+user-name = "Chris Fallin"
+
+[[publisher.rustix]]
+version = "0.33.3"
+when = "2022-02-22"
+user-id = 6825
+user-login = "sunfishcode"
+user-name = "Dan Gohman"
+
+[[publisher.rustix]]
+version = "0.37.23"
+when = "2023-07-05"
+user-id = 6825
+user-login = "sunfishcode"
+user-name = "Dan Gohman"
+
 [[publisher.rustversion]]
 version = "1.0.12"
 when = "2023-03-05"
@@ -167,6 +360,13 @@ user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
 
+[[publisher.serde]]
+version = "1.0.168"
+when = "2023-07-09"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
 [[publisher.serde_bytes]]
 version = "0.11.7"
 when = "2022-08-03"
@@ -181,9 +381,23 @@ user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
 
+[[publisher.serde_derive]]
+version = "1.0.168"
+when = "2023-07-09"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
 [[publisher.serde_json]]
 version = "1.0.79"
 when = "2022-02-12"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
+[[publisher.serde_json]]
+version = "1.0.103"
+when = "2023-07-15"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -201,6 +415,13 @@ when = "2023-06-24"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
+
+[[publisher.target-lexicon]]
+version = "0.12.3"
+when = "2022-02-01"
+user-id = 6825
+user-login = "sunfishcode"
+user-name = "Dan Gohman"
 
 [[publisher.unicode-ident]]
 version = "1.0.6"
@@ -236,11 +457,30 @@ when = "2023-04-20"
 user-id = 73222
 user-login = "wasmtime-publish"
 
+[[publisher.wasi-cap-std-sync]]
+version = "9.0.4"
+when = "2023-06-13"
+user-id = 73222
+user-login = "wasmtime-publish"
+
 [[publisher.wasi-common]]
 version = "8.0.0"
 when = "2023-04-20"
 user-id = 73222
 user-login = "wasmtime-publish"
+
+[[publisher.wasi-common]]
+version = "9.0.4"
+when = "2023-06-13"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wasm-encoder]]
+version = "0.28.0"
+when = "2023-05-23"
+user-id = 1
+user-login = "alexcrichton"
+user-name = "Alex Crichton"
 
 [[publisher.wasm-encoder]]
 version = "0.29.0"
@@ -270,9 +510,22 @@ user-id = 1
 user-login = "alexcrichton"
 user-name = "Alex Crichton"
 
+[[publisher.wasmparser]]
+version = "0.106.0"
+when = "2023-05-23"
+user-id = 1
+user-login = "alexcrichton"
+user-name = "Alex Crichton"
+
 [[publisher.wasmtime]]
 version = "8.0.0"
 when = "2023-04-20"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wasmtime]]
+version = "9.0.4"
+when = "2023-06-13"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -282,9 +535,21 @@ when = "2023-04-20"
 user-id = 73222
 user-login = "wasmtime-publish"
 
+[[publisher.wasmtime-asm-macros]]
+version = "9.0.4"
+when = "2023-06-13"
+user-id = 73222
+user-login = "wasmtime-publish"
+
 [[publisher.wasmtime-cache]]
 version = "8.0.0"
 when = "2023-04-20"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wasmtime-cache]]
+version = "9.0.4"
+when = "2023-06-13"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -294,9 +559,21 @@ when = "2023-04-20"
 user-id = 73222
 user-login = "wasmtime-publish"
 
+[[publisher.wasmtime-component-macro]]
+version = "9.0.4"
+when = "2023-06-13"
+user-id = 73222
+user-login = "wasmtime-publish"
+
 [[publisher.wasmtime-component-util]]
 version = "8.0.0"
 when = "2023-04-20"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wasmtime-component-util]]
+version = "9.0.4"
+when = "2023-06-13"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -306,9 +583,21 @@ when = "2023-04-20"
 user-id = 73222
 user-login = "wasmtime-publish"
 
+[[publisher.wasmtime-cranelift]]
+version = "9.0.4"
+when = "2023-06-13"
+user-id = 73222
+user-login = "wasmtime-publish"
+
 [[publisher.wasmtime-cranelift-shared]]
 version = "8.0.0"
 when = "2023-04-20"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wasmtime-cranelift-shared]]
+version = "9.0.4"
+when = "2023-06-13"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -318,9 +607,21 @@ when = "2023-04-20"
 user-id = 73222
 user-login = "wasmtime-publish"
 
+[[publisher.wasmtime-environ]]
+version = "9.0.4"
+when = "2023-06-13"
+user-id = 73222
+user-login = "wasmtime-publish"
+
 [[publisher.wasmtime-fiber]]
 version = "8.0.0"
 when = "2023-04-20"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wasmtime-fiber]]
+version = "9.0.4"
+when = "2023-06-13"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -330,9 +631,21 @@ when = "2023-04-20"
 user-id = 73222
 user-login = "wasmtime-publish"
 
+[[publisher.wasmtime-jit]]
+version = "9.0.4"
+when = "2023-06-13"
+user-id = 73222
+user-login = "wasmtime-publish"
+
 [[publisher.wasmtime-jit-debug]]
 version = "8.0.0"
 when = "2023-04-20"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wasmtime-jit-debug]]
+version = "9.0.4"
+when = "2023-06-13"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -342,9 +655,21 @@ when = "2023-04-20"
 user-id = 73222
 user-login = "wasmtime-publish"
 
+[[publisher.wasmtime-jit-icache-coherence]]
+version = "9.0.4"
+when = "2023-06-13"
+user-id = 73222
+user-login = "wasmtime-publish"
+
 [[publisher.wasmtime-runtime]]
 version = "8.0.0"
 when = "2023-04-20"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wasmtime-runtime]]
+version = "9.0.4"
+when = "2023-06-13"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -354,15 +679,33 @@ when = "2023-04-20"
 user-id = 73222
 user-login = "wasmtime-publish"
 
+[[publisher.wasmtime-types]]
+version = "9.0.4"
+when = "2023-06-13"
+user-id = 73222
+user-login = "wasmtime-publish"
+
 [[publisher.wasmtime-wasi]]
 version = "8.0.0"
 when = "2023-04-20"
 user-id = 73222
 user-login = "wasmtime-publish"
 
+[[publisher.wasmtime-wasi]]
+version = "9.0.4"
+when = "2023-06-13"
+user-id = 73222
+user-login = "wasmtime-publish"
+
 [[publisher.wasmtime-wit-bindgen]]
 version = "8.0.0"
 when = "2023-04-20"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wasmtime-wit-bindgen]]
+version = "9.0.4"
+when = "2023-06-13"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -386,9 +729,21 @@ when = "2023-04-20"
 user-id = 73222
 user-login = "wasmtime-publish"
 
+[[publisher.wiggle]]
+version = "9.0.4"
+when = "2023-06-13"
+user-id = 73222
+user-login = "wasmtime-publish"
+
 [[publisher.wiggle-generate]]
 version = "8.0.0"
 when = "2023-04-20"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wiggle-generate]]
+version = "9.0.4"
+when = "2023-06-13"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -398,12 +753,33 @@ when = "2023-04-20"
 user-id = 73222
 user-login = "wasmtime-publish"
 
+[[publisher.wiggle-macro]]
+version = "9.0.4"
+when = "2023-06-13"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wit-parser]]
+version = "0.7.1"
+when = "2023-04-27"
+user-id = 1
+user-login = "alexcrichton"
+user-name = "Alex Crichton"
+
 [[publisher.wit-parser]]
 version = "0.8.0"
 when = "2023-05-26"
 user-id = 1
 user-login = "alexcrichton"
 user-name = "Alex Crichton"
+
+[[audits.bytecode-alliance.wildcard-audits.arbitrary]]
+who = "Nick Fitzgerald <fitzgen@gmail.com>"
+criteria = "safe-to-deploy"
+user-id = 696 # Nick Fitzgerald (fitzgen)
+start = "2020-01-14"
+end = "2024-04-21"
+notes = "I am an author of this crate."
 
 [[audits.bytecode-alliance.wildcard-audits.cranelift-bforest]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
@@ -434,6 +810,14 @@ who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
 user-id = 73222 # wasmtime-publish
 start = "2021-10-29"
+end = "2024-06-26"
+notes = "The Bytecode Alliance is the author of this crate."
+
+[[audits.bytecode-alliance.wildcard-audits.cranelift-control]]
+who = "Bobby Holley <bobbyholley@gmail.com>"
+criteria = "safe-to-deploy"
+user-id = 73222 # wasmtime-publish
+start = "2023-05-22"
 end = "2024-06-26"
 notes = "The Bytecode Alliance is the author of this crate."
 
@@ -886,6 +1270,17 @@ criteria = "safe-to-deploy"
 version = "0.3.27"
 notes = "Unsafe used to implement a concurrency primitive AtomicWaker. Well-commented and not obviously incorrect. Like my other audits of these concurrency primitives inside the futures family, I couldn't certify that it is correct without formal methods, but that is out of scope for this vetting."
 
+[[audits.bytecode-alliance.audits.fxprof-processed-profile]]
+who = "Jamey Sharp <jsharp@fastly.com>"
+criteria = "safe-to-deploy"
+version = "0.6.0"
+notes = """
+No unsafe code, I/O, or powerful imports. This is a straightforward set of data
+structures representing the Firefox \"processed\" profile format, with serde
+serialization support. All logic is trivial: either unit conversion, or
+hash-consing to support de-duplication required by the format.
+"""
+
 [[audits.bytecode-alliance.audits.glob]]
 who = "Jamey Sharp <jsharp@fastly.com>"
 criteria = "safe-to-deploy"
@@ -987,6 +1382,12 @@ who = "Nick Fitzgerald <fitzgen@gmail.com>"
 criteria = "safe-to-deploy"
 version = "0.2.5"
 notes = "I am the author of this crate."
+
+[[audits.bytecode-alliance.audits.libc]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.2.146 -> 0.2.147"
+notes = "Only new type definitions and updating others for some platforms, no major changes"
 
 [[audits.bytecode-alliance.audits.memfd]]
 who = "Dan Gohman <dev@sunfishcode.online>"
@@ -1477,6 +1878,13 @@ aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-ch
 who = "Mike Hommey <mh+mozilla@glandium.org>"
 criteria = "safe-to-deploy"
 delta = "0.1.3 -> 0.1.6"
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.debugid]]
+who = "Gabriele Svelto <gsvelto@mozilla.com>"
+criteria = "safe-to-deploy"
+version = "0.8.0"
+notes = "This crates was written by Sentry and I've fully audited it as Firefox crash reporting machinery relies on it."
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
 [[audits.mozilla.audits.fnv]]
