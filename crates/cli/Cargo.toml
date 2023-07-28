@@ -15,7 +15,7 @@ dump_wat = ["dep:wasmprinter"]
 experimental_event_loop = []
 
 [dependencies]
-wizer = { git = "https://github.com/bytecodealliance/wizer", rev = "3acc39cc561e7f985f163a2c8e89259a0dfc2f2f" }
+wizer = "3.0"
 structopt = "0.3"
 anyhow = { workspace = true }
 binaryen = { git = "https://github.com/pepyakin/binaryen-rs", rev = "00c98174843f957681ba0bc5cdcc9d15f5d0cb23" }
@@ -41,7 +41,7 @@ wasmparser = "0.101.0"
 
 [build-dependencies]
 anyhow = "1.0.71"
-wizer = { git = "https://github.com/bytecodealliance/wizer", rev = "3acc39cc561e7f985f163a2c8e89259a0dfc2f2f" }
+wizer = "3.0"
 
 [[bench]]
 name = "benchmark"

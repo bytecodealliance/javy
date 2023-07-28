@@ -40,9 +40,6 @@ audit-as-crates-io = false
 [policy.quickjs-wasm-sys]
 audit-as-crates-io = false
 
-[policy.wizer]
-audit-as-crates-io = true
-
 [[exemptions.Inflector]]
 version = "0.11.4"
 criteria = "safe-to-deploy"
@@ -69,10 +66,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.alloc-stdlib]]
 version = "0.2.2"
-criteria = "safe-to-deploy"
-
-[[exemptions.ambient-authority]]
-version = "0.0.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.ansi_term]]
@@ -129,30 +122,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.bytes]]
 version = "1.1.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.cap-fs-ext]]
-version = "1.0.10"
-criteria = "safe-to-deploy"
-
-[[exemptions.cap-primitives]]
-version = "0.24.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.cap-primitives]]
-version = "1.0.10"
-criteria = "safe-to-deploy"
-
-[[exemptions.cap-std]]
-version = "0.24.4"
-criteria = "safe-to-deploy"
-
-[[exemptions.cap-std]]
-version = "1.0.10"
-criteria = "safe-to-deploy"
-
-[[exemptions.cap-time-ext]]
-version = "1.0.10"
 criteria = "safe-to-deploy"
 
 [[exemptions.cast]]
@@ -259,10 +228,6 @@ criteria = "safe-to-deploy"
 version = "0.1.6"
 criteria = "safe-to-deploy"
 
-[[exemptions.fs-set-times]]
-version = "0.15.0"
-criteria = "safe-to-deploy"
-
 [[exemptions.futures-task]]
 version = "0.3.27"
 criteria = "safe-to-deploy"
@@ -336,14 +301,6 @@ criteria = "safe-to-deploy"
 version = "0.1.12"
 criteria = "safe-to-deploy"
 
-[[exemptions.io-extras]]
-version = "0.13.2"
-criteria = "safe-to-deploy"
-
-[[exemptions.io-lifetimes]]
-version = "0.5.3"
-criteria = "safe-to-deploy"
-
 [[exemptions.ipnet]]
 version = "2.3.1"
 criteria = "safe-to-deploy"
@@ -396,24 +353,8 @@ criteria = "safe-to-deploy"
 version = "0.8.5"
 criteria = "safe-to-deploy"
 
-[[exemptions.libc]]
-version = "0.2.139"
-criteria = "safe-to-deploy"
-
 [[exemptions.libloading]]
 version = "0.7.3"
-criteria = "safe-to-deploy"
-
-[[exemptions.linux-raw-sys]]
-version = "0.0.42"
-criteria = "safe-to-deploy"
-
-[[exemptions.linux-raw-sys]]
-version = "0.1.4"
-criteria = "safe-to-deploy"
-
-[[exemptions.linux-raw-sys]]
-version = "0.3.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.lock_api]]
@@ -585,14 +526,6 @@ criteria = "safe-to-deploy"
 version = "0.2.3"
 criteria = "safe-to-deploy"
 
-[[exemptions.rustix]]
-version = "0.33.3"
-criteria = "safe-to-deploy"
-
-[[exemptions.rustix]]
-version = "0.37.3"
-criteria = "safe-to-deploy"
-
 [[exemptions.same-file]]
 version = "1.0.6"
 criteria = "safe-to-deploy"
@@ -745,10 +678,6 @@ criteria = "safe-to-deploy"
 version = "0.5.8"
 criteria = "safe-to-deploy"
 
-[[exemptions.target-lexicon]]
-version = "0.12.3"
-criteria = "safe-to-deploy"
-
 [[exemptions.tempfile]]
 version = "3.4.0"
 criteria = "safe-to-deploy"
@@ -821,6 +750,10 @@ criteria = "safe-to-deploy"
 [[exemptions.uuid]]
 version = "0.8.2"
 criteria = "safe-to-run"
+
+[[exemptions.uuid]]
+version = "1.4.1"
+criteria = "safe-to-deploy"
 
 [[exemptions.vergen]]
 version = "7.5.1"
@@ -976,6 +909,10 @@ criteria = "safe-to-deploy"
 
 [[exemptions.wizer]]
 version = "1.6.1-beta.4@git:3acc39cc561e7f985f163a2c8e89259a0dfc2f2f"
+criteria = "safe-to-deploy"
+
+[[exemptions.wizer]]
+version = "3.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.zstd]]

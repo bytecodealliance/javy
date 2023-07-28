@@ -8,7 +8,7 @@ bench: cli
 	cargo bench --package=javy-cli
 
 check-bench:
-	cargo check --package=javy-cli --release --benches
+	CARGO_PROFILE_RELEASE_LTO=off cargo check --package=javy-cli --release --benches
 
 # Disabling LTO substantially improves compile time
 cli: core
@@ -75,7 +75,7 @@ fmt-core:
 # This reduces the size of the target directory which improves CI stability.
 fmt-cli:
 	cargo fmt --package=javy-cli -- --check
-	cargo clippy --package=javy-cli --release --all-targets -- -D warnings
+	CARGO_PROFILE_RELEASE_LTO=off cargo clippy --package=javy-cli --release --all-targets -- -D warnings
 
 clean: clean-wasi-sdk clean-cargo
 
