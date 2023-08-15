@@ -8,15 +8,20 @@ on:
 
 jobs:
   test:
-    name: npm_test-${{ matrix.os }}
+    name: npm_test-${{ matrix.os }}-${{ matrix.node }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [16, 18, 20]
 
     runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
 
       - run: npm install
         working-directory: npm/javy-cli
