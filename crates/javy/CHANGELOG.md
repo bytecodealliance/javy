@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Update of `quickjs` types to use types in `quickjs-wasm-rs` 2.0.0.
+- WASI SDK will be automatically downloaded at build time if `QUICKJS_WASM_SYS_WASI_SDK_PATH` environment variable is not set.
 
 ## 1.0.0 - 2023-05-16
 
