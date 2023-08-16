@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Callback functions registered with `context.wrap_callback` now pass `JSValueRef` into the closure instead of `CallbackArg`.
 - `from_qjs_value` now takes `JSValueRef` by value.
+- Updated to `quickjs-wasm-sys` version `1.1.0` which will automatically download a WASI SDK if the `QUICKJS_WASM_SYS_WASI_SDK_PATH` environment variable is not set.
 
 ### Removed
 - `CallbackArg` type.
