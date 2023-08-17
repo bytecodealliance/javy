@@ -5,18 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## Unreleased
+
+## [2.0.0] - 2023-08-17
 
 ### Added
-- `JSValueRef` can convert to Rust types with `try_into` (previously this was implemented on `CallbackArg`)
-- Added `eval_module` method on `JSContextRef` that evaluates JS code in a ECMAScript module scope
+- `JSValueRef` can convert to Rust types with `try_into` (previously this was implemented on `CallbackArg`).
+- Added `eval_module` method on `JSContextRef` that evaluates JS code in a ECMAScript module scope.
 
 ### Changed
-- Callback functions registered with `context.wrap_callback` now pass `JSValueRef` into the closure instead of `CallbackArg`
-- `from_qjs_value` now takes `JSValueRef` by value
+- Callback functions registered with `context.wrap_callback` now pass `JSValueRef` into the closure instead of `CallbackArg`.
+- `from_qjs_value` now takes `JSValueRef` by value.
+- Updated to `quickjs-wasm-sys` version `1.1.0` which will automatically download a WASI SDK if the `QUICKJS_WASM_SYS_WASI_SDK_PATH` environment variable is not set.
 
 ### Removed
-- `CallbackArg` type
+- `CallbackArg` type.
 
 ## [1.0.0] - 2023-05-05
 
@@ -32,7 +35,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - `json` and `messagepack` features have been moved to the `javy` crate
-
-[unreleased]: https://github.com/bytecodealliance/javy/compare/quickjs-wasm-rs-1.0.0...HEAD
-[1.0.0]: https://github.com/bytecodealliance/javy/tree/quickjs-wasm-rs-1.0.0/crates/quickjs-wasm-rs
-
