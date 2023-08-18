@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- `alloc` module containing implementations of a realloc function and a free function.
+- An `export_alloc_fns` crate feature which when enabled, will export `canonical_abi_realloc` and `canonical_abi_free`
+  functions from your Wasm module.
+
 ## 2.0.0 - 2023-08-17
 
 ### Changed

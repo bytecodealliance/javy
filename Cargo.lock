@@ -1343,7 +1343,7 @@ dependencies = [
 
 [[package]]
 name = "javy"
-version = "2.0.1-alpha.1"
+version = "2.1.0-alpha.1"
 dependencies = [
  "anyhow",
  "quickjs-wasm-rs",
@@ -1354,7 +1354,7 @@ dependencies = [
 
 [[package]]
 name = "javy-apis"
-version = "2.0.1-alpha.1"
+version = "2.1.0-alpha.1"
 dependencies = [
  "anyhow",
  "fastrand",
