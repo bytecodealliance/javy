@@ -7,6 +7,13 @@ use std::ptr::copy_nonoverlapping;
 // non-zero to indicate success.
 const ZERO_SIZE_ALLOCATION_PTR: *mut u8 = 1 as _;
 
+// For canonical_abi_realloc and canonical_abi_free, we want the functions to be available for use
+// by other crates, whether or not the `export_alloc_fns` feature is enabled. When the
+// `export_alloc_fns` feature is enabled, we also want to export the two functions from the Wasm
+// module. To do that, we apply an `export_name` attribute when teh `export_alloc_fns` feature is
+// enabled. The `export_name` attribute is what causes the functions to be exported from the Wasm
+// module as opposed to just exported for use by other crates.
+
 /// 1. Allocate memory of new_size with alignment.
 /// 2. If original_ptr != 0
 ///   a. copy min(new_size, original_size) bytes from original_ptr to new memory
