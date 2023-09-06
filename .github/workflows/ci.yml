@@ -7,8 +7,8 @@ on:
   pull_request:
 
 jobs:
-  checks:
-    name: tests_and_lint
+  core:
+    name: test_core
     # We test on `macos-latest` to accurately reflect
     # the core Wasm binary that we attach to the releases,
     # which is built on the latest macOS too.
@@ -17,35 +17,10 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
-        with:
-          submodules: true
 
-      - name: Cargo Cache
-        uses: actions/cache@v3
+      - uses: ./.github/actions/ci-shared-setup
         with:
-          path: ~/.cargo
-          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
-            ${{ runner.os }}-cargo
-
-      - name: Cargo Target Cache
-        uses: actions/cache@v3
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
-            ${{ runner.os }}-cargo-target
-
-      - name: Install wasmtime-cli
-        env:
-          WASMTIME_VERSION: 8.0.0
-        run: |
-          wget -nv 'https://github.com/bytecodealliance/wasmtime/releases/download/v${{ env.WASMTIME_VERSION }}/wasmtime-v${{ env.WASMTIME_VERSION }}-x86_64-macos.tar.xz' -O /tmp/wasmtime.tar.xz
-          mkdir /tmp/wasmtime
-          tar xvf /tmp/wasmtime.tar.xz --strip-components=1 -C /tmp/wasmtime
-          echo "/tmp/wasmtime" >> $GITHUB_PATH
+          os: macos
 
       - name: Install cargo-wasi
         run: cargo install cargo-wasi
@@ -53,11 +28,50 @@ jobs:
       - name: Install cargo-hack
         uses: taiki-e/install-action@cargo-hack
 
-      - name: Tests
-        run: |
-          cargo hack wasi test --workspace --exclude=javy-cli --each-feature -- --nocapture
-          cargo build --package=javy-core --release --target=wasm32-wasi
-          CARGO_PROFILE_RELEASE_LTO=off cargo test --package=javy-cli --release -- --nocapture
+      - name: Compile core
+        run: cargo build -p javy-core --release --target=wasm32-wasi
+
+      - name: Test
+        run: cargo hack wasi test --workspace --exclude=javy-cli --each-feature -- --nocapture
+
+      - name: Lint
+        run: cargo clippy --workspace --exclude=javy-cli --target=wasm32-wasi --all-targets -- -D warnings
+
+      - name: Upload core binary to artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: engine
+          path: target/wasm32-wasi/release/javy_core.wasm
+
+      - name: Upload quickjs_provider to artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: provider
+          path: target/wasm32-wasi/release/javy_quickjs_provider.wasm
+
+  cli:
+    name: test_cli
+    runs-on: ubuntu-latest
+    needs: core
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: ./.github/actions/ci-shared-setup
+        with:
+          os: linux
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: engine
+          path: target/wasm32-wasi/release/
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: provider
+          path: target/wasm32-wasi/release/
+
+      - name: Test CLI
+        run: CARGO_PROFILE_RELEASE_LTO=off cargo test --package=javy-cli --release -- --nocapture
 
       - name: Check benchmarks
         run: CARGO_PROFILE_RELEASE_LTO=off cargo check --package=javy-cli --release --benches
@@ -65,5 +79,4 @@ jobs:
       - name: Lint
         run: |
           cargo fmt -- --check
-          cargo clippy --workspace --exclude=javy-cli --target=wasm32-wasi --all-targets -- -D warnings
           CARGO_PROFILE_RELEASE_LTO=off cargo clippy --package=javy-cli --release --all-targets -- -D warnings

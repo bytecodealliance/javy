@@ -15,11 +15,7 @@ async function main() {
 	try {
 		const version = await getDesiredVersionNumber();
 		if (!(await isBinaryDownloaded(version))) {
-			if (process.env.FORCE_FROM_SOURCE) {
-				await buildBinary(version);
-			} else {
-				await downloadBinary(version);
-			}
+			await downloadBinary(version);
 		}
 		const result = childProcess.spawnSync(binaryPath(version), getArgs(), {
 			stdio: "inherit",
@@ -164,29 +160,4 @@ function platarch() {
 function getArgs() {
 	const args = process.argv.slice(2);
 	return args;
-}
-
-async function buildBinary(version) {
-	const repoDir = cacheDir("build", NAME);
-	try {
-		console.log(`Downloading ${NAME}'s source code...`);
-		fs.rmSync(repoDir, { recursive: true });
-		childProcess.execSync(
-			`git clone https://github.com/${REPO} ${repoDir}`
-		);
-		console.log(`Building ${NAME}...`);
-		childProcess.execSync("make", { cwd: repoDir });
-	} catch (e) {
-		console.error(e);
-		console.error("");
-		console.error(`BUILDING ${NAME} FAILED`);
-		console.error(
-			"Please make sure you have cmake, Rust with the wasm32-wasi target, wasmtime-cli and cargo-wasi installed"
-		);
-		console.error("See the README for more details.");
-	}
-	await fs.promises.rename(
-		path.join(repoDir, "target", "release", NAME),
-		binaryPath(version)
-	);
 }

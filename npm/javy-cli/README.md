@@ -27,21 +27,3 @@ To use a specific version of Javy, set the environment variable
 ```
 FORCE_RELEASE=v1.1.0 npx javy-cli@latest
 ```
-
-## Building from source
-
-If there are no binaries available for your platform or the available binaries
-don't work for you for some reason, the npm package can also build Javy from 
-source.
-
-```
-FORCE_FROM_SOURCE=1 npx javy-cli@latest
-```
-
-Please note that for this to work you must have all prerequisites of Javy
-(listed in the [README]) installed. (That is CMake, Rust, Rust for wasm32-wasi
-target, cargo wasi, wasmtime-cli and Rosetta on Mac M1).
-
-[README]: https://github.com/bytecodealliance/javy/blob/main/README.md
-
-
