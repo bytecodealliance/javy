@@ -40,6 +40,7 @@ pub use config::Config;
 pub use quickjs_wasm_rs as quickjs;
 pub use runtime::Runtime;
 
+pub mod alloc;
 mod config;
 mod runtime;
 
