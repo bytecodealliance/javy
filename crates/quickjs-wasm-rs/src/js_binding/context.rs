@@ -173,7 +173,7 @@ impl JSContextRef {
                 JS_WRITE_OBJ_BYTECODE as i32,
             );
             Ok(Vec::from_raw_parts(
-                output_buffer as *mut u8,
+                output_buffer,
                 output_size.try_into()?,
                 output_size.try_into()?,
             ))

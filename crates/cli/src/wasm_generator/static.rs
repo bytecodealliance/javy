@@ -63,9 +63,15 @@ pub fn generate(js: &JS, exports: Vec<Export>) -> Result<Vec<u8>> {
     let invoke_export = invoke.id();
 
     if !exports.is_empty() {
-        let ExportItem::Function(realloc_fn) = realloc.item else { unreachable!() };
-        let ExportItem::Function(invoke_fn) = invoke.item else { unreachable!() };
-        let ExportItem::Memory(memory) = memory.item else { unreachable!() };
+        let ExportItem::Function(realloc_fn) = realloc.item else {
+            unreachable!()
+        };
+        let ExportItem::Function(invoke_fn) = invoke.item else {
+            unreachable!()
+        };
+        let ExportItem::Memory(memory) = memory.item else {
+            unreachable!()
+        };
         export_exported_js_functions(&mut module, realloc_fn, invoke_fn, memory, exports);
     }
 
