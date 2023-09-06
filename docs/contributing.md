@@ -15,3 +15,7 @@ The versions for `javy` and `javy-apis` must always be the same. So a version ch
 After publishing a release, immediately update the version number to the next patch version with an `-alpha.1` suffix. The first time an additive change is made, reset the patch version to `0` and increment the minor version and reset the suffix to `-alpha.1`. When making additional additive changes, increment the number in the suffix, for example `-alpha.2`. The first time a breaking change is made, reset the patch version and minor version to `0` and increment the major version and reset the suffix to `-alpha.1`. When making additional breaking changes, increment the number in the suffix, for example `-alpha.2`.
 
 When releasing, remove the suffix and then publish.
+
+## Web platform tests (WPT)
+
+We run a subset of the web platform test suite during continuous integration. We recommend reading our suite's [WPT readme](../wpt/README.md) for tips on how to add tests to the suite and what to do when tests won't pass.
