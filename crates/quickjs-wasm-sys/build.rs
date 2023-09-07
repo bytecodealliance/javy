@@ -1,7 +1,7 @@
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, bail, Result};
 use hyper::body::Incoming;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::{env, fs, process};
 
 use http_body_util::BodyExt;
@@ -141,18 +141,104 @@ async fn get_wasi_sdk_path() -> Result<PathBuf> {
     download_wasi_sdk().await
 }
 
+fn find_system_llvm() -> Result<PathBuf> {
+    fs::read_dir("/usr/lib")?.find_map(|e| {
+        e.as_ref().map_or(None, |e| {
+            if e.file_name().to_string_lossy().starts_with("llvm-") {
+                Some(e.path())
+            } else {
+                None
+            }
+        })
+    }).map_or_else(|| Err(anyhow!("Could not determine system llvm version. Is there an llvm installation in /usr/lib?")), Ok)
+}
+
+fn copy_system_llvm_to_out_dir() -> Result<PathBuf> {
+    let system_llvm_path = find_system_llvm()?;
+
+    let new_llvm_path = PathBuf::from(&format!("{}/llvm", env::var("OUT_DIR")?));
+    if new_llvm_path.exists() {
+        fs::remove_dir_all(&new_llvm_path)?;
+    }
+
+    for file in WalkDir::new(&system_llvm_path) {
+        let file = file?;
+        let path = file.path();
+        let dest_path = new_llvm_path.join(path.strip_prefix(&system_llvm_path)?);
+        if path.is_dir() {
+            fs::create_dir(&dest_path)?;
+            continue;
+        }
+        if path.is_symlink() {
+            continue;
+        }
+        fs::copy(path, dest_path)?;
+    }
+
+    Ok(new_llvm_path)
+}
+
+fn install_vendored_libclang_rt_builtins(llvm_path: &Path) -> Result<()> {
+    let exit_code = process::Command::new("tar")
+        .args([
+            "-xf",
+            &format!(
+                "{}/vendored/libclang_rt.builtins-wasm32-wasi-20.0.tar.gz",
+                env!("CARGO_MANIFEST_DIR")
+            ),
+        ])
+        .current_dir(llvm_path)
+        .status()?;
+    if !exit_code.success() {
+        bail!("Failed to extract libclang_rt.builtins-wasm32-wasi archive");
+    }
+    Ok(())
+}
+
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
-    let wasi_sdk_path = get_wasi_sdk_path().await?;
-    if !wasi_sdk_path.try_exists()? {
-        return Err(anyhow!(
-            "wasi-sdk not installed in specified path of {}",
-            wasi_sdk_path.display()
-        ));
-    }
-    env::set_var("CC", format!("{}/bin/clang", wasi_sdk_path.display()));
-    env::set_var("AR", format!("{}/bin/ar", wasi_sdk_path.display()));
-    let sysroot = format!("--sysroot={}/share/wasi-sysroot", wasi_sdk_path.display());
+    let (clang_path, ar_path, sysroot) = if env::var("DOCS_RS").is_ok() {
+        // docs.rs enforces two restrictions that are relevant here:
+        // 1. We don't have network access
+        // 2. We can't modify anything on the filesystem outside of the OUT_DIR environment variable
+        // Because of (1), we can't use the WASI SDK to build QuickJS so instead we use the system
+        // llvm. To compile WASI with the system llvm, we need a WASI sysroot and to install a
+        // libclang_rt builtins archive for WASI.
+        // The WASI sysroot is provided by the preinstalled `wasi-libc` Ubuntu package on docs.rs.
+        // The clang runtime builtins archive, which we vendor in this crate, needs to copied into
+        // one of the llvm library directories.
+        // Since we can't modify the system llvm library directories, we:
+        // 1. Copy the system's llvm installation into the OUT_DIR.
+        // 2. Copy the clang runtime builtins archive into that OUT_DIR llvm installation.
+        // 3. Use that OUT_DIR llvm installation to compile QuickJS.
+
+        // If errors start occurring pertaining to the compiler complaining about the libclang_rt
+        // builtins, you may need to change the version of the of the file we've vendored.
+        // The system version of llvm may also need to be changed to match what's in docs.rs.
+        let new_llvm_path = copy_system_llvm_to_out_dir()?;
+        install_vendored_libclang_rt_builtins(&new_llvm_path)?;
+        (
+            new_llvm_path.join("bin/clang"),
+            new_llvm_path.join("bin/llvm-ar"),
+            PathBuf::from("/usr"),
+        )
+    } else {
+        let wasi_sdk_path = get_wasi_sdk_path().await?;
+        if !wasi_sdk_path.try_exists()? {
+            return Err(anyhow!(
+                "wasi-sdk not installed in specified path of {}",
+                wasi_sdk_path.display()
+            ));
+        }
+        (
+            wasi_sdk_path.join("bin/clang"),
+            wasi_sdk_path.join("bin/ar"),
+            wasi_sdk_path.join("share/wasi-sysroot"),
+        )
+    };
+    env::set_var("CC", clang_path.to_str().unwrap());
+    env::set_var("AR", ar_path.to_str().unwrap());
+    let sysroot = format!("--sysroot={}", sysroot.display());
     env::set_var("CFLAGS", &sysroot);
 
     // Build quickjs as a static library.
