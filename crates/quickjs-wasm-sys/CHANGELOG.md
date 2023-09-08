@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## 1.1.1 - 2023-09-08
+
+- Fixed: Documentation now builds on docs.rs.
+
 ## 1.1.0 - 2023-07-24
 
 - Added: `QUICKJS_WASM_SYS_WASI_SDK_MAJOR_VERSION` and `QUICKJS_WASM_SYS_WASI_SDK_MINOR_VERSION` build-time environment variables to control which version of the WASI SDK to use.
