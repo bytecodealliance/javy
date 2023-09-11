@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Missing documentation for `export_alloc_fns` feature and `alloc` functions.
+
 ## [2.1.0] - 2023-09-11
 
 ### Added

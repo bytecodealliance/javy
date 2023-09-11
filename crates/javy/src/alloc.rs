@@ -14,20 +14,22 @@ const ZERO_SIZE_ALLOCATION_PTR: *mut u8 = 1 as _;
 // enabled. The `export_name` attribute is what causes the functions to be exported from the Wasm
 // module as opposed to just exported for use by other crates.
 
+/// Allocates memory in instance.
+///
 /// 1. Allocate memory of new_size with alignment.
-/// 2. If original_ptr != 0
-///   a. copy min(new_size, original_size) bytes from original_ptr to new memory
-///   b. de-allocate original_ptr
+/// 2. If original_ptr != 0.  
+///   a. copy min(new_size, original_size) bytes from original_ptr to new memory.  
+///   b. de-allocate original_ptr.
 /// 3. Return new memory ptr.
 ///
 /// # Safety
 ///
-/// * `original_ptr` must be 0 or a valid pointer
-/// * if `original_ptr` is not 0, it must be valid for reads of `original_size`
-///   bytes
-/// * if `original_ptr` is not 0, it must be properly aligned
-/// * if `original_size` is not 0, it must match the `new_size` value provided
-///   in the original `canonical_abi_realloc` call that returned `original_ptr`
+/// * `original_ptr` must be 0 or a valid pointer.
+/// * If `original_ptr` is not 0, it must be valid for reads of `original_size`
+///   bytes.
+/// * If `original_ptr` is not 0, it must be properly aligned.
+/// * If `original_size` is not 0, it must match the `new_size` value provided
+///   in the original `canonical_abi_realloc` call that returned `original_ptr`.
 #[cfg_attr(feature = "export_alloc_fns", export_name = "canonical_abi_realloc")]
 pub unsafe extern "C" fn canonical_abi_realloc(
     original_ptr: *mut u8,
@@ -50,13 +52,13 @@ pub unsafe extern "C" fn canonical_abi_realloc(
     new_mem as _
 }
 
-/// Frees memory
+/// Frees allocated memory in instance.
 ///
 /// # Safety
 ///
-/// * `ptr` must denote a block of memory allocated by `canonical_abi_realloc`
+/// * `ptr` must denote a block of memory allocated by `canonical_abi_realloc`.
 /// * `size` and `alignment` must match the values provided in the original
-///   `canonical_abi_realloc` call that returned `ptr`
+///   `canonical_abi_realloc` call that returned `ptr`.
 #[cfg_attr(feature = "export_alloc_fns", export_name = "canonical_abi_free")]
 pub unsafe extern "C" fn canonical_abi_free(ptr: *mut u8, size: usize, alignment: usize) {
     if size > 0 {
