@@ -1,6 +1,6 @@
 # Using complex data types in Wasm functions
 
-Core WebAssembly currently only supports using numbers for arguments and return values for exported and imported functions. This presents a problem when you want to pass strings, byte arrays, or structured data to and from imported/exported functions. This document will provide an overview for one approach to consider.
+Core WebAssembly currently only supports using numbers for arguments and return values for exported and imported functions. This presents a problem when you want to pass strings, byte arrays, or structured data to and from imported/exported functions. The WebAssembly Component Model provides one approach to solving this problem but we have not yet added support for producing WebAssembly components to Javy. This document will provide an overview for an approach using Core WebAssembly to consider.
 
 At a high level, byte arrays can be passed using a pair of integers with the first integer representing the address of the start of the byte array in the instance's linear memory and the second integer representing the length of the byte array. Strings can be passed by encoding the string into a UTF-8 byte array and using the previous solution to pass the byte array. Structured data can be encoded to a JSON string and that string can be passed by encoding it into a UTF-8 byte array and using the previous solution. Other serialization formats can also be used to encode the structured data to a byte array.
 
