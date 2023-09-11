@@ -8,7 +8,18 @@ The examples below use Rust and Wasmtime to on the host however any programming 
 
 ## For exported functions
 
-Passing a byte array to an exported function from the WebAssembly host:
+Given an exported function that receives a byte array and looks like:
+
+```wat
+(module
+  (func (export "your_fn") (param $ptr i32) (param $len i32)
+    ...)
+  (func (export "canonical_abi_realloc") (param $orig_ptr i32) (param $orig_size i32) (param $alignment i32) (param $new_len i32)
+    ...)
+)
+```
+
+Then you can pass a byte array to that exported function from the WebAssembly host:
 
 ```rust
 use anyhow::Result;
@@ -34,7 +45,7 @@ fn call_the_export(bytes: &[u8], instance: wasmtime::Instance, store: &mut wasmt
 }
 ```
 
-In the WebAssembly instance when receiving a byte array from an exported function, you can use the `std::slice::from_raw_parts` function to get the slice.
+In the WebAssembly instance when receiving a byte array in the exported function, you can use the `std::slice::from_raw_parts` function to get the slice.
 
 ```rust
 #[export_name = "your_fn"]
@@ -44,7 +55,16 @@ pub unsafe extern "C" fn your_fn(ptr: *const u8, len: usize) {
 }
 ```
 
-To return a byte array from an exported function in a WebAssembly instance, you need to leak the byte array and we recommend using a static wide pointer for storing the pointer and length.
+Given an exported WebAssembly function that returns a byte array and looks like:
+
+```wat
+(module
+  (func (export "your_fn") (result i32)
+    ...)
+)
+```
+
+To return a byte array from that exported function in a WebAssembly instance, you need to leak the byte array and we recommend using a static wide pointer for storing the pointer and length.
 
 ```rust
 static mut BYTES_RET_AREA: [u32; 2] = [0; 2];
@@ -83,6 +103,14 @@ fn get_slice(instance: wasmtime::Instance, store: &mut wasmtime::Store) -> Resul
 ```
 
 ## For imported functions
+
+Given an imported WebAssembly function that receives a byte array as an argument and looks like:
+
+```wat
+(module
+  (import "host" "my_import" (func $my_import (param i32) (param i32)))
+)
+```
 
 When passing a byte array to the host from the WebAssembly instance, we pass the pointer and length to the imported function:
 
@@ -127,6 +155,16 @@ fn setup(linker: &mut wasmtime::Linker<StoreContext>) -> Result<()> {
             },
         )?;
 }
+```
+
+Given an imported WebAssembly function that returns a byte array and looks like:
+
+```wat
+(module
+  (import "host" "my_import" (func $my_import (result i32)))
+  (func (export "canonical_abi_realloc") (param $orig_ptr i32) (param $orig_size i32) (param $alignment i32) (param $new_len i32)
+    ...)
+)
 ```
 
 When returning a byte array from the host, things get a little more complicated. Below we use a wide pointer to return the byte array. This requires two memory allocations in the instance, one for the byte array and one for the wide pointer, and using `memory.write` to place the array and wide pointer into the allocated memory. Since the byte array is copied into the instance's memory, there is no need to leak the original byte array.
