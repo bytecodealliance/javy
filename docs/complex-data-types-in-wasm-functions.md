@@ -45,6 +45,8 @@ fn call_the_export(bytes: &[u8], instance: wasmtime::Instance, store: &mut wasmt
 }
 ```
 
+You can export the `canonical_abi_realloc` function by enabling the `export_alloc_fns` feature in the `javy` crate.
+
 In the WebAssembly instance when receiving a byte array in the exported function, you can use the `std::slice::from_raw_parts` function to get the slice.
 
 ```rust
@@ -218,6 +220,8 @@ fn setup(linker: &mut wasmtime::Linker<wasmtime_wasi::WasiContext>) -> Result<()
         .unwrap();
 }
 ```
+
+You can export the `canonical_abi_realloc` function by enabling the `export_alloc_fns` feature in the `javy` crate.
 
 When reading a returned byte array from the host, we extract the pointer and length from the wide pointer and then use the pointer and length to read a slice from memory:
 
