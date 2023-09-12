@@ -27,6 +27,57 @@ The entrypoint for working with Javy as a library for third parties. This crate 
 - `javy::Runtime` - a configurable QuickJS runtime.
 - `javy::Config` - a configuration for the runtime.
 
+#### Example of a change
+
+This is a contrived example of how to make a change. If I want to add a configuuration to set a global variable called `javy_rocks` to `true`, I would do the following:
+
+In `crates/javy/src/config.rs`:
+
+```diff
+  /// A configuration for [`Runtime`](crate::Runtime).
+  #[derive(Debug)]
+  pub struct Config {
++     pub(crate) set_javy_rocks: bool,
+  }
+
+  impl Default for Config {
+      /// Creates a [`Config`] with default values.
+      fn default() -> Self {
+          Self {
++             set_javy_rocks: false,
+          }
+      }
+  }
+
+  impl Config {
++     /// Sets `globalThis.javy_rocks` to `true`.
++     pub fn set_javy_rocks(&mut self) -> &mut Self {
++         self.set_javy_rocks = true;
++         self
++     }
+  }
+```
+
+We require creating a method to set the property and it should return `&mut Self` so it can be chained.
+
+In `crates/javy/src/runtime.rs`:
+
+```diff
+  impl Runtime {
+      /// Creates a new [`Runtime`].
+      pub fn new(config: Config) -> Result<Self> {
+          let context = JSContextRef::default();
++         if config.set_javy_rocks {
++             context
++                 .global_object()?
++                 .set_property("javy_rocks", context.value_from_bool(true)?)?;
++         }
+          Ok(Self { context })
+      }
+```
+
+Read the `config` and call the appropriate methods on `context` to apply the configuration.
+
 ### `javy-apis`
 
 Common JS APIs for use with a `javy::Runtime`. For example, `console`, `TextEncoder`, `TextDecoder`. If there is a standard JS API that seems like it would be useful to multiple users of Javy, it should be implemented in this crate. If this is an API specific to your use case, you should define it in a crate of your own and register the implementation using a similar approach to how the APIs in this crate define their implementations.
