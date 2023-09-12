@@ -45,19 +45,21 @@ pub fn generate(js: &JS, exports: Vec<Export>) -> Result<Vec<u8>> {
 
     let mut module = transform::module_config().parse(&wasm)?;
 
-    let (realloc, invoke, memory) = {
+    let (realloc, free, invoke, memory) = {
         let mut exports = HashMap::new();
         for export in module.exports.iter() {
             exports.insert(export.name.as_str(), export);
         }
         (
             *exports.get("canonical_abi_realloc").unwrap(),
+            *exports.get("canonical_abi_free").unwrap(),
             *exports.get("javy.invoke").unwrap(),
             *exports.get("memory").unwrap(),
         )
     };
 
     let realloc_export = realloc.id();
+    let free_export = free.id();
     let invoke_export = invoke.id();
 
     if !exports.is_empty() {
@@ -75,6 +77,7 @@ pub fn generate(js: &JS, exports: Vec<Export>) -> Result<Vec<u8>> {
 
     // We no longer need these exports so remove them.
     module.exports.delete(realloc_export);
+    module.exports.delete(free_export);
     module.exports.delete(invoke_export);
 
     let wasm = module.emit_wasm();

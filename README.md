@@ -21,6 +21,10 @@
 
 When running the official Javy binary on Linux, `glibc` 2.31 or greater must be available. You may need to update the version of your operating system if you are using an older version of `glibc`.
 
+## Extending Javy
+
+If you would like to use Javy for your own project but need to make some changes, read the [extending Javy documentation](docs/extending.md) for one approach to consider.
+
 ## Contributing
 
 We welcome feedback, bug reports and bug fixes. We're also happy to discuss feature development but please discuss the features in an issue before contributing.

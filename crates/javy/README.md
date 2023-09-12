@@ -32,6 +32,8 @@ fn main() -> Result<()> {
 Create a `Runtime` and use the reference returned by `context()` to add functions and evaluate source code.
 
 ## Features
+
+- `export_alloc_fns` - exports `canonical_abi_realloc` and `canonical_abi_free` from generated WebAssembly for allocating and freeing memory
 - `json` - transcoding functions for converting between `JSValueRef` and JSON
 - `messagepack` - transcoding functions for converting between `JSValueRef` and MessagePack
 

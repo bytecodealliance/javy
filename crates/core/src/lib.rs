@@ -3,7 +3,6 @@ use once_cell::sync::OnceCell;
 use std::slice;
 use std::str;
 
-mod alloc;
 mod execution;
 mod runtime;
 
@@ -82,40 +81,4 @@ pub unsafe extern "C" fn invoke(
     let fn_name = str::from_utf8_unchecked(slice::from_raw_parts(fn_name_ptr, fn_name_len));
     execution::run_bytecode(runtime, bytecode);
     execution::invoke_function(runtime, FUNCTION_MODULE_NAME, fn_name);
-}
-
-/// 1. Allocate memory of new_size with alignment.
-/// 2. If original_ptr != 0
-///   a. copy min(new_size, original_size) bytes from original_ptr to new memory
-///   b. de-allocate original_ptr
-/// 3. return new memory ptr
-///
-/// # Safety
-///
-/// * `original_ptr` must be 0 or a valid pointer
-/// * if `original_ptr` is not 0, it must be valid for reads of `original_size`
-///   bytes
-/// * if `original_ptr` is not 0, it must be properly aligned
-/// * if `original_size` is not 0, it must match the `new_size` value provided
-///   in the original `canonical_abi_realloc` call that returned `original_ptr`
-#[export_name = "canonical_abi_realloc"]
-pub unsafe extern "C" fn canonical_abi_realloc(
-    original_ptr: *mut u8,
-    original_size: usize,
-    alignment: usize,
-    new_size: usize,
-) -> *mut std::ffi::c_void {
-    alloc::canonical_abi_realloc(original_ptr, original_size, alignment, new_size)
-}
-
-/// Frees memory
-///
-/// # Safety
-///
-/// * `ptr` must denote a block of memory allocated by `canonical_abi_realloc`
-/// * `size` and `alignment` must match the values provided in the original
-///   `canonical_abi_realloc` call that returned `ptr`
-#[export_name = "canonical_abi_free"]
-pub unsafe extern "C" fn canonical_abi_free(ptr: *mut u8, size: usize, alignment: usize) {
-    alloc::canonical_abi_free(ptr, size, alignment)
 }
