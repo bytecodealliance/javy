@@ -80,11 +80,12 @@ Read the `config` and call the appropriate methods on `context` to apply the con
 
 #### When to add a Cargo feature
 
-You should gate your feature by a Cargo feature if:
+You should consider gating your feature by a Cargo feature when:
 
-- Your feature requires additional dependencies that would not otherwise be required.
-- Your feature would otherwise increase the size of the produced Wasm module.
+- Your feature would materially increase the size of the produced Wasm module.
 - Your feature requires enabling additional features in the `quickjs-wasm-rs` crate.
+
+These are guidelines and we're willing to discuss if a feature needs to be gated by a Cargo feature on a case-by-case basis.
 
 ### `javy-apis`
 
