@@ -1,5 +1,5 @@
-package local:test
+package local:test;
 
 world exported-default {
-  export default: func()
+  export default: func();
 }

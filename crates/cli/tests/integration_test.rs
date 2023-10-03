@@ -134,6 +134,16 @@ fn test_exported_functions_without_flag() {
 }
 
 #[test]
+fn test_exported_function_without_semicolons() {
+    let mut runner = Runner::new_with_exports(
+        "exported-fn-no-semicolon.js",
+        "exported-fn-no-semicolon.wit",
+        "exported-fn",
+    );
+    run_fn(&mut runner, "foo", &[]);
+}
+
+#[test]
 fn test_producers_section_present() {
     let runner = Runner::new("readme.js");
     common::assert_producers_section_is_correct(&runner.wasm).unwrap();

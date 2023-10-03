@@ -1,5 +1,5 @@
-package local:test
+package local:test;
 
 world exported-promise-fn {
-  export foo: func()
+  export foo: func();
 }
