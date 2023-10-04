@@ -1,6 +1,13 @@
 
 # cargo-vet imports lock
 
+[[publisher.aho-corasick]]
+version = "0.7.18"
+when = "2021-04-30"
+user-id = 189
+user-login = "BurntSushi"
+user-name = "Andrew Gallant"
+
 [[publisher.ambient-authority]]
 version = "0.0.1"
 when = "2021-07-13"
@@ -21,6 +28,20 @@ when = "2021-12-09"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
+
+[[publisher.bstr]]
+version = "0.2.17"
+when = "2021-09-20"
+user-id = 189
+user-login = "BurntSushi"
+user-name = "Andrew Gallant"
+
+[[publisher.byteorder]]
+version = "1.4.3"
+when = "2021-03-10"
+user-id = 189
+user-login = "BurntSushi"
+user-name = "Andrew Gallant"
 
 [[publisher.cap-fs-ext]]
 version = "1.0.10"
@@ -145,12 +166,40 @@ when = "2023-06-13"
 user-id = 73222
 user-login = "wasmtime-publish"
 
+[[publisher.csv]]
+version = "1.1.6"
+when = "2021-03-07"
+user-id = 189
+user-login = "BurntSushi"
+user-name = "Andrew Gallant"
+
+[[publisher.csv-core]]
+version = "0.1.10"
+when = "2020-02-14"
+user-id = 189
+user-login = "BurntSushi"
+user-name = "Andrew Gallant"
+
+[[publisher.equivalent]]
+version = "1.0.1"
+when = "2023-07-10"
+user-id = 539
+user-login = "cuviper"
+user-name = "Josh Stone"
+
 [[publisher.fs-set-times]]
 version = "0.15.0"
 when = "2022-01-31"
 user-id = 6825
 user-login = "sunfishcode"
 user-name = "Dan Gohman"
+
+[[publisher.hashbrown]]
+version = "0.14.1"
+when = "2023-09-29"
+user-id = 2915
+user-login = "Amanieu"
+user-name = "Amanieu d'Antras"
 
 [[publisher.io-extras]]
 version = "0.13.2"
@@ -215,6 +264,13 @@ user-id = 6825
 user-login = "sunfishcode"
 user-name = "Dan Gohman"
 
+[[publisher.memchr]]
+version = "2.6.4"
+when = "2023-10-01"
+user-id = 189
+user-login = "BurntSushi"
+user-name = "Andrew Gallant"
+
 [[publisher.num-traits]]
 version = "0.2.16"
 when = "2023-07-20"
@@ -236,6 +292,13 @@ user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
 
+[[publisher.quickcheck]]
+version = "1.0.3"
+when = "2021-01-15"
+user-id = 189
+user-login = "BurntSushi"
+user-name = "Andrew Gallant"
+
 [[publisher.rayon]]
 version = "1.5.1"
 when = "2021-05-18"
@@ -256,6 +319,27 @@ when = "2023-05-01"
 user-id = 3726
 user-login = "cfallin"
 user-name = "Chris Fallin"
+
+[[publisher.regex]]
+version = "1.5.6"
+when = "2022-05-20"
+user-id = 189
+user-login = "BurntSushi"
+user-name = "Andrew Gallant"
+
+[[publisher.regex-automata]]
+version = "0.1.10"
+when = "2021-06-01"
+user-id = 189
+user-login = "BurntSushi"
+user-name = "Andrew Gallant"
+
+[[publisher.regex-syntax]]
+version = "0.6.26"
+when = "2022-05-20"
+user-id = 189
+user-login = "BurntSushi"
+user-name = "Andrew Gallant"
 
 [[publisher.rustix]]
 version = "0.33.3"
@@ -284,6 +368,13 @@ when = "2021-12-12"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
+
+[[publisher.same-file]]
+version = "1.0.6"
+when = "2020-01-11"
+user-id = 189
+user-login = "BurntSushi"
+user-name = "Andrew Gallant"
 
 [[publisher.scopeguard]]
 version = "1.1.0"
@@ -314,8 +405,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.serde_json]]
-version = "1.0.103"
-when = "2023-07-15"
+version = "1.0.107"
+when = "2023-09-13"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -340,6 +431,13 @@ when = "2022-02-01"
 user-id = 6825
 user-login = "sunfishcode"
 user-name = "Dan Gohman"
+
+[[publisher.termcolor]]
+version = "1.1.2"
+when = "2020-11-19"
+user-id = 189
+user-login = "BurntSushi"
+user-name = "Andrew Gallant"
 
 [[publisher.unicode-ident]]
 version = "1.0.6"
@@ -368,6 +466,13 @@ when = "2022-09-15"
 user-id = 1139
 user-login = "Manishearth"
 user-name = "Manish Goregaokar"
+
+[[publisher.walkdir]]
+version = "2.3.2"
+when = "2021-03-22"
+user-id = 189
+user-login = "BurntSushi"
+user-name = "Andrew Gallant"
 
 [[publisher.wasi-cap-std-sync]]
 version = "9.0.4"
@@ -551,6 +656,13 @@ when = "2023-06-13"
 user-id = 73222
 user-login = "wasmtime-publish"
 
+[[publisher.winapi-util]]
+version = "0.1.5"
+when = "2020-04-20"
+user-id = 189
+user-login = "BurntSushi"
+user-name = "Andrew Gallant"
+
 [[publisher.wit-parser]]
 version = "0.7.1"
 when = "2023-04-27"
@@ -559,8 +671,8 @@ user-login = "alexcrichton"
 user-name = "Alex Crichton"
 
 [[publisher.wit-parser]]
-version = "0.8.0"
-when = "2023-05-26"
+version = "0.11.3"
+when = "2023-09-27"
 user-id = 1
 user-login = "alexcrichton"
 user-name = "Alex Crichton"
@@ -1255,6 +1367,18 @@ notes = """
 This crate has `unsafe` blocks and they're all related to SIMD-acceleration and
 are otherwise not doing other `unsafe` operations. Additionally the crate does
 not do anything other than markdown rendering as is expected.
+"""
+
+[[audits.bytecode-alliance.audits.pulldown-cmark]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.8.0 -> 0.9.3"
+notes = """
+This is a large change to the `pulldown-cmark` crate but it tightens
+restrictions on `unsafe` code to forbid it in non-SIMD mode and additionally
+many changes look to be related to refactoring, improving, and restructuring.
+This crate is not fundamentally different from before, which was trusted, but
+looks to be receiving new assistance for maintainership as well.
 """
 
 [[audits.bytecode-alliance.audits.quote]]
