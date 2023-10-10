@@ -161,10 +161,10 @@ console.log("Hello world!");
 
 `index.wit`:
 ```
-package local:main
+package local:main;
 
 world index-world {
-  export foo: func() 
+  export foo: func(); 
 }
 ```
 
@@ -191,10 +191,10 @@ export function fooBar() {
 
 `index.wit`:
 ```
-package local:main
+package local:main;
 
 world index {
-  export foo-bar: func() 
+  export foo-bar: func(); 
 }
 ```
 
@@ -218,10 +218,10 @@ export default function () {
 
 `index.wit`:
 ```
-package local:main
+package local:main;
 
 world index {
-  export default: func() 
+  export default: func(); 
 }
 ```
 
