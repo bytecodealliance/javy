@@ -16,7 +16,7 @@ jobs:
     # consumption in tests.
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: ./.github/actions/ci-shared-setup
         with:
@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: core
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: ./.github/actions/ci-shared-setup
         with:
