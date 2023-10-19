@@ -1396,7 +1396,7 @@ dependencies = [
  "wasmprinter",
  "wasmtime",
  "wasmtime-wasi",
- "wit-parser 0.11.3",
+ "wit-parser 0.12.1",
  "wizer",
 ]
 
@@ -1926,17 +1926,6 @@ name = "pulldown-cmark"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ffade02495f22453cd593159ea2f59827aae7f53fa8323f756799b670881dcf8"
-dependencies = [
- "bitflags 1.3.2",
- "memchr",
- "unicase",
-]
-
-[[package]]
-name = "pulldown-cmark"
-version = "0.9.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77a1a2f1f0a7ecff9c31abbe177637be0e97a0aef46cf8738ece09327985d998"
 dependencies = [
  "bitflags 1.3.2",
  "memchr",
@@ -3894,27 +3883,26 @@ dependencies = [
  "id-arena",
  "indexmap 1.9.3",
  "log",
- "pulldown-cmark 0.8.0",
+ "pulldown-cmark",
  "unicode-xid",
  "url",
 ]
 
 [[package]]
 name = "wit-parser"
-version = "0.11.3"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a39edca9abb16309def3843af73b58d47d243fe33a9ceee572446bcc57556b9a"
+checksum = "f6ace9943d89bbf3dbbc71b966da0e7302057b311f36a4ac3d65ddfef17b52cf"
 dependencies = [
  "anyhow",
  "id-arena",
  "indexmap 2.0.2",
  "log",
- "pulldown-cmark 0.9.3",
  "semver 1.0.17",
  "serde",
+ "serde_derive",
  "serde_json",
  "unicode-xid",
- "url",
 ]
 
 [[package]]
