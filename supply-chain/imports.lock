@@ -349,8 +349,29 @@ user-login = "sunfishcode"
 user-name = "Dan Gohman"
 
 [[publisher.rustix]]
+version = "0.33.7"
+when = "2022-04-18"
+user-id = 6825
+user-login = "sunfishcode"
+user-name = "Dan Gohman"
+
+[[publisher.rustix]]
+version = "0.36.16"
+when = "2023-10-12"
+user-id = 6825
+user-login = "sunfishcode"
+user-name = "Dan Gohman"
+
+[[publisher.rustix]]
 version = "0.37.23"
 when = "2023-07-05"
+user-id = 6825
+user-login = "sunfishcode"
+user-name = "Dan Gohman"
+
+[[publisher.rustix]]
+version = "0.37.26"
+when = "2023-10-19"
 user-id = 6825
 user-login = "sunfishcode"
 user-name = "Dan Gohman"
