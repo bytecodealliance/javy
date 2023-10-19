@@ -19,7 +19,7 @@ anyhow.workspace = true
 # we copied from the wasmtime team to our supply-chain config
 tokio = { version = "=1.26.0", default-features = false, features = ["rt", "macros", "net"] }
 hyper = { version = "=1.0.0-rc.3", features = ["client", "http1"], default-features = false }
-bytes = "=1.1.0"
+bytes = "=1.5.0"
 futures-task = "=0.3.27"
 futures-util = { version = "=0.3.27", default-features = false }
 tokio-macros = "=1.7.0"
