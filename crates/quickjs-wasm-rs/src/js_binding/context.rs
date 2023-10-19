@@ -315,7 +315,7 @@ impl JSContextRef {
     }
 
     /// Wrap the specified Rust value in a JS value
-    pub fn wrap_rust_value<T: 'static>(&self, value: T) -> Result<JSValueRef> {
+    fn wrap_rust_value<T: 'static>(&self, value: T) -> Result<JSValueRef> {
         // Note the use of `RefCell` to provide checked unique references.  Since JS values can be arbitrarily
         // aliased, we need `RefCell`'s dynamic borrow checking to prevent unsound access.
         let pointer = Box::into_raw(Box::new(RefCell::new(value)));

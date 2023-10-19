@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+- Make `JSContextRef::wrap_rust_value` private. Similar to
+  `context::get_rust_value` this function is simply an internal detail.
+
 ## [2.0.1] - 2023-09-11
 
 ### Fixed
