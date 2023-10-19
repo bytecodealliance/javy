@@ -23,7 +23,7 @@ bytes = "=1.1.0"
 futures-task = "=0.3.27"
 futures-util = { version = "=0.3.27", default-features = false }
 tokio-macros = "=1.7.0"
-futures-core = "=0.3.27"
+futures-core = "=0.3.28"
 mio = "=0.8.6"
 http-body-util = "=0.1.0-rc.2"
 tokio-native-tls = "=0.3.1"
