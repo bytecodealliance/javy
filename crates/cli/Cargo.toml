@@ -19,7 +19,7 @@ wizer = "3.0"
 structopt = "0.3"
 anyhow = { workspace = true }
 binaryen = { git = "https://github.com/pepyakin/binaryen-rs", rev = "00c98174843f957681ba0bc5cdcc9d15f5d0cb23" }
-brotli = "3.3.4"
+brotli = "3.4.0"
 wasmprinter = { version = "0.2.45", optional = true }
 wasmtime = { workspace = true }
 wasmtime-wasi = { workspace = true }
