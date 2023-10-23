@@ -1392,7 +1392,7 @@ dependencies = [
  "uuid",
  "walrus",
  "wasi-common",
- "wasmparser 0.106.0",
+ "wasmparser 0.115.0",
  "wasmprinter",
  "wasmtime",
  "wasmtime-wasi",
@@ -3298,6 +3298,16 @@ checksum = "d014e33793cab91655fa6349b0bc974984de106b2e0f6b0dfe6f6594b260624d"
 dependencies = [
  "indexmap 1.9.3",
  "url",
+]
+
+[[package]]
+name = "wasmparser"
+version = "0.115.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e06c0641a4add879ba71ccb3a1e4278fd546f76f1eafb21d8f7b07733b547cd5"
+dependencies = [
+ "indexmap 2.0.2",
+ "semver 1.0.17",
 ]
 
 [[package]]
