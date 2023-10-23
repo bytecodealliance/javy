@@ -34,7 +34,7 @@ serde_json = "1.0"
 uuid = { version = "1.4", features = ["v4"] }
 lazy_static = "1.4"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
-criterion = "0.3"
+criterion = "0.5"
 num-format = "0.4.3"
 tempfile = "3.4.0"
 wasmparser = "0.106.0"
