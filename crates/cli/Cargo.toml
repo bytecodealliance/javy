@@ -37,7 +37,7 @@ serde = { version = "1.0", default-features = false, features = ["derive"] }
 criterion = "0.3"
 num-format = "0.4.3"
 tempfile = "3.4.0"
-wasmparser = "0.101.0"
+wasmparser = "0.106.0"
 
 [build-dependencies]
 anyhow = "1.0.71"
