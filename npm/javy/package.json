@@ -24,7 +24,7 @@
 	"devDependencies": {
 		"@rollup/plugin-node-resolve": "^15.0.1",
 		"javy-cli": "^0.2.0",
-		"rollup": "^3.7.4",
+		"rollup": "^4.1.4",
 		"rollup-plugin-swc": "^0.2.1",
 		"typescript": "^5.2.2",
 		"vite": "^4.0.4",
