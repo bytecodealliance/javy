@@ -1,4 +1,4 @@
-# Runs cargo vet and cargo vet regenerate exemptions for Dependabot PRs
+# Runs cargo vet for Dependabot PRs
 name: Dependabot update cargo vet
 on:
   push:
@@ -49,8 +49,6 @@ jobs:
       - run: cargo vet trust --all Amanieu
         continue-on-error: true
 
-      - run: cargo vet regenerate exemptions
-      
       - name: commit and push
         shell: bash
         run: |
