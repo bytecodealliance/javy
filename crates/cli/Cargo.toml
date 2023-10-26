@@ -40,7 +40,7 @@ tempfile = "3.4.0"
 wasmparser = "0.106.0"
 
 [build-dependencies]
-anyhow = "1.0.71"
+anyhow = "1.0.75"
 wizer = "3.0"
 
 [[bench]]
