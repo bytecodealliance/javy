@@ -208,6 +208,34 @@ user-id = 2915
 user-login = "Amanieu"
 user-name = "Amanieu d'Antras"
 
+[[publisher.http]]
+version = "0.2.9"
+when = "2023-02-17"
+user-id = 359
+user-login = "seanmonstar"
+user-name = "Sean McArthur"
+
+[[publisher.http-body-util]]
+version = "0.1.0-rc.3"
+when = "2023-07-10"
+user-id = 359
+user-login = "seanmonstar"
+user-name = "Sean McArthur"
+
+[[publisher.httparse]]
+version = "1.8.0"
+when = "2022-08-30"
+user-id = 359
+user-login = "seanmonstar"
+user-name = "Sean McArthur"
+
+[[publisher.hyper]]
+version = "1.0.0-rc.3"
+when = "2023-02-23"
+user-id = 359
+user-login = "seanmonstar"
+user-name = "Sean McArthur"
+
 [[publisher.io-extras]]
 version = "0.13.2"
 when = "2022-02-01"
@@ -277,6 +305,13 @@ when = "2023-07-20"
 user-id = 539
 user-login = "cuviper"
 user-name = "Josh Stone"
+
+[[publisher.num_cpus]]
+version = "1.13.1"
+when = "2021-12-20"
+user-id = 359
+user-login = "seanmonstar"
+user-name = "Sean McArthur"
 
 [[publisher.paste]]
 version = "1.0.6"

@@ -281,24 +281,9 @@ criteria = "safe-to-deploy"
 version = "0.3.1"
 criteria = "safe-to-deploy"
 
-[[exemptions.http]]
-version = "0.2.9"
-criteria = "safe-to-deploy"
-notes = "we are exempting tokio, hyper, and their tightly coupled dependencies by the same authors, expecting that the authors at aws will publish attestions we can import at some point soon"
-
-[[exemptions.httparse]]
-version = "1.8.0"
-criteria = "safe-to-deploy"
-notes = "we are exempting tokio, hyper, and their tightly coupled dependencies by the same authors, expecting that the authors at aws will publish attestions we can import at some point soon"
-
 [[exemptions.humantime]]
 version = "2.1.0"
 criteria = "safe-to-deploy"
-
-[[exemptions.hyper]]
-version = "1.0.0-rc.3"
-criteria = "safe-to-deploy"
-notes = "we are exempting tokio, hyper, and their tightly coupled dependencies by the same authors, expecting that the authors at aws will publish attestions we can import at some point soon"
 
 [[exemptions.if_chain]]
 version = "1.0.2"
@@ -375,10 +360,6 @@ criteria = "safe-to-deploy"
 [[exemptions.num-format]]
 version = "0.4.4"
 criteria = "safe-to-run"
-
-[[exemptions.num_cpus]]
-version = "1.13.1"
-criteria = "safe-to-deploy"
 
 [[exemptions.object]]
 version = "0.30.3"
