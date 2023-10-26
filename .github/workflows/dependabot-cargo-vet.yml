@@ -1,0 +1,60 @@
+# Runs cargo vet for Dependabot PRs
+name: Dependabot update cargo vet
+on:
+  push:
+    branches:
+      - "dependabot/cargo/**"
+
+jobs:
+  vet:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    env:
+      CARGO_VET_VERSION: 0.8.0
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/cache@v3
+        with:
+          path: ${{ runner.tool_cache }}/cargo-vet
+          key: cargo-vet-bin-${{ env.CARGO_VET_VERSION }}
+
+      - name: Add the tool cache directory to the search path
+        run: echo "${{ runner.tool_cache }}/cargo-vet/bin" >> $GITHUB_PATH
+
+      - name: Ensure that the tool cache is populated with the cargo-vet binary
+        run: cargo install --root ${{ runner.tool_cache }}/cargo-vet --version ${{ env.CARGO_VET_VERSION }} cargo-vet
+
+      - run: cargo vet
+        continue-on-error: true
+      
+      # These all ask for input on the terminal to select the trusted criteria but take the default of `safe-to-deploy`.
+      
+      - run: cargo vet trust --all BurntSushi
+        continue-on-error: true
+
+      - run: cargo vet trust --all sunfishcode
+        continue-on-error: true
+
+      - run: cargo vet trust --all dtolnay
+        continue-on-error: true
+      
+      - run: cargo vet trust --all cuviper
+        continue-on-error: true
+      
+      - run: cargo vet trust --all Amanieu
+        continue-on-error: true
+
+      - name: commit and push
+        shell: bash
+        run: |
+          if ! git diff --exit-code; then
+            git config --global user.name 'github-actions[bot]'
+            git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+            git commit -am "[dependabot skip] Regenerate cargo vet"
+            git push
+          fi
