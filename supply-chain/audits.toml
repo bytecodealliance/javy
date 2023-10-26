@@ -33,6 +33,12 @@ user-id = 6825 # Dan Gohman (sunfishcode)
 start = "2021-04-14"
 end = "2024-07-25"
 
+[[trusted.anyhow]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-10-05"
+end = "2024-10-26"
+
 [[trusted.async-trait]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
