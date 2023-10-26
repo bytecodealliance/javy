@@ -68,6 +68,10 @@ criteria = "safe-to-deploy"
 version = "0.9.5"
 criteria = "safe-to-deploy"
 
+[[exemptions.backtrace]]
+version = "0.3.69"
+criteria = "safe-to-deploy"
+
 [[exemptions.better_scoped_tls]]
 version = "0.1.1"
 criteria = "safe-to-deploy"
@@ -93,19 +97,35 @@ version = "0.10.4"
 criteria = "safe-to-deploy"
 
 [[exemptions.brotli]]
-version = "3.3.4"
+version = "3.4.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.brotli-decompressor]]
-version = "2.3.2"
+version = "2.5.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.bytes]]
-version = "1.1.0"
+version = "1.5.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.cast]]
 version = "0.3.0"
+criteria = "safe-to-run"
+
+[[exemptions.cc]]
+version = "1.0.83"
+criteria = "safe-to-deploy"
+
+[[exemptions.ciborium]]
+version = "0.2.1"
+criteria = "safe-to-run"
+
+[[exemptions.ciborium-io]]
+version = "0.2.1"
+criteria = "safe-to-run"
+
+[[exemptions.ciborium-ll]]
+version = "0.2.1"
 criteria = "safe-to-run"
 
 [[exemptions.clang-sys]]
@@ -116,8 +136,16 @@ criteria = "safe-to-deploy"
 version = "2.34.0"
 criteria = "safe-to-deploy"
 
+[[exemptions.clap]]
+version = "4.4.7"
+criteria = "safe-to-run"
+
 [[exemptions.cmake]]
 version = "0.1.48"
+criteria = "safe-to-deploy"
+
+[[exemptions.convert_case]]
+version = "0.6.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.cpp_demangle]]
@@ -204,10 +232,13 @@ criteria = "safe-to-deploy"
 version = "0.1.6"
 criteria = "safe-to-deploy"
 
-[[exemptions.futures-task]]
-version = "0.3.27"
+[[exemptions.futures-core]]
+version = "0.3.29"
 criteria = "safe-to-deploy"
-notes = "deferring this vetting until Alex gets back from vacation"
+
+[[exemptions.futures-task]]
+version = "0.3.29"
+criteria = "safe-to-deploy"
 
 [[exemptions.futures-util]]
 version = "0.3.27"
@@ -224,6 +255,10 @@ criteria = "safe-to-deploy"
 
 [[exemptions.getset]]
 version = "0.1.2"
+criteria = "safe-to-deploy"
+
+[[exemptions.gimli]]
+version = "0.26.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.gimli]]
@@ -330,16 +365,15 @@ version = "0.2.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.mio]]
-version = "0.8.6"
+version = "0.8.9"
 criteria = "safe-to-deploy"
-notes = "we are exempting tokio, hyper, and their tightly coupled dependencies by the same authors, expecting that the authors at aws will publish attestions we can import at some point soon"
 
 [[exemptions.nom]]
 version = "7.1.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.num-format]]
-version = "0.4.3"
+version = "0.4.4"
 criteria = "safe-to-run"
 
 [[exemptions.num_cpus]]
@@ -348,6 +382,10 @@ criteria = "safe-to-deploy"
 
 [[exemptions.object]]
 version = "0.30.3"
+criteria = "safe-to-deploy"
+
+[[exemptions.object]]
+version = "0.32.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.once_cell]]
@@ -447,7 +485,7 @@ version = "0.8.11"
 criteria = "safe-to-deploy"
 
 [[exemptions.rmp-serde]]
-version = "1.1.1"
+version = "1.1.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.rustc_version]]
@@ -507,7 +545,7 @@ version = "1.0.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.socket2]]
-version = "0.4.9"
+version = "0.5.5"
 criteria = "safe-to-deploy"
 
 [[exemptions.sourcemap]]
@@ -551,35 +589,35 @@ version = "0.4.18"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_atoms]]
-version = "0.5.9"
+version = "0.6.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_common]]
-version = "0.32.1"
+version = "0.33.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_core]]
-version = "0.83.0"
+version = "0.86.17"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_ast]]
-version = "0.109.1"
+version = "0.110.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_parser]]
-version = "0.140.0"
+version = "0.141.5"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_transforms_base]]
-version = "0.133.0"
+version = "0.134.10"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_utils]]
-version = "0.123.0"
+version = "0.124.9"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_visit]]
-version = "0.95.1"
+version = "0.96.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_eq_ignore_macros]]
@@ -623,9 +661,8 @@ version = "1.2.1"
 criteria = "safe-to-run"
 
 [[exemptions.tokio]]
-version = "1.26.0"
+version = "1.33.0"
 criteria = "safe-to-deploy"
-notes = "we are exempting tokio, hyper, and their tightly coupled dependencies by the same authors, expecting that the authors at aws will publish attestions we can import at some point soon"
 
 [[exemptions.tokio-macros]]
 version = "1.7.0"
@@ -668,7 +705,7 @@ version = "2.4.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.uuid]]
-version = "0.8.2"
+version = "1.5.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.vergen]]
@@ -736,15 +773,7 @@ version = "0.42.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.windows-sys]]
-version = "0.45.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.windows-sys]]
 version = "0.48.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.windows-targets]]
-version = "0.42.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.windows-targets]]
