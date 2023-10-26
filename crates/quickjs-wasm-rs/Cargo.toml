@@ -17,4 +17,4 @@ once_cell = "1.16"
 
 [dev-dependencies]
 quickcheck = "1"
-serde_bytes = "0.11.7"
+serde_bytes = "0.11.12"
