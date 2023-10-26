@@ -25,7 +25,7 @@ futures-util = { version = "=0.3.27", default-features = false }
 tokio-macros = "=1.7.0"
 futures-core = "=0.3.29"
 mio = "=0.8.9"
-http-body-util = "=0.1.0-rc.2"
+http-body-util = "=0.1.0-rc.3"
 tokio-native-tls = "=0.3.1"
 native-tls = "0.2.11"
 openssl-macros = "=0.1.1"
