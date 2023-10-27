@@ -22,7 +22,7 @@ hyper = { version = "=1.0.0-rc.3", features = ["client", "http1"], default-featu
 bytes = "=1.5.0"
 futures-task = "=0.3.29"
 futures-util = { version = "=0.3.27", default-features = false }
-tokio-macros = "=1.7.0"
+tokio-macros = "=2.1.0"
 futures-core = "=0.3.29"
 mio = "=0.8.9"
 http-body-util = "=0.1.0-rc.3"
