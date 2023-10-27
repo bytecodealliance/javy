@@ -36,7 +36,7 @@ lazy_static = "1.4"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 criterion = "0.5"
 num-format = "0.4.4"
-tempfile = "3.8.0"
+tempfile = "3.8.1"
 wasmparser = "0.115.0"
 
 [build-dependencies]
