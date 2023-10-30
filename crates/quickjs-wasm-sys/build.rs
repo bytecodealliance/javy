@@ -1,66 +1,15 @@
 use anyhow::{anyhow, bail, Result};
-use hyper::body::Incoming;
+use hyper::body::HttpBody;
+use hyper::{Body, Client, Response};
+use hyper_tls::HttpsConnector;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::{env, fs, process};
-
-use http_body_util::BodyExt;
-use hyper::{body::Buf, Uri};
-use tokio::io::{AsyncRead, AsyncWrite};
 
 use walkdir::WalkDir;
 
 const WASI_SDK_VERSION_MAJOR: usize = 20;
 const WASI_SDK_VERSION_MINOR: usize = 0;
-
-async fn tls_connect(url: &Uri) -> Result<impl AsyncRead + AsyncWrite + Unpin> {
-    let connector: tokio_native_tls::TlsConnector =
-        tokio_native_tls::native_tls::TlsConnector::new()
-            .unwrap()
-            .into();
-    let addr = format!("{}:{}", url.host().unwrap(), url.port_u16().unwrap_or(443));
-    let stream = tokio::net::TcpStream::connect(addr).await?;
-    let stream = connector.connect(url.host().unwrap(), stream).await?;
-    Ok(stream)
-}
-
-// Mostly taken from the hyper examples:
-// https://github.com/hyperium/hyper/blob/4cf38a12ce7cc5dfd3af356a0cef61ace4ce82b9/examples/client.rs
-async fn get_uri(url_str: impl AsRef<str>) -> Result<Incoming> {
-    let mut url_string = url_str.as_ref().to_string();
-    // This loop will follow redirects and will return when a status code
-    // is a success (200-299) or a non-redirect (300-399).
-    loop {
-        let url: Uri = url_string.parse()?;
-        let stream = tls_connect(&url).await?;
-        let (mut sender, conn) = hyper::client::conn::http1::handshake(stream).await?;
-
-        tokio::task::spawn(async move {
-            if let Err(err) = conn.await {
-                println!("Connection failed: {:?}", err);
-            }
-        });
-
-        let authority = url.authority().unwrap().clone();
-        let req = hyper::Request::builder()
-            .uri(&url)
-            .header(hyper::header::HOST, authority.as_str())
-            .body("".to_string())?;
-
-        let res = sender.send_request(req).await?;
-        if res.status().is_success() {
-            return Ok(res.into_body());
-        } else if res.status().is_redirection() {
-            let target = res
-                .headers()
-                .get("Location")
-                .ok_or(anyhow!("Redirect without `Location` header"))?;
-            url_string = target.to_str()?.to_string();
-        } else {
-            return Err(anyhow!("Could not request URL {:?}", url));
-        }
-    }
-}
 
 async fn download_wasi_sdk() -> Result<PathBuf> {
     let mut wasi_sdk_dir: PathBuf = env::var("OUT_DIR")?.into();
@@ -90,21 +39,32 @@ async fn download_wasi_sdk() -> Result<PathBuf> {
             other => return Err(anyhow!("Unsupported platform tuple {:?}", other)),
         };
 
-        let uri = format!("https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-{major_version}/wasi-sdk-{major_version}.{minor_version}-{file_suffix}.tar.gz");
-        let mut body = get_uri(uri).await?;
-        let mut archive = fs::File::create(&archive_path)?;
-        while let Some(frame) = body.frame().await {
-            if let Some(chunk) = frame
-                .map_err(|err| {
-                    anyhow!(
-                        "Something went wrong when downloading the WASI SDK: {}",
-                        err
-                    )
-                })?
-                .data_ref()
-            {
-                archive.write_all(chunk.chunk())?;
+        let mut uri = format!("https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-{major_version}/wasi-sdk-{major_version}.{minor_version}-{file_suffix}.tar.gz");
+
+        let client = Client::builder().build::<_, hyper::Body>(HttpsConnector::new());
+        let mut response: Response<Body> = loop {
+            let response = client.get(uri.try_into()?).await?;
+            let status = response.status();
+            if status.is_redirection() {
+                uri = response
+                    .headers()
+                    .get("Location")
+                    .ok_or_else(|| anyhow!("Received redirect without location header"))?
+                    .to_str()?
+                    .to_string();
+            } else if !status.is_success() {
+                bail!("Received {status} when downloading WASI SDK");
+            } else {
+                break response;
             }
+        };
+
+        let mut archive = fs::File::create(&archive_path)?;
+
+        while let Some(chunk) = response.body_mut().data().await {
+            archive.write_all(&chunk.map_err(|err| {
+                anyhow!("Something went wrong when downloading the WASI SDK: {err}")
+            })?)?;
         }
     }
 

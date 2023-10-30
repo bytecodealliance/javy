@@ -14,18 +14,6 @@ cc = "1.0"
 bindgen = "0.68.1"
 walkdir = "2"
 anyhow.workspace = true
-
-# The dependencies below are pinned so they map exactly to the exemptions
-# we copied from the wasmtime team to our supply-chain config
-tokio = { version = "=1.33.0", default-features = false, features = ["rt", "macros", "net"] }
-hyper = { version = "=1.0.0-rc.3", features = ["client", "http1"], default-features = false }
-bytes = "=1.5.0"
-futures-task = "=0.3.29"
-futures-util = { version = "=0.3.27", default-features = false }
-tokio-macros = "=2.1.0"
-futures-core = "=0.3.29"
-mio = "=0.8.9"
-http-body-util = "=0.1.0-rc.3"
-tokio-native-tls = "=0.3.1"
-native-tls = "0.2.11"
-openssl-macros = "=0.1.1"
+tokio = { version = "1.33", default-features = false, features = ["rt", "macros"] }
+hyper = { version = "0.14.27", features = ["client", "http1"] }
+hyper-tls = "0.5.0"

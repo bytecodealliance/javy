@@ -281,6 +281,10 @@ criteria = "safe-to-deploy"
 version = "0.3.1"
 criteria = "safe-to-deploy"
 
+[[exemptions.http-body]]
+version = "0.4.5"
+criteria = "safe-to-deploy"
+
 [[exemptions.humantime]]
 version = "2.1.0"
 criteria = "safe-to-deploy"
@@ -526,6 +530,10 @@ version = "1.0.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.socket2]]
+version = "0.4.10"
+criteria = "safe-to-deploy"
+
+[[exemptions.socket2]]
 version = "0.5.5"
 criteria = "safe-to-deploy"
 
@@ -651,6 +659,10 @@ criteria = "safe-to-deploy"
 
 [[exemptions.toml]]
 version = "0.5.8"
+criteria = "safe-to-deploy"
+
+[[exemptions.tower-service]]
+version = "0.3.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.tracing]]

@@ -215,13 +215,6 @@ user-id = 359
 user-login = "seanmonstar"
 user-name = "Sean McArthur"
 
-[[publisher.http-body-util]]
-version = "0.1.0-rc.3"
-when = "2023-07-10"
-user-id = 359
-user-login = "seanmonstar"
-user-name = "Sean McArthur"
-
 [[publisher.httparse]]
 version = "1.8.0"
 when = "2022-08-30"
@@ -230,8 +223,22 @@ user-login = "seanmonstar"
 user-name = "Sean McArthur"
 
 [[publisher.hyper]]
+version = "0.14.27"
+when = "2023-06-26"
+user-id = 359
+user-login = "seanmonstar"
+user-name = "Sean McArthur"
+
+[[publisher.hyper]]
 version = "1.0.0-rc.3"
 when = "2023-02-23"
+user-id = 359
+user-login = "seanmonstar"
+user-name = "Sean McArthur"
+
+[[publisher.hyper-tls]]
+version = "0.5.0"
+when = "2020-12-29"
 user-id = 359
 user-login = "seanmonstar"
 user-name = "Sean McArthur"
