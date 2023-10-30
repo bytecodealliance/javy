@@ -586,7 +586,7 @@ version = "0.33.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_core]]
-version = "0.86.17"
+version = "0.86.23"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_ast]]
@@ -594,15 +594,15 @@ version = "0.110.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_parser]]
-version = "0.141.5"
+version = "0.141.6"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_transforms_base]]
-version = "0.134.10"
+version = "0.134.12"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_utils]]
-version = "0.124.9"
+version = "0.124.11"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_visit]]
@@ -635,10 +635,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.time]]
 version = "0.3.22"
-criteria = "safe-to-deploy"
-
-[[exemptions.time-core]]
-version = "0.1.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.time-macros]]
