@@ -11,7 +11,7 @@ categories = ["external-ffi-bindings"]
 
 [build-dependencies]
 cc = "1.0"
-bindgen = "0.68.1"
+bindgen = "0.69.0"
 walkdir = "2"
 anyhow.workspace = true
 tokio = { version = "1.33", default-features = false, features = ["rt", "macros"] }
