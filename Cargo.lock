@@ -223,9 +223,9 @@ dependencies = [
 
 [[package]]
 name = "bindgen"
-version = "0.69.0"
+version = "0.69.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "042e2e131c066e496ea7880ef6cfeec415a9adc79fc882a65979394f8840bf7c"
+checksum = "9ffcebc3849946a7170a05992aac39da343a90676ab392c51a4280981d6379c2"
 dependencies = [
  "bitflags 2.4.1",
  "cexpr",
@@ -1448,11 +1448,11 @@ dependencies = [
  "uuid",
  "walrus",
  "wasi-common",
- "wasmparser 0.115.0",
+ "wasmparser 0.116.0",
  "wasmprinter",
  "wasmtime",
  "wasmtime-wasi",
- "wit-parser 0.12.1",
+ "wit-parser 0.12.2",
  "wizer",
 ]
 
@@ -2396,9 +2396,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.107"
+version = "1.0.108"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6b420ce6e3d8bd882e9b243c6eed35dbc9a6110c9769e74b584e0d68d1f20c65"
+checksum = "3d1c7e3eac408d115102c4c24ad393e0821bb3a5df4d506a80f85f7a742a526b"
 dependencies = [
  "itoa",
  "ryu",
@@ -2632,9 +2632,9 @@ dependencies = [
 
 [[package]]
 name = "swc_core"
-version = "0.86.23"
+version = "0.86.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0838bf550dcd529191ab75e05d4b5b9863d386cff2d53ac95c6aa81d455af81d"
+checksum = "3cf7b74e68546ff37fa2c853cd3690b475dafe4efbdc77c5050b968ade6004b6"
 dependencies = [
  "swc_atoms",
  "swc_common",
@@ -2662,9 +2662,9 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_parser"
-version = "0.141.6"
+version = "0.141.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "118da17ab64cf4842905ef661117f22bfbb9286424e14d9aaef537dcd66db085"
+checksum = "c4894cf31ae94d15abba75e89cbe0d368ac8a360936d83bc0a951a545ab98b95"
 dependencies = [
  "either",
  "num-bigint",
@@ -2682,9 +2682,9 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_transforms_base"
-version = "0.134.12"
+version = "0.134.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86e730c6e94c2bce56f477de070a296e53aebe377e9b86e70a129873a5287aad"
+checksum = "35e9d83999eba644dc0f56f56dae5295d16b17b96ee1c6d5b9938363a4afd8de"
 dependencies = [
  "better_scoped_tls",
  "bitflags 2.4.1",
@@ -2705,9 +2705,9 @@ dependencies = [
 
 [[package]]
 name = "swc_ecma_utils"
-version = "0.124.11"
+version = "0.124.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1db291c5aca623bf9005c2351cb101df4faedd1fb24856d7d14e79f618e01ce"
+checksum = "11dbd330bd07e3e59eeea04d8304b6bf029216e3ee2133ed9f27802e9579d326"
 dependencies = [
  "indexmap 1.9.3",
  "num_cpus",
@@ -3362,9 +3362,9 @@ dependencies = [
 
 [[package]]
 name = "wasmparser"
-version = "0.115.0"
+version = "0.116.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e06c0641a4add879ba71ccb3a1e4278fd546f76f1eafb21d8f7b07733b547cd5"
+checksum = "53290b1276c5c2d47d694fb1a920538c01f51690e7e261acbe1d10c5fc306ea1"
 dependencies = [
  "indexmap 2.0.2",
  "semver 1.0.17",
@@ -3372,12 +3372,12 @@ dependencies = [
 
 [[package]]
 name = "wasmprinter"
-version = "0.2.70"
+version = "0.2.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e74458a9bc5cc9c7108abfa0fe4dc88d5abf1f3baf194df3264985f17d559b5e"
+checksum = "8f98260aa20f939518bcec1fac32c78898d5c68872e7363a4651f21f791b6c7e"
 dependencies = [
  "anyhow",
- "wasmparser 0.115.0",
+ "wasmparser 0.116.0",
 ]
 
 [[package]]
@@ -3931,9 +3931,9 @@ dependencies = [
 
 [[package]]
 name = "wit-parser"
-version = "0.12.1"
+version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f6ace9943d89bbf3dbbc71b966da0e7302057b311f36a4ac3d65ddfef17b52cf"
+checksum = "43771ee863a16ec4ecf9da0fc65c3bbd4a1235c8e3da5f094b562894843dfa76"
 dependencies = [
  "anyhow",
  "id-arena",

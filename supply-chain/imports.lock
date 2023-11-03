@@ -447,8 +447,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.serde_json]]
-version = "1.0.107"
-when = "2023-09-13"
+version = "1.0.108"
+when = "2023-10-30"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -564,15 +564,15 @@ user-login = "alexcrichton"
 user-name = "Alex Crichton"
 
 [[publisher.wasmparser]]
-version = "0.115.0"
-when = "2023-10-14"
+version = "0.116.0"
+when = "2023-10-30"
 user-id = 1
 user-login = "alexcrichton"
 user-name = "Alex Crichton"
 
 [[publisher.wasmprinter]]
-version = "0.2.70"
-when = "2023-10-14"
+version = "0.2.71"
+when = "2023-10-30"
 user-id = 1
 user-login = "alexcrichton"
 user-name = "Alex Crichton"
@@ -720,8 +720,8 @@ user-login = "alexcrichton"
 user-name = "Alex Crichton"
 
 [[publisher.wit-parser]]
-version = "0.12.1"
-when = "2023-10-18"
+version = "0.12.2"
+when = "2023-10-30"
 user-id = 1
 user-login = "alexcrichton"
 user-name = "Alex Crichton"
