@@ -62,6 +62,18 @@ impl JSApiSet for StreamIO {
             })?,
         )?;
 
+        global.set_property(
+            "__javy_io_readFile",
+            context.wrap_callback(|_, _this, args| {
+                let [path, ..] = args else {
+                    anyhow::bail!("Invalid number of parameters");
+                };
+                let path: String = path.try_into()?;
+                let result = std::fs::read_to_string(&path)?;
+                Ok(result.into())
+            })?,
+        )?;
+
         context.eval_global("io.js", include_str!("io.js"))?;
         Ok(())
     }
