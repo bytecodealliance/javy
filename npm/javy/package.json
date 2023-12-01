@@ -27,7 +27,7 @@
 		"rollup": "^4.1.4",
 		"rollup-plugin-swc": "^0.2.1",
 		"typescript": "^5.2.2",
-		"vite": "^4.0.4",
+		"vite": "^5.0.4",
 		"vite-plugin-dts": "^3.6.0"
 	}
 }
