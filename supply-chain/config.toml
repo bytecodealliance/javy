@@ -277,10 +277,6 @@ criteria = "safe-to-deploy"
 version = "0.3.1"
 criteria = "safe-to-deploy"
 
-[[exemptions.http-body]]
-version = "0.4.5"
-criteria = "safe-to-deploy"
-
 [[exemptions.humantime]]
 version = "2.1.0"
 criteria = "safe-to-deploy"
@@ -405,6 +401,14 @@ criteria = "safe-to-deploy"
 version = "0.10.0"
 criteria = "safe-to-deploy"
 
+[[exemptions.pin-project]]
+version = "1.1.3"
+criteria = "safe-to-deploy"
+
+[[exemptions.pin-project-internal]]
+version = "1.1.3"
+criteria = "safe-to-deploy"
+
 [[exemptions.pin-project-lite]]
 version = "0.2.13"
 criteria = "safe-to-deploy"
@@ -519,10 +523,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.smartstring]]
 version = "1.0.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.socket2]]
-version = "0.4.10"
 criteria = "safe-to-deploy"
 
 [[exemptions.socket2]]
@@ -647,6 +647,14 @@ criteria = "safe-to-deploy"
 
 [[exemptions.toml]]
 version = "0.5.8"
+criteria = "safe-to-deploy"
+
+[[exemptions.tower]]
+version = "0.4.13"
+criteria = "safe-to-deploy"
+
+[[exemptions.tower-layer]]
+version = "0.3.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.tower-service]]

@@ -1,7 +1,11 @@
-use anyhow::{anyhow, bail, Result};
-use hyper::body::HttpBody;
-use hyper::{Body, Client, Response};
+use anyhow::{anyhow, bail, Error, Result};
+use http_body_util::combinators::BoxBody;
+use http_body_util::BodyExt;
+use hyper::body::{Bytes, Incoming};
+use hyper::Response;
 use hyper_tls::HttpsConnector;
+use hyper_util::client::legacy::Client;
+use hyper_util::rt::TokioExecutor;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::{env, fs, process};
@@ -41,8 +45,9 @@ async fn download_wasi_sdk() -> Result<PathBuf> {
 
         let mut uri = format!("https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-{major_version}/wasi-sdk-{major_version}.{minor_version}-{file_suffix}.tar.gz");
 
-        let client = Client::builder().build::<_, hyper::Body>(HttpsConnector::new());
-        let mut response: Response<Body> = loop {
+        let client = Client::builder(TokioExecutor::new())
+            .build::<_, BoxBody<Bytes, Error>>(HttpsConnector::new());
+        let mut response: Response<Incoming> = loop {
             let response = client.get(uri.try_into()?).await?;
             let status = response.status();
             if status.is_redirection() {
@@ -61,10 +66,11 @@ async fn download_wasi_sdk() -> Result<PathBuf> {
 
         let mut archive = fs::File::create(&archive_path)?;
 
-        while let Some(chunk) = response.body_mut().data().await {
-            archive.write_all(&chunk.map_err(|err| {
-                anyhow!("Something went wrong when downloading the WASI SDK: {err}")
-            })?)?;
+        while let Some(next) = response.frame().await {
+            let frame = next?;
+            if let Some(chunk) = frame.data_ref() {
+                archive.write_all(chunk)?;
+            }
         }
     }
 
