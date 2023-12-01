@@ -15,5 +15,5 @@ bindgen = "0.69.1"
 walkdir = "2"
 anyhow.workspace = true
 tokio = { version = "1.33", default-features = false, features = ["rt", "macros"] }
-hyper = { version = "0.14.27", features = ["client", "http1"] }
+hyper = { version = "1.0.1", features = ["client", "http1"] }
 hyper-tls = "0.5.0"
