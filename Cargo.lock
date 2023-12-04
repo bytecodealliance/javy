@@ -1476,7 +1476,7 @@ dependencies = [
  "wasmprinter",
  "wasmtime",
  "wasmtime-wasi",
- "wit-parser 0.12.2",
+ "wit-parser 0.13.0",
  "wizer",
 ]
 
@@ -3989,9 +3989,9 @@ dependencies = [
 
 [[package]]
 name = "wit-parser"
-version = "0.12.2"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "43771ee863a16ec4ecf9da0fc65c3bbd4a1235c8e3da5f094b562894843dfa76"
+checksum = "15df6b7b28ce94b8be39d8df5cb21a08a4f3b9f33b631aedb4aa5776f785ead3"
 dependencies = [
  "anyhow",
  "id-arena",
