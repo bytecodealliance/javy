@@ -574,31 +574,31 @@ version = "0.6.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_common]]
-version = "0.33.2"
+version = "0.33.4"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_core]]
-version = "0.86.29"
+version = "0.86.39"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_ast]]
-version = "0.110.2"
+version = "0.110.5"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_parser]]
-version = "0.141.7"
+version = "0.141.13"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_transforms_base]]
-version = "0.134.14"
+version = "0.134.21"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_utils]]
-version = "0.124.12"
+version = "0.124.18"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_visit]]
-version = "0.96.2"
+version = "0.96.5"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_eq_ignore_macros]]
@@ -636,14 +636,6 @@ criteria = "safe-to-deploy"
 [[exemptions.tinytemplate]]
 version = "1.2.1"
 criteria = "safe-to-run"
-
-[[exemptions.tokio]]
-version = "1.33.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.tokio-macros]]
-version = "1.7.0"
-criteria = "safe-to-deploy"
 
 [[exemptions.toml]]
 version = "0.5.8"
@@ -690,7 +682,7 @@ version = "0.3.3"
 criteria = "safe-to-deploy"
 
 [[exemptions.uuid]]
-version = "1.5.0"
+version = "1.6.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.vergen]]
@@ -698,7 +690,7 @@ version = "7.5.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.walrus]]
-version = "0.20.1"
+version = "0.20.3"
 criteria = "safe-to-deploy"
 
 [[exemptions.walrus-macro]]
