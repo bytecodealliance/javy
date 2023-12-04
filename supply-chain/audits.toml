@@ -345,6 +345,18 @@ user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2019-06-04"
 end = "2024-10-03"
 
+[[trusted.tokio]]
+criteria = "safe-to-deploy"
+user-id = 10 # Carl Lerche (carllerche)
+start = "2019-03-02"
+end = "2024-12-04"
+
+[[trusted.tokio-macros]]
+criteria = "safe-to-deploy"
+user-id = 10 # Carl Lerche (carllerche)
+start = "2019-04-24"
+end = "2024-12-04"
+
 [[trusted.unicode-ident]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
