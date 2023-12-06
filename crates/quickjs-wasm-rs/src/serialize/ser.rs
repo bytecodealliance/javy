@@ -4,8 +4,6 @@ use anyhow::anyhow;
 
 use serde::{ser, ser::Error as SerError, Serialize};
 
-use super::as_key;
-
 /// `Serializer` is a serializer for `JSValueRef` values, implementing the `serde::Serializer` trait.
 ///
 /// This struct is responsible for converting Rust types into `JSValueRef` using the Serde
@@ -211,10 +209,10 @@ impl<'a> ser::Serializer for &'a mut Serializer<'_> {
     where
         T: ?Sized + Serialize,
     {
-        let object = self.context.object_value()?;
+        let mut object = self.context.object_value()?;
         value.serialize(&mut *self)?;
-        object.set_property(variant, self.value)?;
-        self.value = object;
+        std::mem::swap(&mut self.value, &mut object);
+        self.value.set_property(variant, object)?;
 
         Ok(())
     }
@@ -322,7 +320,11 @@ impl<'a> ser::SerializeMap for &'a mut Serializer<'_> {
     {
         let mut map_serializer = Serializer::from_context(self.context)?;
         value.serialize(&mut map_serializer)?;
-        let key = as_key(&self.key)?;
+
+        if !self.key.is_str() {
+            return Err(anyhow::anyhow!("map keys must be a string").into());
+        }
+        let key = self.key.as_str()?;
         self.value.set_property(key, map_serializer.value)?;
         Ok(())
     }

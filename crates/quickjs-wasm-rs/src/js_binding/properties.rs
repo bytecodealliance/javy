@@ -1,14 +1,14 @@
 use super::{context::JSContextRef, exception::Exception, value::JSValueRef};
 use anyhow::Result;
 use quickjs_wasm_sys::{
-    JSAtom, JSPropertyEnum, JSValue, JS_AtomToString, JS_GetOwnPropertyNames,
-    JS_GetPropertyInternal, JS_GPN_ENUM_ONLY, JS_GPN_STRING_MASK, JS_GPN_SYMBOL_MASK,
+    JSAtom, JSPropertyEnum, JS_AtomToString, JS_GetOwnPropertyNames, JS_GetPropertyInternal,
+    JS_GPN_ENUM_ONLY, JS_GPN_STRING_MASK, JS_GPN_SYMBOL_MASK,
 };
 use std::ptr;
 
 #[derive(Debug)]
 pub struct Properties<'a> {
-    value: JSValue,
+    value: JSValueRef<'a>,
     context: &'a JSContextRef,
     property_enum: *mut JSPropertyEnum,
     current_key: JSAtom,
@@ -17,12 +17,18 @@ pub struct Properties<'a> {
 }
 
 impl<'a> Properties<'a> {
-    pub(super) fn new(context: &'a JSContextRef, value: JSValue) -> Result<Self> {
+    pub(super) fn new(context: &'a JSContextRef, value: JSValueRef<'a>) -> Result<Self> {
         let flags = (JS_GPN_STRING_MASK | JS_GPN_SYMBOL_MASK | JS_GPN_ENUM_ONLY) as i32;
         let mut property_enum: *mut JSPropertyEnum = ptr::null_mut();
         let mut length = 0;
         let ret = unsafe {
-            JS_GetOwnPropertyNames(context.inner, &mut property_enum, &mut length, value, flags)
+            JS_GetOwnPropertyNames(
+                context.as_raw(),
+                &mut property_enum,
+                &mut length,
+                value.as_raw(),
+                flags,
+            )
         };
 
         if ret < 0 {
@@ -54,10 +60,10 @@ impl<'a> Properties<'a> {
     pub fn next_value(&self) -> Result<JSValueRef<'a>> {
         let val = unsafe {
             JS_GetPropertyInternal(
-                self.context.inner,
-                self.value,
+                self.context.as_raw(),
+                self.value.as_raw(),
                 self.current_key,
-                self.value,
+                self.value.as_raw(),
                 0,
             )
         };
@@ -65,7 +71,7 @@ impl<'a> Properties<'a> {
     }
 
     fn atom_to_string(&self, atom: JSAtom) -> Result<JSValueRef<'a>> {
-        let raw = unsafe { JS_AtomToString(self.context.inner, atom) };
+        let raw = unsafe { JS_AtomToString(self.context.as_raw(), atom) };
         JSValueRef::new(self.context, raw)
     }
 }

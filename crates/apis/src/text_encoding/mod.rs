@@ -29,17 +29,17 @@ impl JSApiSet for TextEncoding {
 }
 
 fn decode_utf8_buffer_to_js_string(
-) -> impl FnMut(&JSContextRef, JSValueRef, &[JSValueRef]) -> anyhow::Result<JSValue> {
-    move |_ctx: &JSContextRef, _this: JSValueRef, args: &[JSValueRef]| {
+) -> impl FnMut(&JSContextRef, &JSValueRef, &[JSValueRef]) -> anyhow::Result<JSValue> {
+    move |_ctx: &JSContextRef, _this: &JSValueRef, args: &[JSValueRef]| {
         if args.len() != 5 {
             return Err(anyhow!("Expecting 5 arguments, received {}", args.len()));
         }
 
-        let buffer: Vec<u8> = args[0].try_into()?;
-        let byte_offset: usize = args[1].try_into()?;
-        let byte_length: usize = args[2].try_into()?;
-        let fatal: bool = args[3].try_into()?;
-        let ignore_bom: bool = args[4].try_into()?;
+        let buffer: Vec<u8> = (&args[0]).try_into()?;
+        let byte_offset: usize = (&args[1]).try_into()?;
+        let byte_length: usize = (&args[2]).try_into()?;
+        let fatal: bool = (&args[3]).try_into()?;
+        let ignore_bom: bool = (&args[4]).try_into()?;
 
         let mut view = buffer
             .get(byte_offset..(byte_offset + byte_length))
@@ -68,13 +68,13 @@ fn decode_utf8_buffer_to_js_string(
 }
 
 fn encode_js_string_to_utf8_buffer(
-) -> impl FnMut(&JSContextRef, JSValueRef, &[JSValueRef]) -> anyhow::Result<JSValue> {
-    move |_ctx: &JSContextRef, _this: JSValueRef, args: &[JSValueRef]| {
+) -> impl FnMut(&JSContextRef, &JSValueRef, &[JSValueRef]) -> anyhow::Result<JSValue> {
+    move |_ctx: &JSContextRef, _this: &JSValueRef, args: &[JSValueRef]| {
         if args.len() != 1 {
             return Err(anyhow!("Expecting 1 argument, got {}", args.len()));
         }
 
-        let js_string: String = args[0].try_into()?;
+        let js_string: String = (&args[0]).try_into()?;
         Ok(js_string.into_bytes().into())
     }
 }

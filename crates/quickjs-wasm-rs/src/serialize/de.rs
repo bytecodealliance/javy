@@ -5,8 +5,6 @@ use anyhow::anyhow;
 use serde::de::{self, Error as SerError};
 use serde::forward_to_deserialize_any;
 
-use super::as_key;
-
 impl SerError for Error {
     fn custom<T: std::fmt::Display>(msg: T) -> Self {
         Error::Custom(anyhow!(msg.to_string()))
@@ -33,15 +31,11 @@ impl SerError for Error {
 /// ```
 pub struct Deserializer<'de> {
     value: JSValueRef<'de>,
-    map_key: bool,
 }
 
 impl<'de> From<JSValueRef<'de>> for Deserializer<'de> {
     fn from(value: JSValueRef<'de>) -> Self {
-        Self {
-            value,
-            map_key: false,
-        }
+        Self { value }
     }
 }
 impl Deserializer<'_> {
@@ -102,20 +96,14 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         }
 
         if self.value.is_str() {
-            if self.map_key {
-                self.map_key = false;
-                let key = as_key(&self.value)?;
-                return visitor.visit_str(key);
-            } else {
-                let val = self.value.as_str()?;
-                return visitor.visit_str(val);
-            }
+            let val = self.value.as_str()?;
+            return visitor.visit_str(val);
         }
 
         if self.value.is_array() {
             let val = self.value.get_property("length")?;
             let length = val.as_u32_unchecked();
-            let seq = self.value;
+            let seq = self.value.clone();
             let seq_access = SeqAccess {
                 de: self,
                 length,
@@ -199,7 +187,6 @@ impl<'a, 'de> de::MapAccess<'de> for MapAccess<'a, 'de> {
     {
         if let Some(key) = self.properties.next_key()? {
             self.de.value = key;
-            self.de.map_key = true;
             seed.deserialize(&mut *self.de).map(Some)
         } else {
             Ok(None)
