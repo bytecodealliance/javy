@@ -36,11 +36,11 @@ lazy_static = "1.4"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 criterion = "0.5"
 num-format = "0.4.4"
-tempfile = "3.8.0"
+tempfile = "3.9.0"
 wasmparser = "0.118.1"
 
 [build-dependencies]
-anyhow = "1.0.75"
+anyhow = "1.0.78"
 wizer = "3.0"
 
 [[bench]]
