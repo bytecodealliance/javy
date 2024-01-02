@@ -40,6 +40,9 @@ audit-as-crates-io = false
 [policy.quickjs-wasm-sys]
 audit-as-crates-io = false
 
+[policy.wizer]
+audit-as-crates-io = true
+
 [[exemptions.Inflector]]
 version = "0.11.4"
 criteria = "safe-to-deploy"
@@ -111,10 +114,6 @@ criteria = "safe-to-deploy"
 [[exemptions.cast]]
 version = "0.3.0"
 criteria = "safe-to-run"
-
-[[exemptions.cc]]
-version = "1.0.83"
-criteria = "safe-to-deploy"
 
 [[exemptions.ciborium]]
 version = "0.2.1"
@@ -210,14 +209,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.enum-iterator-derive]]
 version = "1.2.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.env_logger]]
-version = "0.9.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.errno]]
-version = "0.2.8"
 criteria = "safe-to-deploy"
 
 [[exemptions.fallible-iterator]]
@@ -745,84 +736,12 @@ criteria = "safe-to-deploy"
 version = "0.4.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.windows-sys]]
-version = "0.42.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.windows-sys]]
-version = "0.48.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.windows-targets]]
-version = "0.48.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.windows_aarch64_gnullvm]]
-version = "0.42.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.windows_aarch64_gnullvm]]
-version = "0.48.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.windows_aarch64_msvc]]
-version = "0.42.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.windows_aarch64_msvc]]
-version = "0.48.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.windows_i686_gnu]]
-version = "0.42.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.windows_i686_gnu]]
-version = "0.48.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.windows_i686_msvc]]
-version = "0.42.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.windows_i686_msvc]]
-version = "0.48.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.windows_x86_64_gnu]]
-version = "0.42.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.windows_x86_64_gnu]]
-version = "0.48.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.windows_x86_64_gnullvm]]
-version = "0.42.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.windows_x86_64_gnullvm]]
-version = "0.48.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.windows_x86_64_msvc]]
-version = "0.42.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.windows_x86_64_msvc]]
-version = "0.48.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.winx]]
-version = "0.31.0"
-criteria = "safe-to-deploy"
-
 [[exemptions.witx]]
 version = "0.9.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.wizer]]
-version = "3.0.0"
+version = "3.0.1@git:408b12e5712d0f2f405dc4eb240764cea4a7e87e"
 criteria = "safe-to-deploy"
 
 [[exemptions.zstd]]
