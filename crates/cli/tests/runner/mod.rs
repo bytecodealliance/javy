@@ -149,7 +149,8 @@ impl Runner {
             self.linker.engine(),
             StoreContext::new(input, self.log_capacity),
         );
-        store.add_fuel(u64::MAX)?;
+        const INITIAL_FUEL: u64 = u64::MAX;
+        store.set_fuel(INITIAL_FUEL)?;
 
         let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
 
@@ -157,7 +158,7 @@ impl Runner {
         let run = instance.get_typed_func::<(), ()>(&mut store, func)?;
 
         let res = run.call(&mut store, ());
-        let fuel_consumed = store.fuel_consumed().unwrap();
+        let fuel_consumed = INITIAL_FUEL - store.get_fuel()?;
         let store_context = store.into_data();
         drop(store_context.wasi);
         let logs = store_context

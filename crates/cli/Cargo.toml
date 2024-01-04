@@ -15,7 +15,7 @@ dump_wat = ["dep:wasmprinter"]
 experimental_event_loop = []
 
 [dependencies]
-wizer = "3.0"
+wizer = { workspace = true }
 structopt = "0.3"
 anyhow = { workspace = true }
 binaryen = { git = "https://github.com/pepyakin/binaryen-rs", rev = "00c98174843f957681ba0bc5cdcc9d15f5d0cb23" }
@@ -41,7 +41,7 @@ wasmparser = "0.118.1"
 
 [build-dependencies]
 anyhow = "1.0.75"
-wizer = "3.0"
+wizer = { workspace = true }
 
 [[bench]]
 name = "benchmark"
