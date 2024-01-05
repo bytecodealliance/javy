@@ -37,13 +37,13 @@ jobs:
         run: make core
 
       - name: Upload core binary to artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: engine
           path: target/wasm32-wasi/release/javy_core.wasm
 
       - name: Upload quickjs_provider to artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: provider
           path: target/wasm32-wasi/release/javy_quickjs_provider.wasm
@@ -54,7 +54,7 @@ jobs:
           gzip -k -f target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm && mv target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm.gz javy-quickjs_provider.wasm.gz
 
       - name: Upload archived quickjs_provider to artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: javy-quickjs_provider.wasm.gz
           path: javy-quickjs_provider.wasm.gz
@@ -69,7 +69,7 @@ jobs:
         run: shasum -a 256 javy-quickjs_provider.wasm.gz | awk '{ print $1 }' > javy-quickjs_provider.wasm.gz.sha256
 
       - name: Upload asset hash to artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: javy-quickjs_provider.wasm.gz.sha256
           path: javy-quickjs_provider.wasm.gz.sha256
@@ -130,12 +130,12 @@ jobs:
         run: sudo apt-get update && sudo apt-get --assume-yes install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
         if: matrix.target == 'aarch64-unknown-linux-gnu'
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: engine
           path: target/wasm32-wasi/release/
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: provider
           path: target/wasm32-wasi/release/
@@ -149,7 +149,7 @@ jobs:
         run: gzip -k -f ${{ matrix.path }} && mv ${{ matrix.path }}.gz ${{ matrix.asset_name }}.gz
 
       - name: Upload assets to artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset_name }}.gz
           path: ${{ matrix.asset_name }}.gz
@@ -164,7 +164,7 @@ jobs:
         run: ${{ matrix.shasum_cmd }} ${{ matrix.asset_name }}.gz | awk '{ print $1 }' > ${{ matrix.asset_name }}.gz.sha256
 
       - name: Upload asset hash to artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset_name }}.gz.sha256
           path: ${{ matrix.asset_name }}.gz.sha256

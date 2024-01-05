@@ -38,13 +38,13 @@ jobs:
         run: cargo clippy --workspace --exclude=javy-cli --target=wasm32-wasi --all-targets -- -D warnings
 
       - name: Upload core binary to artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: engine
           path: target/wasm32-wasi/release/javy_core.wasm
 
       - name: Upload quickjs_provider to artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: provider
           path: target/wasm32-wasi/release/javy_quickjs_provider.wasm
@@ -60,12 +60,12 @@ jobs:
         with:
           os: linux
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: engine
           path: target/wasm32-wasi/release/
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: provider
           path: target/wasm32-wasi/release/
