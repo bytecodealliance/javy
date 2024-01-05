@@ -144,6 +144,12 @@ $ echo '{ "n": 2, "bar": "baz" }' | wasmtime index.wasm
 {"foo":3,"newBar":"baz!"}%   
 ```
 
+If you have a lot of JavaScript and you want to reduce compile times, try using the `--no-source-compression` flag. It will skip compressing the JavaScript source code when generating the Wasm module but will result in the Wasm module being larger.
+
+```bash
+javy compile index.js -o destination/index.wasm --no-source-compression
+```
+
 ### Exporting functions
 
 To export exported JavaScript functions, you can pass a WIT file and WIT world when running `javy compile`. Only ESM exports are supported (that is, Node.js/CommonJS exports are _not_ supported). For each exported JavaScript function, Javy will add an additional function export to the WebAssembly module. Exported functions with arguments and generators are not supported. Return values will also be dropped and not returned. The Wasm module generated is a core Wasm module, **not** a Wasm component.
