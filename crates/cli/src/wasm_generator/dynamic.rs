@@ -64,7 +64,11 @@ use walrus::{DataKind, FunctionBuilder, Module, ValType};
 //    (data (;0;) "\02\05\18function.mjs\06foo\0econsole\06log\06bar\0f\bc\03\00\01\00\00\be\03\00\00\0e\00\06\01\a0\01\00\00\00\03\01\01\1a\00\be\03\00\01\08\ea\05\c0\00\e1)8\e0\00\00\00B\e1\00\00\00\04\e2\00\00\00$\01\00)\bc\03\01\04\01\00\07\0a\0eC\06\01\be\03\00\00\00\03\00\00\13\008\e0\00\00\00B\e1\00\00\00\04\df\00\00\00$\01\00)\bc\03\01\02\03]")
 //    (data (;1;) "foo")
 //  )
-pub fn generate(js: &JS, exported_functions: Vec<Export>, no_source_compression: bool) -> Result<Vec<u8>> {
+pub fn generate(
+    js: &JS,
+    exported_functions: Vec<Export>,
+    no_source_compression: bool,
+) -> Result<Vec<u8>> {
     let mut module = Module::with_config(transform::module_config());
 
     const IMPORT_NAMESPACE: &str = "javy_quickjs_provider_v1";
