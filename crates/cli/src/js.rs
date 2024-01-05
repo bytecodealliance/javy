@@ -54,13 +54,13 @@ impl JS {
         bytecode::compile_source(self.source_code.as_bytes())
     }
 
-    pub fn compress(&self) -> Result<Vec<u8>> {
+    pub fn compress(&self, quality: i32) -> Result<Vec<u8>> {
         let mut compressed_source_code: Vec<u8> = vec![];
         enc::BrotliCompress(
             &mut Cursor::new(&self.source_code.as_bytes()),
             &mut compressed_source_code,
             &BrotliEncoderParams {
-                quality: 11,
+                quality,
                 ..Default::default()
             },
         )?;

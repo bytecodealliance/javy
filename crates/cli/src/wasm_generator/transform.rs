@@ -13,13 +13,13 @@ pub struct SourceCodeSection {
 impl SourceCodeSection {
     pub fn compressed(js: &JS) -> Result<SourceCodeSection> {
         Ok(SourceCodeSection {
-            source_code: js.compress()?,
+            source_code: js.compress(11)?,
         })
     }
 
     pub fn uncompressed(js: &JS) -> Result<SourceCodeSection> {
         Ok(SourceCodeSection {
-            source_code: js.as_bytes().to_vec(),
+            source_code: js.compress(0)?,
         })
     }
 }
