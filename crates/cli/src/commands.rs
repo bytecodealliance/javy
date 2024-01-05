@@ -34,6 +34,10 @@ pub struct CompileCommandOpts {
     #[structopt(short = "n")]
     /// Optional WIT world name for WIT file. Must be specified if WIT is file path is specified.
     pub wit_world: Option<String>,
+
+    #[structopt(long = "dev")]
+    /// Enables the development mode, which reduces compile time at the expense of generating larger WebAssembly files.
+    pub dev: bool,
 }
 
 #[derive(Debug, StructOpt)]

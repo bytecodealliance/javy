@@ -16,6 +16,12 @@ impl SourceCodeSection {
             compressed_source_code: js.compress()?,
         })
     }
+
+    pub fn uncompressed(js: &JS) -> Result<SourceCodeSection> {
+        Ok(SourceCodeSection {
+            compressed_source_code: js.as_bytes().to_vec(),
+        })
+    }
 }
 
 impl CustomSection for SourceCodeSection {

@@ -29,9 +29,9 @@ fn main() -> Result<()> {
                 (Some(wit), Some(world)) => exports::process_exports(&js, wit, world),
             }?;
             let wasm = if opts.dynamic {
-                dynamic_generator::generate(&js, exports)?
+                dynamic_generator::generate(&js, exports, !opts.dev)?
             } else {
-                static_generator::generate(&js, exports)?
+                static_generator::generate(&js, exports, !opts.dev)?
             };
             fs::write(&opts.output, wasm)?;
             Ok(())
