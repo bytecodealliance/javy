@@ -14,7 +14,7 @@ use super::transform::{self, SourceCodeSection};
 
 static mut WASI: OnceLock<WasiCtx> = OnceLock::new();
 
-pub fn generate(js: &JS, exports: Vec<Export>, compress_source: bool) -> Result<Vec<u8>> {
+pub fn generate(js: &JS, exports: Vec<Export>, no_source_compression: bool) -> Result<Vec<u8>> {
     let wasm = include_bytes!(concat!(env!("OUT_DIR"), "/engine.wasm"));
 
     let wasi = WasiCtxBuilder::new()
@@ -97,10 +97,10 @@ pub fn generate(js: &JS, exports: Vec<Export>, compress_source: bool) -> Result<
     let wasm = module.write();
 
     let mut module = transform::module_config().parse(&wasm)?;
-    if compress_source {
-        module.customs.add(SourceCodeSection::new(js)?);
-    } else {
+    if no_source_compression {
         module.customs.add(SourceCodeSection::uncompressed(js)?);
+    } else {
+        module.customs.add(SourceCodeSection::compressed(js)?);
     }
     transform::add_producers_section(&mut module.producers);
     Ok(module.emit_wasm())
