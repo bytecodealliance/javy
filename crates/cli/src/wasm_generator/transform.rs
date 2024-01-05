@@ -7,13 +7,19 @@ use crate::js::JS;
 
 #[derive(Debug)]
 pub struct SourceCodeSection {
-    compressed_source_code: Vec<u8>,
+    source_code: Vec<u8>,
 }
 
 impl SourceCodeSection {
-    pub fn new(js: &JS) -> Result<SourceCodeSection> {
+    pub fn compressed(js: &JS) -> Result<SourceCodeSection> {
         Ok(SourceCodeSection {
-            compressed_source_code: js.compress()?,
+            source_code: js.compress()?,
+        })
+    }
+
+    pub fn uncompressed(js: &JS) -> Result<SourceCodeSection> {
+        Ok(SourceCodeSection {
+            source_code: js.as_bytes().to_vec(),
         })
     }
 }
@@ -24,7 +30,7 @@ impl CustomSection for SourceCodeSection {
     }
 
     fn data(&self, _ids_to_indices: &IdsToIndices) -> Cow<[u8]> {
-        (&self.compressed_source_code).into()
+        (&self.source_code).into()
     }
 }
 
