@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Missing documentation for `export_alloc_fns` feature and `alloc` functions.
 
+### Changed
+
+- Updated to 2023-12-09 release of QuickJS.
+
 ## [2.1.0] - 2023-09-11
 
 ### Added
