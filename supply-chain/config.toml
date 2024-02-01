@@ -2,7 +2,7 @@
 # cargo-vet config file
 
 [cargo-vet]
-version = "0.8"
+version = "0.9"
 
 [imports.bytecode-alliance]
 url = "https://raw.githubusercontent.com/bytecodealliance/wasmtime/main/supply-chain/audits.toml"
@@ -376,10 +376,6 @@ criteria = "safe-to-deploy"
 version = "1.1.3"
 criteria = "safe-to-deploy"
 
-[[exemptions.pin-project-lite]]
-version = "0.2.13"
-criteria = "safe-to-deploy"
-
 [[exemptions.plotters]]
 version = "0.3.4"
 criteria = "safe-to-run"
@@ -525,31 +521,31 @@ version = "0.6.5"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_common]]
-version = "0.33.12"
+version = "0.33.15"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_core]]
-version = "0.87.19"
+version = "0.89.7"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_ast]]
-version = "0.110.17"
+version = "0.111.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_parser]]
-version = "0.141.37"
+version = "0.142.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_transforms_base]]
-version = "0.135.11"
+version = "0.136.4"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_utils]]
-version = "0.125.4"
+version = "0.126.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_visit]]
-version = "0.96.17"
+version = "0.97.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_eq_ignore_macros]]
@@ -621,7 +617,7 @@ version = "0.3.3"
 criteria = "safe-to-deploy"
 
 [[exemptions.uuid]]
-version = "1.6.1"
+version = "1.7.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.vergen]]
