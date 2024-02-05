@@ -22,12 +22,6 @@ url = "https://raw.githubusercontent.com/divviup/libprio-rs/main/supply-chain/au
 [imports.mozilla]
 url = "https://raw.githubusercontent.com/mozilla/supply-chain/main/audits.toml"
 
-[policy.binaryen]
-audit-as-crates-io = true
-
-[policy.binaryen-sys]
-audit-as-crates-io = true
-
 [policy.javy]
 audit-as-crates-io = false
 
@@ -74,14 +68,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.better_scoped_tls]]
 version = "0.1.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.binaryen]]
-version = "0.12.1@git:00c98174843f957681ba0bc5cdcc9d15f5d0cb23"
-criteria = "safe-to-deploy"
-
-[[exemptions.binaryen-sys]]
-version = "0.12.1@git:00c98174843f957681ba0bc5cdcc9d15f5d0cb23"
 criteria = "safe-to-deploy"
 
 [[exemptions.bincode]]
@@ -135,10 +121,6 @@ criteria = "safe-to-deploy"
 [[exemptions.clap]]
 version = "4.4.7"
 criteria = "safe-to-run"
-
-[[exemptions.cmake]]
-version = "0.1.48"
-criteria = "safe-to-deploy"
 
 [[exemptions.convert_case]]
 version = "0.6.0"
@@ -638,6 +620,18 @@ criteria = "safe-to-deploy"
 
 [[exemptions.wasi]]
 version = "0.11.0+wasi-snapshot-preview1"
+criteria = "safe-to-deploy"
+
+[[exemptions.wasm-opt]]
+version = "0.116.0"
+criteria = "safe-to-deploy"
+
+[[exemptions.wasm-opt-cxx-sys]]
+version = "0.116.0"
+criteria = "safe-to-deploy"
+
+[[exemptions.wasm-opt-sys]]
+version = "0.116.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.web-sys]]
