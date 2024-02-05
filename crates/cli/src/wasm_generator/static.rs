@@ -1,9 +1,9 @@
-use std::{collections::HashMap, rc::Rc, sync::OnceLock};
+use std::{collections::HashMap, fs, rc::Rc, sync::OnceLock};
 
 use anyhow::{anyhow, Result};
-use binaryen::{CodegenConfig, Module};
 use walrus::{DataKind, ExportItem, FunctionBuilder, FunctionId, MemoryId, ValType};
 use wasi_common::{pipe::ReadPipe, WasiCtx};
+use wasm_opt::{OptimizationOptions, ShrinkLevel};
 use wasmtime::Linker;
 use wasmtime_wasi::WasiCtxBuilder;
 use wizer::Wizer;
@@ -82,19 +82,7 @@ pub fn generate(js: &JS, exports: Vec<Export>, no_source_compression: bool) -> R
 
     let wasm = module.emit_wasm();
 
-    let codegen_cfg = CodegenConfig {
-        optimization_level: 3, // Aggressively optimize for speed.
-        shrink_level: 0,       // Don't optimize for size at the expense of performance.
-        debug_info: false,
-    };
-
-    let mut module = Module::read(&wasm)
-        .map_err(|_| anyhow!("Unable to read wasm binary for wasm-opt optimizations"))?;
-    module.optimize(&codegen_cfg);
-    module
-        .run_optimization_passes(vec!["strip"], &codegen_cfg)
-        .map_err(|_| anyhow!("Running wasm-opt optimization passes failed"))?;
-    let wasm = module.write();
+    let wasm = optimize_wasm(&wasm)?;
 
     let mut module = transform::module_config().parse(&wasm)?;
     if no_source_compression {
@@ -139,4 +127,18 @@ fn export_exported_js_functions(
         let export_fn = export_fn.finish(vec![], &mut module.funcs);
         module.exports.add(&export.wit, export_fn);
     }
+}
+
+fn optimize_wasm(wasm: &[u8]) -> Result<Vec<u8>> {
+    let tempdir = tempfile::tempdir()?;
+    let tempfile_path = tempdir.path().join("temp.wasm");
+
+    fs::write(&tempfile_path, wasm)?;
+
+    OptimizationOptions::new_opt_level_3() // Aggressively optimize for speed.
+        .shrink_level(ShrinkLevel::Level0) // Don't optimize for size at the expense of performance.
+        .debug_info(false)
+        .run(&tempfile_path, &tempfile_path)?;
+
+    Ok(fs::read(&tempfile_path)?)
 }

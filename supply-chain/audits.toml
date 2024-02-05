@@ -123,6 +123,30 @@ user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2019-06-26"
 end = "2024-10-03"
 
+[[trusted.cxx]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-12-28"
+end = "2025-02-05"
+
+[[trusted.cxx-build]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2020-04-30"
+end = "2025-02-05"
+
+[[trusted.cxxbridge-flags]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2020-08-30"
+end = "2025-02-05"
+
+[[trusted.cxxbridge-macro]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2020-01-08"
+end = "2025-02-05"
+
 [[trusted.env_logger]]
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
@@ -350,6 +374,12 @@ criteria = "safe-to-deploy"
 user-id = 2915 # Amanieu d'Antras (Amanieu)
 start = "2020-02-16"
 end = "2024-07-12"
+
+[[trusted.scratch]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2020-09-17"
+end = "2025-02-05"
 
 [[trusted.serde]]
 criteria = "safe-to-deploy"
