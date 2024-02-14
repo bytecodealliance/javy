@@ -18,4 +18,6 @@ text_encoding = []
 [dependencies]
 anyhow = { workspace = true }
 fastrand = { version = "2.0.1", optional = true }
-javy = { workspace = true }
+javy = { workspace = true, features = ["json"] }
+quickjs-wasm-rs = { version = "3.0.1-alpha.1", path = "../quickjs-wasm-rs" }
+

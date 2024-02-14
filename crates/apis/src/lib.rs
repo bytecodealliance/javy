@@ -61,6 +61,8 @@ mod stream_io;
 #[cfg(feature = "text_encoding")]
 mod text_encoding;
 
+mod json;
+
 pub(crate) trait JSApiSet {
     fn register(&self, runtime: &Runtime, config: &APIConfig) -> Result<()>;
 }
