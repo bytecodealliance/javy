@@ -58,6 +58,10 @@ impl<'a> JSValueRef<'a> {
         Self { context, value }
     }
 
+    /// Creates a new `JSValueRef` from a `u64`, which is QuickJS’s internal representation.
+    ///
+    /// # Safety
+    /// The caller has to ensure that the given value is valid and belongs to the context.
     pub unsafe fn from_raw(context: &'a JSContextRef, value: JSValueRaw) -> Self {
         JSValueRef::new_unchecked(context, value)
     }
