@@ -58,6 +58,10 @@ impl<'a> JSValueRef<'a> {
         Self { context, value }
     }
 
+    pub unsafe fn from_raw(context: &'a JSContextRef, value: JSValueRaw) -> Self {
+        JSValueRef::new_unchecked(context, value)
+    }
+
     pub(super) fn eval_function(&self) -> Result<Self> {
         Self::new(self.context, unsafe {
             JS_EvalFunction(self.context.inner, self.value)
@@ -187,8 +191,12 @@ impl<'a> JSValueRef<'a> {
 
     /// Converts the JavaScript value to a string if it is a string.
     pub fn as_str(&self) -> Result<&str> {
-        let buffer = self.as_wtf8_str_buffer();
-        str::from_utf8(buffer).map_err(Into::into)
+        if self.is_str() {
+            let buffer = self.as_wtf8_str_buffer();
+            str::from_utf8(buffer).map_err(Into::into)
+        } else {
+            Err(anyhow!("Can’t represent {:?} as str", self.value))
+        }
     }
 
     /// Converts the JavaScript value to a string, replacing any invalid UTF-8 sequences with the

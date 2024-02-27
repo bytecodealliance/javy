@@ -141,6 +141,15 @@ impl JSContextRef {
         JSValueRef::new(self, raw)
     }
 
+    /// Returns the raw pointer to the underlying [quickjs_wasm_sys::JSContext].
+    pub unsafe fn as_raw(&self) -> *mut JSContext {
+        self.inner
+    }
+
+    pub unsafe fn from_raw(inner: *mut JSContext) -> JSContextRef {
+        JSContextRef { inner }
+    }
+
     /// Compiles JavaScript to QuickJS bytecode with an ECMAScript module scope.
     ///
     /// # Arguments
