@@ -1,5 +1,15 @@
-#include "../quickjs/quickjs.h"
 #include "../quickjs/libbf.h"
+#include "../quickjs/quickjs.h"
+
+// Quick JS API Extensions.
+// These are wrapper functions on top of QuickJS API and exist because either
+// QuickJS doesn't expose a native way to achieve the desired behavior or
+// because the functions are marked inline, and in which case, bindgen can't
+// generate Rust bindings out-of-the box.
+// https://github.com/rust-lang/rust-bindgen/discussions/2405
+
+// The definitions in this file are paired with their respective `extern "C"`
+// declaration in `extensions/value.rs`.
 
 JSValue JS_NewBool_Ext(JSContext *ctx, JS_BOOL val) {
   return JS_MKVAL(JS_TAG_BOOL, (val != 0));
@@ -21,18 +31,20 @@ JSValue JS_NewFloat64_Ext(JSContext *ctx, double d) {
   return JS_NewFloat64(ctx, d);
 }
 
-JS_BOOL JS_IsFloat64_Ext(int tag) {
-  return JS_TAG_IS_FLOAT64(tag);
+JSValue JS_DupValueExt(JSContext *ctx, JSValueConst v) {
+  return JS_DupValue(ctx, v);
 }
 
-JS_BOOL JS_IsArrayBuffer_Ext(JSContext* ctx, JSValue val) {
-    size_t len;
-    return JS_GetArrayBuffer(ctx, &len, val) != 0;
+JS_BOOL JS_IsFloat64_Ext(int tag) { return JS_TAG_IS_FLOAT64(tag); }
+
+JS_BOOL JS_IsArrayBuffer_Ext(JSContext *ctx, JSValue val) {
+  size_t len;
+  return JS_GetArrayBuffer(ctx, &len, val) != 0;
 }
 
 typedef struct JSBigFloat {
-    JSRefCountHeader header; /* must come first, 32-bit */
-    bf_t num;
+  JSRefCountHeader header; /* must come first, 32-bit */
+  bf_t num;
 } JSBigFloat;
 
 JS_BOOL JS_BigIntSigned(JSContext *ctx, JSValue val) {
@@ -71,7 +83,6 @@ static int JS_BigIntToUint64Free(JSContext *ctx, uint64_t *pres, JSValue val) {
 int JS_BigIntToUint64(JSContext *ctx, uint64_t *pres, JSValueConst val) {
   return JS_BigIntToUint64Free(ctx, pres, JS_DupValue(ctx, val));
 }
-
 
 const JSValue ext_js_null = JS_NULL;
 const JSValue ext_js_undefined = JS_UNDEFINED;
