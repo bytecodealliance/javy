@@ -66,6 +66,7 @@ mod js_binding;
 mod js_value;
 mod serialize;
 
+#[cfg(feature = "export-sys")]
 pub use quickjs_wasm_sys;
 
 pub use crate::js_binding::context::JSContextRef;
