@@ -210,7 +210,7 @@ impl<'a> JSValueRef<'a> {
             let buffer = self.as_wtf8_str_buffer();
             str::from_utf8(buffer).map_err(Into::into)
         } else {
-            Err(anyhow!("Can’t represent {:?} as str", self.value))
+            Err(anyhow!("Value {:?} is not a str", self.value))
         }
     }
 
