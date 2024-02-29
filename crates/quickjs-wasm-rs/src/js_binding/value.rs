@@ -206,12 +206,8 @@ impl<'a> JSValueRef<'a> {
 
     /// Converts the JavaScript value to a string if it is a string.
     pub fn as_str(&self) -> Result<&str> {
-        if self.is_str() {
-            let buffer = self.as_wtf8_str_buffer();
-            str::from_utf8(buffer).map_err(Into::into)
-        } else {
-            Err(anyhow!("Value {:?} is not a str", self.value))
-        }
+        let buffer = self.as_wtf8_str_buffer();
+        str::from_utf8(buffer).map_err(Into::into)
     }
 
     /// Converts the JavaScript value to a string, replacing any invalid UTF-8 sequences with the
