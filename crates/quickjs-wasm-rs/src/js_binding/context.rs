@@ -536,7 +536,7 @@ enum EvalType {
 mod tests {
     use super::JSContextRef;
     use crate::JSError;
-    use anyhow::Result;
+    use anyhow::{anyhow, Result};
     use quickjs_wasm_sys::ext_js_undefined;
     use std::cell::Cell;
     use std::rc::Rc;
@@ -827,6 +827,34 @@ mod tests {
             foo().then(() => {})",
         )?;
         assert!(ctx.is_pending());
+        Ok(())
+    }
+
+    #[test]
+    fn test_reentry_of_wrapped_functions() -> Result<()> {
+        let ctx = JSContextRef::default();
+        let maybe_call_back = ctx.wrap_callback(|_ctx, this_arg, args| {
+            let [f, do_call] = args else {
+                return Err(anyhow!("Wrong number of parameters"));
+            };
+            if do_call.as_bool().is_ok_and(|v| v) {
+                f.call(&this_arg, &[])?;
+            }
+            Ok(crate::JSValue::Undefined)
+        })?;
+        ctx.global_object()?
+            .set_property("maybe_call_back", maybe_call_back)?;
+        ctx.eval_global(
+            "main",
+            r#"
+                let numCalls = 0;
+                function recursive() {
+                    numCalls++
+                    maybe_call_back(recursive, numCalls < 2);
+                }
+                recursive();
+            "#,
+        )?;
         Ok(())
     }
 }
