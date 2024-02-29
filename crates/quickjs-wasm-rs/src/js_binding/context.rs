@@ -17,7 +17,6 @@ use quickjs_wasm_sys::{
     JS_READ_OBJ_BYTECODE, JS_WRITE_OBJ_BYTECODE,
 };
 use std::any::TypeId;
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::convert::TryInto;
 use std::ffi::CString;
@@ -342,7 +341,7 @@ impl JSContextRef {
     fn wrap_rust_value<T: 'static>(&self, value: T) -> Result<JSValueRef> {
         // Note the use of `RefCell` to provide checked unique references.  Since JS values can be arbitrarily
         // aliased, we need `RefCell`'s dynamic borrow checking to prevent unsound access.
-        let pointer = Box::into_raw(Box::new(RefCell::new(value)));
+        let pointer = Box::into_raw(Box::new(value));
 
         let value = JSValueRef::new(self, unsafe {
             JS_NewObjectClass(self.inner, self.get_class_id::<T>().try_into().unwrap())
@@ -361,9 +360,9 @@ impl JSContextRef {
     /// implemented without using `unsafe` code, unlike [JSContextRef::new_callback] which provides a low-level API.
     /// Returning a [JSError] from the callback will cause a JavaScript error with the appropriate
     /// type to be thrown.
-    pub fn wrap_callback<F>(&self, mut f: F) -> Result<JSValueRef>
+    pub fn wrap_callback<F>(&self, f: F) -> Result<JSValueRef>
     where
-        F: (FnMut(&Self, JSValueRef, &[JSValueRef]) -> Result<js_value::JSValue>) + 'static,
+        F: (Fn(&Self, JSValueRef, &[JSValueRef]) -> Result<js_value::JSValue>) + 'static,
     {
         let wrapped = move |inner, this, argc, argv: *mut JSValue, _| {
             let inner_ctx = JSContextRef { inner };
@@ -430,7 +429,7 @@ impl JSContextRef {
     /// See also [JSContextRef::wrap_callback] for a high-level equivalent.
     pub fn new_callback<F>(&self, f: F) -> Result<JSValueRef>
     where
-        F: FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static,
+        F: Fn(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static,
     {
         let trampoline = build_trampoline(&f);
 
@@ -491,7 +490,7 @@ impl JSContextRef {
 
 fn build_trampoline<F>(_f: &F) -> JSCFunctionData
 where
-    F: FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static,
+    F: Fn(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static,
 {
     // We build a trampoline to jump between c <-> rust and allow closing over a specific context.
     // For more info around how this works, see https://adventures.michaelfbryan.com/posts/rust-closures-in-ffi/.
@@ -504,20 +503,20 @@ where
         data: *mut JSValue,
     ) -> JSValue
     where
-        F: FnMut(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static,
+        F: Fn(*mut JSContext, JSValue, c_int, *mut JSValue, c_int) -> JSValue + 'static,
     {
-        (get_rust_value::<F>(*data).unwrap().borrow_mut())(ctx, this, argc, argv, magic)
+        (get_rust_value::<F>(*data).unwrap())(ctx, this, argc, argv, magic)
     }
 
     Some(trampoline::<F>)
 }
 
-fn get_rust_value<T: 'static>(raw: JSValue) -> Result<&'static RefCell<T>> {
+fn get_rust_value<T: 'static>(raw: JSValue) -> Result<&'static T> {
     unsafe {
         let pointer = JS_GetOpaque(
             raw,
             *CLASSES.lock().unwrap().get(&TypeId::of::<T>()).unwrap(),
-        ) as *const RefCell<T>;
+        ) as *const T;
 
         if pointer.is_null() {
             Err(anyhow!("type mismatch"))
