@@ -19,16 +19,16 @@ wizer = { workspace = true }
 structopt = "0.3"
 anyhow = { workspace = true }
 brotli = "3.4.0"
-wasmprinter = { version = "0.2.78", optional = true }
+wasmprinter = { version = "0.201.0", optional = true }
 wasmtime = { workspace = true }
 wasmtime-wasi = { workspace = true }
 wasi-common = { workspace = true }
 walrus = "0.20.3"
-swc_core = { version = "0.89.7", features = ["common_sourcemap", "ecma_ast", "ecma_parser"] }
-wit-parser = "0.13.1"
+swc_core = { version = "0.90.14", features = ["common_sourcemap", "ecma_ast", "ecma_parser"] }
+wit-parser = "0.201.0"
 convert_case = "0.6.0"
 wasm-opt = "0.116.0"
-tempfile = "3.9.0"
+tempfile = "3.10.1"
 
 [dev-dependencies]
 serde_json = "1.0"
@@ -37,10 +37,10 @@ lazy_static = "1.4"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 criterion = "0.5"
 num-format = "0.4.4"
-wasmparser = "0.121.0"
+wasmparser = "0.201.0"
 
 [build-dependencies]
-anyhow = "1.0.79"
+anyhow = "1.0.80"
 wizer = { workspace = true }
 
 [[bench]]

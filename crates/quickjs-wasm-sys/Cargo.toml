@@ -11,10 +11,10 @@ categories = ["external-ffi-bindings"]
 
 [build-dependencies]
 cc = "1.0"
-bindgen = "0.69.2"
+bindgen = "0.69.4"
 walkdir = "2"
 anyhow.workspace = true
-tokio = { version = "1.35", default-features = false, features = ["rt", "macros"] }
+tokio = { version = "1.36", default-features = false, features = ["rt", "macros"] }
 http-body-util = "0.1.0"
 hyper = "1.1"
 hyper-tls = "0.6.0"
