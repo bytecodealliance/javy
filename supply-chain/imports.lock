@@ -16,8 +16,8 @@ user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.anyhow]]
-version = "1.0.79"
-when = "2024-01-02"
+version = "1.0.80"
+when = "2024-02-19"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -84,6 +84,13 @@ when = "2024-01-02"
 user-id = 6825
 user-login = "sunfishcode"
 user-name = "Dan Gohman"
+
+[[publisher.cc]]
+version = "1.0.88"
+when = "2024-02-25"
+user-id = 2915
+user-login = "Amanieu"
+user-name = "Amanieu d'Antras"
 
 [[publisher.cexpr]]
 version = "0.6.0"
@@ -328,8 +335,8 @@ user-login = "alexcrichton"
 user-name = "Alex Crichton"
 
 [[publisher.libc]]
-version = "0.2.151"
-when = "2023-12-10"
+version = "0.2.153"
+when = "2024-01-31"
 user-id = 51017
 user-login = "JohnTitor"
 user-name = "Yuki Okushi"
@@ -447,8 +454,8 @@ user-login = "sunfishcode"
 user-name = "Dan Gohman"
 
 [[publisher.rustix]]
-version = "0.38.28"
-when = "2023-12-09"
+version = "0.38.31"
+when = "2024-02-01"
 user-id = 6825
 user-login = "sunfishcode"
 user-name = "Dan Gohman"
@@ -489,8 +496,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.serde]]
-version = "1.0.196"
-when = "2024-01-26"
+version = "1.0.197"
+when = "2024-02-20"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -503,15 +510,15 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.serde_derive]]
-version = "1.0.196"
-when = "2024-01-26"
+version = "1.0.197"
+when = "2024-02-20"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.serde_json]]
-version = "1.0.113"
-when = "2024-01-29"
+version = "1.0.114"
+when = "2024-02-20"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -573,8 +580,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.tokio]]
-version = "1.35.1"
-when = "2023-12-19"
+version = "1.36.0"
+when = "2024-02-02"
 user-id = 6741
 user-login = "Darksonn"
 user-name = "Alice Ryhl"
@@ -615,8 +622,8 @@ user-login = "Manishearth"
 user-name = "Manish Goregaokar"
 
 [[publisher.walkdir]]
-version = "2.4.0"
-when = "2023-09-05"
+version = "2.5.0"
+when = "2024-03-01"
 user-id = 189
 user-login = "BurntSushi"
 user-name = "Andrew Gallant"
@@ -711,11 +718,17 @@ user-login = "alexcrichton"
 user-name = "Alex Crichton"
 
 [[publisher.wasmparser]]
-version = "0.121.0"
-when = "2024-01-29"
+version = "0.121.2"
+when = "2024-02-12"
 user-id = 1
 user-login = "alexcrichton"
 user-name = "Alex Crichton"
+
+[[publisher.wasmparser]]
+version = "0.201.0"
+when = "2024-02-27"
+user-id = 73222
+user-login = "wasmtime-publish"
 
 [[publisher.wasmprinter]]
 version = "0.2.78"
@@ -723,6 +736,12 @@ when = "2024-01-29"
 user-id = 1
 user-login = "alexcrichton"
 user-name = "Alex Crichton"
+
+[[publisher.wasmprinter]]
+version = "0.201.0"
+when = "2024-02-27"
+user-id = 73222
+user-login = "wasmtime-publish"
 
 [[publisher.wasmtime]]
 version = "16.0.0"
@@ -1080,11 +1099,17 @@ user-login = "sunfishcode"
 user-name = "Dan Gohman"
 
 [[publisher.wit-parser]]
-version = "0.13.1"
-when = "2024-01-09"
+version = "0.13.2"
+when = "2024-02-08"
 user-id = 1
 user-login = "alexcrichton"
 user-name = "Alex Crichton"
+
+[[publisher.wit-parser]]
+version = "0.201.0"
+when = "2024-02-27"
+user-id = 73222
+user-login = "wasmtime-publish"
 
 [[publisher.wizer]]
 version = "4.0.0"
@@ -1539,12 +1564,6 @@ criteria = "safe-to-deploy"
 version = "3.11.1"
 notes = "I am the author of this crate."
 
-[[audits.bytecode-alliance.audits.cc]]
-who = "Alex Crichton <alex@alexcrichton.com>"
-criteria = "safe-to-deploy"
-version = "1.0.73"
-notes = "I am the author of this crate."
-
 [[audits.bytecode-alliance.audits.cfg-if]]
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
@@ -1800,12 +1819,6 @@ who = "Pat Hickey <phickey@fastly.com>"
 criteria = "safe-to-deploy"
 version = "0.1.5"
 notes = "IO is only checking for the existence of paths in the filesystem"
-
-[[audits.bytecode-alliance.audits.peeking_take_while]]
-who = "Nick Fitzgerald <fitzgen@gmail.com>"
-criteria = "safe-to-deploy"
-version = "1.0.0"
-notes = "I am the author of this crate."
 
 [[audits.bytecode-alliance.audits.percent-encoding]]
 who = "Alex Crichton <alex@alexcrichton.com>"
@@ -2198,6 +2211,12 @@ criteria = "safe-to-deploy"
 delta = "0.69.1 -> 0.69.2"
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
+[[audits.mozilla.audits.bindgen]]
+who = "Emilio Cobos Álvarez <emilio@crisal.io>"
+criteria = "safe-to-deploy"
+delta = "0.69.2 -> 0.69.4"
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
 [[audits.mozilla.audits.bitflags]]
 who = "Alex Franchuk <afranchuk@mozilla.com>"
 criteria = "safe-to-deploy"
@@ -2228,18 +2247,6 @@ who = "Jan-Erik Rediger <jrediger@mozilla.com>"
 criteria = "safe-to-deploy"
 delta = "2.4.0 -> 2.4.1"
 notes = "Only allowing new clippy lints"
-aggregated-from = "https://raw.githubusercontent.com/mozilla/glean/main/supply-chain/audits.toml"
-
-[[audits.mozilla.audits.cc]]
-who = "Mike Hommey <mh+mozilla@glandium.org>"
-criteria = "safe-to-deploy"
-delta = "1.0.73 -> 1.0.78"
-aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
-
-[[audits.mozilla.audits.cc]]
-who = "Jan-Erik Rediger <jrediger@mozilla.com>"
-criteria = "safe-to-deploy"
-delta = "1.0.78 -> 1.0.83"
 aggregated-from = "https://raw.githubusercontent.com/mozilla/glean/main/supply-chain/audits.toml"
 
 [[audits.mozilla.audits.crypto-common]]
@@ -2349,13 +2356,6 @@ aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-ch
 who = "Mike Hommey <mh+mozilla@glandium.org>"
 criteria = "safe-to-deploy"
 delta = "1.16.0 -> 1.17.1"
-aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
-
-[[audits.mozilla.audits.peeking_take_while]]
-who = "Bobby Holley <bobbyholley@gmail.com>"
-criteria = "safe-to-deploy"
-delta = "1.0.0 -> 0.1.2"
-notes = "Small refactor of some simple iterator logic, no unsafe code or capabilities."
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
 [[audits.mozilla.audits.percent-encoding]]
