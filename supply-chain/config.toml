@@ -299,7 +299,7 @@ version = "0.2.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.mio]]
-version = "0.8.9"
+version = "0.8.11"
 criteria = "safe-to-deploy"
 
 [[exemptions.nom]]
