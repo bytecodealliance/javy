@@ -1,8 +1,8 @@
 use std::io::Write;
 
-use anyhow::Result;
+use anyhow::{Error, Result};
 use javy::{
-    quickjs::{JSContextRef, JSValue, JSValueRef},
+    quickjs::{prelude::Rest, Context, Ctx, Function, Object, Rest, Value},
     Runtime,
 };
 
@@ -31,21 +31,35 @@ impl JSApiSet for Console {
     }
 }
 
-fn register_console<T, U>(context: &JSContextRef, log_stream: T, error_stream: U) -> Result<()>
+fn register_console<'js, T, U>(context: &Context, log_stream: T, error_stream: U) -> Result<()>
 where
     T: Write + 'static,
     U: Write + 'static,
 {
-    let console_log_callback = context.wrap_callback(console_log_to(log_stream))?;
-    let console_error_callback = context.wrap_callback(console_log_to(error_stream))?;
-    let console_object = context.object_value()?;
-    console_object.set_property("log", console_log_callback)?;
-    console_object.set_property("error", console_error_callback)?;
-    context
-        .global_object()?
-        .set_property("console", console_object)?;
+    context.with(|cx| {
+        let globals = cx.globals();
+        let console = Object::new(cx)?;
+        console.set(
+            "log",
+            Function::new(cx, |cx: Ctx<'js>, args: Rest<Value<'js>>| {
+                Value::new_undefined(cx)
+            }),
+        )?;
+
+        console.set(
+            "error",
+            Function::new(cx, |cx: Ctx<'js>, args: Rest<Value<'js>>| {
+                Value::new_undefined(cx)
+            }),
+        )?;
+
+        globals.set("console", console)?;
+        Ok::<_, Error>(())
+    });
     Ok(())
 }
+
+fn log<'js, T>(mut stream: T, cx: Ctx<'js>, args: &[Value<'js>]) -> Result<Value<'js>> {}
 
 fn console_log_to<T>(
     mut stream: T,
@@ -53,7 +67,7 @@ fn console_log_to<T>(
 where
     T: Write + 'static,
 {
-    move |_ctx: &JSContextRef, _this: JSValueRef, args: &[JSValueRef]| {
+    move |_ctx: Cx<'_>, _this: JSValueRef, args: &[JSValueRef]| {
         // Write full string to in-memory destination before writing to stream since each write call to the stream
         // will invoke a hostcall.
         let mut log_line = String::new();

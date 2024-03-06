@@ -1,5 +1,6 @@
-use crate::quickjs::JSContextRef;
+// use crate::quickjs::JSContextRef;
 use anyhow::Result;
+use rquickjs::{Context, Runtime as QRuntime};
 
 use crate::Config;
 
@@ -33,20 +34,21 @@ use crate::Config;
 ///     .unwrap();
 /// context.eval_global("hello.js", "print('hello!');").unwrap();
 /// ```
-#[derive(Debug)]
 pub struct Runtime {
-    context: JSContextRef,
+    /// The QuickJS context.
+    context: Context,
 }
 
 impl Runtime {
-    /// Creates a new [`Runtime`].
+    /// Creates a new [Runtime].
     pub fn new(_config: Config) -> Result<Self> {
-        let context = JSContextRef::default();
+        let rt = QRuntime::new()?;
+        let context = Context::base(&rt)?;
         Ok(Self { context })
     }
 
-    /// A reference to a [`JSContextRef`].
-    pub fn context(&self) -> &JSContextRef {
+    /// A reference to the inner [Context].
+    pub fn context(&self) -> &Context {
         &self.context
     }
 }

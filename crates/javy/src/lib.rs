@@ -40,7 +40,8 @@
 //!   and MessagePack byte slices
 
 pub use config::Config;
-pub use quickjs_wasm_rs as quickjs;
+// pub use quickjs_wasm_rs as quickjs;
+pub use rquickjs as quickjs;
 pub use runtime::Runtime;
 
 pub mod alloc;
