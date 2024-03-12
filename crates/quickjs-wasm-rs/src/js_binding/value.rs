@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::{convert::TryInto, fmt};
 
 use super::context::JSContextRef;
@@ -8,10 +9,10 @@ use anyhow::{anyhow, Result};
 use quickjs_wasm_sys::{
     size_t as JS_size_t, JSValue as JSValueRaw, JS_BigIntSigned, JS_BigIntToInt64,
     JS_BigIntToUint64, JS_Call, JS_DefinePropertyValueStr, JS_DefinePropertyValueUint32,
-    JS_EvalFunction, JS_GetArrayBuffer, JS_GetPropertyStr, JS_GetPropertyUint32, JS_IsArray,
-    JS_IsArrayBuffer_Ext, JS_IsFloat64_Ext, JS_IsFunction, JS_ToCStringLen2, JS_ToFloat64,
-    JS_PROP_C_W_E, JS_TAG_BIG_INT, JS_TAG_BOOL, JS_TAG_EXCEPTION, JS_TAG_INT, JS_TAG_NULL,
-    JS_TAG_OBJECT, JS_TAG_STRING, JS_TAG_UNDEFINED,
+    JS_DupValue_Ext, JS_EvalFunction, JS_FreeValue_Ext, JS_GetArrayBuffer, JS_GetPropertyStr,
+    JS_GetPropertyUint32, JS_IsArray, JS_IsArrayBuffer_Ext, JS_IsFloat64_Ext, JS_IsFunction,
+    JS_ToCStringLen2, JS_ToFloat64, JS_PROP_C_W_E, JS_TAG_BIG_INT, JS_TAG_BOOL, JS_TAG_EXCEPTION,
+    JS_TAG_INT, JS_TAG_NULL, JS_TAG_OBJECT, JS_TAG_STRING, JS_TAG_UNDEFINED,
 };
 use std::borrow::Cow;
 use std::ffi::CString;
@@ -28,17 +29,17 @@ pub enum BigInt {
 /// This struct provides a safe interface for interacting with JavaScript values in the context of
 /// their associated QuickJS execution environment.
 ///
+/// This value might be reference-counted inside QuickJS and thus needs to be cleaned up on Drop.
+///
 /// # Lifetime
 ///
 /// The lifetime parameter `'a` represents the lifetime of the reference to the `JSContextRef`.
 /// This ensures that the `JSValueRef` cannot outlive the context it is associated with, preventing
 /// potential use-after-free issues or other unsafe behavior.
-#[derive(Debug, Copy, Clone)]
 pub struct JSValueRef<'a> {
     pub(super) context: &'a JSContextRef,
-    pub(super) value: JSValueRaw,
+    value: JSValueRaw,
 }
-
 impl<'a> JSValueRef<'a> {
     pub(super) fn new(context: &'a JSContextRef, raw_value: JSValueRaw) -> Result<Self> {
         let value = Self {
@@ -54,33 +55,43 @@ impl<'a> JSValueRef<'a> {
         }
     }
 
-    pub(super) fn new_unchecked(context: &'a JSContextRef, value: JSValueRaw) -> Self {
-        Self { context, value }
-    }
-
     /// Creates a new `JSValueRef` from a `u64`, which is QuickJS’s internal representation.
     ///
     /// # Safety
     /// The caller has to ensure that the given value is valid and belongs to the context.
+    /// The value must be valid to be freed when `Self` is dropped.
     ///
     /// This function is not part of the crate’s semver API contract.
-    #[cfg(feature = "export-sys")]
-    pub unsafe fn from_raw(context: &'a JSContextRef, value: JSValueRaw) -> Self {
-        JSValueRef::new_unchecked(context, value)
+    #[cfg_attr(feature = "export-sys", visibility::make(pub))]
+    pub(super) unsafe fn from_raw(context: &'a JSContextRef, value: JSValueRaw) -> Self {
+        Self { context, value }
     }
 
     /// Returns QuickJS’s internal representation. Note that the value is implicitly tied to the context it came from.
     ///
     /// # Safety
     /// The function is safe to call, but not part of the crate’s semver API contract.
-    #[cfg(feature = "export-sys")]
-    pub unsafe fn as_raw(&self) -> JSValueRaw {
+    #[cfg_attr(feature = "export-sys", visibility::make(pub))]
+    pub(super) unsafe fn as_raw(&self) -> JSValueRaw {
         self.value
     }
-    pub(super) fn eval_function(&self) -> Result<Self> {
-        Self::new(self.context, unsafe {
-            JS_EvalFunction(self.context.inner, self.value)
-        })
+
+    /// Deconstructs `JSValueRef` into raw parts.
+    ///
+    /// This will effectively leak the value, so it needs to be reconstructed using [`Self::from_raw`] to be dropped.
+    ///
+    /// # Safety
+    /// The function is safe to call, but not part of the crate’s semver API contract.
+    #[cfg_attr(feature = "export-sys", visibility::make(pub))]
+    pub(super) unsafe fn into_raw(self) -> (&'a JSContextRef, JSValueRaw) {
+        let me = std::mem::ManuallyDrop::new(self);
+        (me.context, me.value)
+    }
+
+    pub(super) fn eval_function(self) -> Result<Self> {
+        // value is being moved into QuickJS, it will be freed there
+        let (context, value) = unsafe { self.into_raw() };
+        Self::new(context, unsafe { JS_EvalFunction(context.as_raw(), value) })
     }
 
     /// Calls a JavaScript function with the specified `receiver` and `args`.
@@ -93,7 +104,7 @@ impl<'a> JSValueRef<'a> {
         let args: Vec<JSValueRaw> = args.iter().map(|v| v.value).collect();
         let return_val = unsafe {
             JS_Call(
-                self.context.inner,
+                self.context.as_raw(),
                 self.value,
                 receiver.value,
                 args.len() as i32,
@@ -117,7 +128,7 @@ impl<'a> JSValueRef<'a> {
     /// Converts the JavaScript value to an `f64` without checking its type.
     pub fn as_f64_unchecked(&self) -> f64 {
         let mut ret = 0_f64;
-        unsafe { JS_ToFloat64(self.context.inner, &mut ret, self.value) };
+        unsafe { JS_ToFloat64(self.context.as_raw(), &mut ret, self.value) };
         ret
     }
 
@@ -133,12 +144,12 @@ impl<'a> JSValueRef<'a> {
     }
 
     fn is_signed_big_int(&self) -> bool {
-        unsafe { JS_BigIntSigned(self.context.inner, self.value) == 1 }
+        unsafe { JS_BigIntSigned(self.context.as_raw(), self.value) == 1 }
     }
 
     fn bigint_as_i64(&self) -> Result<i64> {
         let mut ret = 0_i64;
-        let err = unsafe { JS_BigIntToInt64(self.context.inner, &mut ret, self.value) };
+        let err = unsafe { JS_BigIntToInt64(self.context.as_raw(), &mut ret, self.value) };
         if err < 0 {
             anyhow::bail!("big int underflow, value does not fit in i64");
         }
@@ -147,7 +158,7 @@ impl<'a> JSValueRef<'a> {
 
     fn bigint_as_u64(&self) -> Result<u64> {
         let mut ret = 0_u64;
-        let err = unsafe { JS_BigIntToUint64(self.context.inner, &mut ret, self.value) };
+        let err = unsafe { JS_BigIntToUint64(self.context.as_raw(), &mut ret, self.value) };
         if err < 0 {
             anyhow::bail!("big int overflow, value does not fit in u64");
         }
@@ -260,7 +271,7 @@ impl<'a> JSValueRef<'a> {
     fn as_wtf8_str_buffer(&self) -> &[u8] {
         unsafe {
             let mut len: JS_size_t = 0;
-            let ptr = JS_ToCStringLen2(self.context.inner, &mut len, self.value, 0);
+            let ptr = JS_ToCStringLen2(self.context.as_raw(), &mut len, self.value, 0);
             let ptr = ptr as *const u8;
             let len = len as usize;
             std::slice::from_raw_parts(ptr, len)
@@ -270,7 +281,7 @@ impl<'a> JSValueRef<'a> {
     /// Converts the JavaScript value to a byte slice if it is an ArrayBuffer, otherwise returns an error.
     pub fn as_bytes(&self) -> Result<&[u8]> {
         let mut len = 0;
-        let ptr = unsafe { JS_GetArrayBuffer(self.context.inner, &mut len, self.value) };
+        let ptr = unsafe { JS_GetArrayBuffer(self.context.as_raw(), &mut len, self.value) };
         if ptr.is_null() {
             Err(anyhow!(
                 "Can't represent {:?} as an array buffer",
@@ -284,7 +295,7 @@ impl<'a> JSValueRef<'a> {
     /// Converts the JavaScript value to a mutable byte slice if it is an ArrayBuffer, otherwise returns an error.
     pub fn as_bytes_mut(&self) -> Result<&mut [u8]> {
         let mut len = 0;
-        let ptr = unsafe { JS_GetArrayBuffer(self.context.inner, &mut len, self.value) };
+        let ptr = unsafe { JS_GetArrayBuffer(self.context.as_raw(), &mut len, self.value) };
         if ptr.is_null() {
             Err(anyhow!(
                 "Can't represent {:?} as an array buffer",
@@ -297,7 +308,7 @@ impl<'a> JSValueRef<'a> {
 
     /// Retrieves the properties of the JavaScript value.
     pub fn properties(&self) -> Result<Properties<'a>> {
-        Properties::new(self.context, self.value)
+        Properties::new(self.context, self.clone())
     }
 
     /// Checks if the JavaScript value is represented as an `f64`.
@@ -322,7 +333,7 @@ impl<'a> JSValueRef<'a> {
 
     /// Checks if the JavaScript value is an array.
     pub fn is_array(&self) -> bool {
-        unsafe { JS_IsArray(self.context.inner, self.value) == 1 }
+        unsafe { JS_IsArray(self.context.as_raw(), self.value) == 1 }
     }
 
     /// Checks if the JavaScript value is an object (excluding arrays).
@@ -332,7 +343,7 @@ impl<'a> JSValueRef<'a> {
 
     /// Checks if the JavaScript value is an ArrayBuffer.
     pub fn is_array_buffer(&self) -> bool {
-        (unsafe { JS_IsArrayBuffer_Ext(self.context.inner, self.value) }) != 0
+        (unsafe { JS_IsArrayBuffer_Ext(self.context.as_raw(), self.value) }) != 0
     }
 
     /// Checks if the JavaScript value is undefined.
@@ -352,26 +363,29 @@ impl<'a> JSValueRef<'a> {
 
     /// Checks if the JavaScript value is a function.
     pub fn is_function(&self) -> bool {
-        unsafe { JS_IsFunction(self.context.inner, self.value) != 0 }
+        unsafe { JS_IsFunction(self.context.as_raw(), self.value) != 0 }
     }
 
     /// Retrieves the value of a property with the specified `key` from the JavaScript object.
     pub fn get_property(&self, key: impl Into<Vec<u8>>) -> Result<Self> {
         let cstring_key = CString::new(key)?;
         let raw =
-            unsafe { JS_GetPropertyStr(self.context.inner, self.value, cstring_key.as_ptr()) };
+            unsafe { JS_GetPropertyStr(self.context.as_raw(), self.value, cstring_key.as_ptr()) };
         Self::new(self.context, raw)
     }
 
     /// Sets the value of a property with the specified `key` on the JavaScript object to `val`.
     pub fn set_property(&self, key: impl Into<Vec<u8>>, val: JSValueRef) -> Result<()> {
+        // value is being moved into QuickJS, it will be freed there
+        let (_, value) = unsafe { val.into_raw() };
+
         let cstring_key = CString::new(key)?;
         let ret = unsafe {
             JS_DefinePropertyValueStr(
-                self.context.inner,
+                self.context.as_raw(),
                 self.value,
                 cstring_key.as_ptr(),
-                val.value,
+                value,
                 JS_PROP_C_W_E as i32,
             )
         };
@@ -386,20 +400,23 @@ impl<'a> JSValueRef<'a> {
     /// Retrieves the value of an indexed property from the JavaScript object.
     /// This is used for arrays.
     pub fn get_indexed_property(&self, index: u32) -> Result<Self> {
-        let raw = unsafe { JS_GetPropertyUint32(self.context.inner, self.value, index) };
+        let raw = unsafe { JS_GetPropertyUint32(self.context.as_raw(), self.value, index) };
         Self::new(self.context, raw)
     }
 
     /// Appends a property with the value `val` to the JavaScript object.
     /// This is used for arrays.
     pub fn append_property(&self, val: JSValueRef) -> Result<()> {
+        // value is being moved into QuickJS, it will be freed there
+        let (_, value) = unsafe { val.into_raw() };
+
         let len = self.get_property("length")?;
         let ret = unsafe {
             JS_DefinePropertyValueUint32(
-                self.context.inner,
+                self.context.as_raw(),
                 self.value,
                 len.value as u32,
-                val.value,
+                value,
                 JS_PROP_C_W_E as i32,
             )
         };
@@ -427,8 +444,28 @@ impl<'a> JSValueRef<'a> {
     }
 
     /// Convert the `JSValueRef` to a Rust `JSValue` type.
-    fn to_js_value(self) -> Result<JSValue> {
+    fn to_js_value(&self) -> Result<JSValue> {
         from_qjs_value(self)
+    }
+}
+impl<'a> Clone for JSValueRef<'a> {
+    fn clone(&self) -> Self {
+        unsafe {
+            Self {
+                context: self.context,
+                value: JS_DupValue_Ext(self.context.as_raw(), self.value),
+            }
+        }
+    }
+}
+impl<'a> Drop for JSValueRef<'a> {
+    fn drop(&mut self) {
+        unsafe { JS_FreeValue_Ext(self.context.as_raw(), self.value) }
+    }
+}
+impl<'a> Debug for JSValueRef<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "JSValueRef({:?}, 0x{:x})", self.context, self.value)
     }
 }
 
@@ -841,12 +878,13 @@ mod tests {
         let val = context.eval_global("test.js", "true")?;
 
         assert_eq!("true", val.to_string());
-        let arg: bool = val.try_into()?;
-        assert!(arg);
 
         let val_ref = &val;
         let arg: bool = val_ref.try_into()?;
         assert!(arg);
+        let arg: bool = val.try_into()?;
+        assert!(arg);
+
         Ok(())
     }
 
@@ -856,12 +894,13 @@ mod tests {
         let val = context.eval_global("test.js", "42")?;
 
         assert_eq!("42", val.to_string());
-        let arg: i32 = val.try_into()?;
-        assert_eq!(42, arg);
 
         let val_ref = &val;
         let arg: i32 = val_ref.try_into()?;
         assert_eq!(42, arg);
+        let arg: i32 = val.try_into()?;
+        assert_eq!(42, arg);
+
         Ok(())
     }
 
@@ -871,12 +910,13 @@ mod tests {
         let val = context.eval_global("test.js", "42")?;
 
         assert_eq!("42", val.to_string());
-        let arg: usize = val.try_into()?;
-        assert_eq!(42, arg);
 
         let val_ref = &val;
         let arg: usize = val_ref.try_into()?;
         assert_eq!(42, arg);
+        let arg: usize = val.try_into()?;
+        assert_eq!(42, arg);
+
         Ok(())
     }
 
@@ -886,12 +926,13 @@ mod tests {
         let val = context.eval_global("test.js", "42.42")?;
 
         assert_eq!("42.42", val.to_string());
-        let arg: f64 = val.try_into()?;
-        assert_eq!(42.42, arg);
 
         let val_ref = &val;
         let arg: f64 = val_ref.try_into()?;
         assert_eq!(42.42, arg);
+        let arg: f64 = val.try_into()?;
+        assert_eq!(42.42, arg);
+
         Ok(())
     }
 
@@ -901,12 +942,13 @@ mod tests {
         let val = context.eval_global("test.js", "const h = 'hello'; h")?;
 
         assert_eq!("hello", val.to_string());
-        let arg: String = val.try_into()?;
-        assert_eq!("hello", arg);
 
         let val_ref = &val;
         let arg: String = val_ref.try_into()?;
         assert_eq!("hello", arg);
+        let arg: String = val.try_into()?;
+        assert_eq!("hello", arg);
+
         Ok(())
     }
 
@@ -918,12 +960,13 @@ mod tests {
         let expected: Vec<JSValue> = vec![1.into(), 2.into(), 3.into()];
 
         assert_eq!("1,2,3", val.to_string());
-        let arg: Vec<JSValue> = val.try_into()?;
-        assert_eq!(expected, arg);
 
         let val_ref = &val;
         let arg: Vec<JSValue> = val_ref.try_into()?;
         assert_eq!(expected, arg);
+        let arg: Vec<JSValue> = val.try_into()?;
+        assert_eq!(expected, arg);
+
         Ok(())
     }
 
@@ -935,12 +978,13 @@ mod tests {
         let expected = [0_u8; 8].to_vec();
 
         assert_eq!("[object ArrayBuffer]", val.to_string());
-        let arg: Vec<u8> = val.try_into()?;
-        assert_eq!(expected, arg);
 
         let val_ref = &val;
         let arg: Vec<u8> = val_ref.try_into()?;
         assert_eq!(expected, arg);
+        let arg: Vec<u8> = val.try_into()?;
+        assert_eq!(expected, arg);
+
         Ok(())
     }
 
@@ -956,12 +1000,13 @@ mod tests {
         ]);
 
         assert_eq!("[object Object]", val.to_string());
-        let arg: HashMap<String, JSValue> = val.try_into()?;
-        assert_eq!(expected, arg);
 
         let val_ref = &val;
         let arg: HashMap<String, JSValue> = val_ref.try_into()?;
         assert_eq!(expected, arg);
+        let arg: HashMap<String, JSValue> = val.try_into()?;
+        assert_eq!(expected, arg);
+
         Ok(())
     }
 }

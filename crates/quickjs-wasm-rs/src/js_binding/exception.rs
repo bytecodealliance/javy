@@ -34,15 +34,16 @@ impl fmt::Display for Exception {
 
 impl Exception {
     pub(super) fn new(context: &JSContextRef) -> Result<Self> {
-        let exception_value = unsafe { JS_GetException(context.inner) };
-        Self::from(JSValueRef::new_unchecked(context, exception_value))
+        let exception_value = unsafe { JS_GetException(context.as_raw()) };
+        Self::from(unsafe { JSValueRef::from_raw(context, exception_value) })
     }
 
     pub fn from(exception_obj: JSValueRef) -> Result<Self> {
         let msg = exception_obj.as_str().map(ToString::to_string)?;
         let mut stack = None;
 
-        let is_error = unsafe { JS_IsError(exception_obj.context.inner, exception_obj.value) } != 0;
+        let is_error =
+            unsafe { JS_IsError(exception_obj.context.as_raw(), exception_obj.as_raw()) } != 0;
         if is_error {
             let stack_value = exception_obj.get_property("stack")?;
             if !stack_value.is_undefined() {

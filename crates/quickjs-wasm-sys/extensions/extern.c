@@ -8,8 +8,6 @@
 // generate Rust bindings out-of-the box.
 // https://github.com/rust-lang/rust-bindgen/discussions/2405
 
-// The definitions in this file are paired with their respective `extern "C"`
-// declaration in `extensions/value.rs`.
 
 JSValue JS_NewBool_Ext(JSContext *ctx, JS_BOOL val) {
   return JS_MKVAL(JS_TAG_BOOL, (val != 0));
@@ -31,7 +29,11 @@ JSValue JS_NewFloat64_Ext(JSContext *ctx, double d) {
   return JS_NewFloat64(ctx, d);
 }
 
-JSValue JS_DupValueExt(JSContext *ctx, JSValueConst v) {
+void JS_FreeValue_Ext(JSContext *ctx, JSValue v) {
+  JS_FreeValue(ctx, v);
+}
+
+JSValue JS_DupValue_Ext(JSContext *ctx, JSValueConst v) {
   return JS_DupValue(ctx, v);
 }
 

@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased changes
 
-- Expose `JS_DupValue` via `JS_DupValueExt`.
+- Expose `JS_DupValue` via `JS_DupValue_Ext`.
 
 ## [1.2.0] - 2024-01-31
 

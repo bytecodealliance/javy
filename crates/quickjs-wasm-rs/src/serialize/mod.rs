@@ -2,17 +2,6 @@ pub mod de;
 pub mod err;
 pub mod ser;
 
-use super::js_binding::value::JSValueRef;
-
-fn as_key<'a>(v: &'a JSValueRef) -> anyhow::Result<&'a str> {
-    if v.is_str() {
-        let v = v.as_str()?;
-        Ok(v)
-    } else {
-        anyhow::bail!("map keys must be a string")
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::de::Deserializer as ValueDeserializer;

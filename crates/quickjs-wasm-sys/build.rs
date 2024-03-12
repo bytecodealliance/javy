@@ -215,10 +215,10 @@ async fn main() -> Result<()> {
             "quickjs/libregexp.c",
             "quickjs/libunicode.c",
             "quickjs/quickjs.c",
-            "extensions/value.c",
+            "extensions/extern.c",
         ])
         .define("_GNU_SOURCE", None)
-        .define("CONFIG_VERSION", "\"2021-03-27\"")
+        .define("CONFIG_VERSION", "\"2023-12-09\"")
         .define("CONFIG_BIGNUM", None)
         .cargo_metadata(true)
         // The below flags are used by the official Makefile.
@@ -248,12 +248,14 @@ async fn main() -> Result<()> {
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         .clang_args(&["-fvisibility=default", "--target=wasm32-wasi", &sysroot])
         .size_t_is_usize(false)
+        .generate_inline_functions(true) // generate inline functions such as JS_FreeValue
         .generate()?;
 
-    println!("cargo:rerun-if-changed=extensions/value.c");
     println!("cargo:rerun-if-changed=wrapper.h");
-
     for entry in WalkDir::new("quickjs") {
+        println!("cargo:rerun-if-changed={}", entry?.path().display());
+    }
+    for entry in WalkDir::new("extensions") {
         println!("cargo:rerun-if-changed={}", entry?.path().display());
     }
 
