@@ -2,11 +2,14 @@ use std::io::Write;
 
 use anyhow::{Error, Result};
 use javy::{
-    quickjs::{prelude::Rest, Context, Ctx, Function, Object, Rest, Value},
+    quickjs::{
+        prelude::{MutFn, Rest},
+        Context, Ctx, Function, Object, Value,
+    },
     Runtime,
 };
 
-use crate::{APIConfig, JSApiSet};
+use crate::{print, APIConfig, JSApiSet};
 
 pub(super) use config::ConsoleConfig;
 pub use config::LogStream;
@@ -33,24 +36,30 @@ impl JSApiSet for Console {
 
 fn register_console<'js, T, U>(context: &Context, log_stream: T, error_stream: U) -> Result<()>
 where
-    T: Write + 'static,
-    U: Write + 'static,
+    T: Write,
+    U: Write,
 {
     context.with(|cx| {
         let globals = cx.globals();
         let console = Object::new(cx)?;
         console.set(
             "log",
-            Function::new(cx, |cx: Ctx<'js>, args: Rest<Value<'js>>| {
-                Value::new_undefined(cx)
-            }),
+            Function::new(
+                cx,
+                MutFn::new(move |cx: Ctx<'js>, args: Rest<Value<'js>>| {
+                    log(cx, &args, &mut log_stream).unwrap()
+                }),
+            )?,
         )?;
 
         console.set(
             "error",
-            Function::new(cx, |cx: Ctx<'js>, args: Rest<Value<'js>>| {
-                Value::new_undefined(cx)
-            }),
+            Function::new(
+                cx,
+                MutFn::new(move |cx: Ctx<'js>, args: Rest<Value<'js>>| {
+                    log(cx, &args, &mut error_stream).unwrap()
+                }),
+            )?,
         )?;
 
         globals.set("console", console)?;
@@ -59,30 +68,18 @@ where
     Ok(())
 }
 
-fn log<'js, T>(mut stream: T, cx: Ctx<'js>, args: &[Value<'js>]) -> Result<Value<'js>> {}
-
-fn console_log_to<T>(
-    mut stream: T,
-) -> impl FnMut(&JSContextRef, JSValueRef, &[JSValueRef]) -> Result<JSValue>
-where
-    T: Write + 'static,
-{
-    move |_ctx: Cx<'_>, _this: JSValueRef, args: &[JSValueRef]| {
-        // Write full string to in-memory destination before writing to stream since each write call to the stream
-        // will invoke a hostcall.
-        let mut log_line = String::new();
-        for (i, arg) in args.iter().enumerate() {
-            if i != 0 {
-                log_line.push(' ');
-            }
-            let line = arg.to_string();
-            log_line.push_str(&line);
+fn log<'js, T: Write>(ctx: Ctx<'js>, args: &[Value<'js>], mut stream: T) -> Result<Value<'js>> {
+    let mut buf = String::new();
+    for (i, arg) in args.iter().enumerate() {
+        if i != 0 {
+            buf.push(' ');
         }
-
-        writeln!(stream, "{log_line}")?;
-
-        Ok(JSValue::Undefined)
+        print(arg, &mut buf)?;
     }
+
+    writeln!(stream, "{buf}")?;
+
+    Ok(Value::new_undefined(ctx))
 }
 
 #[cfg(test)]

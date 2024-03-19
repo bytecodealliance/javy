@@ -1,5 +1,8 @@
-use anyhow::Result;
-use javy::{quickjs::JSValue, Runtime};
+use anyhow::{Error, Result};
+use javy::{
+    quickjs::{prelude::Func, Object},
+    Runtime,
+};
 
 use crate::{APIConfig, JSApiSet};
 
@@ -7,12 +10,14 @@ pub struct Random;
 
 impl JSApiSet for Random {
     fn register(&self, runtime: &Runtime, _config: &APIConfig) -> Result<()> {
-        let ctx = runtime.context();
-        ctx.global_object()?.get_property("Math")?.set_property(
-            "random",
-            // TODO figure out if we can lazily initialize the PRNG
-            ctx.wrap_callback(|_ctx, _this, _args| Ok(JSValue::Float(fastrand::f64())))?,
-        )?;
+        runtime.context().with(|cx| {
+            let globals = cx.globals();
+            let math: Object<'_> = globals.get("Math").expect("Math global to be defined");
+            math.set("random", Func::from(fastrand::f64))?;
+
+            Ok::<_, Error>(())
+        });
+
         Ok(())
     }
 }

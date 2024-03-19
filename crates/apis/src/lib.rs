@@ -45,6 +45,9 @@
 use anyhow::Result;
 use javy::Runtime;
 
+use javy::quickjs::{Type, Value};
+use std::fmt::Write;
+
 pub use api_config::APIConfig;
 #[cfg(feature = "console")]
 pub use console::LogStream;
@@ -86,4 +89,40 @@ pub fn add_to_runtime(runtime: &Runtime, config: APIConfig) -> Result<()> {
     #[cfg(feature = "text_encoding")]
     text_encoding::TextEncoding.register(runtime, &config)?;
     Ok(())
+}
+
+/// Print the given JS value.
+///
+/// The implementation matches the default JavaScript display format for each value.
+pub(crate) fn print<'js>(val: &Value<'js>, sink: &mut String) -> Result<()> {
+    match val.type_of() {
+        Type::Undefined => write!(sink, "undefined").map_err(Into::into),
+        Type::Null => write!(sink, "null").map_err(Into::into),
+        Type::Bool => {
+            let b = val.as_bool().unwrap();
+            write!(sink, "{}", b).map_err(Into::into)
+        }
+        Type::Int => {
+            let i = val.as_int().unwrap();
+            write!(sink, "{}", i).map_err(Into::into)
+        }
+        Type::Float => {
+            let f = val.as_float().unwrap();
+            write!(sink, "{}", f).map_err(Into::into)
+        }
+        Type::String => {
+            let s = val.as_string().unwrap();
+            write!(sink, "{}", s.to_string()?).map_err(Into::into)
+        }
+        Type::Array => {
+            let inner = val.as_array().unwrap();
+            for e in inner.iter() {
+                print(&e?, sink)?
+            }
+            Ok(())
+        }
+        Type::Object => write!(sink, "[object Object]").map_err(Into::into),
+        // TODO: Implement the rest.
+        _ => unimplemented!(),
+    }
 }
