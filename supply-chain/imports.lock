@@ -16,8 +16,8 @@ user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.anyhow]]
-version = "1.0.80"
-when = "2024-02-19"
+version = "1.0.81"
+when = "2024-03-12"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -86,8 +86,8 @@ user-login = "sunfishcode"
 user-name = "Dan Gohman"
 
 [[publisher.cc]]
-version = "1.0.88"
-when = "2024-02-25"
+version = "1.0.90"
+when = "2024-03-06"
 user-id = 2915
 user-login = "Amanieu"
 user-name = "Amanieu d'Antras"
@@ -265,8 +265,8 @@ user-login = "seanmonstar"
 user-name = "Sean McArthur"
 
 [[publisher.http-body-util]]
-version = "0.1.0"
-when = "2023-11-15"
+version = "0.1.1"
+when = "2024-03-11"
 user-id = 359
 user-login = "seanmonstar"
 user-name = "Sean McArthur"
@@ -517,8 +517,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.serde_json]]
-version = "1.0.114"
-when = "2024-02-20"
+version = "1.0.115"
+when = "2024-03-26"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -580,8 +580,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.tokio]]
-version = "1.36.0"
-when = "2024-02-02"
+version = "1.37.0"
+when = "2024-03-28"
 user-id = 6741
 user-login = "Darksonn"
 user-name = "Alice Ryhl"
@@ -725,8 +725,8 @@ user-login = "alexcrichton"
 user-name = "Alex Crichton"
 
 [[publisher.wasmparser]]
-version = "0.201.0"
-when = "2024-02-27"
+version = "0.202.0"
+when = "2024-03-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -738,8 +738,8 @@ user-login = "alexcrichton"
 user-name = "Alex Crichton"
 
 [[publisher.wasmprinter]]
-version = "0.201.0"
-when = "2024-02-27"
+version = "0.202.0"
+when = "2024-03-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -1106,8 +1106,8 @@ user-login = "alexcrichton"
 user-name = "Alex Crichton"
 
 [[publisher.wit-parser]]
-version = "0.201.0"
-when = "2024-02-27"
+version = "0.202.0"
+when = "2024-03-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -1606,15 +1606,6 @@ this crate has to do with iterators and `Result` and such. No `unsafe` or
 anything like that, all looks good.
 """
 
-[[audits.bytecode-alliance.audits.fastrand]]
-who = "Alex Crichton <alex@alexcrichton.com>"
-criteria = "safe-to-deploy"
-delta = "2.0.0 -> 2.0.1"
-notes = """
-This update had a few doc updates but no otherwise-substantial source code
-updates.
-"""
-
 [[audits.bytecode-alliance.audits.foreign-types]]
 who = "Pat Hickey <phickey@fastly.com>"
 criteria = "safe-to-deploy"
@@ -1863,6 +1854,12 @@ but it's all doing what it says on the tin: being a stable polyfill for strict
 provenance APIs in the standard library while they're on Nightly.
 """
 
+[[audits.bytecode-alliance.audits.static_assertions]]
+who = "Andrew Brown <andrew.brown@intel.com>"
+criteria = "safe-to-deploy"
+version = "1.1.0"
+notes = "No dependencies and completely a compile-time crate as advertised. Uses `unsafe` in one module as a compile-time check only: `mem::transmute` and `ptr::write` are wrapped in an impossible-to-run closure."
+
 [[audits.bytecode-alliance.audits.tinyvec]]
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
@@ -1961,11 +1958,23 @@ criteria = "safe-to-deploy"
 version = "0.24.3"
 notes = "Proc macro. No unsafe or added ambient capabilities"
 
+[[audits.embark-studios.audits.tap]]
+who = "Johan Andersson <opensource@embark-studios.com>"
+criteria = "safe-to-deploy"
+version = "1.0.1"
+notes = "No unsafe usage or ambient capabilities"
+
 [[audits.embark-studios.audits.vec_map]]
 who = "Johan Andersson <opensource@embark-studios.com>"
 criteria = "safe-to-deploy"
 version = "0.8.2"
 notes = "No unsafe usage or ambient capabilities"
+
+[[audits.google.audits.dirs-next]]
+who = "George Burgess IV <gbiv@google.com>"
+criteria = "safe-to-deploy"
+version = "2.0.0"
+aggregated-from = "https://chromium.googlesource.com/chromiumos/third_party/rust_crates/+/main/cargo-vet/audits.toml?format=TEXT"
 
 [[audits.google.audits.env_logger]]
 who = "George Burgess IV <gbiv@google.com>"
@@ -1977,16 +1986,6 @@ aggregated-from = "https://chromium.googlesource.com/chromiumos/third_party/rust
 who = "George Burgess IV <gbiv@google.com>"
 criteria = "safe-to-run"
 delta = "0.9.3 -> 0.8.4"
-aggregated-from = "https://chromium.googlesource.com/chromiumos/third_party/rust_crates/+/main/cargo-vet/audits.toml?format=TEXT"
-
-[[audits.google.audits.fastrand]]
-who = "George Burgess IV <gbiv@google.com>"
-criteria = "safe-to-deploy"
-version = "1.9.0"
-notes = """
-`does-not-implement-crypto` is certified because this crate explicitly says
-that the RNG here is not cryptographically secure.
-"""
 aggregated-from = "https://chromium.googlesource.com/chromiumos/third_party/rust_crates/+/main/cargo-vet/audits.toml?format=TEXT"
 
 [[audits.google.audits.glob]]
@@ -2260,12 +2259,6 @@ who = "Gabriele Svelto <gsvelto@mozilla.com>"
 criteria = "safe-to-deploy"
 version = "0.8.0"
 notes = "This crates was written by Sentry and I've fully audited it as Firefox crash reporting machinery relies on it."
-aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
-
-[[audits.mozilla.audits.fastrand]]
-who = "Mike Hommey <mh+mozilla@glandium.org>"
-criteria = "safe-to-deploy"
-delta = "1.9.0 -> 2.0.0"
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
 [[audits.mozilla.audits.fnv]]

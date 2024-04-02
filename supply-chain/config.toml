@@ -66,6 +66,10 @@ criteria = "safe-to-deploy"
 version = "0.3.69"
 criteria = "safe-to-deploy"
 
+[[exemptions.base64-simd]]
+version = "0.7.0"
+criteria = "safe-to-deploy"
+
 [[exemptions.better_scoped_tls]]
 version = "0.1.1"
 criteria = "safe-to-deploy"
@@ -78,12 +82,16 @@ criteria = "safe-to-deploy"
 version = "1.3.2"
 criteria = "safe-to-deploy"
 
+[[exemptions.bitvec]]
+version = "1.0.1"
+criteria = "safe-to-deploy"
+
 [[exemptions.block-buffer]]
 version = "0.10.4"
 criteria = "safe-to-deploy"
 
 [[exemptions.brotli]]
-version = "3.4.0"
+version = "3.5.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.brotli-decompressor]]
@@ -174,10 +182,6 @@ criteria = "safe-to-deploy"
 version = "2.0.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.dirs-next]]
-version = "2.0.0"
-criteria = "safe-to-deploy"
-
 [[exemptions.dirs-sys-next]]
 version = "0.1.2"
 criteria = "safe-to-deploy"
@@ -186,8 +190,16 @@ criteria = "safe-to-deploy"
 version = "0.2.0"
 criteria = "safe-to-deploy"
 
+[[exemptions.fastrand]]
+version = "2.0.2"
+criteria = "safe-to-deploy"
+
 [[exemptions.from_variant]]
 version = "0.1.7"
+criteria = "safe-to-deploy"
+
+[[exemptions.funty]]
+version = "2.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.futures]]
@@ -274,6 +286,10 @@ criteria = "safe-to-deploy"
 version = "0.10.3"
 criteria = "safe-to-deploy"
 
+[[exemptions.jobserver]]
+version = "0.1.28"
+criteria = "safe-to-deploy"
+
 [[exemptions.lazycell]]
 version = "1.3.0"
 criteria = "safe-to-deploy"
@@ -330,6 +346,10 @@ criteria = "safe-to-deploy"
 version = "0.9.96"
 criteria = "safe-to-deploy"
 
+[[exemptions.outref]]
+version = "0.1.0"
+criteria = "safe-to-deploy"
+
 [[exemptions.phf]]
 version = "0.10.1"
 criteria = "safe-to-deploy"
@@ -380,6 +400,10 @@ criteria = "safe-to-deploy"
 
 [[exemptions.psm]]
 version = "0.1.17"
+criteria = "safe-to-deploy"
+
+[[exemptions.radium]]
+version = "0.7.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.rand]]
@@ -442,6 +466,10 @@ criteria = "safe-to-deploy"
 version = "1.3.0"
 criteria = "safe-to-deploy"
 
+[[exemptions.simd-abstraction]]
+version = "0.7.1"
+criteria = "safe-to-deploy"
+
 [[exemptions.siphasher]]
 version = "0.3.10"
 criteria = "safe-to-deploy"
@@ -459,7 +487,7 @@ version = "0.5.5"
 criteria = "safe-to-deploy"
 
 [[exemptions.sourcemap]]
-version = "6.2.3"
+version = "8.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.stable_deref_trait]]
@@ -468,10 +496,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.stacker]]
 version = "0.1.15"
-criteria = "safe-to-deploy"
-
-[[exemptions.static_assertions]]
-version = "1.1.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.string_enum]]
@@ -495,31 +519,31 @@ version = "0.6.5"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_common]]
-version = "0.33.18"
+version = "0.33.21"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_core]]
-version = "0.90.14"
+version = "0.90.26"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_ast]]
-version = "0.112.4"
+version = "0.112.6"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_parser]]
-version = "0.143.5"
+version = "0.143.11"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_transforms_base]]
-version = "0.137.10"
+version = "0.137.16"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_utils]]
-version = "0.127.7"
+version = "0.127.15"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_visit]]
-version = "0.98.4"
+version = "0.98.7"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_eq_ignore_macros]]
@@ -531,11 +555,11 @@ version = "0.3.9"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_visit]]
-version = "0.5.9"
+version = "0.5.10"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_visit_macros]]
-version = "0.5.10"
+version = "0.5.11"
 criteria = "safe-to-deploy"
 
 [[exemptions.tempfile]]
@@ -590,8 +614,12 @@ criteria = "safe-to-deploy"
 version = "0.3.3"
 criteria = "safe-to-deploy"
 
+[[exemptions.unicode-id-start]]
+version = "1.1.2"
+criteria = "safe-to-deploy"
+
 [[exemptions.uuid]]
-version = "1.7.0"
+version = "1.8.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.vergen]]
@@ -615,7 +643,7 @@ version = "0.11.0+wasi-snapshot-preview1"
 criteria = "safe-to-deploy"
 
 [[exemptions.wasm-opt]]
-version = "0.116.0"
+version = "0.116.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.wasm-opt-cxx-sys]]
@@ -648,6 +676,10 @@ criteria = "safe-to-deploy"
 
 [[exemptions.witx]]
 version = "0.9.1"
+criteria = "safe-to-deploy"
+
+[[exemptions.wyz]]
+version = "0.5.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.zstd]]
