@@ -2,20 +2,18 @@ use std::io::Write;
 
 use anyhow::{Error, Result};
 use javy::{
-    quickjs::{
-        prelude::{MutFn, Rest},
-        Context, Ctx, Function, Object, Value,
-    },
+    quickjs::{prelude::MutFn, Context, Function, Object, Value},
     Runtime,
 };
 
-use crate::{print, APIConfig, JSApiSet};
+use crate::{print, APIConfig, Args, JSApiSet};
 
 pub(super) use config::ConsoleConfig;
 pub use config::LogStream;
 
 mod config;
 
+// TODO: #[derive(Default)]
 pub(super) struct Console {}
 
 impl Console {
@@ -34,20 +32,27 @@ impl JSApiSet for Console {
     }
 }
 
-fn register_console<'js, T, U>(context: &Context, log_stream: T, error_stream: U) -> Result<()>
+fn register_console<'js, T, U>(
+    context: &Context,
+    mut log_stream: T,
+    mut error_stream: U,
+) -> Result<()>
 where
-    T: Write,
-    U: Write,
+    T: Write + 'static,
+    U: Write + 'static,
 {
-    context.with(|cx| {
-        let globals = cx.globals();
-        let console = Object::new(cx)?;
+    // TODO: Revisit the callback signatures, there's a possibility that we can
+    // actually convert from anyhow::Error to quickjs::Error.
+    context.with(|this| {
+        let globals = this.globals();
+        let console = Object::new(this.clone())?;
+
         console.set(
             "log",
             Function::new(
-                cx,
-                MutFn::new(move |cx: Ctx<'js>, args: Rest<Value<'js>>| {
-                    log(cx, &args, &mut log_stream).unwrap()
+                this.clone(),
+                MutFn::new(move |cx, args| {
+                    log(Args::hold(cx, args), &mut log_stream).expect("console.log to succeed")
                 }),
             )?,
         )?;
@@ -55,20 +60,21 @@ where
         console.set(
             "error",
             Function::new(
-                cx,
-                MutFn::new(move |cx: Ctx<'js>, args: Rest<Value<'js>>| {
-                    log(cx, &args, &mut error_stream).unwrap()
+                this,
+                MutFn::new(move |cx, args| {
+                    log(Args::hold(cx, args), &mut error_stream).expect("console.error to succeed")
                 }),
             )?,
         )?;
 
         globals.set("console", console)?;
         Ok::<_, Error>(())
-    });
+    })?;
     Ok(())
 }
 
-fn log<'js, T: Write>(ctx: Ctx<'js>, args: &[Value<'js>], mut stream: T) -> Result<Value<'js>> {
+fn log<'js, T: Write>(args: Args<'js>, stream: &mut T) -> Result<Value<'js>> {
+    let (ctx, args) = args.release();
     let mut buf = String::new();
     for (i, arg) in args.iter().enumerate() {
         if i != 0 {
@@ -79,13 +85,16 @@ fn log<'js, T: Write>(ctx: Ctx<'js>, args: &[Value<'js>], mut stream: T) -> Resu
 
     writeln!(stream, "{buf}")?;
 
-    Ok(Value::new_undefined(ctx))
+    Ok(Value::new_undefined(ctx.clone()))
 }
 
 #[cfg(test)]
 mod tests {
-    use anyhow::Result;
-    use javy::Runtime;
+    use anyhow::{Error, Result};
+    use javy::{
+        quickjs::{Object, Value},
+        Runtime,
+    };
     use std::cell::RefCell;
     use std::rc::Rc;
     use std::{cmp, io};
@@ -99,9 +108,13 @@ mod tests {
     fn test_register() -> Result<()> {
         let runtime = Runtime::default();
         Console::new().register(&runtime, &APIConfig::default())?;
-        let console = runtime.context().global_object()?.get_property("console")?;
-        assert!(console.get_property("log").is_ok());
-        assert!(console.get_property("error").is_ok());
+        runtime.context().with(|cx| {
+            let console: Object<'_> = cx.globals().get("console")?;
+            assert!(console.get::<&str, Value<'_>>("log").is_ok());
+            assert!(console.get::<&str, Value<'_>>("error").is_ok());
+
+            Ok::<_, Error>(())
+        })?;
         Ok(())
     }
 
@@ -113,24 +126,25 @@ mod tests {
         let ctx = runtime.context();
         register_console(ctx, stream.clone(), stream.clone())?;
 
-        ctx.eval_global("main", "console.log(\"hello world\");")?;
-        assert_eq!(b"hello world\n", stream.buffer.borrow().as_slice());
+        ctx.with(|this| {
+            this.eval("console.log(\"hello world\");")?;
+            assert_eq!(b"hello world\n", stream.buffer.borrow().as_slice());
+            stream.clear();
 
-        stream.clear();
+            this.eval("console.log(\"bonjour\", \"le\", \"monde\")")?;
+            assert_eq!(b"bonjour le monde\n", stream.buffer.borrow().as_slice());
 
-        ctx.eval_global("main", "console.log(\"bonjour\", \"le\", \"monde\")")?;
-        assert_eq!(b"bonjour le monde\n", stream.buffer.borrow().as_slice());
+            stream.clear();
 
-        stream.clear();
+            this.eval("console.log(2.3, true, { foo: 'bar' }, null, undefined)")?;
+            assert_eq!(
+                b"2.3 true [object Object] null undefined\n",
+                stream.buffer.borrow().as_slice()
+            );
 
-        ctx.eval_global(
-            "main",
-            "console.log(2.3, true, { foo: 'bar' }, null, undefined)",
-        )?;
-        assert_eq!(
-            b"2.3 true [object Object] null undefined\n",
-            stream.buffer.borrow().as_slice()
-        );
+            Ok::<_, Error>(())
+        })?;
+
         Ok(())
     }
 
@@ -142,24 +156,25 @@ mod tests {
         let ctx = runtime.context();
         register_console(ctx, stream.clone(), stream.clone())?;
 
-        ctx.eval_global("main", "console.error(\"hello world\");")?;
-        assert_eq!(b"hello world\n", stream.buffer.borrow().as_slice());
+        ctx.with(|this| {
+            this.eval("console.error(\"hello world\");")?;
+            assert_eq!(b"hello world\n", stream.buffer.borrow().as_slice());
 
-        stream.clear();
+            stream.clear();
 
-        ctx.eval_global("main", "console.error(\"bonjour\", \"le\", \"monde\")")?;
-        assert_eq!(b"bonjour le monde\n", stream.buffer.borrow().as_slice());
+            this.eval("console.error(\"bonjour\", \"le\", \"monde\")")?;
+            assert_eq!(b"bonjour le monde\n", stream.buffer.borrow().as_slice());
 
-        stream.clear();
+            stream.clear();
 
-        ctx.eval_global(
-            "main",
-            "console.error(2.3, true, { foo: 'bar' }, null, undefined)",
-        )?;
-        assert_eq!(
-            b"2.3 true [object Object] null undefined\n",
-            stream.buffer.borrow().as_slice()
-        );
+            this.eval("console.error(2.3, true, { foo: 'bar' }, null, undefined)")?;
+            assert_eq!(
+                b"2.3 true [object Object] null undefined\n",
+                stream.buffer.borrow().as_slice()
+            );
+            Ok::<_, Error>(())
+        })?;
+
         Ok(())
     }
 

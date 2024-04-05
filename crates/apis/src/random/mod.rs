@@ -25,18 +25,25 @@ impl JSApiSet for Random {
 #[cfg(test)]
 mod tests {
     use crate::{random::Random, APIConfig, JSApiSet};
-    use anyhow::Result;
-    use javy::Runtime;
+    use anyhow::{Error, Result};
+    use javy::{quickjs::Value, Runtime};
 
     #[test]
     fn test_random() -> Result<()> {
         let runtime = Runtime::default();
         Random.register(&runtime, &APIConfig::default())?;
-        let ctx = runtime.context();
-        ctx.eval_global("test.js", "result = Math.random()")?;
-        let result = ctx.global_object()?.get_property("result")?.as_f64()?;
-        assert!(result >= 0.0);
-        assert!(result < 1.0);
+        runtime.context().with(|this| {
+            this.eval("result = Math.random()")?;
+            let result: f64 = this
+                .globals()
+                .get::<&str, Value<'_>>("result")?
+                .as_float()
+                .unwrap();
+            assert!(result >= 0.0);
+            assert!(result < 1.0);
+            Ok::<_, Error>(())
+        });
+
         Ok(())
     }
 }

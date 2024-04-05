@@ -45,7 +45,7 @@
 use anyhow::Result;
 use javy::Runtime;
 
-use javy::quickjs::{Type, Value};
+use javy::quickjs::{prelude::Rest, Ctx, Type, Value};
 use std::fmt::Write;
 
 pub use api_config::APIConfig;
@@ -124,5 +124,25 @@ pub(crate) fn print<'js>(val: &Value<'js>, sink: &mut String) -> Result<()> {
         Type::Object => write!(sink, "[object Object]").map_err(Into::into),
         // TODO: Implement the rest.
         _ => unimplemented!(),
+    }
+}
+
+/// A struct to hold the current [Ctx] and [Value]s passed as arguments to Rust
+/// functions.
+/// A struct here is used to explicitly tie these values with a particular
+/// lifetime.
+//
+// See: https://github.com/rust-lang/rfcs/pull/3216
+pub(crate) struct Args<'js>(Ctx<'js>, Rest<Value<'js>>);
+
+impl<'js> Args<'js> {
+    /// Tie the [Ctx] and [Rest<Value>].
+    fn hold(cx: Ctx<'js>, args: Rest<Value<'js>>) -> Self {
+        Self(cx, args)
+    }
+
+    /// Get the [Ctx] and [Rest<Value>].
+    fn release(self) -> (Ctx<'js>, Rest<Value<'js>>) {
+        (self.0, self.1)
     }
 }
