@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased changes
 
+- Expose `JS_DupValue` via `JS_DupValueExt`.
+
 ## [1.2.0] - 2024-01-31
 
 - Changed: Updated to 2023-12-09 release of QuickJS.

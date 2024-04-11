@@ -141,6 +141,30 @@ impl JSContextRef {
         JSValueRef::new(self, raw)
     }
 
+    /// Returns the raw pointer to the underlying [quickjs_wasm_sys::JSContext].
+    ///
+    /// # Safety
+    /// While calling this function is safe, using it’s return value has to be
+    /// done with a sufficitenly deep understanding of QuickJS and [quickjs_wasm_sys].
+    ///
+    /// This function is not part of the crate’s semver API contract.
+    #[cfg(feature = "export-sys")]
+    pub unsafe fn as_raw(&self) -> *mut JSContext {
+        self.inner
+    }
+
+    /// Creates a `JSContextRef` from a pointer to a [quickjs_wasm_sys::JSContext].
+    ///
+    /// # Safety
+    /// The caller has to ensure that the returned `JSContextRef` is the only one
+    /// used throughout its lifetime.
+    ///
+    /// This function is not part of the crate’s semver API contract.
+    #[cfg(feature = "export-sys")]
+    pub unsafe fn from_raw(inner: *mut JSContext) -> JSContextRef {
+        JSContextRef { inner }
+    }
+
     /// Compiles JavaScript to QuickJS bytecode with an ECMAScript module scope.
     ///
     /// # Arguments

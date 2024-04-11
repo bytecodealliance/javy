@@ -58,6 +58,25 @@ impl<'a> JSValueRef<'a> {
         Self { context, value }
     }
 
+    /// Creates a new `JSValueRef` from a `u64`, which is QuickJS’s internal representation.
+    ///
+    /// # Safety
+    /// The caller has to ensure that the given value is valid and belongs to the context.
+    ///
+    /// This function is not part of the crate’s semver API contract.
+    #[cfg(feature = "export-sys")]
+    pub unsafe fn from_raw(context: &'a JSContextRef, value: JSValueRaw) -> Self {
+        JSValueRef::new_unchecked(context, value)
+    }
+
+    /// Returns QuickJS’s internal representation. Note that the value is implicitly tied to the context it came from.
+    ///
+    /// # Safety
+    /// The function is safe to call, but not part of the crate’s semver API contract.
+    #[cfg(feature = "export-sys")]
+    pub unsafe fn as_raw(&self) -> JSValueRaw {
+        self.value
+    }
     pub(super) fn eval_function(&self) -> Result<Self> {
         Self::new(self.context, unsafe {
             JS_EvalFunction(self.context.inner, self.value)

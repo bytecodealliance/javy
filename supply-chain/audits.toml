@@ -99,6 +99,12 @@ user-id = 6825 # Dan Gohman (sunfishcode)
 start = "2020-09-21"
 end = "2024-07-25"
 
+[[trusted.cc]]
+criteria = "safe-to-deploy"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2024-02-20"
+end = "2025-03-01"
+
 [[trusted.clap_builder]]
 criteria = "safe-to-run"
 user-id = 6743 # Ed Page (epage)
@@ -507,6 +513,18 @@ user-id = 1 # Alex Crichton (alexcrichton)
 start = "2019-03-04"
 end = "2025-01-03"
 
+[[trusted.wasmparser]]
+criteria = "safe-to-deploy"
+user-id = 73222 # wasmtime-publish
+start = "2024-02-15"
+end = "2025-03-01"
+
+[[trusted.wasmprinter]]
+criteria = "safe-to-deploy"
+user-id = 73222 # wasmtime-publish
+start = "2024-02-15"
+end = "2025-03-01"
+
 [[trusted.wasmtime-versioned-export-macros]]
 criteria = "safe-to-deploy"
 user-id = 73222 # wasmtime-publish
@@ -584,6 +602,12 @@ criteria = "safe-to-deploy"
 user-id = 6825 # Dan Gohman (sunfishcode)
 start = "2019-08-20"
 end = "2025-01-02"
+
+[[trusted.wit-parser]]
+criteria = "safe-to-deploy"
+user-id = 73222 # wasmtime-publish
+start = "2024-02-15"
+end = "2025-03-01"
 
 [[trusted.wizer]]
 criteria = "safe-to-deploy"
