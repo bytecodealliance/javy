@@ -28,7 +28,7 @@ fn test_dylib_with_error() -> Result<()> {
     assert!(result.is_err());
     let output = stderr.try_into_inner().unwrap().into_inner();
 
-    let expected_log_output = "Error while running JS: Uncaught Error: foo error\n    at foo (function.mjs)\n    at <anonymous> (function.mjs:1)\n\n";
+    let expected_log_output = "Error:1:24 foo error\n    at foo (function.mjs:1:24)\n    at <anonymous> (function.mjs:1:50)\n\n";
     assert_eq!(expected_log_output, str::from_utf8(&output)?);
 
     Ok(())

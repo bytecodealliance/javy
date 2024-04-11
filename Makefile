@@ -21,9 +21,6 @@ docs:
 	cargo doc --package=javy-cli --open
 	cargo doc --package=javy-core --open --target=wasm32-wasi
 
-test-quickjs-wasm-rs:
-	cargo wasi test --package=quickjs-wasm-rs -- --nocapture
-
 test-javy:
 	cargo wasi test --package=javy --features json,messagepack -- --nocapture
 
@@ -47,7 +44,7 @@ test-wpt:
 	npm install --prefix wpt
 	npm test --prefix wpt 
 
-tests: test-quickjs-wasm-rs test-javy test-apis test-core test-cli test-wpt
+tests: test-javy test-apis test-core test-cli test-wpt
 
 fmt: fmt-quickjs-wasm-sys fmt-quickjs-wasm-rs fmt-javy fmt-apis fmt-core fmt-cli
 

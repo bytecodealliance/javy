@@ -2,11 +2,12 @@ use std::str;
 
 use anyhow::{anyhow, bail, Error, Result};
 use javy::{
-    quickjs::{Error as JSError, Function, String as JSString, TypedArray, Value},
-    Runtime,
+    hold, hold_and_release,
+    quickjs::{context::EvalOptions, Function, String as JSString, TypedArray, Value},
+    to_js_error, Args, Runtime,
 };
 
-use crate::{APIConfig, Args, JSApiSet};
+use crate::{APIConfig, JSApiSet};
 
 pub(super) struct TextEncoding;
 
@@ -17,16 +18,21 @@ impl JSApiSet for TextEncoding {
             globals.set(
                 "__javy_decodeUtf8BufferToString",
                 Function::new(this.clone(), |cx, args| {
-                    decode(Args::hold(cx, args)).expect("decode to succeed")
+                    let (cx, args) = hold_and_release!(cx, args);
+                    decode(hold!(cx.clone(), args)).map_err(|e| to_js_error(cx, e))
                 }),
             )?;
             globals.set(
                 "__javy_encodeStringToUtf8Buffer",
                 Function::new(this.clone(), |cx, args| {
-                    encode(Args::hold(cx, args)).expect("encode to succeed")
+                    let (cx, args) = hold_and_release!(cx, args);
+                    encode(hold!(cx.clone(), args)).map_err(|e| to_js_error(cx, e))
                 }),
             )?;
-            this.eval(include_str!("./text-encoding.js"))?;
+            let mut opts = EvalOptions::default();
+            opts.strict = false;
+            this.eval_with_options(include_str!("./text-encoding.js"), opts)?;
+
             Ok::<_, Error>(())
         })?;
 
@@ -45,10 +51,10 @@ fn decode<'js>(args: Args<'js>) -> Result<Value<'js>> {
     }
 
     let buffer = args[0]
-        .as_array()
-        .ok_or_else(|| anyhow!("buffer must be an array"))?
-        .as_typed_array::<u8>()
-        .ok_or_else(|| anyhow!("buffer must be a UInt8Array"))?
+        .as_object()
+        .ok_or_else(|| anyhow!("buffer must be an object"))?
+        .as_array_buffer()
+        .ok_or_else(|| anyhow!("buffer must be an ArrayBuffer"))?
         .as_bytes()
         .ok_or_else(|| anyhow!("Couldn't retrive &[u8] from buffer"))?;
 
@@ -78,7 +84,10 @@ fn decode<'js>(args: Args<'js>) -> Result<Value<'js>> {
     }
 
     let js_string = if fatal {
-        JSString::from_str(cx, str::from_utf8(view).map_err(JSError::Utf8)?)
+        JSString::from_str(
+            cx.clone(),
+            str::from_utf8(view).map_err(|_| anyhow!("The encoded data was not valid utf-8"))?,
+        )
     } else {
         let str = String::from_utf8_lossy(view);
         JSString::from_str(cx, &str)
@@ -115,13 +124,19 @@ mod tests {
     #[test]
     fn test_text_encoder_decoder() -> Result<()> {
         let runtime = Runtime::default();
+        TextEncoding.register(&runtime, &APIConfig::default())?;
 
         runtime.context().with(|this| {
-
-            TextEncoding.register(&runtime, &APIConfig::default())?;
             let result: Value<'_> = this.eval(
-                "let encoder = new TextEncoder(); let buffer = encoder.encode('hello'); let decoder = new TextDecoder(); decoder.decode(buffer) == 'hello';"
+                r#"
+                let encoder = new TextEncoder(); 
+                let decoder = new TextDecoder();
+
+                let buffer = encoder.encode('hello');
+                decoder.decode(buffer) == 'hello';
+            "#,
             )?;
+
             assert!(result.as_bool().unwrap());
             Ok::<_, Error>(())
         })?;

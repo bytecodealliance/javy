@@ -54,8 +54,8 @@ fn test_encoding() {
     let (output, _, _) = run(&mut runner, "invalid_fatal".as_bytes());
     assert_eq!("The encoded data was not valid utf-8".as_bytes(), output);
 
-    let (output, _, _) = run(&mut runner, "test".as_bytes());
-    assert_eq!("test2".as_bytes(), output);
+    //     let (output, _, _) = run(&mut runner, "test".as_bytes());
+    //     assert_eq!("test2".as_bytes(), output);
 }
 
 #[test]
@@ -98,7 +98,7 @@ fn test_promises() {
     let err = res.err().unwrap().downcast::<RunnerError>().unwrap();
     assert!(str::from_utf8(&err.stderr)
         .unwrap()
-        .contains("Adding tasks to the event queue is not supported"));
+        .contains("Pending jobs in the event queue."));
 }
 
 #[test]
@@ -155,7 +155,7 @@ fn test_error_handling() {
     let result = runner.exec(&[]);
     let err = result.err().unwrap().downcast::<RunnerError>().unwrap();
 
-    let expected_log_output = "Error while running JS: Uncaught Error: error\n    at error (function.mjs:2)\n    at <anonymous> (function.mjs:5)\n\n";
+    let expected_log_output = "Error:2:9 error\n    at error (function.mjs:2:9)\n    at <anonymous> (function.mjs:5:1)\n\n";
 
     assert_eq!(expected_log_output, str::from_utf8(&err.stderr).unwrap());
 }

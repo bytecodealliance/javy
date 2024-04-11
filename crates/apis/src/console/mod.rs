@@ -2,11 +2,12 @@ use std::io::Write;
 
 use anyhow::{Error, Result};
 use javy::{
+    hold, hold_and_release, print,
     quickjs::{prelude::MutFn, Context, Function, Object, Value},
-    Runtime,
+    to_js_error, Args, Runtime,
 };
 
-use crate::{print, APIConfig, Args, JSApiSet};
+use crate::{APIConfig, JSApiSet};
 
 pub(super) use config::ConsoleConfig;
 pub use config::LogStream;
@@ -52,7 +53,8 @@ where
             Function::new(
                 this.clone(),
                 MutFn::new(move |cx, args| {
-                    log(Args::hold(cx, args), &mut log_stream).expect("console.log to succeed")
+                    let (cx, args) = hold_and_release!(cx, args);
+                    log(hold!(cx.clone(), args), &mut log_stream).map_err(|e| to_js_error(cx, e))
                 }),
             )?,
         )?;
@@ -60,9 +62,10 @@ where
         console.set(
             "error",
             Function::new(
-                this,
+                this.clone(),
                 MutFn::new(move |cx, args| {
-                    log(Args::hold(cx, args), &mut error_stream).expect("console.error to succeed")
+                    let (cx, args) = hold_and_release!(cx, args);
+                    log(hold!(cx.clone(), args), &mut error_stream).map_err(|e| to_js_error(cx, e))
                 }),
             )?,
         )?;

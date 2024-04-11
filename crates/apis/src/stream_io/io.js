@@ -8,7 +8,7 @@
       }
       return __javy_io_readSync(
         fd,
-        data.buffer,
+        data,
         data.byteOffset,
         data.byteLength
       );
@@ -19,7 +19,7 @@
       }
       return __javy_io_writeSync(
         fd,
-        data.buffer,
+        data,
         data.byteOffset,
         data.byteLength
       );

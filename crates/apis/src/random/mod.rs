@@ -16,7 +16,7 @@ impl JSApiSet for Random {
             math.set("random", Func::from(fastrand::f64))?;
 
             Ok::<_, Error>(())
-        });
+        })?;
 
         Ok(())
     }
@@ -26,14 +26,19 @@ impl JSApiSet for Random {
 mod tests {
     use crate::{random::Random, APIConfig, JSApiSet};
     use anyhow::{Error, Result};
-    use javy::{quickjs::Value, Runtime};
+    use javy::{
+        quickjs::{context::EvalOptions, Value},
+        Runtime,
+    };
 
     #[test]
     fn test_random() -> Result<()> {
         let runtime = Runtime::default();
         Random.register(&runtime, &APIConfig::default())?;
         runtime.context().with(|this| {
-            this.eval("result = Math.random()")?;
+            let mut eval_opts = EvalOptions::default();
+            eval_opts.strict = false;
+            this.eval_with_options("result = Math.random()", eval_opts)?;
             let result: f64 = this
                 .globals()
                 .get::<&str, Value<'_>>("result")?
@@ -42,7 +47,7 @@ mod tests {
             assert!(result >= 0.0);
             assert!(result < 1.0);
             Ok::<_, Error>(())
-        });
+        })?;
 
         Ok(())
     }

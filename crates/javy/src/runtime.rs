@@ -1,9 +1,11 @@
 // use crate::quickjs::JSContextRef;
-use anyhow::Result;
+use anyhow::{bail, Result};
 use rquickjs::{Context, Runtime as QRuntime};
+use std::mem::ManuallyDrop;
 
 use crate::Config;
 
+// TODO: Update documentation.
 /// A JavaScript Runtime.
 ///
 /// Provides a [`Self::context()`] method for working with the underlying [`JSContextRef`].
@@ -37,25 +39,57 @@ use crate::Config;
 pub struct Runtime {
     /// The QuickJS context.
     context: Context,
+    /// The inner QuickJS runtime representation.
+    // TODO: Document why `ManuallyDrop`.
+    inner: ManuallyDrop<QRuntime>,
 }
 
 impl Runtime {
     /// Creates a new [Runtime].
     pub fn new(_config: Config) -> Result<Self> {
-        let rt = QRuntime::new()?;
-        let context = Context::base(&rt)?;
-        Ok(Self { context })
+        let rt = ManuallyDrop::new(QRuntime::new()?);
+
+        // TODO: Make GC configurable?
+        rt.set_gc_threshold(usize::MAX);
+        // TODO: Add a comment here?
+        let context = Context::full(&rt)?;
+        Ok(Self { inner: rt, context })
     }
 
     /// A reference to the inner [Context].
     pub fn context(&self) -> &Context {
         &self.context
     }
+
+    /// Resolves all the pending jobs in the queue.
+    pub fn resolve_pending_jobs(&self) -> Result<()> {
+        if self.inner.is_job_pending() {
+            loop {
+                let result = self.inner.execute_pending_job();
+                if let Ok(false) = result {
+                    break;
+                }
+
+                if let Err(e) = result {
+                    bail!("{e}")
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Returns true if there are pending jobs in the queue.
+    pub fn has_pending_jobs(&self) -> bool {
+        self.inner.is_job_pending()
+    }
 }
 
 impl Default for Runtime {
-    /// Returns a [`Runtime`] with a default configuration. Panics if there's
-    /// an error.
+    /// Returns a [`Runtime`] with a default configuration.
+    ///
+    /// # Panics
+    /// This function panics if there is an error setting up the runtime.
     fn default() -> Self {
         Self::new(Config::default()).unwrap()
     }

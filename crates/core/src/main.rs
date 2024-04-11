@@ -1,4 +1,4 @@
-use javy::Runtime;
+use javy::{quickjs::Module, Runtime};
 use once_cell::sync::OnceCell;
 use std::io::{self, Read};
 use std::slice;
@@ -21,13 +21,23 @@ pub extern "C" fn init() {
 
     let mut contents = String::new();
     io::stdin().read_to_string(&mut contents).unwrap();
+
     let bytecode = runtime
         .context()
-        .compile_module("function.mjs", &contents)
+        // TODO: Should `function.mjs` be configurable instead?
+        .with(|this| {
+            unsafe { Module::unsafe_declare(this.clone(), FUNCTION_MODULE_NAME, contents) }?
+                .write_object_le()
+        })
         .unwrap();
 
     unsafe {
-        RUNTIME.set(runtime).unwrap();
+        // TODO: switch to `map_err` + `unwrap`?
+        match RUNTIME.set(runtime) {
+            // TODO: Comment why.
+            Err(_) => panic!("Could not pre-intialize Runtime"),
+            _ => {}
+        };
         BYTECODE.set(bytecode).unwrap();
     }
 }

@@ -1,4 +1,4 @@
-use javy::Runtime;
+use javy::{quickjs::Module, Runtime};
 use once_cell::sync::OnceCell;
 use std::slice;
 use std::str;
@@ -12,11 +12,16 @@ static mut COMPILE_SRC_RET_AREA: [u32; 2] = [0; 2];
 
 static mut RUNTIME: OnceCell<Runtime> = OnceCell::new();
 
-/// Used by Wizer to preinitialize the module
+/// Used by Wizer to preinitialize the module.
 #[export_name = "wizer.initialize"]
 pub extern "C" fn init() {
     let runtime = runtime::new_runtime().unwrap();
-    unsafe { RUNTIME.set(runtime).unwrap() };
+    unsafe {
+        match RUNTIME.set(runtime) {
+            Err(_) => panic!("Could not pre-initialize Runtime"),
+            _ => {}
+        }
+    };
 }
 
 /// Compiles JS source code to QuickJS bytecode.
@@ -37,15 +42,22 @@ pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -
     // Use fresh runtime to avoid depending on Wizened runtime
     let runtime = runtime::new_runtime().unwrap();
     let js_src = str::from_utf8(slice::from_raw_parts(js_src_ptr, js_src_len)).unwrap();
-    let bytecode = runtime
+
+    // TODO: Dedup this.
+    let bc = runtime
         .context()
-        .compile_module(FUNCTION_MODULE_NAME, js_src)
+        // TODO: Should `function.mjs` be configurable instead?
+        // Ideally it should pick-up the input file name.
+        .with(|this| {
+            unsafe { Module::unsafe_declare(this.clone(), FUNCTION_MODULE_NAME, js_src) }?
+                .write_object_le()
+        })
         .unwrap();
-    let bytecode_len = bytecode.len();
+
     // We need the bytecode buffer to live longer than this function so it can be read from memory
-    let bytecode_ptr = Box::leak(bytecode.into_boxed_slice()).as_ptr();
+    let bytecode_ptr = Box::leak(bc.clone().into_boxed_slice()).as_ptr();
     COMPILE_SRC_RET_AREA[0] = bytecode_ptr as u32;
-    COMPILE_SRC_RET_AREA[1] = bytecode_len.try_into().unwrap();
+    COMPILE_SRC_RET_AREA[1] = bc.len().try_into().unwrap();
     COMPILE_SRC_RET_AREA.as_ptr()
 }
 
