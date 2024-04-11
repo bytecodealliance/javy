@@ -36,8 +36,6 @@ impl CustomSection for SourceCodeSection {
 
 pub fn module_config() -> ModuleConfig {
     let mut config = ModuleConfig::new();
-    // TODO: configurable?
-    // Setting it to true will enable a better profiling experience.
     config.generate_name_section(false);
     config
 }

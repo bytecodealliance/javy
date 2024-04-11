@@ -37,7 +37,7 @@ fn extract_args<'a, 'js: 'a>(
     Ok((fd, data, offset, length))
 }
 
-fn write<'js>(args: Args<'js>) -> Result<Value<'js>> {
+fn write(args: Args<'_>) -> Result<Value<'_>> {
     enum Fd {
         Stdout,
         Stderr,
@@ -64,7 +64,6 @@ fn write<'js>(args: Args<'js>) -> Result<Value<'js>> {
         .as_bytes()
         .ok_or_else(|| anyhow!("Could not represent data as &[u8]"))?;
 
-    // TODO: Revisit the f64 to usize conversions.
     let offset = offset
         .as_number()
         .ok_or_else(|| anyhow!("offset must be a number"))? as usize;
@@ -90,7 +89,7 @@ fn write<'js>(args: Args<'js>) -> Result<Value<'js>> {
     Ok(Value::new_number(cx, n as f64))
 }
 
-fn read<'js>(args: Args<'js>) -> Result<Value<'js>> {
+fn read(args: Args<'_>) -> Result<Value<'_>> {
     let (cx, args) = args.release();
     let (fd, data, offset, length) = extract_args(&args, "Javy.IO.readSync")?;
 
@@ -117,7 +116,13 @@ fn read<'js>(args: Args<'js>) -> Result<Value<'js>> {
         .as_bytes()
         .ok_or_else(|| anyhow!("Could not represent data as &[u8]"))?;
 
-    // TODO: Comment on safety.
+    // Safety
+    // This is one of the unfortunate unsafe pieces of the APIs, which ideally
+    // should be revisited. In order to make this safe.
+    // This is unsafe only if the length of the buffer doesn't match the length
+    // and offset passed as arguments, the caller must ensure that this is true.
+    // We could make this API safe by changing the expectations of the
+    // JavaScript side of things in `io.js`.
     let dst = data.as_ptr() as *mut _;
     let dst: &mut [u8] = unsafe { std::slice::from_raw_parts_mut(dst, length) };
     let n = fd.read(&mut dst[offset..(offset + length)])?;
@@ -129,7 +134,6 @@ impl JSApiSet for StreamIO {
     fn register<'js>(&self, runtime: &Runtime, _config: &APIConfig) -> Result<()> {
         runtime.context().with(|this| {
             let globals = this.globals();
-            // TODO: Do we need this?
             if globals.get::<_, Object>("Javy").is_err() {
                 globals.set("Javy", Object::new(this.clone())?)?
             }

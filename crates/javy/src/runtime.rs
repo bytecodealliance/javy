@@ -1,14 +1,16 @@
 // use crate::quickjs::JSContextRef;
+use super::from_js_error;
 use anyhow::{bail, Result};
-use rquickjs::{Context, Runtime as QRuntime};
+use rquickjs::{Context, Module, Runtime as QRuntime};
 use std::mem::ManuallyDrop;
 
 use crate::Config;
 
-// TODO: Update documentation.
 /// A JavaScript Runtime.
 ///
-/// Provides a [`Self::context()`] method for working with the underlying [`JSContextRef`].
+/// Javy's [Runtime] holds a [rquickjs::Runtime] and [rquickjs::Context],
+/// and provides accessors these two propoerties which enable working with
+/// [rquickjs] APIs.
 ///
 /// ## Examples
 ///
@@ -17,30 +19,23 @@ use crate::Config;
 /// # use javy::{quickjs::JSValue, Runtime};
 /// let runtime = Runtime::default();
 /// let context = runtime.context();
-/// context
-///     .global_object()
-///     .unwrap()
-///     .set_property(
-///         "print",
-///         context
-///             .wrap_callback(move |_ctx, _this, args| {
-///                 let str = args
-///                     .first()
-///                     .ok_or(anyhow!("Need to pass an argument"))?
-///                     .to_string();
-///                 println!("{str}");
-///                 Ok(JSValue::Undefined)
-///             })
-///             .unwrap(),
-///     )
-///     .unwrap();
-/// context.eval_global("hello.js", "print('hello!');").unwrap();
+///
+///
+///
 /// ```
 pub struct Runtime {
     /// The QuickJS context.
     context: Context,
     /// The inner QuickJS runtime representation.
-    // TODO: Document why `ManuallyDrop`.
+    // We use `ManuallyDrop` to avoid incurring in the cost of dropping the
+    // [rquickjs::Runtime] and its associated objects, which takes a substantial
+    // time.
+    // This assumes that Javy is used for short-lived programs were the host
+    // will collect the instance's memory when execution ends, making these
+    // drops unnecessary.
+    //
+    // This might not be suitable for all use-cases, so we'll make this
+    // behaviour configurable.
     inner: ManuallyDrop<QRuntime>,
 }
 
@@ -49,9 +44,8 @@ impl Runtime {
     pub fn new(_config: Config) -> Result<Self> {
         let rt = ManuallyDrop::new(QRuntime::new()?);
 
-        // TODO: Make GC configurable?
+        // See comment above about configuring GC behaviour.
         rt.set_gc_threshold(usize::MAX);
-        // TODO: Add a comment here?
         let context = Context::full(&rt)?;
         Ok(Self { inner: rt, context })
     }
@@ -82,6 +76,15 @@ impl Runtime {
     /// Returns true if there are pending jobs in the queue.
     pub fn has_pending_jobs(&self) -> bool {
         self.inner.is_job_pending()
+    }
+
+    /// Compiles the given module to bytecode.
+    pub fn compile_to_bytecode(&self, name: &str, contents: &str) -> Result<Vec<u8>> {
+        self.context()
+            .with(|this| {
+                unsafe { Module::unsafe_declare(this.clone(), name, contents) }?.write_object_le()
+            })
+            .map_err(|e| self.context().with(|cx| from_js_error(cx.clone(), e)))
     }
 }
 

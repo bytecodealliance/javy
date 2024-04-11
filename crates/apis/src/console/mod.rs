@@ -14,7 +14,6 @@ pub use config::LogStream;
 
 mod config;
 
-// TODO: #[derive(Default)]
 pub(super) struct Console {}
 
 impl Console {
@@ -33,17 +32,11 @@ impl JSApiSet for Console {
     }
 }
 
-fn register_console<'js, T, U>(
-    context: &Context,
-    mut log_stream: T,
-    mut error_stream: U,
-) -> Result<()>
+fn register_console<T, U>(context: &Context, mut log_stream: T, mut error_stream: U) -> Result<()>
 where
     T: Write + 'static,
     U: Write + 'static,
 {
-    // TODO: Revisit the callback signatures, there's a possibility that we can
-    // actually convert from anyhow::Error to quickjs::Error.
     context.with(|this| {
         let globals = this.globals();
         let console = Object::new(this.clone())?;

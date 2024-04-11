@@ -29,8 +29,10 @@ impl JSApiSet for TextEncoding {
                     encode(hold!(cx.clone(), args)).map_err(|e| to_js_error(cx, e))
                 }),
             )?;
-            let mut opts = EvalOptions::default();
-            opts.strict = false;
+            let opts = EvalOptions {
+                strict: false,
+                ..Default::default()
+            };
             this.eval_with_options(include_str!("./text-encoding.js"), opts)?;
 
             Ok::<_, Error>(())
@@ -41,7 +43,7 @@ impl JSApiSet for TextEncoding {
 }
 
 /// Decode a UTF-8 byte buffer as a JavaScript String.
-fn decode<'js>(args: Args<'js>) -> Result<Value<'js>> {
+fn decode(args: Args<'_>) -> Result<Value<'_>> {
     let (cx, args) = args.release();
     if args.len() != 5 {
         bail!(
@@ -98,7 +100,7 @@ fn decode<'js>(args: Args<'js>) -> Result<Value<'js>> {
 }
 
 /// Encode a JavaScript String into a JavaScript UInt8Array.
-fn encode<'js>(args: Args<'js>) -> Result<Value<'js>> {
+fn encode(args: Args<'_>) -> Result<Value<'_>> {
     let (cx, args) = args.release();
     if args.len() != 1 {
         bail!("Wrong number of arguments. Expected 1. Got {}", args.len());

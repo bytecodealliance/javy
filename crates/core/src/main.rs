@@ -1,4 +1,5 @@
-use javy::{from_js_error, quickjs::Module, Runtime};
+use anyhow::anyhow;
+use javy::Runtime;
 use once_cell::sync::OnceCell;
 use std::io::{self, Read};
 use std::slice;
@@ -23,22 +24,16 @@ pub extern "C" fn init() {
     io::stdin().read_to_string(&mut contents).unwrap();
 
     let bytecode = runtime
-        .context()
-        // TODO: Should `function.mjs` be configurable instead?
-        .with(|this| {
-            unsafe { Module::unsafe_declare(this.clone(), FUNCTION_MODULE_NAME, contents) }?
-                .write_object_le()
-        })
-        .map_err(|e| runtime.context().with(|cx| from_js_error(cx.clone(), e)))
+        .compile_to_bytecode(FUNCTION_MODULE_NAME, &contents)
         .unwrap();
 
     unsafe {
-        // TODO: switch to `map_err` + `unwrap`?
-        match RUNTIME.set(runtime) {
-            // TODO: Comment why.
-            Err(_) => panic!("Could not pre-intialize Runtime"),
-            _ => {}
-        };
+        RUNTIME
+            .set(runtime)
+            // `set` requires `T` to implement `Debug` but quickjs::{Runtime,
+            // Context} don't.
+            .map_err(|_| anyhow!("Could not pre-initialize javy::Runtime"))
+            .unwrap();
         BYTECODE.set(bytecode).unwrap();
     }
 }

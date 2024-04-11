@@ -1,4 +1,5 @@
-use javy::{quickjs::Module, Runtime};
+use anyhow::anyhow;
+use javy::Runtime;
 use once_cell::sync::OnceCell;
 use std::slice;
 use std::str;
@@ -17,10 +18,12 @@ static mut RUNTIME: OnceCell<Runtime> = OnceCell::new();
 pub extern "C" fn init() {
     let runtime = runtime::new_runtime().unwrap();
     unsafe {
-        match RUNTIME.set(runtime) {
-            Err(_) => panic!("Could not pre-initialize Runtime"),
-            _ => {}
-        }
+        RUNTIME
+            .set(runtime)
+            // `set` requires `T` to implement `Debug` but quickjs::{Runtime,
+            // Context} don't.
+            .map_err(|_| anyhow!("Could not pre-initialize javy::Runtime"))
+            .unwrap();
     };
 }
 
@@ -43,21 +46,14 @@ pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -
     let runtime = runtime::new_runtime().unwrap();
     let js_src = str::from_utf8(slice::from_raw_parts(js_src_ptr, js_src_len)).unwrap();
 
-    // TODO: Dedup this.
-    let bc = runtime
-        .context()
-        // TODO: Should `function.mjs` be configurable instead?
-        // Ideally it should pick-up the input file name.
-        .with(|this| {
-            unsafe { Module::unsafe_declare(this.clone(), FUNCTION_MODULE_NAME, js_src) }?
-                .write_object_le()
-        })
+    let bytecode = runtime
+        .compile_to_bytecode(FUNCTION_MODULE_NAME, js_src)
         .unwrap();
 
     // We need the bytecode buffer to live longer than this function so it can be read from memory
-    let bytecode_ptr = Box::leak(bc.clone().into_boxed_slice()).as_ptr();
+    let bytecode_ptr = Box::leak(bytecode.clone().into_boxed_slice()).as_ptr();
     COMPILE_SRC_RET_AREA[0] = bytecode_ptr as u32;
-    COMPILE_SRC_RET_AREA[1] = bc.len().try_into().unwrap();
+    COMPILE_SRC_RET_AREA[1] = bytecode.len().try_into().unwrap();
     COMPILE_SRC_RET_AREA.as_ptr()
 }
 
