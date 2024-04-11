@@ -2,28 +2,29 @@
 //!
 //! Example usage:
 //! ```
-//! # use anyhow::anyhow;
-//! # use javy::{quickjs::JSValue, Runtime};
+//! use anyhow::anyhow;
+//! use javy::{Runtime, from_js_error};
 //! let runtime = Runtime::default();
 //! let context = runtime.context();
-//! context
-//!     .global_object()
-//!     .unwrap()
-//!     .set_property(
-//!         "print",
-//!         context
-//!             .wrap_callback(move |_ctx, _this, args| {
-//!                 let str = args
-//!                     .first()
-//!                     .ok_or(anyhow!("Need to pass an argument"))?
-//!                     .to_string();
-//!                 println!("{str}");
-//!                 Ok(JSValue::Undefined)
-//!             })
-//!             .unwrap(),
-//!     )
-//!     .unwrap();
-//! context.eval_global("hello.js", "print('hello!');").unwrap();
+//!
+//! context.with(|cx| {
+//!     let globals = this.globals();
+//!     globals.set(
+//!         "print_hello",
+//!         Function::new(
+//!             this.clone(),
+//!             MutFn::new(move |_, _| {
+//!                 println!("Hello, world!");
+//!             }),
+//!         )?,
+//!     )?;
+//! });
+//!
+//! context.with(|cx| {
+//!     cx.eval_with_options(Default::default(), "print_hello();")
+//!         .map_err(|e| from_js_error(cx.clone(), e))
+//!         .map(|_| ())
+//! });
 //! ```
 //!
 //! ## Core concepts

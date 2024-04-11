@@ -45,7 +45,7 @@ pub fn invoke_function(runtime: &Runtime, fn_module: &str, fn_name: &str) {
                 global: false,
                 ..Default::default()
             };
-            this.eval_with_options::<Value<'_>, _>(js.into_bytes(), opts)
+            this.eval_with_options::<Value<'_>, _>(js, opts)
                 .map_err(|e| from_js_error(this.clone(), e))
                 .map(|_| ())
         })

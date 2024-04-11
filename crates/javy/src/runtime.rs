@@ -11,18 +11,6 @@ use crate::Config;
 /// Javy's [Runtime] holds a [rquickjs::Runtime] and [rquickjs::Context],
 /// and provides accessors these two propoerties which enable working with
 /// [rquickjs] APIs.
-///
-/// ## Examples
-///
-/// ```
-/// # use anyhow::anyhow;
-/// # use javy::{quickjs::JSValue, Runtime};
-/// let runtime = Runtime::default();
-/// let context = runtime.context();
-///
-///
-///
-/// ```
 pub struct Runtime {
     /// The QuickJS context.
     context: Context,
