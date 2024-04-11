@@ -1,4 +1,4 @@
-use javy::{quickjs::Module, Runtime};
+use javy::{from_js_error, quickjs::Module, Runtime};
 use once_cell::sync::OnceCell;
 use std::io::{self, Read};
 use std::slice;
@@ -29,6 +29,7 @@ pub extern "C" fn init() {
             unsafe { Module::unsafe_declare(this.clone(), FUNCTION_MODULE_NAME, contents) }?
                 .write_object_le()
         })
+        .map_err(|e| runtime.context().with(|cx| from_js_error(cx.clone(), e)))
         .unwrap();
 
     unsafe {

@@ -3,7 +3,7 @@ use std::str;
 use anyhow::{anyhow, bail, Error, Result};
 use javy::{
     hold, hold_and_release,
-    quickjs::{context::EvalOptions, Function, String as JSString, TypedArray, Value},
+    quickjs::{context::EvalOptions, Exception, Function, String as JSString, TypedArray, Value},
     to_js_error, Args, Runtime,
 };
 
@@ -86,7 +86,8 @@ fn decode<'js>(args: Args<'js>) -> Result<Value<'js>> {
     let js_string = if fatal {
         JSString::from_str(
             cx.clone(),
-            str::from_utf8(view).map_err(|_| anyhow!("The encoded data was not valid utf-8"))?,
+            str::from_utf8(view)
+                .map_err(|_| Exception::throw_type(&cx, "The encoded data was not valid utf-8"))?,
         )
     } else {
         let str = String::from_utf8_lossy(view);

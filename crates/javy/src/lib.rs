@@ -60,7 +60,7 @@ pub mod json;
 /// Print the given JS value.
 ///
 /// The implementation matches the default JavaScript display format for each value.
-pub fn print<'js>(val: &Value<'js>, sink: &mut String) -> Result<()> {
+pub fn print(val: &Value, sink: &mut String) -> Result<()> {
     match val.type_of() {
         Type::Undefined => write!(sink, "undefined").map_err(Into::into),
         Type::Null => write!(sink, "null").map_err(Into::into),
@@ -89,7 +89,7 @@ pub fn print<'js>(val: &Value<'js>, sink: &mut String) -> Result<()> {
         }
         Type::Object => write!(sink, "[object Object]").map_err(Into::into),
         // TODO: Implement the rest.
-        _ => unimplemented!(),
+        x => unimplemented!("{x}"),
     }
 }
 
@@ -113,7 +113,7 @@ impl<'js> Args<'js> {
     }
 }
 
-/// Alias for `Args::hold(cx, args).release()
+/// Alias for `Args::hold(cx, args).release()`
 #[macro_export]
 macro_rules! hold_and_release {
     ($cx:expr, $args:expr) => {
@@ -121,7 +121,7 @@ macro_rules! hold_and_release {
     };
 }
 
-/// Alias for `Args::hold(cx, args)
+/// Alias for [Args::hold]
 #[macro_export]
 macro_rules! hold {
     ($cx:expr, $args:expr) => {
