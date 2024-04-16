@@ -3,7 +3,7 @@ use std::io::{Read, Stdin, Write};
 
 use javy::{
     hold, hold_and_release,
-    quickjs::{Function, Object, Value},
+    quickjs::{qjs::JS_GetArrayBuffer, Function, Object, Value},
     to_js_error, Args, Runtime,
 };
 
@@ -59,8 +59,8 @@ fn write(args: Args<'_>) -> Result<Value<'_>> {
     let data = data
         .as_object()
         .ok_or_else(|| anyhow!("Data must be an Object"))?
-        .as_typed_array::<u8>()
-        .ok_or_else(|| anyhow!("Data must be a UInt8Array"))?
+        .as_array_buffer()
+        .ok_or_else(|| anyhow!("Data must be an ArrayBuffer"))?
         .as_bytes()
         .ok_or_else(|| anyhow!("Could not represent data as &[u8]"))?;
 
@@ -108,24 +108,26 @@ fn read(args: Args<'_>) -> Result<Value<'_>> {
         .as_number()
         .ok_or_else(|| anyhow!("length must be a number"))? as usize;
 
-    let data = data
-        .as_object()
-        .ok_or_else(|| anyhow!("Data must be an Object"))?
-        .as_typed_array::<u8>()
-        .ok_or_else(|| anyhow!("Data must be a UInt8Array"))?
-        .as_bytes()
-        .ok_or_else(|| anyhow!("Could not represent data as &[u8]"))?;
-
     // Safety
     // This is one of the unfortunate unsafe pieces of the APIs, currently.
+    // This is a port of the previous implementation.
     // This should ideally be revisited in order to make it safe.
     // This is unsafe only if the length of the buffer doesn't match the length
     // and offset passed as arguments, the caller must ensure that this is true.
     // We could make this API safe by changing the expectations of the
     // JavaScript side of things in `io.js`.
-    let dst = data.as_ptr() as *mut _;
-    let dst: &mut [u8] = unsafe { std::slice::from_raw_parts_mut(dst, length) };
-    let n = fd.read(&mut dst[offset..(offset + length)])?;
+    let data = unsafe {
+        let mut len = 0;
+        let ptr = JS_GetArrayBuffer(cx.as_raw().as_ptr(), &mut len, data.as_raw());
+        if ptr.is_null() {
+            bail!("Data must be an ArrayBuffer");
+        }
+
+        Ok::<_, Error>(std::slice::from_raw_parts_mut(ptr, len as _))
+    }?;
+
+    let data = &mut data[offset..(offset + length)];
+    let n = fd.read(data)?;
 
     Ok(Value::new_number(cx, n as f64))
 }
