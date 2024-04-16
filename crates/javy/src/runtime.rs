@@ -16,9 +16,9 @@ pub struct Runtime {
     context: Context,
     /// The inner QuickJS runtime representation.
     // We use `ManuallyDrop` to avoid incurring in the cost of dropping the
-    // [rquickjs::Runtime] and its associated objects, which takes a substantial
+    // `rquickjs::Runtime` and its associated objects, which takes a substantial
     // time.
-    // This assumes that Javy is used for short-lived programs were the host
+    // This assumes that Javy is used for short-lived programs where the host
     // will collect the instance's memory when execution ends, making these
     // drops unnecessary.
     //

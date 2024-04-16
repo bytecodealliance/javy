@@ -51,9 +51,10 @@ pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -
         .unwrap();
 
     // We need the bytecode buffer to live longer than this function so it can be read from memory
-    let bytecode_ptr = Box::leak(bytecode.clone().into_boxed_slice()).as_ptr();
+    let len = bytecode.len();
+    let bytecode_ptr = Box::leak(bytecode.into_boxed_slice()).as_ptr();
     COMPILE_SRC_RET_AREA[0] = bytecode_ptr as u32;
-    COMPILE_SRC_RET_AREA[1] = bytecode.len().try_into().unwrap();
+    COMPILE_SRC_RET_AREA[1] = len.try_into().unwrap();
     COMPILE_SRC_RET_AREA.as_ptr()
 }
 

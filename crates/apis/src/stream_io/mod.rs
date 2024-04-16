@@ -52,8 +52,7 @@ fn write(args: Args<'_>) -> Result<Value<'_>> {
         1 => Fd::Stdout,
         2 => Fd::Stderr,
         x => anyhow::bail!(
-            "Wrong file descriptor: {}. Only stdin(1) and stderr(2) are supported",
-            x
+            "Unsupported file descriptor: {x}. Only stdout(1) and stderr(2) are supported"
         ),
     };
     let data = data
@@ -98,7 +97,7 @@ fn read(args: Args<'_>) -> Result<Value<'_>> {
         .ok_or_else(|| anyhow!("File descriptor must be a number"))?
     {
         0 => std::io::stdin(),
-        x => anyhow::bail!("Wrong file descriptor: {}. Only stdin(1) is supported", x),
+        x => anyhow::bail!("Unsupported file descriptor: {x}. Only stdin(0) is supported"),
     };
 
     let offset = offset
