@@ -1479,9 +1479,10 @@ name = "javy"
 version = "2.2.1-alpha.1"
 dependencies = [
  "anyhow",
- "quickjs-wasm-rs",
+ "quickcheck",
  "rmp-serde",
  "rquickjs",
+ "serde",
  "serde-transcode",
  "serde_json",
 ]
