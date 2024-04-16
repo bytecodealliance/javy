@@ -117,8 +117,8 @@ fn read(args: Args<'_>) -> Result<Value<'_>> {
         .ok_or_else(|| anyhow!("Could not represent data as &[u8]"))?;
 
     // Safety
-    // This is one of the unfortunate unsafe pieces of the APIs, which ideally
-    // should be revisited. In order to make this safe.
+    // This is one of the unfortunate unsafe pieces of the APIs, currently.
+    // This should ideally be revisited in order to make it safe.
     // This is unsafe only if the length of the buffer doesn't match the length
     // and offset passed as arguments, the caller must ensure that this is true.
     // We could make this API safe by changing the expectations of the
