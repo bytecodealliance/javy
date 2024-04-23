@@ -13,10 +13,8 @@ use crate::Config;
 /// [rquickjs] APIs.
 pub struct Runtime {
     /// The QuickJS context.
-    context: Context,
-    /// The inner QuickJS runtime representation.
     // We use `ManuallyDrop` to avoid incurring in the cost of dropping the
-    // `rquickjs::Runtime` and its associated objects, which takes a substantial
+    // `rquickjs::Context` and its associated objects, which takes a substantial
     // amount of time.
     //
     // This assumes that Javy is used for short-lived programs where the host
@@ -25,6 +23,9 @@ pub struct Runtime {
     //
     // This might not be suitable for all use-cases, so we'll make this
     // behaviour configurable.
+    context: ManuallyDrop<Context>,
+    /// The inner QuickJS runtime representation.
+    // Read above on the usage of `ManuallyDrop`.
     inner: ManuallyDrop<QRuntime>,
 }
 
@@ -35,7 +36,7 @@ impl Runtime {
 
         // See comment above about configuring GC behaviour.
         rt.set_gc_threshold(usize::MAX);
-        let context = Context::full(&rt)?;
+        let context = ManuallyDrop::new(Context::full(&rt)?);
         Ok(Self { inner: rt, context })
     }
 
