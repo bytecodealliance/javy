@@ -8,9 +8,9 @@ use crate::Config;
 
 /// A JavaScript Runtime.
 ///
-/// Javy's [Runtime] holds a [rquickjs::Runtime] and [rquickjs::Context],
+/// Javy's [`Runtime`] holds a [`rquickjs::Runtime`] and [`rquickjs::Context`],
 /// and provides accessors these two propoerties which enable working with
-/// [rquickjs] APIs.
+/// [`rquickjs`] APIs.
 pub struct Runtime {
     /// The QuickJS context.
     // We use `ManuallyDrop` to avoid incurring in the cost of dropping the

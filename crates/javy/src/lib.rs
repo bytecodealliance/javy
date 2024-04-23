@@ -98,7 +98,7 @@ pub fn print(val: &Value, sink: &mut String) -> Result<()> {
     }
 }
 
-/// A struct to hold the current [Ctx] and [Value]s passed as arguments to Rust
+/// A struct to hold the current [`Ctx`] and [`Value`]s passed as arguments to Rust
 /// functions.
 /// A struct here is used to explicitly tie these values with a particular
 /// lifetime.
@@ -144,10 +144,10 @@ pub fn from_js_error(ctx: Ctx<'_>, e: JSError) -> Error {
     }
 }
 
-/// Converts an [anyhow::Error]  to a [JSError].
+/// Converts an [`anyhow::Error`]  to a [`JSError`].
 ///
-/// If the error is an [anyhow::Error] this function will construct and throw
-/// a JS [Exception] in order to construct the [JSError].
+/// If the error is an [`anyhow::Error`] this function will construct and throw
+/// a JS [`Exception`] in order to construct the [`JSError`].
 pub fn to_js_error(cx: Ctx, e: Error) -> JSError {
     match e.downcast::<JSError>() {
         Ok(e) => e,
