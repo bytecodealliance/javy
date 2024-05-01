@@ -34,7 +34,6 @@ audit-as-crates-io = false
 [policy.quickjs-wasm-sys]
 audit-as-crates-io = false
 
-# Temporary until we're off the fork.
 [policy.rquickjs]
 audit-as-crates-io = false
 
