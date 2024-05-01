@@ -36,10 +36,8 @@ mod tests {
         let runtime = Runtime::default();
         Random.register(&runtime, &APIConfig::default())?;
         runtime.context().with(|this| {
-            let eval_opts = EvalOptions {
-                strict: false,
-                ..Default::default()
-            };
+            let mut eval_opts = EvalOptions::default();
+            eval_opts.strict = false;
             this.eval_with_options("result = Math.random()", eval_opts)?;
             let result: f64 = this
                 .globals()

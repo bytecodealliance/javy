@@ -71,9 +71,7 @@ impl Runtime {
     /// Compiles the given module to bytecode.
     pub fn compile_to_bytecode(&self, name: &str, contents: &str) -> Result<Vec<u8>> {
         self.context()
-            .with(|this| {
-                unsafe { Module::unsafe_declare(this.clone(), name, contents) }?.write_object_le()
-            })
+            .with(|this| Module::declare(this.clone(), name, contents)?.write_le())
             .map_err(|e| self.context().with(|cx| from_js_error(cx.clone(), e)))
     }
 }

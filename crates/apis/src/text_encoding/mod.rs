@@ -28,10 +28,8 @@ impl JSApiSet for TextEncoding {
                     encode(hold!(cx.clone(), args)).map_err(|e| to_js_error(cx, e))
                 }),
             )?;
-            let opts = EvalOptions {
-                strict: false,
-                ..Default::default()
-            };
+            let mut opts = EvalOptions::default();
+            opts.strict = false;
             this.eval_with_options(include_str!("./text-encoding.js"), opts)?;
 
             Ok::<_, Error>(())

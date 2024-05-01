@@ -1,11 +1,17 @@
 use std::process;
 
-use anyhow::{bail, Error, Result};
+use anyhow::{anyhow, bail, Error, Result};
 use javy::{
     from_js_error,
     quickjs::{context::EvalOptions, Module, Value},
-    Runtime,
+    to_js_error, Runtime,
 };
+
+static EVENT_LOOP_ERR: &str = r#"
+                Pending jobs in the event queue.
+                Scheduling events is not supported when the 
+                experimental_event_loop cargo feature is disabled.
+            "#;
 
 /// Evaluate the given bytecode.
 ///
@@ -14,7 +20,21 @@ use javy::{
 pub fn run_bytecode(runtime: &Runtime, bytecode: &[u8]) {
     runtime
         .context()
-        .with(|this| Module::instantiate_read_object(this, bytecode).map(|_| ()))
+        .with(|this| {
+            let module = unsafe { Module::load(this.clone(), bytecode)? };
+            let (_, promise) = module.eval()?;
+
+            if cfg!(feature = "experimental_event_loop") {
+                // If the experimental event loop is enabled, trigger it.
+                promise.finish::<Value>().map(|_| ())
+            } else {
+                // Else we simply expect the promise to resolve immediately.
+                match promise.result() {
+                    None => Err(to_js_error(this, anyhow!(EVENT_LOOP_ERR))),
+                    Some(r) => r,
+                }
+            }
+        })
         .map_err(|e| runtime.context().with(|cx| from_js_error(cx.clone(), e)))
         // Prefer calling `process_event_loop` *outside* of the `with` callback,
         // to avoid errors regarding multiple mutable borrows.
@@ -38,13 +58,9 @@ pub fn invoke_function(runtime: &Runtime, fn_module: &str, fn_name: &str) {
     runtime
         .context()
         .with(|this| {
-            let opts = EvalOptions {
-                strict: false,
-                // We're assuming imports and exports, therefore we want to evaluate
-                // as a module.
-                global: false,
-                ..Default::default()
-            };
+            let mut opts = EvalOptions::default();
+            opts.strict = false;
+            opts.global = false;
             this.eval_with_options::<Value<'_>, _>(js, opts)
                 .map_err(|e| from_js_error(this.clone(), e))
                 .map(|_| ())
@@ -57,13 +73,7 @@ fn process_event_loop(rt: &Runtime) -> Result<()> {
     if cfg!(feature = "experimental_event_loop") {
         rt.resolve_pending_jobs()?
     } else if rt.has_pending_jobs() {
-        bail!(
-            r#"
-                Pending jobs in the event queue.
-                Scheduling events is not supported when the 
-                experimental_event_loop cargo feature is disabled.
-            "#
-        );
+        bail!(EVENT_LOOP_ERR);
     }
 
     Ok(())
