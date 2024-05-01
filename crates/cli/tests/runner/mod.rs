@@ -6,9 +6,9 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::{cmp, fs};
 use wasi_common::pipe::{ReadPipe, WritePipe};
+use wasi_common::sync::WasiCtxBuilder;
+use wasi_common::WasiCtx;
 use wasmtime::{Config, Engine, Linker, Module, OptLevel, Store};
-use wasmtime_wasi::sync::WasiCtxBuilder;
-use wasmtime_wasi::WasiCtx;
 
 pub struct Runner {
     pub wasm: Vec<u8>,
@@ -194,7 +194,7 @@ fn setup_engine() -> Engine {
 fn setup_linker(engine: &Engine) -> Linker<StoreContext> {
     let mut linker = Linker::new(engine);
 
-    wasmtime_wasi::sync::add_to_linker(&mut linker, |ctx: &mut StoreContext| &mut ctx.wasi)
+    wasi_common::sync::add_to_linker(&mut linker, |ctx: &mut StoreContext| &mut ctx.wasi)
         .expect("failed to add wasi context");
 
     linker

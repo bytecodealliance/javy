@@ -16,10 +16,10 @@ edition = "2021"
 license = "Apache-2.0 WITH LLVM-exception"
 
 [workspace.dependencies]
-wizer = "4.0.0"
-wasmtime = "16"
-wasmtime-wasi = "16"
-wasi-common = "16"
+wizer = "6.0.0"
+wasmtime = "19"
+wasmtime-wasi = "19"
+wasi-common = "19"
 anyhow = "1.0"
 once_cell = "1.19"
 javy = { path = "crates/javy", version = "2.2.1-alpha.1" }

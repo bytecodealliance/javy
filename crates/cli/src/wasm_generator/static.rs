@@ -2,10 +2,9 @@ use std::{collections::HashMap, fs, rc::Rc, sync::OnceLock};
 
 use anyhow::{anyhow, Result};
 use walrus::{DataKind, ExportItem, FunctionBuilder, FunctionId, MemoryId, ValType};
-use wasi_common::{pipe::ReadPipe, WasiCtx};
+use wasi_common::{pipe::ReadPipe, sync::WasiCtxBuilder, WasiCtx};
 use wasm_opt::{OptimizationOptions, ShrinkLevel};
 use wasmtime::Linker;
-use wasmtime_wasi::WasiCtxBuilder;
 use wizer::Wizer;
 
 use crate::{exports::Export, js::JS};
@@ -34,7 +33,7 @@ pub fn generate(js: &JS, exports: Vec<Export>, no_source_compression: bool) -> R
     let wasm = Wizer::new()
         .make_linker(Some(Rc::new(|engine| {
             let mut linker = Linker::new(engine);
-            wasmtime_wasi::add_to_linker(&mut linker, |_ctx: &mut Option<WasiCtx>| {
+            wasi_common::sync::add_to_linker(&mut linker, |_ctx: &mut Option<WasiCtx>| {
                 unsafe { WASI.get_mut() }.unwrap()
             })?;
             Ok(linker)

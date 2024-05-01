@@ -5,8 +5,9 @@ use std::process::Command;
 use std::str;
 use uuid::Uuid;
 use wasi_common::pipe::WritePipe;
-use wasmtime::{Config, Engine, ExternType, Linker, Module, Store, ValType};
-use wasmtime_wasi::{sync::WasiCtxBuilder, WasiCtx};
+use wasi_common::sync::WasiCtxBuilder;
+use wasi_common::WasiCtx;
+use wasmtime::{Config, Engine, ExternType, Linker, Module, Store};
 
 mod common;
 
@@ -54,11 +55,10 @@ pub fn check_for_new_imports() -> Result<()> {
     for import in module.imports() {
         match (import.module(), import.name(), import.ty()) {
             ("javy_quickjs_provider_v1", "canonical_abi_realloc", ExternType::Func(f))
-                if f.params()
-                    .eq([ValType::I32, ValType::I32, ValType::I32, ValType::I32])
-                    && f.results().eq([ValType::I32]) => {}
+                if f.params().map(|t| t.is_i32()).eq([true, true, true, true])
+                    && f.results().map(|t| t.is_i32()).eq([true]) => {}
             ("javy_quickjs_provider_v1", "eval_bytecode", ExternType::Func(f))
-                if f.params().eq([ValType::I32, ValType::I32]) && f.results().eq([]) => {}
+                if f.params().map(|t| t.is_i32()).eq([true, true]) && f.results().len() == 0 => {}
             ("javy_quickjs_provider_v1", "memory", ExternType::Memory(_)) => (),
             _ => panic!("Unknown import {:?}", import),
         }
@@ -83,15 +83,13 @@ pub fn check_for_new_imports_for_exports() -> Result<()> {
     for import in module.imports() {
         match (import.module(), import.name(), import.ty()) {
             ("javy_quickjs_provider_v1", "canonical_abi_realloc", ExternType::Func(f))
-                if f.params()
-                    .eq([ValType::I32, ValType::I32, ValType::I32, ValType::I32])
-                    && f.results().eq([ValType::I32]) => {}
+                if f.params().map(|t| t.is_i32()).eq([true, true, true, true])
+                    && f.results().map(|t| t.is_i32()).eq([true]) => {}
             ("javy_quickjs_provider_v1", "eval_bytecode", ExternType::Func(f))
-                if f.params().eq([ValType::I32, ValType::I32]) && f.results().eq([]) => {}
+                if f.params().map(|t| t.is_i32()).eq([true, true]) && f.results().len() == 0 => {}
             ("javy_quickjs_provider_v1", "invoke", ExternType::Func(f))
-                if f.params()
-                    .eq([ValType::I32, ValType::I32, ValType::I32, ValType::I32])
-                    && f.results().eq([]) => {}
+                if f.params().map(|t| t.is_i32()).eq([true, true, true, true])
+                    && f.results().len() == 0 => {}
             ("javy_quickjs_provider_v1", "memory", ExternType::Memory(_)) => (),
             _ => panic!("Unknown import {:?}", import),
         }
@@ -195,7 +193,7 @@ fn create_wasm_env(
 ) -> Result<(Engine, Linker<WasiCtx>, Store<WasiCtx>)> {
     let engine = Engine::new(Config::new().wasm_multi_memory(true))?;
     let mut linker = Linker::new(&engine);
-    wasmtime_wasi::add_to_linker(&mut linker, |s| s)?;
+    wasi_common::sync::add_to_linker(&mut linker, |s| s)?;
     let wasi = WasiCtxBuilder::new().stderr(Box::new(stderr)).build();
     let store = Store::new(&engine, wasi);
     Ok((engine, linker, store))
