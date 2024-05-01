@@ -34,6 +34,19 @@ audit-as-crates-io = false
 [policy.quickjs-wasm-sys]
 audit-as-crates-io = false
 
+# Temporary until we're off the fork.
+[policy.rquickjs]
+audit-as-crates-io = false
+
+[policy.rquickjs-core]
+audit-as-crates-io = false
+
+[policy.rquickjs-macro]
+audit-as-crates-io = false
+
+[policy.rquickjs-sys]
+audit-as-crates-io = false
+
 [[exemptions.Inflector]]
 version = "0.11.4"
 criteria = "safe-to-deploy"
@@ -148,10 +161,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.convert_case]]
 version = "0.6.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.core-foundation]]
-version = "0.9.4"
 criteria = "safe-to-deploy"
 
 [[exemptions.cpp_demangle]]
@@ -450,6 +459,10 @@ criteria = "safe-to-run"
 version = "0.2.16"
 criteria = "safe-to-deploy"
 
+[[exemptions.proc-macro-crate]]
+version = "1.3.1"
+criteria = "safe-to-deploy"
+
 [[exemptions.proc-macro-error]]
 version = "1.0.4"
 criteria = "safe-to-deploy"
@@ -470,24 +483,16 @@ criteria = "safe-to-deploy"
 version = "0.4.5"
 criteria = "safe-to-deploy"
 
+[[exemptions.relative-path]]
+version = "1.9.2"
+criteria = "safe-to-deploy"
+
 [[exemptions.rmp]]
 version = "0.8.12"
 criteria = "safe-to-deploy"
 
 [[exemptions.rmp-serde]]
 version = "1.1.2"
-criteria = "safe-to-deploy"
-
-[[exemptions.rquickjs]]
-version = "0.5.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.rquickjs-core]]
-version = "0.5.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.rquickjs-sys]]
-version = "0.5.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.rustc-demangle]]
@@ -646,16 +651,20 @@ criteria = "safe-to-deploy"
 version = "0.11.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.tinytemplate]]
-version = "1.2.1"
-criteria = "safe-to-run"
-
 [[exemptions.tinyvec_macros]]
 version = "0.1.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.toml]]
 version = "0.5.7"
+criteria = "safe-to-deploy"
+
+[[exemptions.toml_datetime]]
+version = "0.6.5"
+criteria = "safe-to-deploy"
+
+[[exemptions.toml_edit]]
+version = "0.19.15"
 criteria = "safe-to-deploy"
 
 [[exemptions.tower]]
@@ -772,6 +781,10 @@ criteria = "safe-to-deploy"
 
 [[exemptions.winapi-x86_64-pc-windows-gnu]]
 version = "0.4.0"
+criteria = "safe-to-deploy"
+
+[[exemptions.winnow]]
+version = "0.5.40"
 criteria = "safe-to-deploy"
 
 [[exemptions.witx]]
