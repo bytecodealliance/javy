@@ -107,11 +107,11 @@ version = "0.10.4"
 criteria = "safe-to-deploy"
 
 [[exemptions.brotli]]
-version = "3.5.0"
+version = "5.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.brotli-decompressor]]
-version = "2.5.1"
+version = "4.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.bumpalo]]
