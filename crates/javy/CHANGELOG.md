@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Introduce `rquickjs` to interface with QuickJS instead of `quickjs-wasm-rs`;
+  this version no longer includes re-exports from `quickjs-wasm-rs`. 
+
 ## [2.2.0] - 2024-01-31
 
 ### Fixed

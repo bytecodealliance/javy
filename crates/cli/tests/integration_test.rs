@@ -10,7 +10,7 @@ fn test_identity() {
 
     let (output, _, fuel_consumed) = run_with_u8s(&mut runner, 42);
     assert_eq!(42, output);
-    assert_fuel_consumed_within_threshold(37907, fuel_consumed);
+    assert_fuel_consumed_within_threshold(43239, fuel_consumed);
 }
 
 #[test]
@@ -46,7 +46,7 @@ fn test_encoding() {
 
     let (output, _, fuel_consumed) = run(&mut runner, "hello".as_bytes());
     assert_eq!("el".as_bytes(), output);
-    assert_fuel_consumed_within_threshold(258_852, fuel_consumed);
+    assert_fuel_consumed_within_threshold(218_527, fuel_consumed);
 
     let (output, _, _) = run(&mut runner, "invalid".as_bytes());
     assert_eq!("true".as_bytes(), output);
@@ -67,7 +67,7 @@ fn test_logging() {
         "hello world from console.log\nhello world from console.error\n",
         logs.as_str(),
     );
-    assert_fuel_consumed_within_threshold(22_296, fuel_consumed);
+    assert_fuel_consumed_within_threshold(34169, fuel_consumed);
 }
 
 #[test]
@@ -76,7 +76,7 @@ fn test_readme_script() {
 
     let (output, _, fuel_consumed) = run(&mut runner, r#"{ "n": 2, "bar": "baz" }"#.as_bytes());
     assert_eq!(r#"{"foo":3,"newBar":"baz!"}"#.as_bytes(), output);
-    assert_fuel_consumed_within_threshold(284_736, fuel_consumed);
+    assert_fuel_consumed_within_threshold(235_476, fuel_consumed);
 }
 
 #[cfg(feature = "experimental_event_loop")]
@@ -98,7 +98,7 @@ fn test_promises() {
     let err = res.err().unwrap().downcast::<RunnerError>().unwrap();
     assert!(str::from_utf8(&err.stderr)
         .unwrap()
-        .contains("Adding tasks to the event queue is not supported"));
+        .contains("Pending jobs in the event queue."));
 }
 
 #[test]
@@ -106,7 +106,7 @@ fn test_exported_functions() {
     let mut runner = Runner::new_with_exports("exported-fn.js", "exported-fn.wit", "exported-fn");
     let (_, logs, fuel_consumed) = run_fn(&mut runner, "foo", &[]);
     assert_eq!("Hello from top-level\nHello from foo\n", logs);
-    assert_fuel_consumed_within_threshold(54610, fuel_consumed);
+    assert_fuel_consumed_within_threshold(72552, fuel_consumed);
     let (_, logs, _) = run_fn(&mut runner, "foo-bar", &[]);
     assert_eq!("Hello from top-level\nHello from fooBar\n", logs);
 }
@@ -155,7 +155,7 @@ fn test_error_handling() {
     let result = runner.exec(&[]);
     let err = result.err().unwrap().downcast::<RunnerError>().unwrap();
 
-    let expected_log_output = "Error while running JS: Uncaught Error: error\n    at error (function.mjs:2)\n    at <anonymous> (function.mjs:5)\n\n";
+    let expected_log_output = "Error:2:9 error\n    at error (function.mjs:2:9)\n    at <anonymous> (function.mjs:5:1)\n\n";
 
     assert_eq!(expected_log_output, str::from_utf8(&err.stderr).unwrap());
 }
@@ -180,7 +180,7 @@ fn test_exported_default_arrow_fn() {
     );
     let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", &[]);
     assert_eq!(logs, "42\n");
-    assert_fuel_consumed_within_threshold(48_628, fuel_consumed);
+    assert_fuel_consumed_within_threshold(67547, fuel_consumed);
 }
 
 #[test]
@@ -192,7 +192,7 @@ fn test_exported_default_fn() {
     );
     let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", &[]);
     assert_eq!(logs, "42\n");
-    assert_fuel_consumed_within_threshold(49_748, fuel_consumed);
+    assert_fuel_consumed_within_threshold(67792, fuel_consumed);
 }
 
 fn run_with_u8s(r: &mut Runner, stdin: u8) -> (u8, String, u64) {

@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use javy::Runtime;
 use once_cell::sync::OnceCell;
 use std::io::{self, Read};
@@ -21,13 +22,18 @@ pub extern "C" fn init() {
 
     let mut contents = String::new();
     io::stdin().read_to_string(&mut contents).unwrap();
+
     let bytecode = runtime
-        .context()
-        .compile_module("function.mjs", &contents)
+        .compile_to_bytecode(FUNCTION_MODULE_NAME, &contents)
         .unwrap();
 
     unsafe {
-        RUNTIME.set(runtime).unwrap();
+        RUNTIME
+            .set(runtime)
+            // `set` requires `T` to implement `Debug` but quickjs::{Runtime,
+            // Context} don't.
+            .map_err(|_| anyhow!("Could not pre-initialize javy::Runtime"))
+            .unwrap();
         BYTECODE.set(bytecode).unwrap();
     }
 }

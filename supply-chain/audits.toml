@@ -57,12 +57,6 @@ user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2019-04-02"
 end = "2024-10-03"
 
-[[trusted.bumpalo]]
-criteria = "safe-to-deploy"
-user-id = 696 # Nick Fitzgerald (fitzgen)
-start = "2019-03-16"
-end = "2025-05-01"
-
 [[trusted.byteorder]]
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
@@ -243,6 +237,12 @@ user-id = 6825 # Dan Gohman (sunfishcode)
 start = "2021-06-12"
 end = "2024-07-25"
 
+[[trusted.is-terminal]]
+criteria = "safe-to-deploy"
+user-id = 6825 # Dan Gohman (sunfishcode)
+start = "2022-01-22"
+end = "2025-04-16"
+
 [[trusted.itoa]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
@@ -421,7 +421,7 @@ end = "2024-07-12"
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2023-01-20"
-end = "2025-05-01"
+end = "2025-05-02"
 
 [[trusted.smallvec]]
 criteria = "safe-to-deploy"
@@ -487,19 +487,19 @@ end = "2024-12-04"
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2022-12-14"
-end = "2025-05-01"
+end = "2025-05-02"
 
 [[trusted.toml_datetime]]
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2022-10-21"
-end = "2025-05-01"
+end = "2025-05-02"
 
 [[trusted.toml_edit]]
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2021-09-13"
-end = "2025-05-01"
+end = "2025-05-02"
 
 [[trusted.unicode-ident]]
 criteria = "safe-to-deploy"
@@ -547,7 +547,7 @@ end = "2025-01-03"
 criteria = "safe-to-deploy"
 user-id = 73222 # wasmtime-publish
 start = "2024-02-15"
-end = "2025-05-01"
+end = "2025-05-02"
 
 [[trusted.wasmparser]]
 criteria = "safe-to-deploy"
@@ -565,7 +565,7 @@ end = "2025-03-01"
 criteria = "safe-to-deploy"
 user-id = 73222 # wasmtime-publish
 start = "2024-03-20"
-end = "2025-05-01"
+end = "2025-05-02"
 
 [[trusted.wasmtime-versioned-export-macros]]
 criteria = "safe-to-deploy"
@@ -573,17 +573,11 @@ user-id = 73222 # wasmtime-publish
 start = "2023-08-21"
 end = "2025-01-03"
 
-[[trusted.wast]]
+[[trusted.web-sys]]
 criteria = "safe-to-deploy"
-user-id = 73222 # wasmtime-publish
-start = "2024-02-15"
-end = "2025-05-01"
-
-[[trusted.wat]]
-criteria = "safe-to-deploy"
-user-id = 73222 # wasmtime-publish
-start = "2024-02-15"
-end = "2025-05-01"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2019-03-04"
+end = "2025-04-16"
 
 [[trusted.winapi-util]]
 criteria = "safe-to-deploy"
@@ -655,7 +649,7 @@ end = "2025-01-02"
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2023-02-22"
-end = "2025-05-01"
+end = "2025-05-02"
 
 [[trusted.winx]]
 criteria = "safe-to-deploy"
