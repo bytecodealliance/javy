@@ -71,7 +71,7 @@ version = "0.12.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.ast_node]]
-version = "0.9.6"
+version = "0.9.8"
 criteria = "safe-to-deploy"
 
 [[exemptions.backtrace]]
@@ -135,7 +135,7 @@ version = "0.3.0"
 criteria = "safe-to-run"
 
 [[exemptions.cc]]
-version = "1.0.92"
+version = "1.0.96"
 criteria = "safe-to-deploy"
 
 [[exemptions.ciborium]]
@@ -231,11 +231,11 @@ version = "0.2.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.fastrand]]
-version = "2.0.2"
+version = "2.1.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.from_variant]]
-version = "0.1.7"
+version = "0.1.8"
 criteria = "safe-to-deploy"
 
 [[exemptions.funty]]
@@ -339,7 +339,7 @@ version = "0.10.3"
 criteria = "safe-to-deploy"
 
 [[exemptions.jobserver]]
-version = "0.1.28"
+version = "0.1.31"
 criteria = "safe-to-deploy"
 
 [[exemptions.lazycell]]
@@ -487,11 +487,11 @@ version = "1.9.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.rmp]]
-version = "0.8.12"
+version = "0.8.14"
 criteria = "safe-to-deploy"
 
 [[exemptions.rmp-serde]]
-version = "1.1.2"
+version = "1.3.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.rustc-demangle]]
@@ -579,7 +579,7 @@ version = "0.1.15"
 criteria = "safe-to-deploy"
 
 [[exemptions.string_enum]]
-version = "0.4.2"
+version = "0.4.4"
 criteria = "safe-to-deploy"
 
 [[exemptions.strsim]]
@@ -599,31 +599,31 @@ version = "0.6.6"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_common]]
-version = "0.33.22"
+version = "0.33.26"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_core]]
-version = "0.90.30"
+version = "0.91.3"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_ast]]
-version = "0.112.7"
+version = "0.113.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_parser]]
-version = "0.143.13"
+version = "0.144.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_transforms_base]]
-version = "0.137.17"
+version = "0.138.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_utils]]
-version = "0.127.17"
+version = "0.128.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_visit]]
-version = "0.98.7"
+version = "0.99.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_eq_ignore_macros]]
@@ -631,15 +631,15 @@ version = "0.1.3"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_macros_common]]
-version = "0.3.9"
+version = "0.3.11"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_visit]]
-version = "0.5.13"
+version = "0.5.14"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_visit_macros]]
-version = "0.5.11"
+version = "0.5.12"
 criteria = "safe-to-deploy"
 
 [[exemptions.tempfile]]
