@@ -22,7 +22,7 @@ wasmtime-wasi = "16"
 wasi-common = "16"
 anyhow = "1.0"
 once_cell = "1.19"
-javy = { path = "crates/javy", version = "2.2.1-alpha.1" }
+javy = { path = "crates/javy", version = "3.0.0-alpha.1" }
 
 [profile.release]
 lto = true

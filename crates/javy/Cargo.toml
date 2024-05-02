@@ -1,6 +1,6 @@
 [package]
 name = "javy"
-version = "2.2.1-alpha.1"
+version = "3.0.0-alpha.1"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -11,10 +11,14 @@ categories = ["wasm"]
 
 [dependencies]
 anyhow = { workspace = true }
-quickjs-wasm-rs = { version = "3.1.0-alpha.1", path = "../quickjs-wasm-rs" }
+rquickjs = { git = "https://github.com/Shopify/rquickjs", branch = "improved-wasm-support", features = ["array-buffer", "bindgen", "no-free"] }
+serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", optional = true }
 serde-transcode = { version = "1.1", optional = true }
 rmp-serde = { version = "^1.1", optional = true }
+# TODO: cargo doesn't seem to pickup the fact that quickcheck is only used for
+# tests.
+quickcheck = "1"
 
 [features]
 export_alloc_fns = []
