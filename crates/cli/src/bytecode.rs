@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Result};
+use wasi_common::{sync::WasiCtxBuilder, WasiCtx};
 use wasmtime::{Engine, Instance, Linker, Memory, Module, Store};
-use wasmtime_wasi::{WasiCtx, WasiCtxBuilder};
 
 pub const QUICKJS_PROVIDER_MODULE: &[u8] =
     include_bytes!(concat!(env!("OUT_DIR"), "/provider.wasm"));
@@ -18,7 +18,10 @@ fn create_wasm_env() -> Result<(Store<WasiCtx>, Instance, Memory)> {
     let engine = Engine::default();
     let module = Module::new(&engine, QUICKJS_PROVIDER_MODULE)?;
     let mut linker = Linker::new(&engine);
-    wasmtime_wasi::snapshots::preview_1::add_wasi_snapshot_preview1_to_linker(&mut linker, |s| s)?;
+    wasi_common::sync::snapshots::preview_1::add_wasi_snapshot_preview1_to_linker(
+        &mut linker,
+        |s| s,
+    )?;
     let wasi = WasiCtxBuilder::new().inherit_stderr().build();
     let mut store = Store::new(&engine, wasi);
     let instance = linker.instantiate(&mut store, &module)?;

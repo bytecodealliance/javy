@@ -1,9 +1,8 @@
 use anyhow::Result;
 use std::boxed::Box;
 use std::str;
-use wasi_common::{pipe::WritePipe, WasiFile};
+use wasi_common::{pipe::WritePipe, sync::WasiCtxBuilder, WasiCtx, WasiFile};
 use wasmtime::{Engine, Instance, Linker, Store};
-use wasmtime_wasi::{sync::WasiCtxBuilder, WasiCtx};
 
 mod common;
 
@@ -78,7 +77,7 @@ fn create_wasm_env<T: WasiFile + Clone + 'static>(
 ) -> Result<(Instance, Store<WasiCtx>)> {
     let engine = Engine::default();
     let mut linker = Linker::new(&engine);
-    wasmtime_wasi::add_to_linker(&mut linker, |s| s)?;
+    wasi_common::sync::add_to_linker(&mut linker, |s| s)?;
     let wasi = WasiCtxBuilder::new()
         .stderr(Box::new(stderr.clone()))
         .build();

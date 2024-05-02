@@ -4,10 +4,10 @@ use num_format::{Locale, ToFormattedString};
 use std::{fmt::Display, fs, path::Path, process::Command};
 use wasi_common::{
     pipe::{ReadPipe, WritePipe},
+    sync::WasiCtxBuilder,
     WasiCtx,
 };
 use wasmtime::{Engine, Linker, Module, Store};
-use wasmtime_wasi::sync::WasiCtxBuilder;
 
 struct FunctionCase {
     name: String,
@@ -110,7 +110,7 @@ impl FunctionCase {
             .stdout(Box::new(WritePipe::new_in_memory()))
             .stderr(Box::new(WritePipe::new_in_memory()))
             .build();
-        wasmtime_wasi::add_to_linker(&mut linker, |s| s).unwrap();
+        wasi_common::sync::add_to_linker(&mut linker, |s| s).unwrap();
         let mut store = Store::new(&self.engine, wasi);
 
         if let Linking::Dynamic = self.linking {

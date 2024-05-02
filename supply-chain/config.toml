@@ -654,18 +654,6 @@ criteria = "safe-to-deploy"
 version = "0.1.1"
 criteria = "safe-to-deploy"
 
-[[exemptions.toml]]
-version = "0.5.7"
-criteria = "safe-to-deploy"
-
-[[exemptions.toml_datetime]]
-version = "0.6.5"
-criteria = "safe-to-deploy"
-
-[[exemptions.toml_edit]]
-version = "0.19.15"
-criteria = "safe-to-deploy"
-
 [[exemptions.tower]]
 version = "0.4.13"
 criteria = "safe-to-deploy"
@@ -742,10 +730,6 @@ criteria = "safe-to-deploy"
 version = "0.2.92"
 criteria = "safe-to-deploy"
 
-[[exemptions.wasm-encoder]]
-version = "0.202.0"
-criteria = "safe-to-deploy"
-
 [[exemptions.wasm-opt]]
 version = "0.116.1"
 criteria = "safe-to-deploy"
@@ -782,10 +766,6 @@ criteria = "safe-to-deploy"
 version = "0.4.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.winnow]]
-version = "0.5.40"
-criteria = "safe-to-deploy"
-
 [[exemptions.witx]]
 version = "0.9.1"
 criteria = "safe-to-deploy"
@@ -803,11 +783,11 @@ version = "0.7.32"
 criteria = "safe-to-deploy"
 
 [[exemptions.zstd]]
-version = "0.11.2+zstd.1.5.2"
+version = "0.13.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.zstd-safe]]
-version = "5.0.2+zstd.1.5.2"
+version = "7.1.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.zstd-sys]]

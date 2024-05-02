@@ -417,6 +417,12 @@ user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-02-28"
 end = "2024-07-12"
 
+[[trusted.serde_spanned]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2023-01-20"
+end = "2025-05-02"
+
 [[trusted.smallvec]]
 criteria = "safe-to-deploy"
 user-id = 2017 # Matt Brubeck (mbrubeck)
@@ -477,6 +483,24 @@ user-id = 10 # Carl Lerche (carllerche)
 start = "2019-04-24"
 end = "2024-12-04"
 
+[[trusted.toml]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2022-12-14"
+end = "2025-05-02"
+
+[[trusted.toml_datetime]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2022-10-21"
+end = "2025-05-02"
+
+[[trusted.toml_edit]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2021-09-13"
+end = "2025-05-02"
+
 [[trusted.unicode-ident]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
@@ -519,6 +543,12 @@ user-id = 1 # Alex Crichton (alexcrichton)
 start = "2019-03-04"
 end = "2025-01-03"
 
+[[trusted.wasm-encoder]]
+criteria = "safe-to-deploy"
+user-id = 73222 # wasmtime-publish
+start = "2024-02-15"
+end = "2025-05-02"
+
 [[trusted.wasmparser]]
 criteria = "safe-to-deploy"
 user-id = 73222 # wasmtime-publish
@@ -530,6 +560,12 @@ criteria = "safe-to-deploy"
 user-id = 73222 # wasmtime-publish
 start = "2024-02-15"
 end = "2025-03-01"
+
+[[trusted.wasmtime-slab]]
+criteria = "safe-to-deploy"
+user-id = 73222 # wasmtime-publish
+start = "2024-03-20"
+end = "2025-05-02"
 
 [[trusted.wasmtime-versioned-export-macros]]
 criteria = "safe-to-deploy"
@@ -608,6 +644,12 @@ criteria = "safe-to-deploy"
 user-id = 64539 # Kenny Kerr (kennykerr)
 start = "2021-10-27"
 end = "2025-01-02"
+
+[[trusted.winnow]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2023-02-22"
+end = "2025-05-02"
 
 [[trusted.winx]]
 criteria = "safe-to-deploy"
