@@ -12,10 +12,10 @@ use walrus::{DataKind, FunctionBuilder, Module, ValType};
 //    (type (;1;) (func (param i32 i32)))
 //    (type (;2;) (func (param i32 i32 i32 i32)))
 //    (type (;3;) (func (param i32 i32 i32 i32) (result i32)))
-//    (import "javy_quickjs_provider_v1" "canonical_abi_realloc" (func (;0;) (type 3)))
-//    (import "javy_quickjs_provider_v1" "eval_bytecode" (func (;1;) (type 1)))
-//    (import "javy_quickjs_provider_v1" "memory" (memory (;0;) 0))
-//    (import "javy_quickjs_provider_v1" "invoke" (func (;2;) (type 2)))
+//    (import "javy_quickjs_provider_v2" "canonical_abi_realloc" (func (;0;) (type 3)))
+//    (import "javy_quickjs_provider_v2" "eval_bytecode" (func (;1;) (type 1)))
+//    (import "javy_quickjs_provider_v2" "memory" (memory (;0;) 0))
+//    (import "javy_quickjs_provider_v2" "invoke" (func (;2;) (type 2)))
 //    (func (;3;) (type 0)
 //      (local i32 i32)
 //      i32.const 0
@@ -71,7 +71,7 @@ pub fn generate(
 ) -> Result<Vec<u8>> {
     let mut module = Module::with_config(transform::module_config());
 
-    const IMPORT_NAMESPACE: &str = "javy_quickjs_provider_v1";
+    const IMPORT_NAMESPACE: &str = "javy_quickjs_provider_v2";
 
     let canonical_abi_realloc_type = module.types.add(
         &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
