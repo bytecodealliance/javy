@@ -22,3 +22,6 @@ serde_bytes = "0.11.14"
 [features]
 # Re-exports the quickjs-wasm-sys module and exposes additional, unstable APIs.
 export-sys = []
+
+[badges]
+maintenance = { status = "deprecated" }
