@@ -22,7 +22,6 @@
 //!    })?,
 //! )?;
 //! context.eval_global("hello.js", "print('hello!');")?;
-//! # Ok::<(), Error>(())
 //! ```
 //!
 //! If you want to customize the runtime or the APIs, you can use the
