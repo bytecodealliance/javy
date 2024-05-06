@@ -54,12 +54,12 @@ pub fn check_for_new_imports() -> Result<()> {
     let module = Module::from_binary(&engine, &wasm)?;
     for import in module.imports() {
         match (import.module(), import.name(), import.ty()) {
-            ("javy_quickjs_provider_v1", "canonical_abi_realloc", ExternType::Func(f))
+            ("javy_quickjs_provider_v2", "canonical_abi_realloc", ExternType::Func(f))
                 if f.params().map(|t| t.is_i32()).eq([true, true, true, true])
                     && f.results().map(|t| t.is_i32()).eq([true]) => {}
-            ("javy_quickjs_provider_v1", "eval_bytecode", ExternType::Func(f))
+            ("javy_quickjs_provider_v2", "eval_bytecode", ExternType::Func(f))
                 if f.params().map(|t| t.is_i32()).eq([true, true]) && f.results().len() == 0 => {}
-            ("javy_quickjs_provider_v1", "memory", ExternType::Memory(_)) => (),
+            ("javy_quickjs_provider_v2", "memory", ExternType::Memory(_)) => (),
             _ => panic!("Unknown import {:?}", import),
         }
     }
@@ -82,15 +82,15 @@ pub fn check_for_new_imports_for_exports() -> Result<()> {
     let module = Module::from_binary(&engine, &wasm)?;
     for import in module.imports() {
         match (import.module(), import.name(), import.ty()) {
-            ("javy_quickjs_provider_v1", "canonical_abi_realloc", ExternType::Func(f))
+            ("javy_quickjs_provider_v2", "canonical_abi_realloc", ExternType::Func(f))
                 if f.params().map(|t| t.is_i32()).eq([true, true, true, true])
                     && f.results().map(|t| t.is_i32()).eq([true]) => {}
-            ("javy_quickjs_provider_v1", "eval_bytecode", ExternType::Func(f))
+            ("javy_quickjs_provider_v2", "eval_bytecode", ExternType::Func(f))
                 if f.params().map(|t| t.is_i32()).eq([true, true]) && f.results().len() == 0 => {}
-            ("javy_quickjs_provider_v1", "invoke", ExternType::Func(f))
+            ("javy_quickjs_provider_v2", "invoke", ExternType::Func(f))
                 if f.params().map(|t| t.is_i32()).eq([true, true, true, true])
                     && f.results().len() == 0 => {}
-            ("javy_quickjs_provider_v1", "memory", ExternType::Memory(_)) => (),
+            ("javy_quickjs_provider_v2", "memory", ExternType::Memory(_)) => (),
             _ => panic!("Unknown import {:?}", import),
         }
     }
@@ -175,7 +175,7 @@ fn invoke_fn_on_generated_module(
     let quickjs_provider_instance = linker.instantiate(&mut store, &quickjs_provider_module)?;
     linker.instance(
         &mut store,
-        "javy_quickjs_provider_v1",
+        "javy_quickjs_provider_v2",
         quickjs_provider_instance,
     )?;
     let js_instance = linker.instantiate(&mut store, &js_module)?;
