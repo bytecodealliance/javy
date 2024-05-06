@@ -1,6 +1,6 @@
-//! JS APIs for Javy.
+//! A collection of APIs for Javy.
 //!
-//! This crate provides JS APIs you can add to Javy.
+//! APIs are enabled through cargo features.
 //!
 //! Example usage:
 //! ```
@@ -30,17 +30,18 @@
 //! for the underlying [`Runtime`] or an [`APIConfig`] for the APIs.
 //!
 //! ## Features
-//! * `console` - Registers an implementation of the `console` API.
-//! * `text_encoding` - Registers implementations of `TextEncoder` and `TextDecoder`.
-//! * `random` - Overrides the implementation of `Math.random` to one that
-//!   seeds the RNG on first call to `Math.random`. This is helpful to enable
-//!   when using Wizer to snapshot a [`javy::Runtime`] so that the output of
-//!   `Math.random` relies on the WASI context used at runtime and not the
-//!   WASI context used when Wizening. Enabling this feature will increase the
-//!   size of the Wasm module that includes the Javy Runtime and will
-//!   introduce an additional hostcall invocation when `Math.random` is
-//!   invoked for the first time.
-//! * `stream_io` - Registers implementations of `Javy.IO.readSync` and `Javy.IO.writeSync`.
+//! * `console`:  Adds an implementation of the `console.log` and `console.error`,
+//! enabling the configuration of the standard streams.
+//! * `text_encoding`:  Registers implementations of `TextEncoder` and `TextDecoder`.
+//! * `random`: Overrides the implementation of `Math.random` to one that seeds
+//! the RNG on first call to `Math.random`. This is helpful to enable when using
+//! using a tool like Wizer to snapshot a [`Runtime`] so that the output of
+//! `Math.random` relies on the WASI context used at runtime and not the WASI
+//! context used when Wizening. Enabling this feature will increase the size of
+//! the Wasm module that includes the Javy Runtime and will introduce an
+//! additional hostcall invocation when `Math.random` is invoked for the first
+//! time.
+//! * `stream_io`: Adds the implementation of `Javy.IO.readSync` and `Javy.IO.writeSync`.
 
 use anyhow::Result;
 use javy::Runtime;
