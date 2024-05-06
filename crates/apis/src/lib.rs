@@ -41,7 +41,7 @@
 //! the Wasm module that includes the Javy Runtime and will introduce an
 //! additional hostcall invocation when `Math.random` is invoked for the first
 //! time.
-//! * `stream_io`: Adds the implementation of `Javy.IO.readSync` and `Javy.IO.writeSync`.
+//! * `stream_io`: Adds an implementation of `Javy.IO.readSync` and `Javy.IO.writeSync`.
 
 use anyhow::Result;
 use javy::Runtime;
