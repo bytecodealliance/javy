@@ -3,25 +3,23 @@
 //! APIs are enabled through cargo features.
 //!
 //! Example usage:
-//! ```
-//! # use anyhow::{anyhow, Error, Result};
-//! use javy::{quickjs::JSValue, Runtime};
-//! use javy_apis::RuntimeExt;
+//! ```rust
 //!
-//! let runtime = Runtime::new_with_defaults()?;
-//! let context = runtime.context();
-//! context.global_object()?.set_property(
-//!    "print",
-//!    context.wrap_callback(move |_ctx, _this, args| {
-//!        let str = args
-//!            .first()
-//!            .ok_or(anyhow!("Need to pass an argument"))?
-//!            .to_string();
-//!        println!("{str}");
-//!        Ok(JSValue::Undefined)
-//!    })?,
-//! )?;
-//! context.eval_global("hello.js", "print('hello!');")?;
+//! //With the `console` feature enabled.
+//! use javy::{Runtime, from_js_error};
+//! use javy_apis::RuntimeExt;
+//! use anyhow::Result;
+//!
+//! fn main() -> Result<()> {
+//!     let runtime = Runtime::new_with_defaults()?;
+//!     let context = runtime.context();
+//!     context.with(|cx| {
+//!         cx.eval_with_options(Default::default(), "console.log('hello!');")
+//!             .map_err(|e| to_js_error(cx.clone(), e))?
+//!     });
+//!     Ok(())
+//! }
+//!
 //! ```
 //!
 //! If you want to customize the runtime or the APIs, you can use the
