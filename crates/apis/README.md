@@ -1,13 +1,20 @@
-# javy-apis
+<div align="center">
+  <h1><code>Javy APIs</code></h1>
+  <p>
+    <strong>A collection of APIs for Javy</strong>
+  </p>
 
-A collection of APIs that can be added to a Javy runtime.
+  <p>
+    <a href="https://docs.rs/javy-apis"><img src="https://docs.rs/javy-apis/badge.svg" alt="Documentation Status" /></a>
+    <a href="https://crates.io/crates/javy-apis"><img src="https://img.shields.io/crates/v/javy-apis.svg" alt="crates.io status" /></a>
+  </p>
+</div>
 
-APIs are registered by enabling crate features.
-
-## Example usage
+Refer to the [crate level documentation](https://docs.rs/javy-apis) to learn more.
+ 
+Example usage:
 
 ```rust
-
 // With the `console` feature enabled.
 use javy::{Runtime, from_js_error};
 use javy_apis::RuntimeExt;
@@ -23,14 +30,6 @@ fn main() -> Result<()> {
     Ok(())
 }
 ```
-
-If you want to customize the runtime or the APIs, you can use the `Runtime::new_with_apis` method instead to provide a `javy::Config` for the underlying `Runtime` or an `APIConfig` for the APIs.
-
-## Features
-* `console` - Registers an implementation of the `console` API.
-* `text_encoding` - Registers implementations of `TextEncoder` and `TextDecoder`.
-* `random` - Overrides the implementation of `Math.random` to one that seeds the RNG on first call to `Math.random`. This is helpful to enable when using Wizer to snapshot a Javy Runtime so that the output of `Math.random` relies on the WASI context used at runtime and not the WASI context used when Wizening. Enabling this feature will increase the size of the Wasm module that includes the Javy Runtime and will introduce an additional hostcall invocation when `Math.random` is invoked for the first time.
-* `stream_io` - Registers implementations of `Javy.IO.readSync` and `Javy.IO.writeSync`.
 
 ## Publishing to crates.io
 
