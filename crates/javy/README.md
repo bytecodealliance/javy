@@ -1,11 +1,21 @@
-# javy
+<div align="center">
+  <h1><code>Javy</code></h1>
+  <p>
+    <strong>A configurable JavaScript runtime for WebAssembly</strong>
+  </p>
+  <p>
+    <a href="https://docs.rs/javy"><img src="https://docs.rs/javy/badge.svg" alt="Documentation Status" /></a>
+    <a href="https://crates.io/crates/javy"><img src="https://img.shields.io/crates/v/javy.svg" alt="crates.io status" /></a>
+  </p>
+</div>
 
-A configurable JavaScript runtime for WebAssembly.
 
 Uses QuickJS through the [`rquickjs`](https://docs.rs/rquickjs/latest/rquickjs/)
 crate to evalulate JavaScript source code or QuickJS bytecode.
 
-## Example usage
+Refer to the [crate level documentation](https://docs.rs/javy) to learn more.
+
+Example usage:
 
 ```rust
 use anyhow::anyhow;
@@ -32,14 +42,6 @@ context.with(|cx| {
          .map(|_| ())
 });
 ```
-
-Create a `Runtime` and use the reference returned by `context()` to add functions and evaluate source code.
-
-## Features
-
-- `export_alloc_fns` - exports `canonical_abi_realloc` and `canonical_abi_free` from generated WebAssembly for allocating and freeing memory
-- `json` - transcoding functions for converting between `JSValueRef` and JSON
-- `messagepack` - transcoding functions for converting between `JSValueRef` and MessagePack
 
 ## Publishing to crates.io
 

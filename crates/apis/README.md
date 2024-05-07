@@ -1,6 +1,16 @@
-# Javy APIs
+<div align="center">
+  <h1><code>Javy APIs</code></h1>
+  <p>
+    <strong>A collection of APIs for Javy</strong>
+  </p>
 
-A collection of APIs for Javy.
+  <p>
+    <a href="https://docs.rs/javy-apis"><img src="https://docs.rs/javy-apis/badge.svg" alt="Documentation Status" /></a>
+    <a href="https://crates.io/crates/javy-apis"><img src="https://img.shields.io/crates/v/javy-apis.svg" alt="crates.io status" /></a>
+  </p>
+</div>
+
+Refer to the [crate level documentation](https://docs.rs/javy-apis) to learn more.
  
 Example usage:
 
