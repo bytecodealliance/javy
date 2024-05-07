@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Mark crate as deprecated
 - Add a new `expose-sys` feature that exposes unstable escape hatch functions to the underlying `quickjs_wasm_sys` crate.
 
 ## [3.0.0] - 2024-01-31

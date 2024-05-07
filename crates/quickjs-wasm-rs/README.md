@@ -1,3 +1,12 @@
+# This crate is deprecated.
+[![crates.io](https://img.shields.io/crates/v/quickjs-wasm-rs.svg)](https://crates.io/crates/quickjs-wasm-rs)
+
+The motivation for this change is explained in detail in 
+https://github.com/bytecodealliance/javy/pull/618 
+
+We recommend using [`rquickjs`](https://github.com/DelSkayn/rquickjs) as the
+high-level bindings for QuickJS.
+
 # quickjs-wasm-rs
 
 High-level bindings and serializers for a Wasm build of QuickJS.

@@ -1,4 +1,15 @@
+# This crate is deprecated.
+[![crates.io](https://img.shields.io/crates/v/quickjs-wasm-sys.svg)](https://crates.io/crates/quickjs-wasm-sys)
+
+The motivation for this change is explained in detail in 
+https://github.com/bytecodealliance/javy/pull/618 
+
+We recommend using [`rquickjs`](https://github.com/DelSkayn/rquickjs) as the
+high-level bindings for QuickJS.
+
 # quickjs-wasm-sys: Wasm QuickJS bindings for Rust
+
+High-level bindings and serializers for a Wasm build of QuickJS.
 
 FFI bindings for a Wasm build of the QuickJS Javascript engine.
 
