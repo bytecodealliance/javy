@@ -2,8 +2,8 @@ use std::io::Write;
 
 use anyhow::{Error, Result};
 use javy::{
-    hold, hold_and_release, print,
-    quickjs::{prelude::MutFn, Context, Function, Object, Value},
+    hold, hold_and_release,
+    quickjs::{convert, prelude::MutFn, Context, FromJs, Function, Object, Value},
     to_js_error, Args, Runtime,
 };
 
@@ -71,15 +71,14 @@ where
 
 fn log<'js, T: Write>(args: Args<'js>, stream: &mut T) -> Result<Value<'js>> {
     let (ctx, args) = args.release();
-    let mut buf = String::new();
     for (i, arg) in args.iter().enumerate() {
+        let stringified = <convert::Coerced<String>>::from_js(&ctx, arg.clone())?.0;
         if i != 0 {
-            buf.push(' ');
+            write!(stream, " ")?;
         }
-        print(arg, &mut buf)?;
+        write!(stream, "{stringified}")?;
     }
-
-    writeln!(stream, "{buf}")?;
+    writeln!(stream)?;
 
     Ok(Value::new_undefined(ctx.clone()))
 }
