@@ -24,7 +24,7 @@ bitflags! {
 bitflags! {
     /// Flags representing implementation of JavaScript intrinsics
     /// made available through the `Javy` global.
-    /// The APIs in this list can be thought of APIs similar to the ones
+    /// The APIs in this list can be thought of as APIs similar to the ones
     /// exposed by Node or Deno.
     ///
     /// NB: These APIs are meant to be migrated to a runtime-agnostic namespace,
@@ -41,7 +41,7 @@ bitflags! {
 
 /// A configuration for [`Runtime`](crate::Runtime).
 ///
-/// These are the global configuration options to crate a [`Runtime`](crate::Runtime),
+/// These are the global configuration options to create a [`Runtime`](crate::Runtime),
 /// and customize its behavior.
 pub struct Config {
     /// JavaScript features.
