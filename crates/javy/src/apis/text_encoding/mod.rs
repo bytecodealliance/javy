@@ -1,42 +1,44 @@
 use std::str;
 
-use crate::{APIConfig, JSApiSet};
-use anyhow::{anyhow, bail, Error, Result};
-use javy::{
+use crate::{
     hold, hold_and_release,
-    quickjs::{context::EvalOptions, Exception, Function, String as JSString, TypedArray, Value},
-    to_js_error, to_string_lossy, Args, Runtime,
+    quickjs::{
+        context::{EvalOptions, Intrinsic},
+        qjs, Ctx, Exception, Function, String as JSString, TypedArray, Value,
+    },
+    to_js_error, to_string_lossy, Args,
 };
+use anyhow::{anyhow, bail, Error, Result};
 
-pub(super) struct TextEncoding;
+pub struct TextEncoding;
 
-impl JSApiSet for TextEncoding {
-    fn register<'js>(&self, runtime: &Runtime, _: &APIConfig) -> Result<()> {
-        runtime.context().with(|this| {
-            let globals = this.globals();
-            globals.set(
-                "__javy_decodeUtf8BufferToString",
-                Function::new(this.clone(), |cx, args| {
-                    let (cx, args) = hold_and_release!(cx, args);
-                    decode(hold!(cx.clone(), args)).map_err(|e| to_js_error(cx, e))
-                }),
-            )?;
-            globals.set(
-                "__javy_encodeStringToUtf8Buffer",
-                Function::new(this.clone(), |cx, args| {
-                    let (cx, args) = hold_and_release!(cx, args);
-                    encode(hold!(cx.clone(), args)).map_err(|e| to_js_error(cx, e))
-                }),
-            )?;
-            let mut opts = EvalOptions::default();
-            opts.strict = false;
-            this.eval_with_options(include_str!("./text-encoding.js"), opts)?;
-
-            Ok::<_, Error>(())
-        })?;
-
-        Ok(())
+impl Intrinsic for TextEncoding {
+    unsafe fn add_intrinsic(ctx: std::ptr::NonNull<qjs::JSContext>) {
+        register(Ctx::from_raw(ctx)).expect("Register TextEncoding APIs to succeed");
     }
+}
+
+fn register<'js>(this: Ctx<'js>) -> Result<()> {
+    let globals = this.globals();
+    globals.set(
+        "__javy_decodeUtf8BufferToString",
+        Function::new(this.clone(), |cx, args| {
+            let (cx, args) = hold_and_release!(cx, args);
+            decode(hold!(cx.clone(), args)).map_err(|e| to_js_error(cx, e))
+        }),
+    )?;
+    globals.set(
+        "__javy_encodeStringToUtf8Buffer",
+        Function::new(this.clone(), |cx, args| {
+            let (cx, args) = hold_and_release!(cx, args);
+            encode(hold!(cx.clone(), args)).map_err(|e| to_js_error(cx, e))
+        }),
+    )?;
+    let mut opts = EvalOptions::default();
+    opts.strict = false;
+    this.eval_with_options(include_str!("./text-encoding.js"), opts)?;
+
+    Ok::<_, Error>(())
 }
 
 /// Decode a UTF-8 byte buffer as a JavaScript String.
@@ -119,16 +121,14 @@ fn encode(args: Args<'_>) -> Result<Value<'_>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{APIConfig, JSApiSet};
+    use crate::{quickjs::Value, Config, Runtime};
     use anyhow::{Error, Result};
-    use javy::{quickjs::Value, Runtime};
-
-    use super::TextEncoding;
 
     #[test]
     fn test_text_encoder_decoder() -> Result<()> {
-        let runtime = Runtime::default();
-        TextEncoding.register(&runtime, &APIConfig::default())?;
+        let mut config = Config::default();
+        config.text_encoding(true);
+        let runtime = Runtime::new(config)?;
 
         runtime.context().with(|this| {
             let result: Value<'_> = this.eval(

@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Mark the crate as deprecated.
+- Fold APIs under the [Javy crate](https://crates.io/crates/javy) to enable more
+  ergonomic runtime configuration and mark the crate as deprecated.
 - Rewrite the APIs on top of Javy v3.0.0, which drops support for
   `quickjs-wasm-rs` in favor of `rquickjs`
 

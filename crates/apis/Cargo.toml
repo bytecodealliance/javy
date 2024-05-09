@@ -9,13 +9,7 @@ homepage = "https://github.com/bytecodealliance/javy/tree/main/crates/apis"
 repository = "https://github.com/bytecodealliance/javy/tree/main/crates/apis"
 categories = ["wasm"]
 
-[features]
-console = []
-random = ["dep:fastrand"]
-stream_io = []
-text_encoding = []
-
 [dependencies]
-anyhow = { workspace = true }
-fastrand = { version = "2.1.0", optional = true }
-javy = { workspace = true }
+
+[badges]
+maintenance  = { status = "deprecated" }

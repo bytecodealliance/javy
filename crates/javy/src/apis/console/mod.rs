@@ -1,71 +1,69 @@
-use std::io::Write;
+use std::io::{stderr, stdout, Write};
+use std::ptr::NonNull;
 
-use anyhow::{Error, Result};
-use javy::{
+use crate::{
     hold, hold_and_release, print,
-    quickjs::{prelude::MutFn, Context, Function, Object, Value},
-    to_js_error, Args, Runtime,
+    quickjs::{context::Intrinsic, prelude::MutFn, qjs, Ctx, Function, Object, Value},
+    to_js_error, Args,
 };
+use anyhow::Result;
 
-use crate::{APIConfig, JSApiSet};
+/// An implemetation of JavaScript `console` APIs.
+/// This implementation is *not* standard in the sense that it redirects the output of
+/// `console.log` to stderr.
+pub(crate) struct NonStandardConsole;
 
-pub(super) use config::ConsoleConfig;
-pub use config::LogStream;
+/// An implemetation of JavaScript `console` APIs. This implementation is
+/// standard as it redirects `console.log` to stdout `console.error` to stderr.
+pub(crate) struct Console;
 
-mod config;
-
-pub(super) struct Console {}
-
-impl Console {
-    pub(super) fn new() -> Self {
-        Console {}
+impl Intrinsic for NonStandardConsole {
+    unsafe fn add_intrinsic(ctx: NonNull<qjs::JSContext>) {
+        register(Ctx::from_raw(ctx), stderr(), stderr()).expect("registering console to succeed");
     }
 }
 
-impl JSApiSet for Console {
-    fn register(&self, runtime: &Runtime, config: &APIConfig) -> Result<()> {
-        register_console(
-            runtime.context(),
-            config.console.log_stream.to_stream(),
-            config.console.error_stream.to_stream(),
-        )
+impl Intrinsic for Console {
+    unsafe fn add_intrinsic(ctx: NonNull<qjs::JSContext>) {
+        register(Ctx::from_raw(ctx), stdout(), stderr()).expect("registering console to succeed");
     }
 }
 
-fn register_console<T, U>(context: &Context, mut log_stream: T, mut error_stream: U) -> Result<()>
+pub(crate) fn register<'js, T, U>(
+    this: Ctx<'js>,
+    mut log_stream: T,
+    mut error_stream: U,
+) -> Result<()>
 where
     T: Write + 'static,
     U: Write + 'static,
 {
-    context.with(|this| {
-        let globals = this.globals();
-        let console = Object::new(this.clone())?;
+    let globals = this.globals();
+    let console = Object::new(this.clone())?;
 
-        console.set(
-            "log",
-            Function::new(
-                this.clone(),
-                MutFn::new(move |cx, args| {
-                    let (cx, args) = hold_and_release!(cx, args);
-                    log(hold!(cx.clone(), args), &mut log_stream).map_err(|e| to_js_error(cx, e))
-                }),
-            )?,
-        )?;
+    console.set(
+        "log",
+        Function::new(
+            this.clone(),
+            MutFn::new(move |cx, args| {
+                let (cx, args) = hold_and_release!(cx, args);
+                log(hold!(cx.clone(), args), &mut log_stream).map_err(|e| to_js_error(cx, e))
+            }),
+        )?,
+    )?;
 
-        console.set(
-            "error",
-            Function::new(
-                this.clone(),
-                MutFn::new(move |cx, args| {
-                    let (cx, args) = hold_and_release!(cx, args);
-                    log(hold!(cx.clone(), args), &mut error_stream).map_err(|e| to_js_error(cx, e))
-                }),
-            )?,
-        )?;
+    console.set(
+        "error",
+        Function::new(
+            this.clone(),
+            MutFn::new(move |cx, args| {
+                let (cx, args) = hold_and_release!(cx, args);
+                log(hold!(cx.clone(), args), &mut error_stream).map_err(|e| to_js_error(cx, e))
+            }),
+        )?,
+    )?;
 
-        globals.set("console", console)?;
-        Ok::<_, Error>(())
-    })?;
+    globals.set("console", console)?;
     Ok(())
 }
 
@@ -86,24 +84,19 @@ fn log<'js, T: Write>(args: Args<'js>, stream: &mut T) -> Result<Value<'js>> {
 
 #[cfg(test)]
 mod tests {
-    use anyhow::{Error, Result};
-    use javy::{
+    use crate::{
+        apis::console::register,
         quickjs::{Object, Value},
         Runtime,
     };
+    use anyhow::{Error, Result};
     use std::cell::RefCell;
     use std::rc::Rc;
     use std::{cmp, io};
 
-    use crate::console::register_console;
-    use crate::{APIConfig, JSApiSet};
-
-    use super::Console;
-
     #[test]
     fn test_register() -> Result<()> {
         let runtime = Runtime::default();
-        Console::new().register(&runtime, &APIConfig::default())?;
         runtime.context().with(|cx| {
             let console: Object<'_> = cx.globals().get("console")?;
             assert!(console.get::<&str, Value<'_>>("log").is_ok());
@@ -117,12 +110,11 @@ mod tests {
     #[test]
     fn test_console_log() -> Result<()> {
         let mut stream = SharedStream::default();
-
         let runtime = Runtime::default();
         let ctx = runtime.context();
-        register_console(ctx, stream.clone(), stream.clone())?;
 
         ctx.with(|this| {
+            register(this.clone(), stream.clone(), stream.clone()).unwrap();
             this.eval("console.log(\"hello world\");")?;
             assert_eq!(b"hello world\n", stream.buffer.borrow().as_slice());
             stream.clear();
@@ -147,12 +139,11 @@ mod tests {
     #[test]
     fn test_console_error() -> Result<()> {
         let mut stream = SharedStream::default();
-
         let runtime = Runtime::default();
         let ctx = runtime.context();
-        register_console(ctx, stream.clone(), stream.clone())?;
 
         ctx.with(|this| {
+            register(this.clone(), stream.clone(), stream.clone()).unwrap();
             this.eval("console.error(\"hello world\");")?;
             assert_eq!(b"hello world\n", stream.buffer.borrow().as_slice());
 
