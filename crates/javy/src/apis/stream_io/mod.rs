@@ -15,7 +15,7 @@ impl Intrinsic for StreamIO {
     }
 }
 
-fn register<'js>(this: Ctx<'js>) -> Result<()> {
+fn register(this: Ctx<'_>) -> Result<()> {
     let globals = this.globals();
     if globals.get::<_, Object>("Javy").is_err() {
         globals.set("Javy", Object::new(this.clone())?)?

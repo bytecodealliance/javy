@@ -2,9 +2,12 @@ use std::io::{stderr, stdout, Write};
 use std::ptr::NonNull;
 
 use crate::{
-    hold, hold_and_release, print,
-    quickjs::{context::Intrinsic, prelude::MutFn, qjs, Ctx, Function, Object, Value},
-    to_js_error, Args,
+    hold, hold_and_release,
+    quickjs::{
+        context::Intrinsic, convert, prelude::MutFn, qjs, Ctx, FromJs, Function, Object,
+        String as JSString, Value,
+    },
+    to_js_error, to_string_lossy, Args,
 };
 use anyhow::Result;
 
@@ -29,11 +32,7 @@ impl Intrinsic for Console {
     }
 }
 
-pub(crate) fn register<'js, T, U>(
-    this: Ctx<'js>,
-    mut log_stream: T,
-    mut error_stream: U,
-) -> Result<()>
+pub(crate) fn register<T, U>(this: Ctx<'_>, mut log_stream: T, mut error_stream: U) -> Result<()>
 where
     T: Write + 'static,
     U: Write + 'static,
@@ -69,15 +68,31 @@ where
 
 fn log<'js, T: Write>(args: Args<'js>, stream: &mut T) -> Result<Value<'js>> {
     let (ctx, args) = args.release();
-    let mut buf = String::new();
-    for (i, arg) in args.iter().enumerate() {
+    for (i, arg) in args.into_inner().into_iter().enumerate() {
         if i != 0 {
-            buf.push(' ');
+            write!(stream, " ")?;
         }
-        print(arg, &mut buf)?;
-    }
 
-    writeln!(stream, "{buf}")?;
+        if let Some(symbol) = arg.as_symbol() {
+            if let Some(description) = symbol.description()?.into_string() {
+                let description = description
+                    .to_string()
+                    .unwrap_or_else(|e| to_string_lossy(&ctx, &description, e));
+                write!(stream, "Symbol({description})")?;
+            } else {
+                write!(stream, "Symbol()")?;
+            }
+        } else {
+            let stringified =
+                <convert::Coerced<JSString>>::from_js(&ctx, arg.clone()).map(|string| {
+                    string
+                        .to_string()
+                        .unwrap_or_else(|e| to_string_lossy(&ctx, &string.0, e))
+                })?;
+            write!(stream, "{stringified}")?;
+        };
+    }
+    writeln!(stream)?;
 
     Ok(Value::new_undefined(ctx.clone()))
 }
@@ -108,7 +123,7 @@ mod tests {
     }
 
     #[test]
-    fn test_console_log() -> Result<()> {
+    fn test_value_serialization() -> Result<()> {
         let mut stream = SharedStream::default();
         let runtime = Runtime::default();
         let ctx = runtime.context();
@@ -118,17 +133,69 @@ mod tests {
             this.eval("console.log(\"hello world\");")?;
             assert_eq!(b"hello world\n", stream.buffer.borrow().as_slice());
             stream.clear();
+            macro_rules! test_console_log {
+                ($js:expr, $expected:expr) => {{
+                    this.eval($js)?;
+                    assert_eq!(
+                        $expected,
+                        std::str::from_utf8(stream.buffer.borrow().as_slice()).unwrap()
+                    );
+                    stream.clear();
+                }};
+            }
 
-            this.eval("console.log(\"bonjour\", \"le\", \"monde\")")?;
-            assert_eq!(b"bonjour le monde\n", stream.buffer.borrow().as_slice());
+            test_console_log!("console.log(\"hello world\");", "hello world\n");
 
-            stream.clear();
+            // Invalid UTF-16 surrogate pair
+            test_console_log!("console.log(\"\\uD800\");", "�\n");
 
-            this.eval("console.log(2.3, true, { foo: 'bar' }, null, undefined)")?;
-            assert_eq!(
-                b"2.3 true [object Object] null undefined\n",
-                stream.buffer.borrow().as_slice()
+            test_console_log!(
+                "console.log(function(){ return 1 })",
+                "function(){ return 1 }\n"
             );
+
+            test_console_log!(
+                "console.log([1, \"two\", 3.42, null, 5])",
+                "1,two,3.42,,5\n"
+            );
+
+            test_console_log!(
+                "console.log(2.3, true, { foo: 'bar' }, null, undefined)",
+                "2.3 true [object Object] null undefined\n"
+            );
+
+            test_console_log!(
+                "console.log(new Date(0))",
+                "Thu Jan 01 1970 00:00:00 GMT+0000\n"
+            );
+
+            test_console_log!("console.log(new ArrayBuffer())", "[object ArrayBuffer]\n");
+
+            test_console_log!("console.log(NaN)", "NaN\n");
+
+            test_console_log!("console.log(new Set())", "[object Set]\n");
+
+            test_console_log!("console.log(new Map())", "[object Map]\n");
+
+            test_console_log!(
+                "function Foo(){}; console.log(new Foo())",
+                "[object Object]\n"
+            );
+
+            test_console_log!("console.log(Symbol())", "Symbol()\n");
+
+            test_console_log!("console.log(Symbol(''))", "Symbol()\n");
+
+            test_console_log!("console.log(Symbol('foo'))", "Symbol(foo)\n");
+
+            test_console_log!("console.log(Symbol(null))", "Symbol(null)\n");
+
+            test_console_log!("console.log(Symbol(undefined))", "Symbol()\n");
+
+            test_console_log!("console.log(Symbol([]))", "Symbol()\n");
+
+            // Invalid UTF-16 surrogate pair
+            test_console_log!("console.log(Symbol(\"\\uD800\"))", "Symbol(�)\n");
 
             Ok::<_, Error>(())
         })?;
@@ -137,28 +204,25 @@ mod tests {
     }
 
     #[test]
-    fn test_console_error() -> Result<()> {
-        let mut stream = SharedStream::default();
+    fn test_console_streams() -> Result<()> {
+        let mut log_stream = SharedStream::default();
+        let error_stream = SharedStream::default();
+
         let runtime = Runtime::default();
         let ctx = runtime.context();
 
         ctx.with(|this| {
-            register(this.clone(), stream.clone(), stream.clone()).unwrap();
+            register(this.clone(), log_stream.clone(), error_stream.clone()).unwrap();
+            this.eval("console.log(\"hello world\");")?;
+            assert_eq!(b"hello world\n", log_stream.buffer.borrow().as_slice());
+            assert!(error_stream.buffer.borrow().is_empty());
+
+            log_stream.clear();
+
             this.eval("console.error(\"hello world\");")?;
-            assert_eq!(b"hello world\n", stream.buffer.borrow().as_slice());
+            assert_eq!(b"hello world\n", error_stream.buffer.borrow().as_slice());
+            assert!(log_stream.buffer.borrow().is_empty());
 
-            stream.clear();
-
-            this.eval("console.error(\"bonjour\", \"le\", \"monde\")")?;
-            assert_eq!(b"bonjour le monde\n", stream.buffer.borrow().as_slice());
-
-            stream.clear();
-
-            this.eval("console.error(2.3, true, { foo: 'bar' }, null, undefined)")?;
-            assert_eq!(
-                b"2.3 true [object Object] null undefined\n",
-                stream.buffer.borrow().as_slice()
-            );
             Ok::<_, Error>(())
         })?;
 

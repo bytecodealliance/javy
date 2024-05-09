@@ -18,7 +18,7 @@ impl Intrinsic for TextEncoding {
     }
 }
 
-fn register<'js>(this: Ctx<'js>) -> Result<()> {
+fn register(this: Ctx<'_>) -> Result<()> {
     let globals = this.globals();
     globals.set(
         "__javy_decodeUtf8BufferToString",

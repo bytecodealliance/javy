@@ -50,11 +50,8 @@ mod config;
 mod runtime;
 mod serde;
 
-use anyhow::{anyhow, Error, Result};
-use rquickjs::{
-    prelude::Rest, qjs, Ctx, Error as JSError, Exception, String as JSString, Type, Value,
-};
-use std::fmt::Write;
+use anyhow::{anyhow, Error};
+use rquickjs::{prelude::Rest, qjs, Ctx, Error as JSError, Exception, String as JSString, Value};
 
 #[cfg(feature = "messagepack")]
 pub mod messagepack;
@@ -63,42 +60,6 @@ pub mod messagepack;
 pub mod json;
 
 mod apis;
-
-/// Print the given JS value.
-///
-/// The implementation matches the default JavaScript display format for each value.
-pub fn print(val: &Value, sink: &mut String) -> Result<()> {
-    match val.type_of() {
-        Type::Undefined => write!(sink, "undefined").map_err(Into::into),
-        Type::Null => write!(sink, "null").map_err(Into::into),
-        Type::Bool => {
-            let b = val.as_bool().unwrap();
-            write!(sink, "{}", b).map_err(Into::into)
-        }
-        Type::Int => {
-            let i = val.as_int().unwrap();
-            write!(sink, "{}", i).map_err(Into::into)
-        }
-        Type::Float => {
-            let f = val.as_float().unwrap();
-            write!(sink, "{}", f).map_err(Into::into)
-        }
-        Type::String => {
-            let s = val.as_string().unwrap();
-            write!(sink, "{}", s.to_string()?).map_err(Into::into)
-        }
-        Type::Array => {
-            let inner = val.as_array().unwrap();
-            for e in inner.iter() {
-                print(&e?, sink)?
-            }
-            Ok(())
-        }
-        Type::Object => write!(sink, "[object Object]").map_err(Into::into),
-        // TODO: Implement the rest.
-        x => unimplemented!("{x}"),
-    }
-}
 
 /// A struct to hold the current [`Ctx`] and [`Value`]s passed as arguments to Rust
 /// functions.
