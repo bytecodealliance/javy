@@ -73,17 +73,29 @@ where
 
 fn log<'js, T: Write>(args: Args<'js>, stream: &mut T) -> Result<Value<'js>> {
     let (ctx, args) = args.release();
-    for (i, arg) in args.iter().enumerate() {
-        let stringified =
-            <convert::Coerced<JSString>>::from_js(&ctx, arg.clone()).map(|string| {
-                string
-                    .to_string()
-                    .unwrap_or_else(|e| to_string_lossy(&ctx, &string.0, e))
-            })?;
+    for (i, arg) in args.into_inner().into_iter().enumerate() {
         if i != 0 {
             write!(stream, " ")?;
         }
-        write!(stream, "{stringified}")?;
+
+        if let Some(symbol) = arg.as_symbol() {
+            if let Some(description) = symbol.description()?.into_string() {
+                let description = description
+                    .to_string()
+                    .unwrap_or_else(|e| to_string_lossy(&ctx, &description, e));
+                write!(stream, "Symbol({description})")?;
+            } else {
+                write!(stream, "Symbol()")?;
+            }
+        } else {
+            let stringified =
+                <convert::Coerced<JSString>>::from_js(&ctx, arg.clone()).map(|string| {
+                    string
+                        .to_string()
+                        .unwrap_or_else(|e| to_string_lossy(&ctx, &string.0, e))
+                })?;
+            write!(stream, "{stringified}")?;
+        };
     }
     writeln!(stream)?;
 
@@ -177,6 +189,21 @@ mod tests {
                 "function Foo(){}; console.log(new Foo())",
                 "[object Object]\n"
             );
+
+            test_console_log!("console.log(Symbol())", "Symbol()\n");
+
+            test_console_log!("console.log(Symbol(''))", "Symbol()\n");
+
+            test_console_log!("console.log(Symbol('foo'))", "Symbol(foo)\n");
+
+            test_console_log!("console.log(Symbol(null))", "Symbol(null)\n");
+
+            test_console_log!("console.log(Symbol(undefined))", "Symbol()\n");
+
+            test_console_log!("console.log(Symbol([]))", "Symbol()\n");
+
+            // Invalid UTF-16 surrogate pair
+            test_console_log!("console.log(Symbol(\"\\uD800\"))", "Symbol(�)\n");
 
             Ok::<_, Error>(())
         })?;
