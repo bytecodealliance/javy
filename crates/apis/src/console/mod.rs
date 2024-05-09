@@ -3,8 +3,10 @@ use std::io::Write;
 use anyhow::{Error, Result};
 use javy::{
     hold, hold_and_release,
-    quickjs::{convert, prelude::MutFn, Context, FromJs, Function, Object, Value},
-    to_js_error, Args, Runtime,
+    quickjs::{
+        convert, prelude::MutFn, Context, FromJs, Function, Object, String as JSString, Value,
+    },
+    to_js_error, to_string_lossy, Args, Runtime,
 };
 
 use crate::{APIConfig, JSApiSet};
@@ -72,7 +74,12 @@ where
 fn log<'js, T: Write>(args: Args<'js>, stream: &mut T) -> Result<Value<'js>> {
     let (ctx, args) = args.release();
     for (i, arg) in args.iter().enumerate() {
-        let stringified = <convert::Coerced<String>>::from_js(&ctx, arg.clone())?.0;
+        let stringified =
+            <convert::Coerced<JSString>>::from_js(&ctx, arg.clone()).map(|string| {
+                string
+                    .to_string()
+                    .unwrap_or_else(|e| to_string_lossy(&ctx, &string.0, e))
+            })?;
         if i != 0 {
             write!(stream, " ")?;
         }
@@ -134,6 +141,9 @@ mod tests {
             }
 
             test_console_log!("console.log(\"hello world\");", "hello world\n");
+
+            // Invalid UTF-16 surrogate pair
+            test_console_log!("console.log(\"\\uD800\");", "�\n");
 
             test_console_log!(
                 "console.log(function(){ return 1 })",
