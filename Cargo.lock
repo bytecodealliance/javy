@@ -1533,7 +1533,6 @@ version = "0.2.0"
 dependencies = [
  "anyhow",
  "javy",
- "javy-apis",
  "once_cell",
 ]
 

@@ -49,9 +49,12 @@ impl Runtime {
     fn build_from_config(rt: &QRuntime, cfg: &Config) -> Result<ManuallyDrop<Context>> {
         let intrinsics = &cfg.intrinsics;
         let javy_intrinsics = &cfg.javy_intrinsics;
-        // We always set Random give that the principles around snapshotting and
-        // random are applicable to all uses of Javy, given that the use of
-        // Wizer is not optional.
+        // We always set Random given that the principles around snapshotting and
+        // random are applicable when using Javy from the CLI (the usage of
+        // Wizer from the CLI is not optional).
+        // NB: Users of Javy as a crate are welcome to switch this config,
+        // however note that the usage of a custom `Random` implementation
+        // should not affect the output of `Math.random()`.
         let context = Context::custom::<Random>(rt)?;
 
         // We use `Context::with` to ensure that there's a proper lock on the

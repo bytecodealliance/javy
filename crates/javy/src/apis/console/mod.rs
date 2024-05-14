@@ -11,13 +11,14 @@ use crate::{
 };
 use anyhow::Result;
 
-/// An implemetation of JavaScript `console` APIs.
+/// An implementation of JavaScript `console` APIs.
 /// This implementation is *not* standard in the sense that it redirects the output of
 /// `console.log` to stderr.
 pub(crate) struct NonStandardConsole;
 
 /// An implemetation of JavaScript `console` APIs. This implementation is
-/// standard as it redirects `console.log` to stdout `console.error` to stderr.
+/// standard as it redirects `console.log` to stdout and `console.error` to
+/// stderr.
 pub(crate) struct Console;
 
 impl Intrinsic for NonStandardConsole {
