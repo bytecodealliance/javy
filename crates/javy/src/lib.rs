@@ -40,7 +40,7 @@
 //! * `messagepack` - functions for converting between [`quickjs::JSValueRef`]
 //!   and MessagePack byte slices
 
-pub use config::Config;
+pub use config::*;
 pub use rquickjs as quickjs;
 pub use runtime::Runtime;
 use std::str;
@@ -58,6 +58,8 @@ pub mod messagepack;
 
 #[cfg(feature = "json")]
 pub mod json;
+
+mod apis;
 
 /// A struct to hold the current [`Ctx`] and [`Value`]s passed as arguments to Rust
 /// functions.
@@ -79,7 +81,7 @@ impl<'js> Args<'js> {
     }
 }
 
-/// Alias for `Args::hold(cx, args).release()`
+/// Alias for [`Args::hold(cx, args).release()`]
 #[macro_export]
 macro_rules! hold_and_release {
     ($cx:expr, $args:expr) => {
@@ -87,7 +89,7 @@ macro_rules! hold_and_release {
     };
 }
 
-/// Alias for [Args::hold]
+/// Alias for [`Args::hold`]
 #[macro_export]
 macro_rules! hold {
     ($cx:expr, $args:expr) => {

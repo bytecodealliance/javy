@@ -1,15 +1,45 @@
 use anyhow::{anyhow, bail, Error, Result};
 use std::io::{Read, Stdin, Write};
 
-use javy::{
+use crate::{
     hold, hold_and_release,
-    quickjs::{qjs::JS_GetArrayBuffer, Function, Object, Value},
-    to_js_error, Args, Runtime,
+    quickjs::{context::Intrinsic, qjs, qjs::JS_GetArrayBuffer, Ctx, Function, Object, Value},
+    to_js_error, Args,
 };
 
-use crate::{APIConfig, JSApiSet};
+pub struct StreamIO;
 
-pub(super) struct StreamIO;
+impl Intrinsic for StreamIO {
+    unsafe fn add_intrinsic(ctx: std::ptr::NonNull<qjs::JSContext>) {
+        register(Ctx::from_raw(ctx)).expect("Registering StreamIO functions to succeed");
+    }
+}
+
+fn register(this: Ctx<'_>) -> Result<()> {
+    let globals = this.globals();
+    if globals.get::<_, Object>("Javy").is_err() {
+        globals.set("Javy", Object::new(this.clone())?)?
+    }
+
+    globals.set(
+        "__javy_io_writeSync",
+        Function::new(this.clone(), |cx, args| {
+            let (cx, args) = hold_and_release!(cx, args);
+            write(hold!(cx.clone(), args)).map_err(|e| to_js_error(cx, e))
+        }),
+    )?;
+
+    globals.set(
+        "__javy_io_readSync",
+        Function::new(this.clone(), |cx, args| {
+            let (cx, args) = hold_and_release!(cx, args);
+            read(hold!(cx.clone(), args)).map_err(|e| to_js_error(cx, e))
+        }),
+    )?;
+
+    this.eval(include_str!("io.js"))?;
+    Ok::<_, Error>(())
+}
 
 fn extract_args<'a, 'js: 'a>(
     args: &'a [Value<'js>],
@@ -129,36 +159,4 @@ fn read(args: Args<'_>) -> Result<Value<'_>> {
     let n = fd.read(data)?;
 
     Ok(Value::new_number(cx, n as f64))
-}
-
-impl JSApiSet for StreamIO {
-    fn register<'js>(&self, runtime: &Runtime, _config: &APIConfig) -> Result<()> {
-        runtime.context().with(|this| {
-            let globals = this.globals();
-            if globals.get::<_, Object>("Javy").is_err() {
-                globals.set("Javy", Object::new(this.clone())?)?
-            }
-
-            globals.set(
-                "__javy_io_writeSync",
-                Function::new(this.clone(), |cx, args| {
-                    let (cx, args) = hold_and_release!(cx, args);
-                    write(hold!(cx.clone(), args)).map_err(|e| to_js_error(cx, e))
-                }),
-            )?;
-
-            globals.set(
-                "__javy_io_readSync",
-                Function::new(this.clone(), |cx, args| {
-                    let (cx, args) = hold_and_release!(cx, args);
-                    read(hold!(cx.clone(), args)).map_err(|e| to_js_error(cx, e))
-                }),
-            )?;
-
-            this.eval(include_str!("io.js"))?;
-            Ok::<_, Error>(())
-        })?;
-
-        Ok(())
-    }
 }

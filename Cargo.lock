@@ -1486,6 +1486,8 @@ name = "javy"
 version = "3.0.0-alpha.1"
 dependencies = [
  "anyhow",
+ "bitflags 2.5.0",
+ "fastrand",
  "quickcheck",
  "rmp-serde",
  "rquickjs",
@@ -1497,11 +1499,6 @@ dependencies = [
 [[package]]
 name = "javy-apis"
 version = "3.0.0-alpha.1"
-dependencies = [
- "anyhow",
- "fastrand",
- "javy",
-]
 
 [[package]]
 name = "javy-cli"
@@ -1536,7 +1533,6 @@ version = "0.2.0"
 dependencies = [
  "anyhow",
  "javy",
- "javy-apis",
  "once_cell",
 ]
 

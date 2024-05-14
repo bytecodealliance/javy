@@ -1,40 +1,33 @@
+use crate::quickjs::{context::Intrinsic, prelude::Func, qjs, Ctx, Object};
 use anyhow::{Error, Result};
-use javy::{
-    quickjs::{prelude::Func, Object},
-    Runtime,
-};
-
-use crate::{APIConfig, JSApiSet};
 
 pub struct Random;
 
-impl JSApiSet for Random {
-    fn register(&self, runtime: &Runtime, _config: &APIConfig) -> Result<()> {
-        runtime.context().with(|cx| {
-            let globals = cx.globals();
-            let math: Object<'_> = globals.get("Math").expect("Math global to be defined");
-            math.set("random", Func::from(fastrand::f64))?;
-
-            Ok::<_, Error>(())
-        })?;
-
-        Ok(())
+impl Intrinsic for Random {
+    unsafe fn add_intrinsic(ctx: std::ptr::NonNull<qjs::JSContext>) {
+        register(Ctx::from_raw(ctx)).expect("`Random` APIs to succeed")
     }
+}
+
+fn register(cx: Ctx) -> Result<()> {
+    let globals = cx.globals();
+    let math: Object<'_> = globals.get("Math").expect("Math global to be defined");
+    math.set("random", Func::from(fastrand::f64))?;
+
+    Ok::<_, Error>(())
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{random::Random, APIConfig, JSApiSet};
-    use anyhow::{Error, Result};
-    use javy::{
+    use crate::{
         quickjs::{context::EvalOptions, Value},
         Runtime,
     };
+    use anyhow::{Error, Result};
 
     #[test]
     fn test_random() -> Result<()> {
         let runtime = Runtime::default();
-        Random.register(&runtime, &APIConfig::default())?;
         runtime.context().with(|this| {
             let mut eval_opts = EvalOptions::default();
             eval_opts.strict = false;
