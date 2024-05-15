@@ -1498,7 +1498,7 @@ dependencies = [
 
 [[package]]
 name = "javy-apis"
-version = "3.0.0-alpha.1"
+version = "3.0.0"
 
 [[package]]
 name = "javy-cli"
