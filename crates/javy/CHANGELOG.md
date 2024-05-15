@@ -10,7 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Introduce `rquickjs` to interface with QuickJS instead of `quickjs-wasm-rs`;
-  this version no longer includes re-exports from `quickjs-wasm-rs`. 
+  this version no longer includes re-exports from `quickjs-wasm-rs`.
+- `javy::serde::de::Deserializer` should now match `JSON.stringify`: non-JSON
+  primitives are skipped in Objects and nullified in Arrays.
 
 ## [2.2.0] - 2024-01-31
 

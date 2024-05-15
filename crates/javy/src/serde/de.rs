@@ -3,6 +3,7 @@ use crate::serde::err::{Error, Result};
 use crate::serde::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER};
 use crate::{from_js_error, to_string_lossy};
 use anyhow::anyhow;
+use rquickjs::Null;
 use serde::de::{self, Error as SerError};
 use serde::forward_to_deserialize_any;
 
@@ -200,14 +201,23 @@ impl<'a, 'de> de::MapAccess<'de> for MapAccess<'a, 'de> {
     where
         K: de::DeserializeSeed<'de>,
     {
-        if let Some(kv) = self.properties.next() {
-            let (k, v) = kv.map_err(|e| from_js_error(self.de.value.ctx().clone(), e))?;
-            self.de.value = k.clone();
-            self.de.map_key = true;
-            self.de.current_kv = Some((k, v));
-            seed.deserialize(&mut *self.de).map(Some)
-        } else {
-            Ok(None)
+        loop {
+            if let Some(kv) = self.properties.next() {
+                let (k, v) = kv.map_err(|e| from_js_error(self.de.value.ctx().clone(), e))?;
+
+                // Entries with non-JSONable values are skipped to respect JSON.stringify's spec
+                if !is_jsonable(&v) {
+                    continue;
+                }
+
+                self.de.value = k.clone();
+                self.de.map_key = true;
+                self.de.current_kv = Some((k, v));
+
+                return seed.deserialize(&mut *self.de).map(Some);
+            } else {
+                return Ok(None);
+            }
         }
     }
 
@@ -238,6 +248,13 @@ impl<'a, 'de> de::SeqAccess<'de> for SeqAccess<'a, 'de> {
             self.de.value = self
                 .seq
                 .get(self.index)
+                .map(|v| {
+                    if is_jsonable(&v) {
+                        v
+                    } else {
+                        Null.into_value(self.seq.ctx().clone())
+                    }
+                })
                 .map_err(|e| from_js_error(self.seq.ctx().clone(), e))?;
             self.index += 1;
             seed.deserialize(&mut *self.de).map(Some)
@@ -245,6 +262,17 @@ impl<'a, 'de> de::SeqAccess<'de> for SeqAccess<'a, 'de> {
             Ok(None)
         }
     }
+}
+
+fn is_jsonable(value: &Value<'_>) -> bool {
+    !matches!(
+        value.type_of(),
+        rquickjs::Type::Undefined
+            | rquickjs::Type::Symbol
+            | rquickjs::Type::Function
+            | rquickjs::Type::Uninitialized
+            | rquickjs::Type::Constructor
+    )
 }
 
 #[cfg(test)]
@@ -423,6 +451,52 @@ mod tests {
             let val = deserialize_value::<Vec<u8>>(v);
 
             assert_eq!(vec![1, 2, 3], val);
+        });
+    }
+
+    #[test]
+    fn test_non_json_object_values_are_dropped() {
+        let rt = Runtime::default();
+        rt.context().with(|cx| {
+            cx.eval::<Value<'_>, _>(
+                r#"
+                var unitialized;
+                var a = {
+                    a: undefined,
+                    b: function() {},
+                    c: Symbol(),
+                    d: () => {},
+                    e: unitialized,
+                };"#,
+            )
+            .unwrap();
+            let v = cx.globals().get("a").unwrap();
+
+            let val = deserialize_value::<BTreeMap<String, ()>>(v);
+            assert_eq!(BTreeMap::new(), val);
+        });
+    }
+
+    #[test]
+    fn test_non_json_array_values_are_null() {
+        let rt = Runtime::default();
+        rt.context().with(|cx| {
+            cx.eval::<Value<'_>, _>(
+                r#"
+                var unitialized;
+                var a = [
+                    undefined,
+                    function() {},
+                    Symbol(),
+                    () => {},
+                    unitialized,
+                ];"#,
+            )
+            .unwrap();
+            let v = cx.globals().get("a").unwrap();
+
+            let val = deserialize_value::<Vec<Option<()>>>(v);
+            assert_eq!(vec![None; 5], val);
         });
     }
 }
