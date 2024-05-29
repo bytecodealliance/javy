@@ -12,7 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Introduce `rquickjs` to interface with QuickJS instead of `quickjs-wasm-rs`;
   this version no longer includes re-exports from `quickjs-wasm-rs`.
 - `javy::serde::de::Deserializer` should now match `JSON.stringify`: non-JSON
-  primitives are skipped in Objects and nullified in Arrays.
+  primitives are skipped in Objects and nullified in Arrays. 
+- Introduce a faster implemementation for `JSON.parse` and `JSON.stringify`
+  based on `simd-json`, `serde-json` and `serde-transcode`. Also introduce the
+  `Javy.JSON` temporary helper namespace which contains helpers for working with
+  JSON.
 
 ## [2.2.0] - 2024-01-31
 
