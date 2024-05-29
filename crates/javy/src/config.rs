@@ -186,7 +186,7 @@ impl Config {
         self
     }
 
-    /// Whether to override the implemenation of JSON.parse and JSON.stringify
+    /// Whether to override the implementation of JSON.parse and JSON.stringify
     /// with a Rust implementation that uses a combination of Serde transcoding
     /// serde_json and simd_json for improved performance.
     /// This setting requires the `JSON` intrinsic to be enabled and the `json`
