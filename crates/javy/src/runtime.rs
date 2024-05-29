@@ -1,10 +1,14 @@
 // use crate::quickjs::JSContextRef;
 use super::from_js_error;
 use crate::{
-    apis::{Console, JavyJson, Json, NonStandardConsole, Random, StreamIO, TextEncoding},
+    apis::{Console, NonStandardConsole, Random, StreamIO, TextEncoding},
     config::{JSIntrinsics, JavyIntrinsics},
     Config,
 };
+
+#[cfg(feature = "json")]
+use crate::apis::{JavyJson, Json};
+
 use anyhow::{bail, Result};
 use rquickjs::{
     context::{intrinsic, Intrinsic},
@@ -82,8 +86,9 @@ impl Runtime {
             }
 
             if cfg.override_json_parse_and_stringify {
-                if cfg!(feature = "json") {
-                    unsafe { Json::add_intrinsic(ctx.as_raw()) }
+                #[cfg(feature = "json")]
+                unsafe {
+                    Json::add_intrinsic(ctx.as_raw())
                 }
             }
 
@@ -134,8 +139,9 @@ impl Runtime {
             }
 
             if javy_intrinsics.contains(JavyIntrinsics::JSON) {
-                if cfg!(feature = "json") {
-                    unsafe { JavyJson::add_intrinsic(ctx.as_raw()) }
+                #[cfg(feature = "json")]
+                unsafe {
+                    JavyJson::add_intrinsic(ctx.as_raw())
                 }
             }
         });

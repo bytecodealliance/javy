@@ -208,6 +208,7 @@ impl Config {
 }
 
 #[cfg(test)]
+#[cfg(feature = "json")]
 mod tests {
     use super::Config;
 
