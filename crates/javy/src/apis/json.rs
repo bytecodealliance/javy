@@ -74,7 +74,7 @@ fn register<'js>(this: Ctx<'js>) -> Result<()> {
     Ok(())
 }
 
-fn call_json_parse<'js>(args: Args<'js>) -> Result<Value> {
+fn call_json_parse(args: Args<'_>) -> Result<Value> {
     let (this, args) = args.release();
 
     match args.len() {
@@ -87,8 +87,8 @@ fn call_json_parse<'js>(args: Args<'js>) -> Result<Value> {
             }
 
             let mut string = val_to_string(this.clone(), args[0].clone())?;
-            let mut bytes = unsafe { string.as_bytes_mut() };
-            json::parse(this, &mut bytes)
+            let bytes = unsafe { string.as_bytes_mut() };
+            json::parse(this, bytes)
         }
         _ => {
             // If there's more than one argument, defer to the built-in
@@ -107,7 +107,7 @@ fn call_json_parse<'js>(args: Args<'js>) -> Result<Value> {
     }
 }
 
-fn call_json_stringify<'js>(args: Args<'js>) -> Result<Value> {
+fn call_json_stringify(args: Args<'_>) -> Result<Value> {
     let (this, args) = args.release();
 
     match args.len() {
@@ -140,7 +140,7 @@ fn call_json_stringify<'js>(args: Args<'js>) -> Result<Value> {
     }
 }
 
-fn register_javy_json<'js>(this: Ctx<'js>) -> Result<()> {
+fn register_javy_json(this: Ctx<'_>) -> Result<()> {
     let globals = this.globals();
     let javy = if globals.get::<_, Object>("Javy").is_err() {
         Object::new(this.clone())?
@@ -167,7 +167,7 @@ fn register_javy_json<'js>(this: Ctx<'js>) -> Result<()> {
 }
 
 /// Definition for Javy.JSON.fromStdin
-fn from_stdin<'js>(args: Args<'js>) -> Result<Value<'js>> {
+fn from_stdin(args: Args<'_>) -> Result<Value> {
     // Light experimentation shows that 1k bytes is enough to avoid paying the
     // high relocation costs. We can modify as we see fit or even make this
     // configurable if needed.
@@ -179,7 +179,7 @@ fn from_stdin<'js>(args: Args<'js>) -> Result<Value<'js>> {
 }
 
 /// Definition for Javy.JSON.toStdout
-fn to_stdout<'js>(args: Args<'js>) -> Result<()> {
+fn to_stdout(args: Args<'_>) -> Result<()> {
     let (_, args) = args.release();
     let mut fd = std::io::stdout();
     let buffer = json::stringify(args[0].clone())?;
