@@ -21,8 +21,16 @@ rmp-serde = { version = "^1.3", optional = true }
 quickcheck = "1"
 bitflags = "2.5.0"
 fastrand = "2.1.0"
+simd-json = { version = "0.13.10", optional = true, default-features = false, features = ["big-int-as-float", "serde_impl"] }
 
 [features]
 export_alloc_fns = []
 messagepack = ["rmp-serde", "serde-transcode"]
-json = ["serde_json", "serde-transcode"]
+# According to our benchmarks and experiments, the fastest and most efficient
+# JSON implementation comes from:
+# * Using SIMD JSON for parsing
+# * Using serde_json for stringifying
+# This implementation is behind a feature flag, because of the code size
+# implications of enabling by default (due to the extra dependencies) and also
+# because the native implementation is probably fine for most use-cases.
+json = ["serde_json", "serde-transcode", "simd-json"]

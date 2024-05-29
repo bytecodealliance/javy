@@ -50,8 +50,11 @@ mod config;
 mod runtime;
 mod serde;
 
-use anyhow::{anyhow, Error};
-use rquickjs::{prelude::Rest, qjs, Ctx, Error as JSError, Exception, String as JSString, Value};
+use anyhow::{anyhow, Error, Result};
+use rquickjs::{
+    convert, prelude::Rest, qjs, Ctx, Error as JSError, Exception, FromJs, String as JSString,
+    Value,
+};
 
 #[cfg(feature = "messagepack")]
 pub mod messagepack;
@@ -173,4 +176,25 @@ pub fn to_string_lossy<'js>(cx: &Ctx<'js>, string: &JSString<'js>, error: JSErro
         }
     }
     res
+}
+
+/// Retrieves the string representation of a JavaScript value.
+pub fn val_to_string<'js>(this: Ctx<'js>, val: Value<'js>) -> Result<String> {
+    if let Some(symbol) = val.as_symbol() {
+        if let Some(description) = symbol.description()?.into_string() {
+            let description = description
+                .to_string()
+                .unwrap_or_else(|e| to_string_lossy(&this, &description, e));
+            Ok(format!("Symbol({description})"))
+        } else {
+            Ok("Symbol()".into())
+        }
+    } else {
+        let stringified = <convert::Coerced<JSString>>::from_js(&this, val).map(|string| {
+            string
+                .to_string()
+                .unwrap_or_else(|e| to_string_lossy(&this, &string.0, e))
+        })?;
+        Ok(stringified)
+    }
 }

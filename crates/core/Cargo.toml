@@ -15,7 +15,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 anyhow = { workspace = true }
-javy = { workspace = true, features = ["export_alloc_fns"] }
+javy = { workspace = true, features = ["export_alloc_fns", "json"] }
 once_cell = { workspace = true }
 
 [features]

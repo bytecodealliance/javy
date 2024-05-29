@@ -1,0 +1,6 @@
+# Explicit directive for simd-json
+# Cargo doesn't read directives in individual crates when invoking build
+# commands from the workspace root, hence adding it at the workspace root.
+# https://doc.rust-lang.org/cargo/reference/config.html
+[target.wasm32-wasi]
+rustflags = ["-C", "target-feature=+simd128"]

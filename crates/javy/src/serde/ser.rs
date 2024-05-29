@@ -13,7 +13,7 @@ use super::as_key;
 /// serialization framework.
 ///
 /// ```
-/// // Assuming you have [Ctx] instance named context
+/// // Assuming you have [`Ctx`] instance named context
 /// let serializer = Serializer::from_context(context)?;
 /// let value: Value = serializer.serialize_u32(42)?;
 /// ```

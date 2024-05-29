@@ -36,7 +36,7 @@
 //! ### `TextEncoding`
 //!
 //! Provides partial implementations of `TextEncoder` and `TextDecoder`.
-//! Disables by default.
+//! Disabled by default.
 //!
 //! ### `Random`
 //!
@@ -50,13 +50,22 @@
 //!
 //! Provides an implementation of `Javy.IO.readSync` and `Javy.IO.writeSync`.
 //! Disabled by default.
-
+//!
+//! ###  `JSON`
+//! Provides an efficient implementation of JSON functions based on [`simd-json`](https://crates.io/crates/simd-json/0.13.10)
+//! and [`serde_json`](https://crates.io/crates/serde_json)
+//!
+//! Disabled by default.
 pub(crate) mod console;
+#[cfg(feature = "json")]
+pub(crate) mod json;
 pub(crate) mod random;
 pub(crate) mod stream_io;
 pub(crate) mod text_encoding;
 
 pub(crate) use console::*;
+#[cfg(feature = "json")]
+pub(crate) use json::*;
 pub(crate) use random::*;
 pub(crate) use stream_io::*;
 pub(crate) use text_encoding::*;

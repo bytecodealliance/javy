@@ -6,7 +6,8 @@ pub(crate) fn new_runtime() -> Result<Runtime> {
     let config = config
         .text_encoding(true)
         .redirect_stdout_to_stderr(true)
-        .javy_stream_io(true);
+        .javy_stream_io(true)
+        .javy_json(true);
 
     Runtime::new(std::mem::take(config))
 }

@@ -1,3 +1,4 @@
+use anyhow::{bail, Result};
 use bitflags::bitflags;
 
 bitflags! {
@@ -36,6 +37,7 @@ bitflags! {
     /// moved out.
     pub(crate) struct JavyIntrinsics: u32 {
         const STREAM_IO = 1;
+        const JSON = 1 << 1;
     }
 }
 
@@ -51,6 +53,12 @@ pub struct Config {
     /// Whether to use a custom console implementation provided by Javy,
     /// that redirects stdout to stderr.
     pub(crate) redirect_stdout_to_stderr: bool,
+    /// Whether to override the implementation of JSON.parse and JSON.stringify
+    /// with a Rust implementation that uses a combination for Serde transcoding
+    /// serde_json and simd_json.
+    /// This setting requires the `JSON` intrinsic to be enabled, and the `json`
+    /// crate feature to be enabled as well.
+    pub(crate) override_json_parse_and_stringify: bool,
 }
 
 impl Default for Config {
@@ -62,6 +70,7 @@ impl Default for Config {
             intrinsics,
             javy_intrinsics: JavyIntrinsics::empty(),
             redirect_stdout_to_stderr: false,
+            override_json_parse_and_stringify: false,
         }
     }
 }
@@ -161,10 +170,62 @@ impl Config {
         self
     }
 
+    /// Whether the `Javy.JSON` intrinsic will be available.
+    /// Disabled by default.
+    /// This setting requires the `json` crate feature to be enabled.
+    #[cfg(feature = "json")]
+    pub fn javy_json(&mut self, enable: bool) -> &mut Self {
+        self.javy_intrinsics.set(JavyIntrinsics::JSON, enable);
+        self
+    }
+
     /// Enables whether the output of console.log will be redirected to
     /// `stderr`.
     pub fn redirect_stdout_to_stderr(&mut self, enable: bool) -> &mut Self {
         self.redirect_stdout_to_stderr = enable;
         self
+    }
+
+    /// Whether to override the implementation of JSON.parse and JSON.stringify
+    /// with a Rust implementation that uses a combination of Serde transcoding
+    /// serde_json and simd_json for improved performance.
+    /// This setting requires the `JSON` intrinsic to be enabled and the `json`
+    /// crate feature to be enabled as well.
+    /// Disabled by default.
+    #[cfg(feature = "json")]
+    pub fn override_json_parse_and_stringify(&mut self, enable: bool) -> &mut Self {
+        self.override_json_parse_and_stringify = enable;
+        self
+    }
+
+    pub(crate) fn validate(self) -> Result<Self> {
+        if self.override_json_parse_and_stringify && !self.intrinsics.contains(JSIntrinsics::JSON) {
+            bail!("JSON Intrinsic is required to override JSON.parse and JSON.stringify");
+        }
+
+        Ok(self)
+    }
+}
+
+#[cfg(test)]
+#[cfg(feature = "json")]
+mod tests {
+    use super::Config;
+
+    #[test]
+    fn err_config_validation() {
+        let mut config = Config::default();
+        config.override_json_parse_and_stringify(true);
+        config.json(false);
+
+        assert!(config.validate().is_err());
+    }
+
+    #[test]
+    fn ok_config_validation() {
+        let mut config = Config::default();
+        config.override_json_parse_and_stringify(true);
+
+        assert!(config.validate().is_ok());
     }
 }

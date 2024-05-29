@@ -5,6 +5,10 @@ use crate::{
     config::{JSIntrinsics, JavyIntrinsics},
     Config,
 };
+
+#[cfg(feature = "json")]
+use crate::apis::{JavyJson, Json};
+
 use anyhow::{bail, Result};
 use rquickjs::{
     context::{intrinsic, Intrinsic},
@@ -42,11 +46,12 @@ impl Runtime {
 
         // See comment above about configuring GC behaviour.
         rt.set_gc_threshold(usize::MAX);
-        let context = Self::build_from_config(&rt, &config)?;
+        let context = Self::build_from_config(&rt, config)?;
         Ok(Self { inner: rt, context })
     }
 
-    fn build_from_config(rt: &QRuntime, cfg: &Config) -> Result<ManuallyDrop<Context>> {
+    fn build_from_config(rt: &QRuntime, cfg: Config) -> Result<ManuallyDrop<Context>> {
+        let cfg = cfg.validate()?;
         let intrinsics = &cfg.intrinsics;
         let javy_intrinsics = &cfg.javy_intrinsics;
         // We always set Random given that the principles around snapshotting and
@@ -78,6 +83,13 @@ impl Runtime {
 
             if intrinsics.contains(JSIntrinsics::JSON) {
                 unsafe { intrinsic::Json::add_intrinsic(ctx.as_raw()) }
+            }
+
+            if cfg.override_json_parse_and_stringify {
+                #[cfg(feature = "json")]
+                unsafe {
+                    Json::add_intrinsic(ctx.as_raw())
+                }
             }
 
             if intrinsics.contains(JSIntrinsics::PROXY) {
@@ -124,6 +136,13 @@ impl Runtime {
 
             if javy_intrinsics.contains(JavyIntrinsics::STREAM_IO) {
                 unsafe { StreamIO::add_intrinsic(ctx.as_raw()) }
+            }
+
+            if javy_intrinsics.contains(JavyIntrinsics::JSON) {
+                #[cfg(feature = "json")]
+                unsafe {
+                    JavyJson::add_intrinsic(ctx.as_raw())
+                }
             }
         });
 
