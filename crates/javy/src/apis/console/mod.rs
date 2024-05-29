@@ -3,11 +3,8 @@ use std::ptr::NonNull;
 
 use crate::{
     hold, hold_and_release,
-    quickjs::{
-        context::Intrinsic, convert, prelude::MutFn, qjs, Ctx, FromJs, Function, Object,
-        String as JSString, Value,
-    },
-    to_js_error, to_string_lossy, Args,
+    quickjs::{context::Intrinsic, prelude::MutFn, qjs, Ctx, Function, Object, Value},
+    to_js_error, val_to_string, Args,
 };
 use anyhow::Result;
 
@@ -74,28 +71,12 @@ fn log<'js, T: Write>(args: Args<'js>, stream: &mut T) -> Result<Value<'js>> {
             write!(stream, " ")?;
         }
 
-        if let Some(symbol) = arg.as_symbol() {
-            if let Some(description) = symbol.description()?.into_string() {
-                let description = description
-                    .to_string()
-                    .unwrap_or_else(|e| to_string_lossy(&ctx, &description, e));
-                write!(stream, "Symbol({description})")?;
-            } else {
-                write!(stream, "Symbol()")?;
-            }
-        } else {
-            let stringified =
-                <convert::Coerced<JSString>>::from_js(&ctx, arg.clone()).map(|string| {
-                    string
-                        .to_string()
-                        .unwrap_or_else(|e| to_string_lossy(&ctx, &string.0, e))
-                })?;
-            write!(stream, "{stringified}")?;
-        };
+        let str = val_to_string(ctx.clone(), arg)?;
+        write!(stream, "{str}")?;
     }
     writeln!(stream)?;
 
-    Ok(Value::new_undefined(ctx.clone()))
+    Ok(Value::new_undefined(ctx))
 }
 
 #[cfg(test)]
