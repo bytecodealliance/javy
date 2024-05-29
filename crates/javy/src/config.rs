@@ -53,7 +53,7 @@ pub struct Config {
     /// Whether to use a custom console implementation provided by Javy,
     /// that redirects stdout to stderr.
     pub(crate) redirect_stdout_to_stderr: bool,
-    /// Whether to override the implemenation of JSON.parse and JSON.stringify
+    /// Whether to override the implementation of JSON.parse and JSON.stringify
     /// with a Rust implementation that uses a combination for Serde transcoding
     /// serde_json and simd_json.
     /// This setting requires the `JSON` intrinsic to be enabled, and the `json`
