@@ -18,7 +18,7 @@ experimental_event_loop = []
 wizer = { workspace = true }
 structopt = "0.3"
 anyhow = { workspace = true }
-brotli = "5.0.0"
+brotli = "6.0.0"
 wasmprinter = { version = "0.206.0", optional = true }
 wasmtime = { workspace = true }
 wasmtime-wasi = { workspace = true }
