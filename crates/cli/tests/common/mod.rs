@@ -1,6 +1,5 @@
 use anyhow::Result;
 use std::path::{Path, PathBuf};
-use wasmparser::ProducersSectionReader;
 use wasmtime::{Engine, Module};
 
 // Allows dead code b/c each integration test suite is considered its own
@@ -25,13 +24,15 @@ pub fn create_quickjs_provider_module(engine: &Engine) -> Result<Module> {
 pub fn assert_producers_section_is_correct(wasm: &[u8]) -> Result<()> {
     let producers_section = wasmparser::Parser::new(0)
         .parse_all(wasm)
-        .find_map(|payload| match payload {
-            Ok(wasmparser::Payload::CustomSection(c)) if c.name() == "producers" => {
-                Some(ProducersSectionReader::new(c.data(), c.data_offset()).unwrap())
+        .find_map(|payload| {
+            if let Ok(wasmparser::Payload::CustomSection(c)) = payload {
+                if let wasmparser::KnownCustom::Producers(r) = c.as_known() {
+                    return Some(r);
+                }
             }
-            _ => None,
+            None
         })
-        .unwrap();
+        .expect("Should have producers custom section");
     let fields = producers_section
         .into_iter()
         .collect::<Result<Vec<_>, _>>()?;
