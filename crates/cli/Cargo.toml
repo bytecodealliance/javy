@@ -24,8 +24,12 @@ wasmtime = { workspace = true }
 wasmtime-wasi = { workspace = true }
 wasi-common = { workspace = true }
 walrus = "0.20.3"
-swc_core = { version = "0.91.3", features = ["common_sourcemap", "ecma_ast", "ecma_parser"] }
-wit-parser = "0.206.0"
+swc_core = { version = "0.91.3", features = [
+    "common_sourcemap",
+    "ecma_ast",
+    "ecma_parser",
+] }
+wit-parser = "0.209.1"
 convert_case = "0.6.0"
 wasm-opt = "0.116.1"
 tempfile = "3.10.1"

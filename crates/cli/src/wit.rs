@@ -18,7 +18,9 @@ pub fn parse_exports(wit: impl AsRef<Path>, world: &str) -> Result<Vec<String>> 
     let mut exported_functions = vec![];
     for (_, export) in &world.exports {
         match export {
-            WorldItem::Interface(_) => bail!("Exported interfaces are not supported"),
+            WorldItem::Interface { .. } => {
+                bail!("Exported interfaces are not supported")
+            }
             WorldItem::Function(f) => {
                 if !f.params.is_empty() {
                     bail!("Exported functions with parameters are not supported")
