@@ -1198,6 +1198,7 @@ checksum = "290f1a1d9242c78d09ce40a5e87e7554ee637af1351968159f4952f028f75604"
 dependencies = [
  "ahash",
  "allocator-api2",
+ "serde",
 ]
 
 [[package]]
@@ -1548,7 +1549,7 @@ dependencies = [
  "walrus",
  "wasi-common",
  "wasm-opt",
- "wasmparser 0.206.0",
+ "wasmparser 0.209.1",
  "wasmprinter 0.206.0",
  "wasmtime",
  "wasmtime-wasi",
@@ -3613,6 +3614,7 @@ dependencies = [
  "hashbrown 0.14.3",
  "indexmap 2.2.6",
  "semver 1.0.22",
+ "serde",
 ]
 
 [[package]]
