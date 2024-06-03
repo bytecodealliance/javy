@@ -1,0 +1,194 @@
+# Embedding in Node.js Application
+This example demonstrates how to run Javy in a Node.js (v20+) host application.
+
+## Warning
+This example does NOT show how to run a Node.js application in Javy. This is useful for when you want to run untrusted user generated code in a sandbox. This code is meant to be an example not production-ready code. 
+
+
+## Summary
+This example shows how to use a dynamically linked Javy compiled WASM module. We use std in/out/error to communicate with the embedded javascript see [this blog post](https://k33g.hashnode.dev/wasi-communication-between-nodejs-and-wasm-modules-another-way-with-stdin-and-stdout) for details.
+
+
+### Steps
+
+1. The first step is to compile the `embedded.js` with Javy using dynamic linking:
+```shell
+javy compile embedded.js -d -o embedded.wasm
+```
+2. Next emit the Javy provider
+```shell
+javy emit-provider -o provider.wasm
+```
+3. Then we can run `host.mjs`
+```shell
+node --no-warnings=ExperimentalWarning host.mjs
+```
+
+
+`embedded.js`
+```javascript
+// Read input from stdin
+const input = readInput();
+// Call the function with the input
+const result = foo(input);
+// Write the result to stdout
+writeOutput(result);
+
+// The main function.
+function foo(input) {
+  if (input && typeof input === "object" && typeof input.n === "number") {
+    return { n: input.n + 1 };
+  }
+  return { n: 0 };
+}
+
+// Read input from stdin
+function readInput() {
+  const chunkSize = 1024;
+  const inputChunks = [];
+  let totalBytes = 0;
+
+  // Read all the available bytes
+  while (1) {
+    const buffer = new Uint8Array(chunkSize);
+    // Stdin file descriptor
+    const fd = 0;
+    const bytesRead = Javy.IO.readSync(fd, buffer);
+
+    totalBytes += bytesRead;
+    if (bytesRead === 0) {
+      break;
+    }
+    inputChunks.push(buffer.subarray(0, bytesRead));
+  }
+
+  // Assemble input into a single Uint8Array
+  const { finalBuffer } = inputChunks.reduce(
+    (context, chunk) => {
+      context.finalBuffer.set(chunk, context.bufferOffset);
+      context.bufferOffset += chunk.length;
+      return context;
+    },
+    { bufferOffset: 0, finalBuffer: new Uint8Array(totalBytes) },
+  );
+
+  const maybeJson = new TextDecoder().decode(finalBuffer);
+  try {
+    return JSON.parse(maybeJson);
+  } catch {
+    return;
+  }
+}
+
+// Write output to stdout
+function writeOutput(output) {
+  const encodedOutput = new TextEncoder().encode(JSON.stringify(output));
+  const buffer = new Uint8Array(encodedOutput);
+  // Stdout file descriptor
+  const fd = 1;
+  Javy.IO.writeSync(fd, buffer);
+}
+```
+
+
+`host.mjs`
+```javascript
+import { readFile, writeFile, open } from "node:fs/promises";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { WASI } from "wasi";
+
+try {
+  const [embeddedModule, providerModule] = await Promise.all([
+    compileModule("./embedded.wasm"),
+    compileModule("./provider.wasm"),
+  ]);
+  const result = await runJavy(providerModule, embeddedModule, { n: 100 });
+  console.log("Success!", JSON.stringify(result, null, 2));
+} catch (e) {
+  console.log(e);
+}
+
+async function compileModule(wasmPath) {
+  const bytes = await readFile(new URL(wasmPath, import.meta.url));
+  return WebAssembly.compile(bytes);
+}
+
+async function runJavy(providerModule, embeddedModule, input) {
+  const uniqueId = crypto.randomUUID();
+
+  // Use stdin/stdout/stderr to communicate with WASM process
+  // See https://k33g.hashnode.dev/wasi-communication-between-nodejs-and-wasm-modules-another-way-with-stdin-and-stdout
+  const workDir = tmpdir();
+  const stdinFilePath = join(workDir, `stdin.wasm.${uniqueId}.txt`);
+  const stdoutFilePath = join(workDir, `stdout.wasm.${uniqueId}.txt`);
+  const stderrFilePath = join(workDir, `stderr.wasm.${uniqueId}.txt`);
+
+  // 👋 send data to the WASM program
+  await writeFile(stdinFilePath, JSON.stringify(input), { encoding: "utf8" });
+
+  const [stdinFile, stdoutFile, stderrFile] = await Promise.all([
+    open(stdinFilePath, "r"),
+    open(stdoutFilePath, "a"),
+    open(stderrFilePath, "a"),
+  ]);
+
+  try {
+    const wasi = new WASI({
+      version: "preview1",
+      args: [],
+      env: {},
+      stdin: stdinFile.fd,
+      stdout: stdoutFile.fd,
+      stderr: stderrFile.fd,
+      returnOnExit: true,
+    });
+
+    const providerInstance = await WebAssembly.instantiate(
+      providerModule,
+      wasi.getImportObject(),
+    );
+    const instance = await WebAssembly.instantiate(embeddedModule, {
+      javy_quickjs_provider_v1: providerInstance.exports,
+    });
+
+    // Javy provider is a WASI reactor see https://github.com/WebAssembly/WASI/blob/main/legacy/application-abi.md?plain=1
+    wasi.initialize(providerInstance);
+    instance.exports._start();
+
+    const [out, err] = await Promise.all([
+      readOutput(stdoutFilePath),
+      readOutput(stderrFilePath),
+    ]);
+
+    if (err) {
+      throw new Error(err);
+    }
+
+    return out;
+  } catch (e) {
+    if (e instanceof WebAssembly.RuntimeError) {
+      const errorMessage = await readOutput(stderrFilePath);
+      if (errorMessage) {
+        throw new Error(errorMessage);
+      }
+    }
+    throw e;
+  } finally {
+    await Promise.all([
+      stdinFile.close(),
+      stdoutFile.close(),
+      stderrFile.close(),
+    ]);
+  }
+}
+
+async function readOutput(filePath) {
+  const str = (await readFile(filePath, "utf8")).trim();
+  try {
+    return JSON.parse(str);
+  } catch {
+    return str;
+  }
+}
+```

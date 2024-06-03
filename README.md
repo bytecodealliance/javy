@@ -253,6 +253,8 @@ In a runtime like Wasmtime, [wasmtime-wasi](
 https://docs.rs/wasmtime-wasi/latest/wasmtime_wasi/struct.WasiCtx.html#method.set_stdin)
 can be used to set the input and retrieve the output.
 
+To embed Javy in a Node.js application see this [example](docs/nodejs-embedding.md).
+
 ### Creating and using dynamically linked modules
 
 An important use for Javy is for when you may want or need to generate much smaller Wasm modules. Using the `-d` flag when invoking Javy will create a dynamically linked module which will have a much smaller file size than a statically linked module. Statically linked modules embed the JS engine inside the module while dynamically linked modules rely on Wasm imports to provide the JS engine. Dynamically linked modules have special requirements that statically linked modules do not and will not execute in WebAssembly runtimes that do not meet these requirements.
