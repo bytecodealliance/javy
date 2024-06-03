@@ -139,7 +139,7 @@ version = "0.3.0"
 criteria = "safe-to-run"
 
 [[exemptions.cc]]
-version = "1.0.96"
+version = "1.0.98"
 criteria = "safe-to-deploy"
 
 [[exemptions.ciborium]]
@@ -655,7 +655,7 @@ version = "0.33.26"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_core]]
-version = "0.91.3"
+version = "0.92.8"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_ast]]
