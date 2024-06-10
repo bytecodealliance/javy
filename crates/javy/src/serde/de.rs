@@ -213,7 +213,6 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             if let Some(f) = get_to_json(&self.value) {
                 let v: Value = f.call((This(self.value.clone()),))?;
 
-                // TODO: Must find a way to discard.
                 if v.is_undefined() {
                     self.value = Value::new_undefined(v.ctx().clone());
                 } else {

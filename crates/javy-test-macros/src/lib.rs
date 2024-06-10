@@ -1,9 +1,10 @@
+use anyhow::bail;
 /// Macros for testing Javy.
 ///
-/// Helper macros to define 262 tests or tests that exercise different
+/// Helper macros to define Test262 tests or tests that exercise different
 /// configuration combinations.
 ///
-/// Currently only defining 262 tests for JSON is supported.
+/// Currently only defining Test262 tests for JSON is supported.
 ///
 /// Usage
 ///
@@ -26,7 +27,7 @@ impl Config262 {
         if path.is_dir() {
             Ok(())
         } else {
-            Err(anyhow::anyhow!("Invalid path"))
+            bail!("Invalid path")
         }
     }
 }
@@ -76,7 +77,7 @@ fn ignore(test_name: &str) -> bool {
         "test_stringify_replacer_array_proxy_revoked_realm",
         "test_stringify_value_bigint_cross_realm",
         // TODO
-        // Currenlty the conversion between non-utf8 string encodings is lossy.
+        // Currently the conversion between non-utf8 string encodings is lossy.
         // There's probably a way to improve the interop.
         "test_stringify_value_string_escape_unicode",
     ]

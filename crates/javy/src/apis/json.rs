@@ -32,7 +32,7 @@ use crate::serde::de::get_to_json;
 
 use simd_json::Error as SError;
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, bail, Result};
 use std::{
     io::{Read, Write},
     ptr::NonNull,
@@ -71,6 +71,8 @@ fn register<'js>(this: Ctx<'js>) -> Result<()> {
     )?;
 
     // Explicitly set the function's name and length properties.
+    // In both the parse and the stringify case below, the spec tests
+    // assert that the name and length properties must be  correctly set.
     parse.set_length(2)?;
     parse.set_name("parse")?;
 
@@ -97,10 +99,10 @@ fn call_json_parse<'a>(args: Args<'a>, default: Function<'a>) -> Result<Value<'a
     let (this, args) = args.release();
 
     match args.len() {
-        0 => Err(anyhow!(Exception::throw_syntax(
+        0 => bail!(Exception::throw_syntax(
             &this,
             "undefined\" is not valid JSON"
-        ))),
+        )),
         1 => {
             let val = args[0].clone();
             // Fast path. Number and null are treated as identity.
@@ -109,10 +111,7 @@ fn call_json_parse<'a>(args: Args<'a>, default: Function<'a>) -> Result<Value<'a
             }
 
             if val.is_symbol() {
-                return Err(anyhow!(Exception::throw_type(
-                    &this,
-                    "Expected string primitive"
-                )));
+                bail!(Exception::throw_type(&this, "Expected string primitive"));
             }
 
             let mut string = val_to_string(this.clone(), args[0].clone())?;
@@ -122,9 +121,11 @@ fn call_json_parse<'a>(args: Args<'a>, default: Function<'a>) -> Result<Value<'a
                     return original;
                 }
 
-                // TODO: Use the actual result here.
-                let _e = original.downcast::<SError>().unwrap();
-                anyhow!(Exception::throw_syntax(&this, ""))
+                let e = match original.downcast_ref::<SError>() {
+                    Some(e) => e.to_string(),
+                    None => "JSON parse error".into(),
+                };
+                anyhow!(Exception::throw_syntax(&this, &e))
             })
         }
         _ => {
