@@ -1,17 +1,30 @@
-use crate::quickjs::{object::ObjectIter, Array, Filter, Value};
+use crate::quickjs::{
+    function::This,
+    object::ObjectIter,
+    qjs::{JS_GetClassID, JS_GetProperty},
+    Array, Exception, Filter, String as JSString, Value,
+};
 use crate::serde::err::{Error, Result};
 use crate::serde::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER};
-use crate::{from_js_error, to_string_lossy};
+use crate::to_string_lossy;
 use anyhow::anyhow;
-use rquickjs::Null;
+use rquickjs::{atom::PredefinedAtom, Function, Null};
 use serde::de::{self, Error as SerError};
 use serde::forward_to_deserialize_any;
+
+// Class IDs, for internal, deserialization purposes only.
+enum ClassId {
+    Number = 4,
+    String = 5,
+    Bool = 6,
+    BigInt = 33,
+}
 
 use super::as_key;
 
 impl SerError for Error {
-    fn custom<T: std::fmt::Display>(msg: T) -> Self {
-        Error::Custom(anyhow!(msg.to_string()))
+    fn custom<T: std::fmt::Display>(e: T) -> Self {
+        Error::Custom(anyhow!(e.to_string()))
     }
 }
 
@@ -32,6 +45,8 @@ pub struct Deserializer<'js> {
     value: Value<'js>,
     map_key: bool,
     current_kv: Option<(Value<'js>, Value<'js>)>,
+    /// Stack to track circular dependencies.
+    stack: Vec<Value<'js>>,
 }
 
 impl<'de> From<Value<'de>> for Deserializer<'de> {
@@ -40,6 +55,9 @@ impl<'de> From<Value<'de>> for Deserializer<'de> {
             value,
             map_key: false,
             current_kv: None,
+            // We are probaby over allocating here. But it's probably fine to
+            // over allocate to avoid paying the cost of subsequent allocations.
+            stack: Vec::with_capacity(100),
         }
     }
 }
@@ -78,6 +96,21 @@ impl<'js> Deserializer<'js> {
         }
         unreachable!()
     }
+
+    /// When stringifying, circular dependencies are not allowed. This function
+    /// checks the current value stack to ensure that if the same value (tag and
+    /// bits) is found again a proper error is raised.
+    fn check_cycles(&self) -> Result<()> {
+        for val in self.stack.iter().rev() {
+            if self.value.eq(val) {
+                return Err(Error::from(Exception::throw_type(
+                    val.ctx(),
+                    "circular dependency",
+                )));
+            }
+        }
+        Ok(())
+    }
 }
 
 impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
@@ -91,13 +124,37 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
             return self.deserialize_number(visitor);
         }
 
+        if get_class_id(&self.value) == ClassId::Number as u32 {
+            let value_of = get_valueof(&self.value);
+            if let Some(f) = value_of {
+                let v = f.call((This(self.value.clone()),))?;
+                self.value = v;
+                return self.deserialize_number(visitor);
+            }
+        }
+
         if self.value.is_bool() {
-            let val = self.value.as_bool().unwrap();
-            return visitor.visit_bool(val);
+            return visitor.visit_bool(self.value.as_bool().expect("value to be boolean"));
+        }
+
+        if get_class_id(&self.value) == ClassId::Bool as u32 {
+            let value_of = get_valueof(&self.value);
+            if let Some(f) = value_of {
+                let v = f.call((This(self.value.clone()),))?;
+                return visitor.visit_bool(v);
+            }
         }
 
         if self.value.is_null() || self.value.is_undefined() {
             return visitor.visit_unit();
+        }
+
+        if get_class_id(&self.value) == ClassId::String as u32 {
+            let value_of = get_to_string(&self.value);
+            if let Some(f) = value_of {
+                let v = f.call(((This(self.value.clone())),))?;
+                self.value = v;
+            }
         }
 
         if self.value.is_string() {
@@ -119,32 +176,85 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         }
 
         if self.value.is_array() {
+            self.check_cycles().and_then(|_| {
+                self.stack.push(self.value.clone());
+                Ok(())
+            })?;
             let arr = self.value.as_array().unwrap().clone();
-            let length = arr.len();
+            // Retrieve the `length` property from the object itself rather than
+            // using the bindings `Array::len` given that according to the spec
+            // it's fine to return any value, not just a number from the
+            // `length` property.
+            let value: Value = arr.as_object().get(PredefinedAtom::Length)?;
+            let length: usize = if value.is_number() {
+                value.as_number().unwrap() as usize
+            } else {
+                let value_of: Function = value
+                    .as_object()
+                    .expect("length to be an object")
+                    .get(PredefinedAtom::ValueOf)?;
+                value_of.call(())?
+            };
             let seq_access = SeqAccess {
                 de: self,
                 length,
                 seq: arr,
                 index: 0,
             };
-            return visitor.visit_seq(seq_access);
+            let result = visitor.visit_seq(seq_access);
+            self.stack.pop();
+            return result;
         }
 
         if self.value.is_object() {
-            let filter = Filter::new().enum_only().symbol().string();
+            ensure_supported(&self.value).and_then(|_| {
+                self.check_cycles().and_then(|_| {
+                    self.stack.push(self.value.clone());
+                    Ok(())
+                })
+            })?;
+
+            // TODO: Check that obj.len is 1.
+            if let Some(f) = get_to_json(&self.value) {
+                let v: Value = f.call((This(self.value.clone()),))?;
+
+                // TODO: Must find a way to discard.
+                if v.is_undefined() {
+                    self.value = Value::new_undefined(v.ctx().clone());
+                } else {
+                    self.value = v;
+                }
+                return self.deserialize_any(visitor);
+            }
+
+            let filter = Filter::new().enum_only().string();
             let obj = self.value.as_object().unwrap();
             let properties: ObjectIter<'_, _, Value<'_>> =
                 obj.own_props::<Value<'_>, Value<'_>>(filter);
+            self.stack.push(self.value.clone());
             let map_access = MapAccess {
                 de: self,
                 properties,
             };
-            return visitor.visit_map(map_access);
+
+            let result = visitor.visit_map(map_access);
+            self.stack.pop();
+            return result;
         }
 
-        Err(Error::Custom(anyhow!(
-            "Couldn't deserialize value: {:?}",
-            self.value
+        if get_class_id(&self.value) == ClassId::BigInt as u32
+            || self.value.type_of() == rquickjs::Type::BigInt
+        {
+            if let Some(f) = get_to_json(&self.value) {
+                let v: Value = f.call((This(self.value.clone()),))?;
+                self.value = v;
+                return self.deserialize_any(visitor);
+            }
+        }
+
+        Err(Error::from(Exception::throw_type(
+            self.value.ctx(),
+            "Unsupported type",
         )))
     }
 
@@ -203,16 +313,40 @@ impl<'a, 'de> de::MapAccess<'de> for MapAccess<'a, 'de> {
     {
         loop {
             if let Some(kv) = self.properties.next() {
-                let (k, v) = kv.map_err(|e| from_js_error(self.de.value.ctx().clone(), e))?;
+                let (k, v) = kv?;
 
-                // Entries with non-JSONable values are skipped to respect JSON.stringify's spec
-                if !is_jsonable(&v) {
+                let to_json = get_to_json(&v);
+                let v = if let Some(f) = to_json {
+                    f.call((This(v.clone()), k.clone()))?
+                } else {
+                    v
+                };
+
+                // Entries with non-JSONable values are skipped to respect
+                // JSON.stringify's spec
+                if !ensure_supported(&v)? || k.is_symbol() {
                     continue;
                 }
 
-                self.de.value = k.clone();
+                let class_id = get_class_id(&v);
+
+                if class_id == ClassId::Bool as u32 || class_id == ClassId::Number as u32 {
+                    let value_of = get_valueof(&v);
+                    if let Some(f) = value_of {
+                        let v = f.call((This(v.clone()),))?;
+                        self.de.current_kv = Some((k.clone(), v));
+                    }
+                } else if class_id == ClassId::String as u32 {
+                    let to_string = get_to_string(&v);
+                    if let Some(f) = to_string {
+                        let v = f.call((This(v.clone()),))?;
+                        self.de.current_kv = Some((k.clone(), v));
+                    }
+                } else {
+                    self.de.current_kv = Some((k.clone(), v));
+                }
+                self.de.value = k;
                 self.de.map_key = true;
-                self.de.current_kv = Some((k, v));
 
                 return seed.deserialize(&mut *self.de).map(Some);
             } else {
@@ -245,17 +379,17 @@ impl<'a, 'de> de::SeqAccess<'de> for SeqAccess<'a, 'de> {
         T: de::DeserializeSeed<'de>,
     {
         if self.index < self.length {
-            self.de.value = self
-                .seq
-                .get(self.index)
-                .map(|v| {
-                    if is_jsonable(&v) {
-                        v
-                    } else {
-                        Null.into_value(self.seq.ctx().clone())
-                    }
-                })
-                .map_err(|e| from_js_error(self.seq.ctx().clone(), e))?;
+            let el = self.seq.get(self.index)?;
+            let to_json = get_to_json(&el);
+
+            if let Some(f) = to_json {
+                let index_value = JSString::from_str(el.ctx().clone(), &self.index.to_string());
+                self.de.value = f.call((This(el.clone()), index_value))?;
+            } else if ensure_supported(&el)? {
+                self.de.value = el
+            } else {
+                self.de.value = Null.into_value(self.seq.ctx().clone())
+            }
             self.index += 1;
             seed.deserialize(&mut *self.de).map(Some)
         } else {
@@ -264,15 +398,71 @@ impl<'a, 'de> de::SeqAccess<'de> for SeqAccess<'a, 'de> {
     }
 }
 
-fn is_jsonable(value: &Value<'_>) -> bool {
-    !matches!(
+/// Checks if the value is an object and contains a single `toJSON` function.
+pub(crate) fn get_to_json<'a>(value: &Value<'a>) -> Option<Function<'a>> {
+    let f = unsafe {
+        JS_GetProperty(
+            value.ctx().as_raw().as_ptr(),
+            value.as_raw(),
+            PredefinedAtom::ToJSON as u32,
+        )
+    };
+    let f = unsafe { Value::from_raw(value.ctx().clone(), f) };
+
+    if f.is_function() {
+        Some(f.into_function().unwrap())
+    } else {
+        None
+    }
+}
+
+/// Checks if the value is an object and contains a `valueOf` function.
+fn get_valueof<'a>(value: &Value<'a>) -> Option<Function<'a>> {
+    if let Some(o) = value.as_object() {
+        let value_of = o.get("valueOf").ok();
+        value_of.clone()
+    } else {
+        None
+    }
+}
+
+/// Checks if the value is an object and contains a `valueOf` function.
+fn get_to_string<'a>(value: &Value<'a>) -> Option<Function<'a>> {
+    if let Some(o) = value.as_object() {
+        let value_of = o.get("toString").ok();
+        value_of.clone()
+    } else {
+        None
+    }
+}
+
+/// Gets the underlying class id of the value.
+fn get_class_id(v: &Value) -> u32 {
+    unsafe { JS_GetClassID(v.as_raw()) }
+}
+
+/// Ensures that the value can be stringified.
+fn ensure_supported(value: &Value<'_>) -> Result<bool> {
+    let class_id = get_class_id(value);
+    if class_id == (ClassId::Bool as u32) || class_id == (ClassId::Number as u32) {
+        return Ok(true);
+    }
+
+    if class_id == ClassId::BigInt as u32 {
+        return Err(Error::from(Exception::throw_type(
+            value.ctx(),
+            "BigInt not supported",
+        )));
+    }
+
+    Ok(!matches!(
         value.type_of(),
         rquickjs::Type::Undefined
             | rquickjs::Type::Symbol
             | rquickjs::Type::Function
             | rquickjs::Type::Uninitialized
             | rquickjs::Type::Constructor
-    )
+    ))
 }
 
 #[cfg(test)]

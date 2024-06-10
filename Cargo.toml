@@ -5,7 +5,7 @@ members = [
   "crates/javy",
   "crates/apis",
   "crates/core",
-  "crates/cli",
+  "crates/cli", "crates/javy-test-macros",
 ]
 resolver = "2"
 

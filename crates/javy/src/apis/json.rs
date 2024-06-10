@@ -21,11 +21,16 @@ use crate::{
     hold, hold_and_release, json,
     quickjs::{
         context::Intrinsic,
+        function::This,
         prelude::{MutFn, Rest},
-        qjs, Ctx, Function, Object, String as JSString, Value,
+        qjs, Ctx, Exception, Function, Object, String as JSString, Value,
     },
     to_js_error, val_to_string, Args,
 };
+
+use crate::serde::de::get_to_json;
+
+use simd_json::Error as SError;
 
 use anyhow::{anyhow, Result};
 use std::{
@@ -52,19 +57,33 @@ impl Intrinsic for Json {
 }
 
 fn register<'js>(this: Ctx<'js>) -> Result<()> {
+    let global = this.globals();
+    let json: Object = global.get("JSON")?;
+    let default_parse: Function = json.get("parse")?;
+    let default_stringify: Function = json.get("stringify")?;
+
     let parse = Function::new(
         this.clone(),
         MutFn::new(move |cx: Ctx<'js>, args: Rest<Value<'js>>| {
-            call_json_parse(hold!(cx.clone(), args)).map_err(|e| to_js_error(cx, e))
+            call_json_parse(hold!(cx.clone(), args), default_parse.clone())
+                .map_err(|e| to_js_error(cx, e))
         }),
     )?;
+
+    // Explicitly set the function's name and length properties.
+    parse.set_length(2)?;
+    parse.set_name("parse")?;
 
     let stringify = Function::new(
         this.clone(),
         MutFn::new(move |cx: Ctx<'js>, args: Rest<Value<'js>>| {
-            call_json_stringify(hold!(cx.clone(), args)).map_err(|e| to_js_error(cx, e))
+            call_json_stringify(hold!(cx.clone(), args), default_stringify.clone())
+                .map_err(|e| to_js_error(cx, e))
         }),
     )?;
+
+    stringify.set_name("stringify")?;
+    stringify.set_length(3)?;
 
     let global = this.globals();
     let json: Object = global.get("JSON")?;
@@ -74,11 +93,14 @@ fn register<'js>(this: Ctx<'js>) -> Result<()> {
     Ok(())
 }
 
-fn call_json_parse(args: Args<'_>) -> Result<Value> {
+fn call_json_parse<'a>(args: Args<'a>, default: Function<'a>) -> Result<Value<'a>> {
     let (this, args) = args.release();
 
     match args.len() {
-        0 => Err(anyhow!("Error: \"undefined\" is not valid JSON")),
+        0 => Err(anyhow!(Exception::throw_syntax(
+            &this,
+            "undefined\" is not valid JSON"
+        ))),
         1 => {
             let val = args[0].clone();
             // Fast path. Number and null are treated as identity.
@@ -86,9 +108,24 @@ fn call_json_parse(args: Args<'_>) -> Result<Value> {
                 return Ok(val);
             }
 
+            if val.is_symbol() {
+                return Err(anyhow!(Exception::throw_type(
+                    &this,
+                    "Expected string primitive"
+                )));
+            }
+
             let mut string = val_to_string(this.clone(), args[0].clone())?;
             let bytes = unsafe { string.as_bytes_mut() };
-            json::parse(this, bytes)
+            json::parse(this.clone(), bytes).map_err(|original| {
+                if original.downcast_ref::<SError>().is_none() {
+                    return original;
+                }
+
+                // TODO: Use the actual result here.
+                let _e = original.downcast::<SError>().unwrap();
+                anyhow!(Exception::throw_syntax(&this, ""))
+            })
         }
         _ => {
             // If there's more than one argument, defer to the built-in
@@ -96,24 +133,37 @@ fn call_json_parse(args: Args<'_>) -> Result<Value> {
             // reviver argument.
             //
             // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse#reviver.
-            let global = this.globals();
-            let json: Object = global.get("JSON")?;
-            let parse: Function = json.get("parse")?;
-
-            parse
+            default
                 .call((args[0].clone(), args[1].clone()))
-                .map_err(|e| anyhow!("{e}"))
+                .map_err(|e| anyhow!(e))
         }
     }
 }
 
-fn call_json_stringify(args: Args<'_>) -> Result<Value> {
+fn call_json_stringify<'a>(args: Args<'a>, default: Function<'a>) -> Result<Value<'a>> {
     let (this, args) = args.release();
 
     match args.len() {
         0 => Ok(Value::new_undefined(this.clone())),
         1 => {
-            let bytes = json::stringify(args[0].clone())?;
+            let arg = args[0].clone();
+            let val: Value = if arg.is_object() {
+                if let Some(f) = get_to_json(&arg) {
+                    f.call((
+                        This(arg.clone()),
+                        JSString::from_str(arg.ctx().clone(), "")?.into_value(),
+                    ))?
+                } else {
+                    arg.clone()
+                }
+            } else {
+                arg.clone()
+            };
+            if val.is_function() || val.is_undefined() || val.is_symbol() {
+                return Ok(Value::new_undefined(arg.ctx().clone()));
+            }
+
+            let bytes = json::stringify(val.clone())?;
             let str = String::from_utf8(bytes)?;
             let str = JSString::from_str(this, &str)?;
             Ok(str.into_value())
@@ -123,18 +173,14 @@ fn call_json_stringify(args: Args<'_>) -> Result<Value> {
             // defer to the built-in JSON.stringify, which will take care of
             // validating invoking the replacer function and/or applying the
             // space argument.
-            let global = this.globals();
-            let json: Object = global.get("JSON")?;
-            let stringify: Function = json.get("stringify")?;
-
             if args.len() == 2 {
-                stringify
+                default
                     .call((args[0].clone(), args[1].clone()))
-                    .map_err(|e| anyhow!("{e}"))
+                    .map_err(|e| anyhow::Error::new(e))
             } else {
-                stringify
+                default
                     .call((args[0].clone(), args[1].clone(), args[2].clone()))
-                    .map_err(|e| anyhow!("{e}"))
+                    .map_err(|e| anyhow::Error::new(e))
             }
         }
     }
