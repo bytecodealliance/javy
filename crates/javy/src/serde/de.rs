@@ -210,7 +210,6 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
                     .map(|_| self.stack.push(self.value.clone()))
             })?;
 
-            // TODO: Check that obj.len is 1.
             if let Some(f) = get_to_json(&self.value) {
                 let v: Value = f.call((This(self.value.clone()),))?;
 
