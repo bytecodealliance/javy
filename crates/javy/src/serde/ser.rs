@@ -631,23 +631,6 @@ mod tests {
         Ok(())
     }
 
-    // #[test]
-    // fn test_map_with_invalid_key_type() {
-    //     // This is technically possible since msgpack supports maps
-    //     // with any other valid msgpack type. However, we try to enforce
-    //     // using `K: String` since it allow transcoding from json<->msgpack.
-    //     let rt = Runtime::default();
-    //     rt.context().with(|cx| {
-    //         let mut serializer = ValueSerializer::from_context(cx.clone()).unwrap();
-
-    //         let mut map = BTreeMap::new();
-    //         map.insert(42, "bar");
-    //         map.insert(43, "titi");
-
-    //         let err = map.serialize(&mut serializer).unwrap_err();
-    //         assert_eq!("map keys must be a string".to_string(), err.to_string());
-    //     });
-    // }
     #[test]
     fn test_map() {
         let rt = Runtime::default();
