@@ -101,7 +101,7 @@ fn call_json_parse<'a>(args: Args<'a>, default: Function<'a>) -> Result<Value<'a
     match args.len() {
         0 => bail!(Exception::throw_syntax(
             &this,
-            "undefined\" is not valid JSON"
+            "\"undefined\" is not valid JSON"
         )),
         1 => {
             let val = args[0].clone();
