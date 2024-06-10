@@ -1,0 +1,15 @@
+[package]
+name = "javy-test-macros"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+anyhow = { workspace = true }
+proc-macro2 = "1.0.85"
+quote = "1.0.36"
+syn = { version = "2.0.66", features = ["full"] }
