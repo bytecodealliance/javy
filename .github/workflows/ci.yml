@@ -17,6 +17,8 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
 
       - uses: ./.github/actions/ci-shared-setup
         with:
