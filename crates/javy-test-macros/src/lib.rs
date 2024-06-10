@@ -46,10 +46,12 @@ pub fn t262(stream: TokenStream) -> TokenStream {
     let config_parser = syn::meta::parser(|meta| {
         if meta.path.is_ident("path") {
             let lit: Option<LitStr> = Some(meta.value()?.parse()?);
-            if lit.is_none() {
+
+            if let Some(s) = lit {
+                config.root = PathBuf::from(s.clone().value());
+            } else {
                 return Err(meta.error("Expected String literal"));
             }
-            config.root = PathBuf::from(lit.unwrap().value());
             config.validate().map_err(|e| meta.error(e))
         } else {
             Err(meta.error("Unsupported property"))
@@ -118,8 +120,8 @@ fn gen_tests(
             let path = entry.path();
             let path_str = path.clone().into_os_string().into_string().unwrap();
             let name = path.file_stem().unwrap().to_str().unwrap();
-            let name = name.replace(".", "_");
-            let name = name.replace("-", "_");
+            let name = name.replace('.', "_");
+            let name = name.replace('-', "_");
             let test_name = Ident::new(&format!("test_{}_{}", prefix, name), Span::call_site());
             let ignore = ignore(&test_name.to_string());
 

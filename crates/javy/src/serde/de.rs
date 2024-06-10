@@ -176,10 +176,8 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         }
 
         if self.value.is_array() {
-            self.check_cycles().and_then(|_| {
-                self.stack.push(self.value.clone());
-                Ok(())
-            })?;
+            self.check_cycles()
+                .map(|_| self.stack.push(self.value.clone()))?;
             let arr = self.value.as_array().unwrap().clone();
             // Retrieve the `length` property from the object itself rather than
             // using the bindings `Array::len` given that according to the spec
@@ -208,10 +206,8 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
 
         if self.value.is_object() {
             ensure_supported(&self.value).and_then(|_| {
-                self.check_cycles().and_then(|_| {
-                    self.stack.push(self.value.clone());
-                    Ok(())
-                })
+                self.check_cycles()
+                    .map(|_| self.stack.push(self.value.clone()))
             })?;
 
             // TODO: Check that obj.len is 1.

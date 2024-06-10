@@ -176,11 +176,11 @@ fn call_json_stringify<'a>(args: Args<'a>, default: Function<'a>) -> Result<Valu
             if args.len() == 2 {
                 default
                     .call((args[0].clone(), args[1].clone()))
-                    .map_err(|e| anyhow::Error::new(e))
+                    .map_err(anyhow::Error::new)
             } else {
                 default
                     .call((args[0].clone(), args[1].clone(), args[2].clone()))
-                    .map_err(|e| anyhow::Error::new(e))
+                    .map_err(anyhow::Error::new)
             }
         }
     }
