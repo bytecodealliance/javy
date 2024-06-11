@@ -6,6 +6,7 @@ use std::slice;
 use std::str;
 use std::string::String;
 
+use javy_config::Config;
 mod execution;
 mod runtime;
 
@@ -18,7 +19,7 @@ static mut BYTECODE: OnceCell<Vec<u8>> = OnceCell::new();
 pub extern "C" fn init() {
     let _wasm_ctx = WasmCtx::new();
 
-    let runtime = runtime::new_runtime().unwrap();
+    let runtime = runtime::new(Config::all()).unwrap();
 
     let mut contents = String::new();
     io::stdin().read_to_string(&mut contents).unwrap();

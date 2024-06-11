@@ -7,6 +7,7 @@ members = [
   "crates/core",
   "crates/cli",
   "crates/javy-test-macros",
+  "crates/javy-config",
 ]
 resolver = "2"
 
@@ -23,7 +24,9 @@ wasmtime-wasi = "19"
 wasi-common = "19"
 anyhow = "1.0"
 once_cell = "1.19"
+bitflags = "2.5.0"
 javy = { path = "crates/javy", version = "3.0.0-alpha.1" }
+javy-config = { path = "crates/javy-config" }
 
 [profile.release]
 lto = true
