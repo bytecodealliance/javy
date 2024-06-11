@@ -16,7 +16,6 @@ experimental_event_loop = []
 
 [dependencies]
 wizer = { workspace = true }
-structopt = "0.3"
 anyhow = { workspace = true }
 brotli = "6.0.0"
 wasmprinter = { version = "0.209.1", optional = true }
@@ -33,6 +32,7 @@ wit-parser = "0.209.1"
 convert_case = "0.6.0"
 wasm-opt = "0.116.1"
 tempfile = "3.10.1"
+clap = { version = "4.5.7", features = ["derive"] }
 
 [dev-dependencies]
 serde_json = "1.0"

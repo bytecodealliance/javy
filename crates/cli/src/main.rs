@@ -5,21 +5,21 @@ mod js;
 mod wasm_generator;
 mod wit;
 
-use crate::commands::{Command, EmitProviderCommandOpts};
+use crate::commands::{Cli, Command, EmitProviderCommandOpts};
 use crate::wasm_generator::r#static as static_generator;
 use anyhow::{bail, Result};
+use clap::Parser;
 use js::JS;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
-use structopt::StructOpt;
 use wasm_generator::dynamic as dynamic_generator;
 
 fn main() -> Result<()> {
-    let cmd = Command::from_args();
+    let args = Cli::parse();
 
-    match &cmd {
-        Command::EmitProvider(opts) => emit_provider(opts),
+    match args.command {
+        Command::EmitProvider(opts) => emit_provider(&opts),
         Command::Compile(opts) => {
             let js = JS::from_file(&opts.input)?;
             let exports = match (&opts.wit, &opts.wit_world) {
