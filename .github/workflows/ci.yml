@@ -17,6 +17,8 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
 
       - uses: ./.github/actions/ci-shared-setup
         with:
@@ -32,6 +34,8 @@ jobs:
         run: cargo build -p javy-core --release --target=wasm32-wasi
 
       - name: Test
+        env: 
+          CARGO_TARGET_WASM32_WASI_RUNNER: wasmtime --dir=.
         run: cargo hack wasi test --workspace --exclude=javy-cli --each-feature -- --nocapture
 
       - name: Lint
