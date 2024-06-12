@@ -8,6 +8,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [3.0.0] - 2024-06-12
+
 ### Changed
 
 - Introduce `rquickjs` to interface with QuickJS instead of `quickjs-wasm-rs`;
