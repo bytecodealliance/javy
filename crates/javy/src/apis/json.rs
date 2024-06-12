@@ -230,5 +230,6 @@ fn to_stdout(args: Args<'_>) -> Result<()> {
     let (_, args) = args.release();
     let mut fd = std::io::stdout();
     let buffer = json::stringify(args[0].clone())?;
-    fd.write_all(&buffer).map_err(Into::into)
+    fd.write_all(&buffer)?;
+    fd.flush().map_err(Into::into)
 }
