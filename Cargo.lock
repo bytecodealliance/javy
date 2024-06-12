@@ -1731,11 +1731,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "javy-config"
+version = "1.4.0"
+dependencies = [
+ "bitflags 2.5.0",
+]
+
+[[package]]
 name = "javy-core"
 version = "0.2.0"
 dependencies = [
  "anyhow",
  "javy",
+ "javy-config",
  "once_cell",
 ]
 
