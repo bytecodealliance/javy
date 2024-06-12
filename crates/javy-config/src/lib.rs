@@ -24,11 +24,25 @@
 use bitflags::bitflags;
 
 bitflags! {
+    #[derive(Eq, PartialEq)]
     pub struct Config: u32 {
         const OVERRIDE_JSON_PARSE_AND_STRINGIFY = 1;
         const JAVY_JSON = 1 << 1;
-        const JAVY_STREAM_IO = 1 << 1;
-        const REDIRECT_STDOUT_TO_STDERR = 1 << 2;
-        const TEXT_ENCODING = 1 << 3;
+        const JAVY_STREAM_IO = 1 << 2;
+        const REDIRECT_STDOUT_TO_STDERR = 1 << 3;
+        const TEXT_ENCODING = 1 << 4;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Config;
+    #[test]
+    fn check_bits() {
+        assert!(Config::OVERRIDE_JSON_PARSE_AND_STRINGIFY == Config::from_bits(1).unwrap());
+        assert!(Config::JAVY_JSON == Config::from_bits(1 << 1).unwrap());
+        assert!(Config::JAVY_STREAM_IO == Config::from_bits(1 << 2).unwrap());
+        assert!(Config::REDIRECT_STDOUT_TO_STDERR == Config::from_bits(1 << 3).unwrap());
+        assert!(Config::TEXT_ENCODING == Config::from_bits(1 << 4).unwrap());
     }
 }
