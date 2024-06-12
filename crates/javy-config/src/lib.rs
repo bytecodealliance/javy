@@ -18,7 +18,7 @@
 //! need to override non-standard defaults typically set during CLI invocations.
 //! These defaults often do not align with the preferences of the CLI users.
 //!
-//! In gneneral this crate should be treated as an internal detail and
+//! In general this crate should be treated as an internal detail and
 //! a contract between the CLI and the Javy crate.
 
 use bitflags::bitflags;
