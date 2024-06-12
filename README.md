@@ -259,7 +259,7 @@ To embed Javy in a Node.js application see this [example](docs/nodejs-embedding.
 
 An important use for Javy is for when you may want or need to generate much smaller Wasm modules. Using the `-d` flag when invoking Javy will create a dynamically linked module which will have a much smaller file size than a statically linked module. Statically linked modules embed the JS engine inside the module while dynamically linked modules rely on Wasm imports to provide the JS engine. Dynamically linked modules have special requirements that statically linked modules do not and will not execute in WebAssembly runtimes that do not meet these requirements.
 
-To successfully instantiate and run a dynamically linked Javy module, the execution environment must provide a `javy_quickjs_provider_v1` namespace for importing that links to the exports provided by the `javy_quickjs_provider.wasm` module. Dynamically linked modules **cannot** be instantiated in environments that do not provide this import.
+To successfully instantiate and run a dynamically linked Javy module, the execution environment must provide a `javy_quickjs_provider_v2` namespace for importing that links to the exports provided by the `javy_quickjs_provider.wasm` module. Dynamically linked modules **cannot** be instantiated in environments that do not provide this import.
 
 Dynamically linked Javy modules are tied to QuickJS since they use QuickJS's bytecode representation.
 
@@ -273,7 +273,7 @@ The `javy_quickjs_provider.wasm` module is available as an asset on the Javy rel
 $ echo 'console.log("hello world!");' > my_code.js
 $ javy compile -d -o my_code.wasm my_code.js
 $ javy emit-provider -o provider.wasm
-$ wasmtime run --preload javy_quickjs_provider_v1=provider.wasm my_code.wasm
+$ wasmtime run --preload javy_quickjs_provider_v2=provider.wasm my_code.wasm
 hello world!
 ```
 
