@@ -4,3 +4,9 @@
 # https://doc.rust-lang.org/cargo/reference/config.html
 [target.wasm32-wasi]
 rustflags = ["-C", "target-feature=+simd128"]
+
+# We want to ensure that all the MSVC dependencies are statically resolved and
+# included in the final CLI binary.
+# Ref: https://github.com/rust-lang/rust/pull/122268
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]
