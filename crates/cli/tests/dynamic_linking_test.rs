@@ -127,6 +127,8 @@ fn test_producers_section_present() -> Result<()> {
 }
 
 #[test]
+// Temporarily ignore given that Javy.JSON is disabled by default.
+#[ignore]
 fn javy_json_identity() -> Result<()> {
     let src = r#"
         console.log(Javy.JSON.toStdout(Javy.JSON.fromStdin()));
