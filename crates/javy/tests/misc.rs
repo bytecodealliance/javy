@@ -1,6 +1,7 @@
 use anyhow::Result;
 use javy::{quickjs::context::EvalOptions, Config, Runtime};
 
+#[cfg(feature = "json")]
 #[test]
 fn string_keys_and_ref_counting() -> Result<()> {
     let mut config = Config::default();
