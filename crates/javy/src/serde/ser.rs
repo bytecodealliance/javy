@@ -1,7 +1,4 @@
-use crate::quickjs::{
-    qjs::{JS_DefinePropertyValue, JS_ValueToAtom, JS_PROP_C_W_E},
-    Array, Ctx, Object, String as JSString, Value,
-};
+use crate::quickjs::{object::Property, Array, Ctx, Object, String as JSString, Value};
 use crate::serde::err::{Error, Result};
 use anyhow::anyhow;
 
@@ -340,29 +337,16 @@ impl<'a> ser::SerializeMap for &'a mut Serializer<'_> {
     {
         let mut map_serializer = Serializer::from_context(self.context.clone())?;
         value.serialize(&mut map_serializer)?;
-        let atom = unsafe { JS_ValueToAtom(self.context.as_raw().as_ptr(), self.key.as_raw()) };
-
         if let Some(o) = self.value.as_object() {
-            // Use `JS_DefinePropertyValue` to keep the semantics of the object
-            // unchanged.
-            let result = unsafe {
-                JS_DefinePropertyValue(
-                    self.context.as_raw().as_ptr(),
-                    o.as_raw(),
-                    atom,
-                    map_serializer.value.as_raw(),
-                    JS_PROP_C_W_E as i32,
-                )
-            };
-
-            return if result != 0 {
-                Ok(())
-            } else {
-                Err(Error::custom("Error while serializing object"))
-            };
+            let prop = Property::from(map_serializer.value.clone())
+                .writable()
+                .configurable()
+                .enumerable();
+            o.prop::<_, _, _>(self.key.clone(), prop)
+                .map_err(|e| Error::custom(e.to_string()))
+        } else {
+            Err(Error::custom("Expected to be an object"))
         }
-
-        Err(Error::custom("Expected to be an object"))
     }
 
     fn end(self) -> Result<()> {
