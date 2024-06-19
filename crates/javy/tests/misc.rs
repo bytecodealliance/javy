@@ -12,7 +12,7 @@ fn string_keys_and_ref_counting() -> Result<()> {
 
     rt.context().with(|this| {
         let _: () = this
-            .eval_with_options(&*source, EvalOptions::default())
+            .eval_with_options(*source, EvalOptions::default())
             .inspect_err(|e| println!("{e}"))
             .expect("source evaluation to succeed");
     });
