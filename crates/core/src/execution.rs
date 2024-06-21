@@ -61,10 +61,24 @@ pub fn invoke_function(runtime: &Runtime, fn_module: &str, fn_name: &str) {
             let mut opts = EvalOptions::default();
             opts.strict = false;
             opts.global = false;
-            this.eval_with_options::<Value<'_>, _>(js, opts)
-                .map_err(|e| from_js_error(this.clone(), e))
-                .map(|_| ())
+            let value = this.eval_with_options::<Value<'_>, _>(js, opts)?;
+
+            if let Some(promise) = value.as_promise() {
+                if cfg!(feature = "experimental_event_loop") {
+                    // If the experimental event loop is enabled, trigger it.
+                    promise.finish::<Value>().map(|_| ())
+                } else {
+                    // Else we simply expect the promise to resolve immediately.
+                    match promise.result() {
+                        None => Err(to_js_error(this, anyhow!(EVENT_LOOP_ERR))),
+                        Some(r) => r,
+                    }
+                }
+            } else {
+                Ok(())
+            }
         })
+        .map_err(|e| runtime.context().with(|cx| from_js_error(cx.clone(), e)))
         .and_then(|_: ()| process_event_loop(runtime))
         .unwrap_or_else(handle_error)
 }

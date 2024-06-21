@@ -47,6 +47,25 @@ pub fn test_dynamic_linking_with_func_without_flag() -> Result<()> {
 }
 
 #[test]
+fn test_errors_in_exported_functions_are_correctly_reported() -> Result<()> {
+    let js_src = "export function foo() { throw \"Error\" }";
+    let wit = "
+        package local:main
+
+        world foo-test {
+            export foo: func()
+        }
+    ";
+    let res = invoke_fn_on_generated_module(js_src, "foo", Some((wit, "foo-test")), None, None);
+    assert!(res
+        .err()
+        .unwrap()
+        .to_string()
+        .contains("error while executing"));
+    Ok(())
+}
+
+#[test]
 pub fn check_for_new_imports() -> Result<()> {
     // If you need to change this test, then you've likely made a breaking change.
     let js_src = "console.log(42);";
