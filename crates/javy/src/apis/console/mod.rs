@@ -71,7 +71,7 @@ fn log<'js, T: Write>(args: Args<'js>, stream: &mut T) -> Result<Value<'js>> {
             write!(stream, " ")?;
         }
 
-        let str = val_to_string(ctx.clone(), arg)?;
+        let str = val_to_string(&ctx, arg)?;
         write!(stream, "{str}")?;
     }
     writeln!(stream)?;

@@ -114,7 +114,7 @@ fn call_json_parse<'a>(args: Args<'a>, default: Function<'a>) -> Result<Value<'a
                 bail!(Exception::throw_type(&this, "Expected string primitive"));
             }
 
-            let mut string = val_to_string(this.clone(), args[0].clone())?;
+            let mut string = val_to_string(&this, args[0].clone())?;
             let bytes = unsafe { string.as_bytes_mut() };
             json::parse(this.clone(), bytes).map_err(|original| {
                 if original.downcast_ref::<SError>().is_none() {

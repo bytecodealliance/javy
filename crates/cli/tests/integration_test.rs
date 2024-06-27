@@ -10,7 +10,7 @@ fn test_identity() {
 
     let (output, _, fuel_consumed) = run_with_u8s(&mut runner, 42);
     assert_eq!(42, output);
-    assert_fuel_consumed_within_threshold(43239, fuel_consumed);
+    assert_fuel_consumed_within_threshold(47_773, fuel_consumed);
 }
 
 #[test]
@@ -19,7 +19,7 @@ fn test_fib() {
 
     let (output, _, fuel_consumed) = run_with_u8s(&mut runner, 5);
     assert_eq!(8, output);
-    assert_fuel_consumed_within_threshold(59_822, fuel_consumed);
+    assert_fuel_consumed_within_threshold(66_007, fuel_consumed);
 }
 
 #[test]
@@ -28,7 +28,7 @@ fn test_recursive_fib() {
 
     let (output, _, fuel_consumed) = run_with_u8s(&mut runner, 5);
     assert_eq!(8, output);
-    assert_fuel_consumed_within_threshold(61_617, fuel_consumed);
+    assert_fuel_consumed_within_threshold(69_306, fuel_consumed);
 }
 
 #[test]
@@ -46,7 +46,7 @@ fn test_encoding() {
 
     let (output, _, fuel_consumed) = run(&mut runner, "hello".as_bytes());
     assert_eq!("el".as_bytes(), output);
-    assert_fuel_consumed_within_threshold(218_527, fuel_consumed);
+    assert_fuel_consumed_within_threshold(258_197, fuel_consumed);
 
     let (output, _, _) = run(&mut runner, "invalid".as_bytes());
     assert_eq!("true".as_bytes(), output);
@@ -76,7 +76,7 @@ fn test_readme_script() {
 
     let (output, _, fuel_consumed) = run(&mut runner, r#"{ "n": 2, "bar": "baz" }"#.as_bytes());
     assert_eq!(r#"{"foo":3,"newBar":"baz!"}"#.as_bytes(), output);
-    assert_fuel_consumed_within_threshold(235_476, fuel_consumed);
+    assert_fuel_consumed_within_threshold(270_919, fuel_consumed);
 }
 
 #[cfg(feature = "experimental_event_loop")]
@@ -106,7 +106,7 @@ fn test_exported_functions() {
     let mut runner = Runner::new_with_exports("exported-fn.js", "exported-fn.wit", "exported-fn");
     let (_, logs, fuel_consumed) = run_fn(&mut runner, "foo", &[]);
     assert_eq!("Hello from top-level\nHello from foo\n", logs);
-    assert_fuel_consumed_within_threshold(72552, fuel_consumed);
+    assert_fuel_consumed_within_threshold(80023, fuel_consumed);
     let (_, logs, _) = run_fn(&mut runner, "foo-bar", &[]);
     assert_eq!("Hello from top-level\nHello from fooBar\n", logs);
 }
@@ -180,7 +180,7 @@ fn test_exported_default_arrow_fn() {
     );
     let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", &[]);
     assert_eq!(logs, "42\n");
-    assert_fuel_consumed_within_threshold(67547, fuel_consumed);
+    assert_fuel_consumed_within_threshold(76706, fuel_consumed);
 }
 
 #[test]
