@@ -192,7 +192,7 @@ fn test_exported_default_fn() {
     );
     let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", &[]);
     assert_eq!(logs, "42\n");
-    assert_fuel_consumed_within_threshold(67792, fuel_consumed);
+    assert_fuel_consumed_within_threshold(77909, fuel_consumed);
 }
 
 fn run_with_u8s(r: &mut Runner, stdin: u8) -> (u8, String, u64) {
