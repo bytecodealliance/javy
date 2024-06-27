@@ -358,43 +358,11 @@ criteria = "safe-to-deploy"
 version = "0.1.60"
 criteria = "safe-to-deploy"
 
-[[exemptions.icu_collections]]
-version = "1.5.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.icu_locid]]
-version = "1.5.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.icu_locid_transform]]
-version = "1.5.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.icu_locid_transform_data]]
-version = "1.5.0"
-criteria = "safe-to-deploy"
-
 [[exemptions.icu_normalizer]]
 version = "1.5.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.icu_normalizer_data]]
-version = "1.5.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.icu_properties]]
-version = "1.5.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.icu_properties_data]]
-version = "1.5.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.icu_provider]]
-version = "1.5.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.icu_provider_macros]]
 version = "1.5.0"
 criteria = "safe-to-deploy"
 
@@ -472,10 +440,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.libredox]]
 version = "0.1.3"
-criteria = "safe-to-deploy"
-
-[[exemptions.litemap]]
-version = "0.7.3"
 criteria = "safe-to-deploy"
 
 [[exemptions.log]]
@@ -638,6 +602,22 @@ criteria = "safe-to-deploy"
 version = "1.3.0"
 criteria = "safe-to-deploy"
 
+[[exemptions.rquickjs]]
+version = "0.6.1"
+criteria = "safe-to-deploy"
+
+[[exemptions.rquickjs-core]]
+version = "0.6.1"
+criteria = "safe-to-deploy"
+
+[[exemptions.rquickjs-macro]]
+version = "0.6.1"
+criteria = "safe-to-deploy"
+
+[[exemptions.rquickjs-sys]]
+version = "0.6.1"
+criteria = "safe-to-deploy"
+
 [[exemptions.rustc-demangle]]
 version = "0.1.24"
 criteria = "safe-to-deploy"
@@ -794,10 +774,6 @@ criteria = "safe-to-deploy"
 version = "3.10.1"
 criteria = "safe-to-deploy"
 
-[[exemptions.tinystr]]
-version = "0.7.6"
-criteria = "safe-to-deploy"
-
 [[exemptions.tower]]
 version = "0.4.13"
 criteria = "safe-to-deploy"
@@ -934,20 +910,8 @@ criteria = "safe-to-deploy"
 version = "1.0.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.writeable]]
-version = "0.5.5"
-criteria = "safe-to-deploy"
-
 [[exemptions.wyz]]
 version = "0.5.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.yoke]]
-version = "0.7.4"
-criteria = "safe-to-deploy"
-
-[[exemptions.yoke-derive]]
-version = "0.7.4"
 criteria = "safe-to-deploy"
 
 [[exemptions.zerocopy]]
@@ -958,20 +922,8 @@ criteria = "safe-to-deploy"
 version = "0.7.34"
 criteria = "safe-to-deploy"
 
-[[exemptions.zerofrom]]
-version = "0.1.4"
-criteria = "safe-to-deploy"
-
 [[exemptions.zerofrom-derive]]
 version = "0.1.4"
-criteria = "safe-to-deploy"
-
-[[exemptions.zerovec]]
-version = "0.10.2"
-criteria = "safe-to-deploy"
-
-[[exemptions.zerovec-derive]]
-version = "0.10.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.zstd]]
