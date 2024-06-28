@@ -11,7 +11,9 @@ categories = ["wasm"]
 
 [dependencies]
 anyhow = { workspace = true }
-rquickjs = { git = "https://github.com/Shopify/rquickjs", branch = "improved-wasm-support", features = ["array-buffer", "bindgen", "no-free"] }
+rquickjs = { version = "=0.6.1", features = ["array-buffer", "bindgen"] }
+rquickjs-core = "=0.6.1"
+rquickjs-sys = "=0.6.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", optional = true }
 serde-transcode = { version = "1.1", optional = true }

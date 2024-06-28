@@ -161,7 +161,7 @@ fn gen_tests(
 
                         let test_contents = ::std::fs::read(&#path_str).expect("test file contents to be available");
                         let r: ::javy::quickjs::Result<()> = this.eval_with_options(test_contents, ::javy::quickjs::context::EvalOptions::default());
-                        assert!(r.is_ok(), "{}", ::javy::val_to_string(this.clone(), this.catch()).unwrap());
+                        assert!(r.is_ok(), "{}", ::javy::val_to_string(&this, this.catch()).unwrap());
                     });
 
                 }

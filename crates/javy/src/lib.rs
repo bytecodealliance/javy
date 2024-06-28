@@ -108,7 +108,7 @@ pub fn from_js_error(ctx: Ctx<'_>, e: JSError) -> Error {
         if let Some(exception) = val.clone().into_exception() {
             anyhow!("{exception}")
         } else {
-            anyhow!(val_to_string(ctx, val).unwrap_or_else(|_| "Internal error".to_string()))
+            anyhow!(val_to_string(&ctx, val).unwrap_or_else(|_| "Internal error".to_string()))
         }
     } else {
         Into::into(e)
@@ -202,21 +202,21 @@ pub fn to_string_lossy<'js>(cx: &Ctx<'js>, string: &JSString<'js>, error: JSErro
 }
 
 /// Retrieves the string representation of a JavaScript value.
-pub fn val_to_string<'js>(this: Ctx<'js>, val: Value<'js>) -> Result<String> {
+pub fn val_to_string<'js>(this: &Ctx<'js>, val: Value<'js>) -> Result<String> {
     if let Some(symbol) = val.as_symbol() {
         if let Some(description) = symbol.description()?.into_string() {
             let description = description
                 .to_string()
-                .unwrap_or_else(|e| to_string_lossy(&this, &description, e));
+                .unwrap_or_else(|e| to_string_lossy(this, &description, e));
             Ok(format!("Symbol({description})"))
         } else {
             Ok("Symbol()".into())
         }
     } else {
-        let stringified = <convert::Coerced<JSString>>::from_js(&this, val).map(|string| {
+        let stringified = <convert::Coerced<JSString>>::from_js(this, val).map(|string| {
             string
                 .to_string()
-                .unwrap_or_else(|e| to_string_lossy(&this, &string.0, e))
+                .unwrap_or_else(|e| to_string_lossy(this, &string.0, e))
         })?;
         Ok(stringified)
     }

@@ -1693,6 +1693,8 @@ dependencies = [
  "quickcheck",
  "rmp-serde",
  "rquickjs",
+ "rquickjs-core",
+ "rquickjs-sys",
  "serde",
  "serde-transcode",
  "serde_json",
@@ -2535,7 +2537,8 @@ dependencies = [
 [[package]]
 name = "rquickjs"
 version = "0.6.1"
-source = "git+https://github.com/Shopify/rquickjs?branch=improved-wasm-support#3d80f5757db52e9e1af2605cb6e1aaba6d44ceac"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "313802853d6b1a91a7ecaef37b88b2e3be94dbfd8e46e8c585ec7d03977c4585"
 dependencies = [
  "rquickjs-core",
  "rquickjs-macro",
@@ -2544,7 +2547,8 @@ dependencies = [
 [[package]]
 name = "rquickjs-core"
 version = "0.6.1"
-source = "git+https://github.com/Shopify/rquickjs?branch=improved-wasm-support#3d80f5757db52e9e1af2605cb6e1aaba6d44ceac"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b61d5ef0cf929f69b30c106b70cafbf8c9b00435da7b13c004e61db639ae7cc"
 dependencies = [
  "relative-path",
  "rquickjs-sys",
@@ -2553,7 +2557,8 @@ dependencies = [
 [[package]]
 name = "rquickjs-macro"
 version = "0.6.1"
-source = "git+https://github.com/Shopify/rquickjs?branch=improved-wasm-support#3d80f5757db52e9e1af2605cb6e1aaba6d44ceac"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "52decfafae40368b74e1513235245612680224924925736f386b9456b78efce9"
 dependencies = [
  "convert_case",
  "fnv",
@@ -2570,7 +2575,8 @@ dependencies = [
 [[package]]
 name = "rquickjs-sys"
 version = "0.6.1"
-source = "git+https://github.com/Shopify/rquickjs?branch=improved-wasm-support#3d80f5757db52e9e1af2605cb6e1aaba6d44ceac"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "22a6df95dbd61eacfa2fb7571c9d0a6d2acb168135f6261ddd53d0347fd65441"
 dependencies = [
  "bindgen",
  "cc",
