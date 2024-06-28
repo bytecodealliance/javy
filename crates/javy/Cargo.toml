@@ -26,7 +26,7 @@ fastrand = "2.1.0"
 simd-json = { version = "0.13.10", optional = true, default-features = false, features = ["big-int-as-float", "serde_impl"] }
 
 [dev-dependencies]
-javy-test-macros = { path = "../javy-test-macros/" }
+javy-test-macros = { path = "../test-macros/" }
 
 [features]
 export_alloc_fns = []
