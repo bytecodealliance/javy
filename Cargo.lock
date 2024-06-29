@@ -1714,6 +1714,7 @@ dependencies = [
  "clap",
  "convert_case",
  "criterion",
+ "javy-runner",
  "lazy_static",
  "num-format",
  "serde",
@@ -1747,6 +1748,18 @@ dependencies = [
  "javy",
  "javy-config",
  "once_cell",
+]
+
+[[package]]
+name = "javy-runner"
+version = "3.0.0"
+dependencies = [
+ "anyhow",
+ "tempfile",
+ "uuid",
+ "wasi-common",
+ "wasmtime",
+ "wasmtime-wasi",
 ]
 
 [[package]]

@@ -31,17 +31,18 @@ swc_core = { version = "0.92.8", features = [
 wit-parser = "0.209.1"
 convert_case = "0.6.0"
 wasm-opt = "0.116.1"
-tempfile = "3.10.1"
+tempfile = { workspace = true }
 clap = { version = "4.5.7", features = ["derive"] }
 
 [dev-dependencies]
 serde_json = "1.0"
-uuid = { version = "1.8", features = ["v4"] }
 lazy_static = "1.4"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 criterion = "0.5"
 num-format = "0.4.4"
 wasmparser = "0.209.1"
+javy-runner = { path = "../runner/" }
+uuid = { workspace = true }
 
 [build-dependencies]
 anyhow = "1.0.86"

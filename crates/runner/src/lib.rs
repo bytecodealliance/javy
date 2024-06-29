@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use std::error::Error;
 use std::fmt::{self, Display, Formatter};
 use std::io::{self, Cursor, Write};
@@ -10,10 +10,93 @@ use wasi_common::sync::WasiCtxBuilder;
 use wasi_common::WasiCtx;
 use wasmtime::{Config, Engine, Linker, Module, OptLevel, Store};
 
+pub struct Builder {
+    /// The JS source.
+    input: PathBuf,
+    /// Root path. Used resolve the absolute path of the JS source.
+    root: PathBuf,
+    /// `javy` binary path.
+    bin_path: String,
+    /// The path to the wit file.
+    wit: Option<PathBuf>,
+    /// The name of the wit world.
+    world: Option<String>,
+    /// The logger capacity, in bytes.
+    capacity: usize,
+    built: bool,
+}
+
+impl Default for Builder {
+    fn default() -> Self {
+        Self {
+            capacity: usize::MAX,
+            input: PathBuf::from("identity.js"),
+            wit: None,
+            world: None,
+            bin_path: "javy".into(),
+            root: Default::default(),
+            built: false,
+        }
+    }
+}
+
+impl Builder {
+    pub fn root(&mut self, root: impl Into<PathBuf>) -> &mut Self {
+        self.root = root.into();
+        self
+    }
+
+    pub fn input(&mut self, path: impl Into<PathBuf>) -> &mut Self {
+        self.input = path.into();
+        self
+    }
+
+    pub fn bin(&mut self, bin: impl Into<String>) -> &mut Self {
+        self.bin_path = bin.into();
+        self
+    }
+
+    pub fn wit(&mut self, wit: impl Into<PathBuf>) -> &mut Self {
+        self.wit = Some(wit.into());
+        self
+    }
+
+    pub fn world(&mut self, world: impl Into<String>) -> &mut Self {
+        self.world = Some(world.into());
+        self
+    }
+
+    pub fn build(&mut self) -> Result<Runner> {
+        if self.built {
+            bail!("Builder already used to build a runner")
+        }
+
+        if (self.wit.is_some() && self.world.is_none())
+            || (self.wit.is_none() && self.world.is_some())
+        {
+            bail!("Both `wit` and `world` must be defined")
+        }
+
+        let Self {
+            bin_path,
+            input,
+            wit,
+            world,
+            capacity,
+            root,
+            built: _,
+        } = std::mem::replace(self, Default::default());
+
+        self.built = true;
+
+        Ok(Runner::new(bin_path, root, input, wit, world, capacity))
+    }
+}
+
 pub struct Runner {
     pub wasm: Vec<u8>,
     linker: Linker<StoreContext>,
-    log_capacity: usize,
+    capacity: usize,
 }
 
 #[derive(Debug)]
@@ -58,48 +141,25 @@ impl StoreContext {
     }
 }
 
-impl Default for Runner {
-    fn default() -> Self {
-        Self::new("identity.js")
-    }
-}
-
 impl Runner {
-    pub fn new(js_file: impl AsRef<Path>) -> Self {
-        Self::new_with_fixed_logging_capacity(js_file, None, None, usize::MAX)
-    }
-
-    pub fn new_with_exports(
-        js_file: impl AsRef<Path>,
-        wit_path: impl AsRef<Path>,
-        world: &str,
-    ) -> Self {
-        Self::new_with_fixed_logging_capacity(
-            js_file,
-            Some(wit_path.as_ref()),
-            Some(world),
-            usize::MAX,
-        )
-    }
-
-    fn new_with_fixed_logging_capacity(
-        js_file: impl AsRef<Path>,
-        wit_path: Option<&Path>,
-        wit_world: Option<&str>,
+    fn new(
+        bin: String,
+        root: PathBuf,
+        source: impl AsRef<Path>,
+        wit: Option<PathBuf>,
+        world: Option<String>,
         capacity: usize,
     ) -> Self {
         let wasm_file_name = format!("{}.wasm", uuid::Uuid::new_v4());
 
-        let root = PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").unwrap());
-        let sample_scripts = root.join("tests").join("sample-scripts");
         // This directory is unique and will automatically get deleted
         // when `tempdir` goes out of scope.
         let Ok(tempdir) = tempfile::tempdir() else {
             panic!("Could not create temporary directory for .wasm test artifacts");
         };
         let wasm_file = tempdir.path().join(wasm_file_name);
-        let js_file = sample_scripts.join(js_file);
-        let wit_file = wit_path.map(|p| sample_scripts.join(p));
+        let js_file = root.join(source);
+        let wit_file = wit.map(|p| root.join(p));
 
         let mut args = vec![
             "compile".to_string(),
@@ -108,14 +168,14 @@ impl Runner {
             wasm_file.to_str().unwrap().to_string(),
         ];
 
-        if let (Some(wit_file), Some(world)) = (wit_file, wit_world) {
+        if let (Some(wit_file), Some(world)) = (wit_file, world) {
             args.push("--wit".to_string());
             args.push(wit_file.to_str().unwrap().to_string());
             args.push("-n".to_string());
             args.push(world.to_string());
         }
 
-        let output = Command::new(env!("CARGO_BIN_EXE_javy"))
+        let output = Command::new(bin)
             .current_dir(root)
             .args(args)
             .output()
@@ -136,7 +196,7 @@ impl Runner {
         Self {
             wasm,
             linker,
-            log_capacity: capacity,
+            capacity,
         }
     }
 
@@ -147,7 +207,7 @@ impl Runner {
     pub fn exec_func(&mut self, func: &str, input: &[u8]) -> Result<(Vec<u8>, Vec<u8>, u64)> {
         let mut store = Store::new(
             self.linker.engine(),
-            StoreContext::new(input, self.log_capacity),
+            StoreContext::new(input, self.capacity),
         );
         const INITIAL_FUEL: u64 = u64::MAX;
         store.set_fuel(INITIAL_FUEL)?;
