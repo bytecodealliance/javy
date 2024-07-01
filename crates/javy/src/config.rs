@@ -38,6 +38,7 @@ bitflags! {
     pub(crate) struct JavyIntrinsics: u32 {
         const STREAM_IO = 1;
         const JSON = 1 << 1;
+        const CRYPTOX = 1 << 2;
     }
 }
 
@@ -176,6 +177,14 @@ impl Config {
     #[cfg(feature = "json")]
     pub fn javy_json(&mut self, enable: bool) -> &mut Self {
         self.javy_intrinsics.set(JavyIntrinsics::JSON, enable);
+        self
+    }
+
+    /// Whether the `Javy.CRYPTOX` intrinsic will be available.
+    /// Enabled by default.
+    // #[cfg(feature = "cryptox")]
+    pub fn javy_cryptox(&mut self, enable: bool) -> &mut Self {
+        self.javy_intrinsics.set(JavyIntrinsics::CRYPTOX, enable);
         self
     }
 
