@@ -287,3 +287,25 @@ impl Write for LogWriter {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Builder;
+    use anyhow::Result;
+
+    #[test]
+    fn test_validation_on_world_defined() -> Result<()> {
+        let result = Builder::default().world("foo").build();
+
+        assert!(result.is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn test_validation_on_wit_defined() -> Result<()> {
+        let result = Builder::default().wit("foo.wit").build();
+
+        assert!(result.is_err());
+        Ok(())
+    }
+}

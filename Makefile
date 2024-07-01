@@ -33,6 +33,9 @@ test-core:
 test-cli: core
 	CARGO_PROFILE_RELEASE_LTO=off cargo test --package=javy-cli --release --features=$(CLI_FEATURES) -- --nocapture
 
+test-runner:
+	cargo test --package=javy-runner -- --nocapture
+
 # WPT requires a Javy build with the experimental_event_loop feature to pass
 test-wpt: export CORE_FEATURES ?= experimental_event_loop
 test-wpt:
@@ -44,7 +47,7 @@ test-wpt:
 test-config:
 	CARGO_PROFILE_RELEASE_LTO=off cargo test --package=javy-config -- --nocapture
 
-tests: test-javy test-core test-cli test-wpt test-config
+tests: test-javy test-core test-runner test-cli test-wpt test-config
 
 fmt: fmt-quickjs-wasm-sys fmt-quickjs-wasm-rs fmt-javy fmt-apis fmt-core fmt-cli
 
