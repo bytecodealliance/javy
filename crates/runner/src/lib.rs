@@ -85,7 +85,7 @@ impl Builder {
             capacity,
             root,
             built: _,
-        } = std::mem::replace(self, Default::default());
+        } = std::mem::take(self);
 
         self.built = true;
 
