@@ -5,8 +5,8 @@ use javy_runner::{Builder, Runner, RunnerError};
 use std::path::PathBuf;
 use std::str;
 
-static BIN: &'static str = env!("CARGO_BIN_EXE_javy");
-static ROOT: &'static str = env!("CARGO_MANIFEST_DIR");
+static BIN: &str = env!("CARGO_BIN_EXE_javy");
+static ROOT: &str = env!("CARGO_MANIFEST_DIR");
 
 #[test]
 fn test_identity() -> Result<()> {
