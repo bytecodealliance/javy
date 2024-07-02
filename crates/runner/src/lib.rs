@@ -21,15 +21,12 @@ pub struct Builder {
     wit: Option<PathBuf>,
     /// The name of the wit world.
     world: Option<String>,
-    /// The logger capacity, in bytes.
-    capacity: usize,
     built: bool,
 }
 
 impl Default for Builder {
     fn default() -> Self {
         Self {
-            capacity: usize::MAX,
             input: PathBuf::from("identity.js"),
             wit: None,
             world: None,
@@ -82,21 +79,19 @@ impl Builder {
             input,
             wit,
             world,
-            capacity,
             root,
             built: _,
         } = std::mem::take(self);
 
         self.built = true;
 
-        Ok(Runner::new(bin_path, root, input, wit, world, capacity))
+        Ok(Runner::new(bin_path, root, input, wit, world))
     }
 }
 
 pub struct Runner {
     pub wasm: Vec<u8>,
     linker: Linker<StoreContext>,
-    capacity: usize,
 }
 
 #[derive(Debug)]
@@ -148,7 +143,6 @@ impl Runner {
         source: impl AsRef<Path>,
         wit: Option<PathBuf>,
         world: Option<String>,
-        capacity: usize,
     ) -> Self {
         let wasm_file_name = format!("{}.wasm", uuid::Uuid::new_v4());
 
@@ -193,11 +187,7 @@ impl Runner {
         let engine = setup_engine();
         let linker = setup_linker(&engine);
 
-        Self {
-            wasm,
-            linker,
-            capacity,
-        }
+        Self { wasm, linker }
     }
 
     pub fn exec(&mut self, input: &[u8]) -> Result<(Vec<u8>, Vec<u8>, u64)> {
@@ -205,10 +195,7 @@ impl Runner {
     }
 
     pub fn exec_func(&mut self, func: &str, input: &[u8]) -> Result<(Vec<u8>, Vec<u8>, u64)> {
-        let mut store = Store::new(
-            self.linker.engine(),
-            StoreContext::new(input, self.capacity),
-        );
+        let mut store = Store::new(self.linker.engine(), StoreContext::new(input, usize::MAX));
         const INITIAL_FUEL: u64 = u64::MAX;
         store.set_fuel(INITIAL_FUEL)?;
 
