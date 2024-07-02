@@ -62,7 +62,7 @@ pub(crate) mod json;
 pub(crate) mod random;
 pub(crate) mod stream_io;
 pub(crate) mod text_encoding;
-pub(crate) mod cryptox;
+pub(crate) mod crypto;
 
 pub(crate) use console::*;
 #[cfg(feature = "json")]
@@ -70,4 +70,4 @@ pub(crate) use json::*;
 pub(crate) use random::*;
 pub(crate) use stream_io::*;
 pub(crate) use text_encoding::*;
-pub(crate) use cryptox::*;
+pub(crate) use crypto::*;

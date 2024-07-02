@@ -19,6 +19,7 @@ bitflags! {
         const OPERATORS = 1 << 12;
         const BIGNUM_EXTENSION = 1 << 13;
         const TEXT_ENCODING = 1 << 14;
+        const CRYPTO = 1 << 15;
     }
 }
 
@@ -38,7 +39,6 @@ bitflags! {
     pub(crate) struct JavyIntrinsics: u32 {
         const STREAM_IO = 1;
         const JSON = 1 << 1;
-        const CRYPTOX = 1 << 2;
     }
 }
 
@@ -180,11 +180,11 @@ impl Config {
         self
     }
 
-    /// Whether the `Javy.CRYPTOX` intrinsic will be available.
+    /// Whether the `crypto` intrinsic will be available.
     /// Enabled by default.
-    // #[cfg(feature = "cryptox")]
-    pub fn javy_cryptox(&mut self, enable: bool) -> &mut Self {
-        self.javy_intrinsics.set(JavyIntrinsics::CRYPTOX, enable);
+    // #[cfg(feature = "crypto")]
+    pub fn crypto(&mut self, enable: bool) -> &mut Self {
+        self.intrinsics.set(JSIntrinsics::CRYPTO, enable);
         self
     }
 

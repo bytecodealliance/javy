@@ -10,14 +10,13 @@ use hmac::{Hmac, Mac};
 
 /// An implemetation of crypto APIs to optimize fuel.
 /// Currently, hmacSHA256 is the only function implemented.
-pub struct Cryptox;
+pub struct Crypto;
 
-impl Intrinsic for Cryptox {
+impl Intrinsic for Crypto {
     unsafe fn add_intrinsic(ctx: std::ptr::NonNull<qjs::JSContext>) {
-        register(Ctx::from_raw(ctx)).expect("`Cryptox` APIs to succeed")
+        register(Ctx::from_raw(ctx)).expect("`Crypto` APIs to succeed")
     }
 }
-
 fn register(this: Ctx<'_>) -> Result<()> {
     let globals = this.globals();
 
@@ -32,7 +31,7 @@ fn register(this: Ctx<'_>) -> Result<()> {
         }),
     )?;
 
-    globals.set("cryptox", crypto_obj)?;
+    globals.set("crypto", crypto_obj)?;
 
     Ok::<_, Error>(())
 }
@@ -72,14 +71,14 @@ mod tests {
     #[test]
     fn test_text_encoder_decoder() -> Result<()> {
         let mut config = Config::default();
-        config.javy_cryptox(true);
+        config.crypto(true);
         let runtime = Runtime::new(config)?;
 
         runtime.context().with(|this| {
             let result: Value<'_> = this.eval(
                 r#"
                     let expectedHex = "97d2a569059bbcd8ead4444ff99071f4c01d005bcefe0d3567e1be628e5fdcd9";
-                    let result = cryptox.hmacSHA256("my secret and secure key", "input message");
+                    let result = crypto.hmacSHA256("my secret and secure key", "input message");
                     expectedHex === result;
             "#,
             )?;

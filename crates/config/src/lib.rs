@@ -31,7 +31,7 @@ bitflags! {
         const JAVY_STREAM_IO = 1 << 2;
         const REDIRECT_STDOUT_TO_STDERR = 1 << 3;
         const TEXT_ENCODING = 1 << 4;
-        const JAVY_CRYPTOX = 1 << 5;
+        const CRYPTO = 1 << 5;
     }
 }
 
@@ -45,6 +45,6 @@ mod tests {
         assert!(Config::JAVY_STREAM_IO == Config::from_bits(1 << 2).unwrap());
         assert!(Config::REDIRECT_STDOUT_TO_STDERR == Config::from_bits(1 << 3).unwrap());
         assert!(Config::TEXT_ENCODING == Config::from_bits(1 << 4).unwrap());
-        assert!(Config::JAVY_CRYPTOX == Config::from_bits(1 << 5).unwrap());
+        assert!(Config::CRYPTO == Config::from_bits(1 << 5).unwrap());
     }
 }
