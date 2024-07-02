@@ -291,3 +291,20 @@ git push origin --tags
 ```
 3. Create a new release from the new tag in github [here](https://github.com/bytecodealliance/javy/releases/new).
 4. A GitHub Action will trigger for `publish.yml` when a release is published ([i.e. it doesn't run on drafts](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#:~:text=created%2C%20edited%2C%20or%20deleted%20activity%20types%20for%20draft%20releases)), creating the artifacts for downloading.
+
+## Testing locally
+
+1. Clone submodules
+```
+git submodules init
+git submodules update
+```
+2. Install cargo hack
+```
+cargo +stable install cargo-hack --locked
+```
+3. Run tests, eg:
+```
+cargo +stable install cargo-hack --locked
+```
+CARGO_TARGET_WASM32_WASI_RUNNER="wasmtime --dir=." cargo hack wasi test --workspace --exclude=javy-cli --exclude=javy-config --each-feature -- --nocapture
