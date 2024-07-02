@@ -34,18 +34,6 @@ audit-as-crates-io = false
 [policy.quickjs-wasm-sys]
 audit-as-crates-io = false
 
-[policy.rquickjs]
-audit-as-crates-io = false
-
-[policy.rquickjs-core]
-audit-as-crates-io = false
-
-[policy.rquickjs-macro]
-audit-as-crates-io = false
-
-[policy.rquickjs-sys]
-audit-as-crates-io = false
-
 [[exemptions.Inflector]]
 version = "0.11.4"
 criteria = "safe-to-deploy"
