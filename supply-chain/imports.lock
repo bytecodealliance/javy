@@ -8,6 +8,41 @@ user-id = 189
 user-login = "BurntSushi"
 user-name = "Andrew Gallant"
 
+[[publisher.anstream]]
+version = "0.6.14"
+when = "2024-05-02"
+user-id = 6743
+user-login = "epage"
+user-name = "Ed Page"
+
+[[publisher.anstyle]]
+version = "1.0.7"
+when = "2024-05-02"
+user-id = 6743
+user-login = "epage"
+user-name = "Ed Page"
+
+[[publisher.anstyle-parse]]
+version = "0.2.4"
+when = "2024-05-02"
+user-id = 6743
+user-login = "epage"
+user-name = "Ed Page"
+
+[[publisher.anstyle-query]]
+version = "1.1.0"
+when = "2024-06-04"
+user-id = 6743
+user-login = "epage"
+user-name = "Ed Page"
+
+[[publisher.anstyle-wincon]]
+version = "3.0.3"
+when = "2024-05-02"
+user-id = 6743
+user-login = "epage"
+user-name = "Ed Page"
+
 [[publisher.anyhow]]
 version = "1.0.86"
 when = "2024-05-18"
@@ -84,6 +119,41 @@ when = "2021-10-11"
 user-id = 3788
 user-login = "emilio"
 user-name = "Emilio Cobos Álvarez"
+
+[[publisher.clap]]
+version = "4.5.8"
+when = "2024-06-28"
+user-id = 6743
+user-login = "epage"
+user-name = "Ed Page"
+
+[[publisher.clap_builder]]
+version = "4.5.8"
+when = "2024-06-28"
+user-id = 6743
+user-login = "epage"
+user-name = "Ed Page"
+
+[[publisher.clap_derive]]
+version = "4.5.8"
+when = "2024-06-28"
+user-id = 6743
+user-login = "epage"
+user-name = "Ed Page"
+
+[[publisher.clap_lex]]
+version = "0.7.1"
+when = "2024-06-06"
+user-id = 6743
+user-login = "epage"
+user-name = "Ed Page"
+
+[[publisher.colorchoice]]
+version = "1.0.1"
+when = "2024-05-02"
+user-id = 6743
+user-login = "epage"
+user-name = "Ed Page"
 
 [[publisher.core-foundation]]
 version = "0.9.3"
@@ -251,8 +321,8 @@ user-login = "seanmonstar"
 user-name = "Sean McArthur"
 
 [[publisher.hyper]]
-version = "1.3.1"
-when = "2024-04-16"
+version = "1.4.0"
+when = "2024-07-01"
 user-id = 359
 user-login = "seanmonstar"
 user-name = "Sean McArthur"
@@ -265,8 +335,8 @@ user-login = "seanmonstar"
 user-name = "Sean McArthur"
 
 [[publisher.hyper-util]]
-version = "0.1.5"
-when = "2024-05-28"
+version = "0.1.6"
+when = "2024-07-01"
 user-id = 359
 user-login = "seanmonstar"
 user-name = "Sean McArthur"
@@ -291,6 +361,13 @@ when = "2024-02-09"
 user-id = 6825
 user-login = "sunfishcode"
 user-name = "Dan Gohman"
+
+[[publisher.is_terminal_polyfill]]
+version = "1.70.0"
+when = "2024-05-02"
+user-id = 6743
+user-login = "epage"
+user-name = "Ed Page"
 
 [[publisher.itoa]]
 version = "1.0.11"
@@ -349,8 +426,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.proc-macro2]]
-version = "1.0.85"
-when = "2024-06-02"
+version = "1.0.86"
+when = "2024-06-21"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -447,8 +524,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.serde_bytes]]
-version = "0.11.14"
-when = "2024-01-02"
+version = "0.11.15"
+when = "2024-06-25"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -461,8 +538,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.serde_json]]
-version = "1.0.117"
-when = "2024-05-08"
+version = "1.0.120"
+when = "2024-07-01"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -489,8 +566,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.syn]]
-version = "2.0.66"
-when = "2024-05-23"
+version = "2.0.68"
+when = "2024-06-23"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -686,12 +763,6 @@ user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmparser]]
-version = "0.209.1"
-when = "2024-05-29"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wasmparser]]
 version = "0.212.0"
 when = "2024-06-27"
 user-id = 73222
@@ -704,8 +775,8 @@ user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmprinter]]
-version = "0.209.1"
-when = "2024-05-29"
+version = "0.212.0"
+when = "2024-06-27"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -1750,29 +1821,6 @@ criteria = "safe-to-run"
 version = "0.7.4"
 aggregated-from = "https://chromium.googlesource.com/chromiumos/third_party/rust_crates/+/refs/heads/main/cargo-vet/audits.toml?format=TEXT"
 
-[[audits.google.audits.bitflags]]
-who = "Lukasz Anforowicz <lukasza@chromium.org>"
-criteria = "safe-to-deploy"
-version = "2.4.2"
-notes = """
-Audit notes:
-
-* I've checked for any discussion in Google-internal cl/546819168 (where audit
-  of version 2.3.3 happened)
-* `src/lib.rs` contains `#![cfg_attr(not(test), forbid(unsafe_code))]`
-* There are 2 cases of `unsafe` in `src/external.rs` but they seem to be
-  correct in a straightforward way - they just propagate the marker trait's
-  impl (e.g. `impl bytemuck::Pod`) from the inner to the outer type
-* Additional discussion and/or notes may be found in https://crrev.com/c/5238056
-"""
-aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
-
-[[audits.google.audits.bitflags]]
-who = "Adrian Taylor <adetaylor@chromium.org>"
-criteria = "safe-to-deploy"
-delta = "2.4.2 -> 2.5.0"
-aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
-
 [[audits.google.audits.cast]]
 who = "George Burgess IV <gbiv@google.com>"
 criteria = "safe-to-run"
@@ -1810,6 +1858,27 @@ who = "ChromeOS"
 criteria = "safe-to-run"
 version = "0.10.5"
 aggregated-from = "https://chromium.googlesource.com/chromiumos/third_party/rust_crates/+/refs/heads/main/cargo-vet/audits.toml?format=TEXT"
+
+[[audits.google.audits.lazy_static]]
+who = "Lukasz Anforowicz <lukasza@chromium.org>"
+criteria = "safe-to-deploy"
+version = "1.4.0"
+notes = '''
+I grepped for \"crypt\", \"cipher\", \"fs\", \"net\" - there were no hits.
+
+There are two places where `unsafe` is used.  Unsafe review notes can be found
+in https://crrev.com/c/5347418.
+
+This crate has been added to Chromium in https://crrev.com/c/3321895.
+'''
+aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
+
+[[audits.google.audits.lazy_static]]
+who = "Lukasz Anforowicz <lukasza@chromium.org>"
+criteria = "safe-to-deploy"
+delta = "1.4.0 -> 1.5.0"
+notes = "Unsafe review notes: https://crrev.com/c/5650836"
+aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
 
 [[audits.google.audits.link-cplusplus]]
 who = "George Burgess IV <gbiv@google.com>"
@@ -2257,13 +2326,6 @@ who = "Mike Hommey <mh+mozilla@glandium.org>"
 criteria = "safe-to-deploy"
 delta = "0.10.3 -> 0.10.5"
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
-
-[[audits.mozilla.audits.lazy_static]]
-who = "Nika Layzell <nika@thelayzells.com>"
-criteria = "safe-to-deploy"
-version = "1.4.0"
-notes = "I have read over the macros, and audited the unsafe code."
-aggregated-from = "https://raw.githubusercontent.com/mozilla/cargo-vet/main/supply-chain/audits.toml"
 
 [[audits.mozilla.audits.litemap]]
 who = "Makoto Kato <m_kato@ga2.so-net.ne.jp>"
