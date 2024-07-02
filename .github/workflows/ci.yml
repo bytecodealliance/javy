@@ -36,13 +36,21 @@ jobs:
       - name: Test
         env: 
           CARGO_TARGET_WASM32_WASI_RUNNER: wasmtime --dir=.
-        run: cargo hack wasi test --workspace --exclude=javy-cli --exclude=javy-config --each-feature -- --nocapture
+        run: cargo hack wasi test --workspace --exclude=javy-cli --exclude=javy-config --exclude=javy-runner --each-feature -- --nocapture
 
       - name: Test Config
         run: cargo test --package=javy-config
 
+      - name: Test Runner
+        run: cargo test --package=javy-runner
+
       - name: Lint
-        run: cargo clippy --workspace --exclude=javy-cli --target=wasm32-wasi --all-targets -- -D warnings
+        run: cargo clippy --workspace --exclude=javy-cli --exclude=javy-runner --target=wasm32-wasi --all-targets -- -D warnings
+        
+      # We need to specify a different job for linting `javy-runner` given that 
+      # it depends on Wasmtime and Cranelift cannot be compiled to `wasm32-wasi`
+      - name: Lint Runner
+        run: cargo clippy --package=javy-runner -- -D warnings
 
       - name: Upload core binary to artifacts
         uses: actions/upload-artifact@v4
