@@ -29,7 +29,7 @@ runs:
       id: wasmtime_version
       shell: bash
       run: |
-        VERSION=$(cargo metadata | jq '.packages[] | select(.name == "wasmtime") | .version' -r)
+        VERSION=$(cargo metadata --format-version=1 --locked | jq '.packages[] | select(.name == "wasmtime") | .version' -r)
         echo "::set-output name=wasmtime_version::$VERSION"
 
     - name: Install wasmtime-cli
