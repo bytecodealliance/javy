@@ -715,31 +715,31 @@ version = "0.6.7"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_common]]
-version = "0.33.26"
+version = "0.34.3"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_core]]
-version = "0.92.11"
+version = "0.96.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_ast]]
-version = "0.113.7"
+version = "0.115.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_parser]]
-version = "0.144.2"
+version = "0.146.7"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_transforms_base]]
-version = "0.138.4"
+version = "0.140.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_utils]]
-version = "0.128.3"
+version = "0.130.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_visit]]
-version = "0.99.1"
+version = "0.101.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_eq_ignore_macros]]

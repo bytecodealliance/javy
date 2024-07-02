@@ -20,7 +20,7 @@ use swc_core::{
             Decl, EsVersion, ExportDecl, ExportSpecifier, Module, ModuleDecl, ModuleExportName,
             ModuleItem, Stmt,
         },
-        parser::{self, EsConfig, Syntax},
+        parser::{self, EsSyntax, Syntax},
     },
 };
 
@@ -152,7 +152,7 @@ impl JS {
         let mut errors = vec![];
         parser::parse_file_as_module(
             &file,
-            Syntax::Es(EsConfig::default()),
+            Syntax::Es(EsSyntax::default()),
             EsVersion::Es2020,
             None,
             &mut errors,
