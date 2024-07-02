@@ -2,14 +2,13 @@ use std::path::Path;
 
 use anyhow::{bail, Result};
 
-use wit_parser::{Resolve, UnresolvedPackage, WorldItem};
+use wit_parser::{Resolve, WorldItem};
 
 pub fn parse_exports(wit: impl AsRef<Path>, world: &str) -> Result<Vec<String>> {
     let mut resolve = Resolve::default();
-    let package = UnresolvedPackage::parse_path(wit.as_ref())?;
-    resolve.push(package)?;
+    resolve.push_path(wit.as_ref())?;
     let (_, package_id) = resolve.package_names.first().unwrap();
-    let world_id = resolve.select_world(*package_id, Some(world))?;
+    let world_id = resolve.select_world(&[*package_id], Some(world))?;
     let world = resolve.worlds.get(world_id).unwrap();
 
     if !world.imports.is_empty() {

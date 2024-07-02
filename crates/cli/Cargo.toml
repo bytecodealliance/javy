@@ -28,7 +28,7 @@ swc_core = { version = "0.92.8", features = [
     "ecma_ast",
     "ecma_parser",
 ] }
-wit-parser = "0.209.1"
+wit-parser = "0.212.0"
 convert_case = "0.6.0"
 wasm-opt = "0.116.1"
 tempfile = { workspace = true }
