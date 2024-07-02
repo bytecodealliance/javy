@@ -13,7 +13,7 @@ pub(crate) fn new(shared_config: SharedConfig) -> Result<Runtime> {
         // fix forward.
         .override_json_parse_and_stringify(false)
         .javy_json(false)
-        .javy_cryptox(true);
+        .javy_cryptox(shared_config.contains(SharedConfig::JAVY_CRYPTOX));
 
     Runtime::new(std::mem::take(config))
 }
