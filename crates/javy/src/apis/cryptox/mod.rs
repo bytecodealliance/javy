@@ -53,9 +53,9 @@ fn hmac_sha256(args: Args<'_>) -> Result<Value<'_>> {
     /// Create alias for HMAC-SHA256
     type HmacSha256 = Hmac<Sha256>;
 
-    let mut mac = HmacSha256::new_from_slice(&js_string_secret.as_bytes())
+    let mut mac = HmacSha256::new_from_slice(js_string_secret.as_bytes())
         .expect("HMAC can take key of any size");
-    mac.update(&js_string_message.as_bytes());
+    mac.update(js_string_message.as_bytes());
 
     let result = mac.finalize();
     let code_bytes = result.into_bytes();
