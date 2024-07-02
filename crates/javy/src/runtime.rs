@@ -1,7 +1,7 @@
 // use crate::quickjs::JSContextRef;
 use super::from_js_error;
 use crate::{
-    apis::{Cryptox, Console, NonStandardConsole, Random, StreamIO, TextEncoding},
+    apis::{Crypto, Console, NonStandardConsole, Random, StreamIO, TextEncoding},
     config::{JSIntrinsics, JavyIntrinsics},
     Config,
 };
@@ -145,10 +145,10 @@ impl Runtime {
                 }
             }
 
-            if javy_intrinsics.contains(JavyIntrinsics::CRYPTOX) {
-                // #[cfg(feature = "cryptox")]
+            if intrinsics.contains(JSIntrinsics::CRYPTO) {
+                // #[cfg(feature = "crypto")]
                 unsafe {
-                    Cryptox::add_intrinsic(ctx.as_raw())
+                    Crypto::add_intrinsic(ctx.as_raw())
                 }
             }
         });
