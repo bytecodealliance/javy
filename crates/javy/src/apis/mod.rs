@@ -57,17 +57,17 @@
 //!
 //! Disabled by default.
 pub(crate) mod console;
+pub(crate) mod crypto;
 #[cfg(feature = "json")]
 pub(crate) mod json;
 pub(crate) mod random;
 pub(crate) mod stream_io;
 pub(crate) mod text_encoding;
-pub(crate) mod crypto;
 
 pub(crate) use console::*;
+pub(crate) use crypto::*;
 #[cfg(feature = "json")]
 pub(crate) use json::*;
 pub(crate) use random::*;
 pub(crate) use stream_io::*;
 pub(crate) use text_encoding::*;
-pub(crate) use crypto::*;

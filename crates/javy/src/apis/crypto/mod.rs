@@ -1,12 +1,9 @@
-use crate::quickjs::{context::Intrinsic, qjs, Ctx, Object, String as JSString, Value, Function};
-use crate::{
-    hold, hold_and_release, val_to_string,
-    to_js_error, Args
-};
+use crate::quickjs::{context::Intrinsic, qjs, Ctx, Function, Object, String as JSString, Value};
+use crate::{hold, hold_and_release, to_js_error, val_to_string, Args};
 use anyhow::{bail, Error, Result};
 
-use sha2::Sha256;
 use hmac::{Hmac, Mac};
+use sha2::Sha256;
 
 /// An implemetation of crypto APIs to optimize fuel.
 /// Currently, hmacSHA256 is the only function implemented.
@@ -58,7 +55,7 @@ fn hmac_sha256(args: Args<'_>) -> Result<Value<'_>> {
 
     let result = mac.finalize();
     let code_bytes = result.into_bytes();
-    let code : String = format!("{code_bytes:x}");
+    let code: String = format!("{code_bytes:x}");
     let js_string = JSString::from_str(cx, &code);
     Ok(Value::from_string(js_string?))
 }
