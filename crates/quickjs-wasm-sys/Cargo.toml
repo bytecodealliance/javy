@@ -16,9 +16,9 @@ walkdir = "2"
 anyhow.workspace = true
 tokio = { version = "1.38", default-features = false, features = ["rt", "macros"] }
 http-body-util = "0.1.1"
-hyper = "1.3"
+hyper = "1.4"
 hyper-tls = "0.6.0"
-hyper-util = { version = "0.1.5", features = ["http1"] }
+hyper-util = { version = "0.1.6", features = ["http1"] }
 
 [badges]
 maintenance = { status = "deprecated" }

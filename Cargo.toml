@@ -25,11 +25,11 @@ wasmtime-wasi = "19"
 wasi-common = "19"
 anyhow = "1.0"
 once_cell = "1.19"
-bitflags = "2.5.0"
+bitflags = "2.6.0"
 javy-config = { path = "crates/config" }
 javy = { path = "crates/javy", version = "3.0.0" }
 tempfile = "3.10.1"
-uuid = { version = "1.8", features = ["v4"] }
+uuid = { version = "1.9", features = ["v4"] }
 
 [profile.release]
 lto = true
