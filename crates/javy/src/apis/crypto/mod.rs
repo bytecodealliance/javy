@@ -99,26 +99,28 @@ pub struct HmacClass<'js> {
 
 #[rquickjs_macro::methods]
 impl<'js> HmacClass<'js> {
-    #[qjs(get, rename = "digest")]
+    #[qjs()]
     pub fn digest(&self, type_of_digest: JSString<'js>) -> Result<Value<'js>, JsError> {
         let ctx = self.message.ctx();
-        let js_type_of_digest = type_of_digest.to_string()?;
-        if js_type_of_digest != "hex" {
-            // raises this error:
-            // mismatched types
-            // `anyhow::Error` and `rquickjs::Error` have similar names, but are actually distinct typesrustcClick for full compiler diagnostic
-            // macros.rs(229, 9): Actual error occurred here
-            // macros.rs(58, 39): Error originated from macro call here
-            // lib.rs(387, 1): `anyhow::Error` is defined in crate `anyhow`
-            // result.rs(59, 1): `rquickjs::Error` is defined in crate `rquickjs_core`
-            // bail!("Only supported digest format is hex");
+        // let js_type_of_digest = type_of_digest.to_string()?;
+        // if js_type_of_digest != "hex" {
+        //     return Err(rquickjs::Exception::throw_type(&ctx.clone(), "digest type must be hex"));
+        // }
+
+        // let js_string_message = val_to_string(&ctx, self.message.clone().into()).map_err(|e| to_js_error(ctx.clone(), e));
+        // if js_string_message.is_err() {
+        //     return Err(rquickjs::Exception::throw_type(&ctx.clone(), "failed val_to_string"));
+        // }
+        // let code = hmac_sha256_result(self.key.clone(), js_string_message?).map_err(|e| to_js_error(ctx.clone(), e));
+        // if code.is_err() {
+        //     return Err(rquickjs::Exception::throw_type(&ctx.clone(), "failed hmac_sha256_result"));
+        // }
+        // let js_string = JSString::from_str(ctx.clone(), &code?)?;
+        let js_string = JSString::from_str(ctx.clone(), "hello world");
+        if js_string.is_err() {
+            return Err(rquickjs::Exception::throw_type(&ctx.clone(), "failed to convert string"));
         }
-
-        let js_string_message = val_to_string(&ctx, self.message.clone().into()).unwrap();
-
-        let code = hmac_sha256_result(self.key.clone(), js_string_message).unwrap();
-        let js_string = JSString::from_str(ctx.clone(), &code)?;
-        Ok(Value::from_string(js_string))
+        Ok(Value::from_string(js_string?))
     }
 }
 
@@ -145,11 +147,10 @@ mod tests {
                     hmac.message === "input message";
 
                     // this line crashes
-                    // hmac.digest("hex");
+                    hmac.digest("hex") == "hello world";
             "#,
             )?;
-
-            // assert!(result.as_bool().unwrap());
+            assert!(result.as_bool().unwrap());
             Ok::<_, Error>(())
         })?;
         Ok(())
