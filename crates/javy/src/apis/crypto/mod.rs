@@ -1,5 +1,5 @@
 use crate::quickjs::{context::Intrinsic, qjs, Class, Ctx, Function, Object, String as JSString, Value};
-
+use rquickjs::Error as JsError;
 use crate::{hold, hold_and_release, to_js_error, val_to_string, Args};
 use anyhow::{bail, Error, Result};
 
@@ -15,6 +15,7 @@ impl Intrinsic for Crypto {
         register(Ctx::from_raw(ctx)).expect("`Crypto` APIs to succeed")
     }
 }
+
 fn register(this: Ctx<'_>) -> Result<()> {
     let globals = this.globals();
 
@@ -47,9 +48,9 @@ fn hmac_sha256(args: Args<'_>) -> Result<Class<HmacClass>> {
     let js_string_algo = val_to_string(&ctx, args[0].clone())?;
     let js_string_secret = val_to_string(&ctx, args[1].clone())?;
     
-    // if (js_algo_secret != "sha256") {
-    //     bail!("Argument 1: only sha256 supported.");
-    // }
+    if js_string_algo != "sha256" {
+        bail!("Argument 1: only sha256 supported.");
+    }
 
     return Ok(
         Class::instance(
@@ -62,16 +63,7 @@ fn hmac_sha256(args: Args<'_>) -> Result<Class<HmacClass>> {
         ).unwrap()
     );
 
-    // let cls = Class::instance(
-    //     ctx.clone(),
-    //     TestClass {
-    //         inner_object: Object::new(ctx.clone()).unwrap(),
-    //         some_value: 1,
-    //         another_value: 2,
-    //     },
-    // )
-    // .unwrap();
-
+    // prior method
     // Pass it to JavaScript
 
     // mac.update(js_string_message.as_bytes());
@@ -106,44 +98,29 @@ pub struct HmacClass<'js> {
 }
 
 #[rquickjs_macro::methods]
-impl <'_>HmacClass<'_> {
+impl<'js> HmacClass<'js> {
     #[qjs(get, rename = "digest")]
-    pub fn digest(&self, type_of_digest: JSString<'_>) -> Result<Value<'_>> {
+    pub fn digest(&self, type_of_digest: JSString<'js>) -> Result<Value<'js>, JsError> {
         let ctx = self.message.ctx();
+        let js_type_of_digest = type_of_digest.to_string()?;
+        if js_type_of_digest != "hex" {
+            // raises this error:
+            // mismatched types
+            // `anyhow::Error` and `rquickjs::Error` have similar names, but are actually distinct typesrustcClick for full compiler diagnostic
+            // macros.rs(229, 9): Actual error occurred here
+            // macros.rs(58, 39): Error originated from macro call here
+            // lib.rs(387, 1): `anyhow::Error` is defined in crate `anyhow`
+            // result.rs(59, 1): `rquickjs::Error` is defined in crate `rquickjs_core`
+            // bail!("Only supported digest format is hex");
+        }
 
         let js_string_message = val_to_string(&ctx, self.message.clone().into()).unwrap();
 
-        // return hmac_sha256_result(self.key.clone(), js_string_message).unwrap();
-        let js_string = JSString::from_str(ctx.clone(), "hello world");
-
-        // fails with:
-        // lifetime may not live long enough
-        // requirement occurs because of the type `rquickjs::Value<'_>`, which makes the generic argument `'_` invariant
-        // the struct `rquickjs::Value<'js>` is invariant over the parameter `'js`
-        // see <https://doc.rust-lang.org/nomicon/subtyping.html> for more information about variancerustcClick for full compiler diagnostic
-        // mod.rs(111, 19): let's call the lifetime of this reference `'1`
-        // mod.rs(111, 19): has type `&crypto::HmacClass<'2>`
-        Ok(Value::from_string(js_string?))
+        let code = hmac_sha256_result(self.key.clone(), js_string_message).unwrap();
+        let js_string = JSString::from_str(ctx.clone(), &code)?;
+        Ok(Value::from_string(js_string))
     }
 }
-
-#[derive(rquickjs_macro::Trace)]
-#[rquickjs_macro::class(rename_all = "camelCase")]
-pub struct TestClass<'js> {
-    /// These attribute make the accessible from JavaScript with getters and setters.
-    /// As we used `rename_all = "camelCase"` in the attribute it will be called `innerObject`
-    /// on the JavaScript side.
-    #[qjs(get, set)]
-    inner_object: Object<'js>,
-
-    /// This works for any value which implements `IntoJs` and `FromJs` and is clonable.
-    #[qjs(get, set)]
-    some_value: u32,
-    /// Make a field enumerable.
-    #[qjs(get, set, enumerable)]
-    another_value: u32,
-}
-
 
 #[cfg(test)]
 mod tests {
@@ -167,7 +144,8 @@ mod tests {
                     // hmac.digest("hex") === expectedHex;
                     hmac.message === "input message";
 
-                    hmac.digest("hex");
+                    // this line crashes
+                    // hmac.digest("hex");
             "#,
             )?;
 
