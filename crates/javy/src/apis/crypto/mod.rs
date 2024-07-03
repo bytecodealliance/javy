@@ -102,21 +102,21 @@ impl<'js> HmacClass<'js> {
     #[qjs()]
     pub fn digest(&self, type_of_digest: JSString<'js>) -> Result<Value<'js>, JsError> {
         let ctx = self.message.ctx();
-        // let js_type_of_digest = type_of_digest.to_string()?;
-        // if js_type_of_digest != "hex" {
-        //     return Err(rquickjs::Exception::throw_type(&ctx.clone(), "digest type must be hex"));
-        // }
+        let js_type_of_digest = type_of_digest.to_string()?;
+        if js_type_of_digest != "hex" {
+            return Err(rquickjs::Exception::throw_type(&ctx.clone(), "digest type must be hex"));
+        }
 
-        // let js_string_message = val_to_string(&ctx, self.message.clone().into()).map_err(|e| to_js_error(ctx.clone(), e));
-        // if js_string_message.is_err() {
-        //     return Err(rquickjs::Exception::throw_type(&ctx.clone(), "failed val_to_string"));
-        // }
-        // let code = hmac_sha256_result(self.key.clone(), js_string_message?).map_err(|e| to_js_error(ctx.clone(), e));
-        // if code.is_err() {
-        //     return Err(rquickjs::Exception::throw_type(&ctx.clone(), "failed hmac_sha256_result"));
-        // }
-        // let js_string = JSString::from_str(ctx.clone(), &code?)?;
-        let js_string = JSString::from_str(ctx.clone(), "hello world");
+        let js_string_message = val_to_string(&ctx, self.message.clone().into()).map_err(|e| to_js_error(ctx.clone(), e));
+        if js_string_message.is_err() {
+            return Err(rquickjs::Exception::throw_type(&ctx.clone(), "failed val_to_string"));
+        }
+        let code = hmac_sha256_result(self.key.clone(), js_string_message?).map_err(|e| to_js_error(ctx.clone(), e));
+        if code.is_err() {
+            return Err(rquickjs::Exception::throw_type(&ctx.clone(), "failed hmac_sha256_result"));
+        }
+        let js_string = JSString::from_str(ctx.clone(), &code?);
+        // let js_string = JSString::from_str(ctx.clone(), "hello world");
         if js_string.is_err() {
             return Err(rquickjs::Exception::throw_type(&ctx.clone(), "failed to convert string"));
         }
@@ -138,16 +138,10 @@ mod tests {
         runtime.context().with(|this| {
             let result: Value<'_> = this.eval(
                 r#"
-                    // let expectedHex = "97d2a569059bbcd8ead4444ff99071f4c01d005bcefe0d3567e1be628e5fdcd9";
-                    // let result = crypto.hmacSHA256("my secret and secure key", "input message");
-                    // expectedHex === result;
+                    let expectedHex = "97d2a569059bbcd8ead4444ff99071f4c01d005bcefe0d3567e1be628e5fdcd9";
                     let hmac = crypto.createHmac("sha256", "my secret and secure key");
                     hmac.message = "input message";
-                    // hmac.digest("hex") === expectedHex;
-                    hmac.message === "input message";
-
-                    // this line crashes
-                    hmac.digest("hex") == "hello world";
+                    hmac.digest("hex") === expectedHex;
             "#,
             )?;
             assert!(result.as_bool().unwrap());
