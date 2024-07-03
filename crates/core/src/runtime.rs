@@ -13,7 +13,8 @@ pub(crate) fn new(shared_config: SharedConfig) -> Result<Runtime> {
         // fix forward.
         .override_json_parse_and_stringify(false)
         .javy_json(false)
-        .crypto(shared_config.contains(SharedConfig::CRYPTO));
+        // .crypto(shared_config.contains(SharedConfig::CRYPTO));
+        .crypto(true);
 
     Runtime::new(std::mem::take(config))
 }

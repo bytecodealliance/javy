@@ -1584,6 +1584,7 @@ dependencies = [
  "rmp-serde",
  "rquickjs",
  "rquickjs-core",
+ "rquickjs-macro",
  "rquickjs-sys",
  "serde",
  "serde-transcode",
