@@ -146,7 +146,6 @@ impl Runtime {
             }
 
             if intrinsics.contains(JSIntrinsics::CRYPTO) {
-                // #[cfg(feature = "crypto")]
                 unsafe { Crypto::add_intrinsic(ctx.as_raw()) }
             }
         });

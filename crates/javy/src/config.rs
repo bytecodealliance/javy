@@ -67,6 +67,7 @@ impl Default for Config {
     fn default() -> Self {
         let mut intrinsics = JSIntrinsics::all();
         intrinsics.set(JSIntrinsics::TEXT_ENCODING, false);
+        intrinsics.set(JSIntrinsics::CRYPTO, false);
         Self {
             intrinsics,
             javy_intrinsics: JavyIntrinsics::empty(),
@@ -181,8 +182,7 @@ impl Config {
     }
 
     /// Whether the `crypto` intrinsic will be available.
-    /// Enabled by default.
-    // #[cfg(feature = "crypto")]
+    /// Disabled by default.
     pub fn crypto(&mut self, enable: bool) -> &mut Self {
         self.intrinsics.set(JSIntrinsics::CRYPTO, enable);
         self
