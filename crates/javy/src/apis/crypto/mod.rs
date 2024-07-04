@@ -26,7 +26,7 @@ fn register(this: Ctx<'_>) -> Result<()> {
         "createHmac",
         Function::new(this.clone(), |this, args| {
             let (this, args) = hold_and_release!(this, args);
-            hmac_sha256(hold!(this.clone(), args)).map_err(|e| to_js_error(this, e))
+            hmac_sha256_obj(hold!(this.clone(), args)).map_err(|e| to_js_error(this, e))
         }),
     )?;
 
@@ -34,21 +34,22 @@ fn register(this: Ctx<'_>) -> Result<()> {
 
     Ok::<_, Error>(())
 }
-/// hmac_sha256 applies the HMAC algorithm for signing.
+
+/// hmac_sha256_obj creates the HMAC object
 /// Arg[0] - algorithm (only supports sha256 today)
 /// Arg[1] - secret key
 /// returns - Hmac object
-fn hmac_sha256(args: Args<'_>) -> Result<Class<HmacClass>> {
+fn hmac_sha256_obj(args: Args<'_>) -> Result<Class<HmacClass>> {
     let (ctx, args) = args.release();
 
     if args.len() != 2 {
         bail!("Wrong number of arguments. Expected 2. Got {}", args.len());
     }
 
-    let js_string_algo = val_to_string(&ctx, args[0].clone())?;
-    let js_string_secret = val_to_string(&ctx, args[1].clone())?;
+    let algo = val_to_string(&ctx, args[0].clone())?;
+    let key = val_to_string(&ctx, args[1].clone())?;
     
-    if js_string_algo != "sha256" {
+    if algo != "sha256" {
         bail!("Argument 1: only sha256 supported.");
     }
 
@@ -56,16 +57,15 @@ fn hmac_sha256(args: Args<'_>) -> Result<Class<HmacClass>> {
         Class::instance(
             ctx.clone(),
             HmacClass{
-                algorithm: js_string_algo.clone(), 
-                key: js_string_secret.clone(),
+                algorithm: algo.clone(),
+                key: key.clone(),
                 message: JSString::from_str(ctx, "").unwrap(),
             }
         ).unwrap()
     );
 }
 
-
-
+/// hmac_sha256_result applies the HMAC sha256 algorithm for signing.
 fn hmac_sha256_result(secret: String, message: String) -> Result<String> {
     type HmacSha256 = Hmac<Sha256>;
     let mut hmac = HmacSha256::new_from_slice(secret.as_bytes()).expect("HMAC can take key of any size");
@@ -73,7 +73,7 @@ fn hmac_sha256_result(secret: String, message: String) -> Result<String> {
     let result = hmac.finalize();
     let code_bytes = result.into_bytes();
     let code: String = format!("{code_bytes:x}");
-    return Ok(code);
+    Ok(code)
 }
 
 #[derive(rquickjs_macro::Trace)]
@@ -87,43 +87,43 @@ pub struct HmacClass<'js> {
 #[rquickjs_macro::methods]
 impl<'js> HmacClass<'js> {
     #[qjs()]
-    pub fn digest(&self, type_of_digest: JSString<'js>) -> Result<Value<'js>, JsError> {
+    pub fn digest(&self, js_type_of_digest: JSString<'js>) -> Result<Value<'js>, JsError> {
         let ctx = self.message.ctx();
 
         // Convert JSString to Rust String
-        let js_type_of_digest = type_of_digest.to_string()
-            .map_err(|e| rquickjs::Exception::throw_type(&ctx, &format!("Failed to convert type_of_digest to string: {}", e)))?;
+        let type_of_digest = js_type_of_digest.to_string()
+            .map_err(|e| rquickjs::Exception::throw_type(ctx, &format!("Failed to convert type_of_digest to string: {}", e)))?;
 
-        if js_type_of_digest != "hex" {
-            return Err(rquickjs::Exception::throw_type(&ctx, "digest type must be 'hex'"));
+        if type_of_digest != "hex" {
+            return Err(rquickjs::Exception::throw_type(ctx, "digest type must be 'hex'"));
         }
 
         // Convert message to Rust String
-        let js_string_message = val_to_string(&ctx, self.message.clone().into())
-            .map_err(|e| rquickjs::Exception::throw_type(&ctx, &format!("Failed to convert message to string: {}", e)))?;
+        let string_message = val_to_string(ctx, self.message.clone().into())
+            .map_err(|e| rquickjs::Exception::throw_type(ctx, &format!("Failed to convert message to string: {}", e)))?;
 
         // Compute HMAC
-        let code = hmac_sha256_result(self.key.clone(), js_string_message)
-            .map_err(|e| rquickjs::Exception::throw_type(&ctx, &format!("Failed to compute HMAC: {}", e)))?;
+        let string_digest = hmac_sha256_result(self.key.clone(), string_message)
+            .map_err(|e| rquickjs::Exception::throw_type(ctx, &format!("Failed to compute HMAC: {}", e)))?;
 
         // Convert result to JSString
-        let js_string = JSString::from_str(ctx.clone(), &code)
-            .map_err(|e| rquickjs::Exception::throw_type(&ctx, &format!("Failed to convert result to JSString: {}", e)))?;
+        let js_string_digest = JSString::from_str(ctx.clone(), &string_digest)
+            .map_err(|e| rquickjs::Exception::throw_type(ctx, &format!("Failed to convert result to JSString: {}", e)))?;
 
-        Ok(Value::from_string(js_string))
+        Ok(Value::from_string(js_string_digest))
     }
 
     #[qjs()]
-    pub fn update(&mut self, v: JSString<'js>) {
+    pub fn update(&mut self, js_v: JSString<'js>) {
         let ctx = self.message.ctx();
-        let mut js_string_message = val_to_string(&ctx, self.message.clone().into())
-          .map_err(|e| rquickjs::Exception::throw_type(&ctx, &format!("Failed to convert message to string: {}", e))).unwrap();
+        let mut string_message = val_to_string(ctx, self.message.clone().into())
+          .map_err(|e| rquickjs::Exception::throw_type(ctx, &format!("Failed to convert message to string: {}", e))).unwrap();
 
-        let js_v = val_to_string(&ctx, v.clone().into())
-          .map_err(|e| rquickjs::Exception::throw_type(&ctx, &format!("Failed to convert message to string: {}", e))).unwrap();
+        let v = val_to_string(ctx, js_v.clone().into())
+          .map_err(|e| rquickjs::Exception::throw_type(ctx, &format!("Failed to convert message to string: {}", e))).unwrap();
 
-        js_string_message.push_str(&js_v);
-        self.message = JSString::from_str(ctx.clone(), &js_string_message).unwrap();
+          string_message.push_str(&v);
+        self.message = JSString::from_str(ctx.clone(), &string_message).unwrap();
     }
 }
 
