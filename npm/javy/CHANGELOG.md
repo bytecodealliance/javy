@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Added crypto HmacSha256 API support.
+
 ## [0.1.2] - 2023-07-28
 
 ### Added
