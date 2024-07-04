@@ -18,50 +18,48 @@ impl Intrinsic for Crypto {
 
 fn register(this: Ctx<'_>) -> Result<()> {
     let globals = this.globals();
-
     let crypto_obj = Object::new(this.clone())?;
+    let subtle_obj = Object::new(this.clone())?;
 
-    crypto_obj.set(
-        "createHmac",
+    subtle_obj.set(
+        "sign",
         Function::new(this.clone(), |this, args| {
             let (this, args) = hold_and_release!(this, args);
-            hmac_sha256_obj(hold!(this.clone(), args)).map_err(|e| to_js_error(this, e))
+            hmac_sha256(hold!(this.clone(), args)).map_err(|e| to_js_error(this, e))
         }),
     )?;
 
+    crypto_obj.set("subtle", subtle_obj)?;
     globals.set("crypto", crypto_obj)?;
 
     Ok::<_, Error>(())
 }
 
-/// hmac_sha256_obj creates the HMAC object
-/// Arg[0] - algorithm (only supports sha256 today)
-/// Arg[1] - secret key
-/// returns - Hmac object
-fn hmac_sha256_obj(args: Args<'_>) -> Result<Class<HmacClass>> {
+
+/// hmac_sha256 applies the HMAC algorithm using sha256 for hashing.
+/// Arg[0] - secret
+/// Arg[1] - message
+/// returns - hex encoded string of hmac.
+fn hmac_sha256(args: Args<'_>) -> Result<Value<'_>> {
     let (ctx, args) = args.release();
 
-    if args.len() != 2 {
-        bail!("Wrong number of arguments. Expected 2. Got {}", args.len());
+    if args.len() != 3 {
+        bail!("Wrong number of arguments. Expected 3. Got {}", args.len());
     }
 
-    let algo = val_to_string(&ctx, args[0].clone())?;
-    let key = val_to_string(&ctx, args[1].clone())?;
-    
-    if algo != "sha256" {
-        bail!("Argument 1: only sha256 supported.");
-    }
+    // let protocol: Object = val_to_string(&ctx, args[0].clone())?; // need to figure out how to convert val to a struct
+    // use: .get https://docs.rs/rquickjs/0.6.2/rquickjs/struct.Object.html#method.get
 
-    return Ok(
-        Class::instance(
-            ctx.clone(),
-            HmacClass{
-                algorithm: algo.clone(),
-                key: key.clone(),
-                message: JSString::from_str(ctx, "").unwrap(),
-            }
-        ).unwrap()
-    );
+    let secret = val_to_string(&ctx, args[1].clone())?;
+    let message = val_to_string(&ctx, args[2].clone())?;
+
+    let string_digest = hmac_sha256_result(secret, message);
+
+    // Convert result to JSString
+    let js_string_digest = JSString::from_str(ctx.clone(), &string_digest?)
+    .map_err(|e| rquickjs::Exception::throw_type(&ctx, &format!("Failed to convert result to JSString: {}", e)))?;
+
+    Ok(Value::from_string(js_string_digest))
 }
 
 /// hmac_sha256_result applies the HMAC sha256 algorithm for signing.
@@ -73,57 +71,6 @@ fn hmac_sha256_result(secret: String, message: String) -> Result<String> {
     let code_bytes = result.into_bytes();
     let code: String = format!("{code_bytes:x}");
     Ok(code)
-}
-
-#[derive(rquickjs_macro::Trace)]
-#[rquickjs_macro::class(rename_all = "camelCase")]
-pub struct HmacClass<'js> {
-    algorithm: String,
-    key: String,
-    message: JSString<'js>,
-}
-
-#[rquickjs_macro::methods]
-impl<'js> HmacClass<'js> {
-    #[qjs()]
-    pub fn digest(&self, js_type_of_digest: JSString<'js>) -> Result<Value<'js>, JsError> {
-        let ctx = self.message.ctx();
-
-        // Convert JSString to Rust String
-        let type_of_digest = js_type_of_digest.to_string()
-            .map_err(|e| rquickjs::Exception::throw_type(ctx, &format!("Failed to convert type_of_digest to string: {}", e)))?;
-
-        if type_of_digest != "hex" {
-            return Err(rquickjs::Exception::throw_type(ctx, "digest type must be 'hex'"));
-        }
-
-        // Convert message to Rust String
-        let string_message = val_to_string(ctx, self.message.clone().into())
-            .map_err(|e| rquickjs::Exception::throw_type(ctx, &format!("Failed to convert message to string: {}", e)))?;
-
-        // Compute HMAC
-        let string_digest = hmac_sha256_result(self.key.clone(), string_message)
-            .map_err(|e| rquickjs::Exception::throw_type(ctx, &format!("Failed to compute HMAC: {}", e)))?;
-
-        // Convert result to JSString
-        let js_string_digest = JSString::from_str(ctx.clone(), &string_digest)
-            .map_err(|e| rquickjs::Exception::throw_type(ctx, &format!("Failed to convert result to JSString: {}", e)))?;
-
-        Ok(Value::from_string(js_string_digest))
-    }
-
-    #[qjs()]
-    pub fn update(&mut self, js_v: JSString<'js>) {
-        let ctx = self.message.ctx();
-        let mut string_message = val_to_string(ctx, self.message.clone().into())
-          .map_err(|e| rquickjs::Exception::throw_type(ctx, &format!("Failed to convert message to string: {}", e))).unwrap();
-
-        let v = val_to_string(ctx, js_v.clone().into())
-          .map_err(|e| rquickjs::Exception::throw_type(ctx, &format!("Failed to convert update input to string: {}", e))).unwrap();
-
-          string_message.push_str(&v);
-        self.message = JSString::from_str(ctx.clone(), &string_message).unwrap();
-    }
 }
 
 #[cfg(test)]
@@ -141,9 +88,8 @@ mod tests {
             let result: Value<'_> = this.eval(
                 r#"
                     let expectedHex = "97d2a569059bbcd8ead4444ff99071f4c01d005bcefe0d3567e1be628e5fdcd9";
-                    let hmac = crypto.createHmac("sha256", "my secret and secure key");
-                    hmac.update("input message");
-                    hmac.digest("hex") === expectedHex;
+                    let result = crypto.subtle.sign({name: "HMAC", hash: "sha-256"}, "my secret and secure key", "input message");
+                    result === expectedHex;
             "#,
             )?;
             assert!(result.as_bool().unwrap());
@@ -159,7 +105,7 @@ mod tests {
         runtime.context().with(|this| {
             let result= this.eval::<Value<'_>, _>(
                 r#"
-                    crypto.createHmac("sha256", "hello world");
+                    crypto.subtle;
             "#,
             );
             assert!(result.is_err());
@@ -181,9 +127,7 @@ mod tests {
                 r#"
                     // matched tested behavior in node v18
                     let expectedHex = "c06ae855290abd8f397af6975e9c2f72fe27a90a3e0f0bb73b4f991567501980";
-                    let hmac = crypto.createHmac("sha256", "\uD800\uD800\uD800\uD800\uD800");
-                    hmac.update("\uD800\uD800\uD800\uD800\uD800");
-                    let result = hmac.digest("hex");
+                    let result = crypto.subtle.sign({name: "HMAC", hash: "sha-256"}, "\uD800\uD800\uD800\uD800\uD800", "\uD800\uD800\uD800\uD800\uD800");
                     console.log(result);
                     console.log("Match?", result === expectedHex);
                     result === expectedHex;
@@ -196,7 +140,7 @@ mod tests {
     }
 
     #[test]
-    fn test_not_sha256_algo_errors() -> Result<()> {
+    fn test_crypto_undefined_methods_raise_not_a_function() -> Result<()> {
         let mut config = Config::default();
         config.crypto(true);
         let runtime = Runtime::new(config)?;
@@ -204,36 +148,56 @@ mod tests {
         runtime.context().with(|this| {
             let result= this.eval::<Value<'_>, _>(
                 r#"
-                    crypto.createHmac("not-sha", "my secret and secure key");
+                    crypto.subtle.encrypt({name: "HMAC", hash: "sha-256"}, "my secret and secure key", "input message");
             "#,
             );
             assert!(result.is_err());
             let e = result.map_err(|e| from_js_error(this.clone(), e)).unwrap_err();
-            assert_eq!("Error:2:28 Argument 1: only sha256 supported.\n    at <eval> (eval_script:2:28)\n", e.to_string());
+            assert_eq!("Error:2:35 not a function\n    at <eval> (eval_script:2:35)\n", e.to_string());
             Ok::<_, Error>(())
         })?;
         Ok(())
     }
 
-    #[test]
-    fn test_not_hex_digest_errors() -> Result<()> {
-        let mut config = Config::default();
-        config.crypto(true);
-        let runtime = Runtime::new(config)?;
+    // #[test]
+    // fn test_not_sha256_algo_errors() -> Result<()> {
+    //     let mut config = Config::default();
+    //     config.crypto(true);
+    //     let runtime = Runtime::new(config)?;
 
-        runtime.context().with(|this| {
-            let result= this.eval::<Value<'_>, _>(
-                r#"
-                    let hmac = crypto.createHmac("sha256", "my secret and secure key");
-                    hmac.update("input message");
-                    hmac.digest("base64");
-            "#,
-            );
-            assert!(result.is_err());
-            let e = result.map_err(|e| from_js_error(this.clone(), e)).unwrap_err();
-            assert_eq!("Error:4:26 digest type must be 'hex'\n    at <eval> (eval_script:4:26)\n", e.to_string());
-            Ok::<_, Error>(())
-        })?;
-        Ok(())
-    }
+    //     runtime.context().with(|this| {
+    //         let result= this.eval::<Value<'_>, _>(
+    //             r#"
+    //                 crypto.createHmac("not-sha", "my secret and secure key");
+    //         "#,
+    //         );
+    //         assert!(result.is_err());
+    //         let e = result.map_err(|e| from_js_error(this.clone(), e)).unwrap_err();
+    //         assert_eq!("Error:2:28 Argument 1: only sha256 supported.\n    at <eval> (eval_script:2:28)\n", e.to_string());
+    //         Ok::<_, Error>(())
+    //     })?;
+    //     Ok(())
+    // }
+
+    // #[test]
+    // fn test_not_hex_digest_errors() -> Result<()> {
+    //     let mut config = Config::default();
+    //     config.crypto(true);
+    //     let runtime = Runtime::new(config)?;
+
+    //     runtime.context().with(|this| {
+    //         let result= this.eval::<Value<'_>, _>(
+    //             r#"
+    //                 let hmac = crypto.createHmac("sha256", "my secret and secure key");
+    //                 hmac.update("input message");
+    //                 hmac.digest("base64");
+    //         "#,
+    //         );
+    //         assert!(result.is_err());
+    //         let e = result.map_err(|e| from_js_error(this.clone(), e)).unwrap_err();
+    //         assert_eq!("Error:4:26 digest type must be 'hex'\n    at <eval> (eval_script:4:26)\n", e.to_string());
+    //         Ok::<_, Error>(())
+    //     })?;
+    //     Ok(())
+    // }
 }

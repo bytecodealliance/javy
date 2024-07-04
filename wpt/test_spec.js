@@ -67,4 +67,7 @@ export default [
   {
     testFile: "upstream/encoding/textencoder-utf16-surrogates.any.js",
   },
+  // {
+  //   testFile: "upstream/WebCryptoAPI/sign_verify/hmac.https.any.js",
+  // },
 ];

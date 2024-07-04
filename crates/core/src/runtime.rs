@@ -15,7 +15,7 @@ pub(crate) fn new(shared_config: SharedConfig) -> Result<Runtime> {
         .javy_json(false)
         // For the time being, ship crypto as off by default
         // Later, we may enable it with:  .crypto(shared_config.contains(SharedConfig::CRYPTO))
-        .crypto(false);
+        .crypto(cfg!(feature = "experimental_crypto"));
 
     Runtime::new(std::mem::take(config))
 }
