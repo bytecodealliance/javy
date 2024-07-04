@@ -1,5 +1,4 @@
-use crate::quickjs::{context::Intrinsic, qjs, Class, Ctx, Function, Object, String as JSString, Value};
-use rquickjs::Error as JsError;
+use crate::quickjs::{context::Intrinsic, qjs, Ctx, Function, Object, String as JSString, Value};
 use crate::{hold, hold_and_release, to_js_error, val_to_string, Args};
 use anyhow::{bail, Error, Result};
 
@@ -35,7 +34,6 @@ fn register(this: Ctx<'_>) -> Result<()> {
     Ok::<_, Error>(())
 }
 
-
 /// hmac_sha256 applies the HMAC algorithm using sha256 for hashing.
 /// Arg[0] - secret
 /// Arg[1] - message
@@ -47,9 +45,17 @@ fn hmac_sha256(args: Args<'_>) -> Result<Value<'_>> {
         bail!("Wrong number of arguments. Expected 3. Got {}", args.len());
     }
 
-    // let protocol: Object = val_to_string(&ctx, args[0].clone())?; // need to figure out how to convert val to a struct
-    // use: .get https://docs.rs/rquickjs/0.6.2/rquickjs/struct.Object.html#method.get
+    let protocol = args[0].as_object();
 
+    let js_protocol_name: Value = protocol.expect("protocol struct required").get("name").unwrap();
+    if val_to_string(&ctx, js_protocol_name.clone())? != "HMAC" {
+        bail!("only name=HMAC supported");
+    }
+
+    let js_protocol_name: Value = protocol.expect("protocol struct required").get("hash").unwrap();
+    if val_to_string(&ctx, js_protocol_name.clone())? != "sha-256" {
+        bail!("only hash=sha-256 supported");
+    }
     let secret = val_to_string(&ctx, args[1].clone())?;
     let message = val_to_string(&ctx, args[2].clone())?;
 
@@ -159,45 +165,43 @@ mod tests {
         Ok(())
     }
 
-    // #[test]
-    // fn test_not_sha256_algo_errors() -> Result<()> {
-    //     let mut config = Config::default();
-    //     config.crypto(true);
-    //     let runtime = Runtime::new(config)?;
+    #[test]
+    fn test_not_hmac_algo_errors() -> Result<()> {
+        let mut config = Config::default();
+        config.crypto(true);
+        let runtime = Runtime::new(config)?;
 
-    //     runtime.context().with(|this| {
-    //         let result= this.eval::<Value<'_>, _>(
-    //             r#"
-    //                 crypto.createHmac("not-sha", "my secret and secure key");
-    //         "#,
-    //         );
-    //         assert!(result.is_err());
-    //         let e = result.map_err(|e| from_js_error(this.clone(), e)).unwrap_err();
-    //         assert_eq!("Error:2:28 Argument 1: only sha256 supported.\n    at <eval> (eval_script:2:28)\n", e.to_string());
-    //         Ok::<_, Error>(())
-    //     })?;
-    //     Ok(())
-    // }
+        runtime.context().with(|this| {
+            let result= this.eval::<Value<'_>, _>(
+                r#"
+                    let result = crypto.subtle.sign({name: "not-HMAC", hash: "not-sha-256"}, "my secret and secure key", "input message");
+            "#,
+            );
+            assert!(result.is_err());
+            let e = result.map_err(|e| from_js_error(this.clone(), e)).unwrap_err();
+            assert_eq!("Error:2:48 only name=HMAC supported\n    at <eval> (eval_script:2:48)\n", e.to_string());
+            Ok::<_, Error>(())
+        })?;
+        Ok(())
+    }
 
-    // #[test]
-    // fn test_not_hex_digest_errors() -> Result<()> {
-    //     let mut config = Config::default();
-    //     config.crypto(true);
-    //     let runtime = Runtime::new(config)?;
+    #[test]
+    fn test_not_sha256_algo_errors() -> Result<()> {
+        let mut config = Config::default();
+        config.crypto(true);
+        let runtime = Runtime::new(config)?;
 
-    //     runtime.context().with(|this| {
-    //         let result= this.eval::<Value<'_>, _>(
-    //             r#"
-    //                 let hmac = crypto.createHmac("sha256", "my secret and secure key");
-    //                 hmac.update("input message");
-    //                 hmac.digest("base64");
-    //         "#,
-    //         );
-    //         assert!(result.is_err());
-    //         let e = result.map_err(|e| from_js_error(this.clone(), e)).unwrap_err();
-    //         assert_eq!("Error:4:26 digest type must be 'hex'\n    at <eval> (eval_script:4:26)\n", e.to_string());
-    //         Ok::<_, Error>(())
-    //     })?;
-    //     Ok(())
-    // }
+        runtime.context().with(|this| {
+            let result= this.eval::<Value<'_>, _>(
+                r#"
+                    let result = crypto.subtle.sign({name: "HMAC", hash: "not-sha-256"}, "my secret and secure key", "input message");
+            "#,
+            );
+            assert!(result.is_err());
+            let e = result.map_err(|e| from_js_error(this.clone(), e)).unwrap_err();
+            assert_eq!("Error:2:48 only hash=sha-256 supported\n    at <eval> (eval_script:2:48)\n", e.to_string());
+            Ok::<_, Error>(())
+        })?;
+        Ok(())
+    }
 }
