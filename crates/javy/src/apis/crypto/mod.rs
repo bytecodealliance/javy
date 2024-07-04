@@ -153,6 +153,24 @@ mod tests {
     }
 
     #[test]
+    fn test_crypto_disabled_by_default() -> Result<()> {
+        let runtime = Runtime::new(Config::default())?;
+
+        runtime.context().with(|this| {
+            let result= this.eval::<Value<'_>, _>(
+                r#"
+                    crypto.createHmac("sha256", "hello world");
+            "#,
+            );
+            assert!(result.is_err());
+            let e = result.map_err(|e| from_js_error(this.clone(), e)).unwrap_err();
+            assert_eq!("Error:2:21 'crypto' is not defined\n    at <eval> (eval_script:2:21)\n", e.to_string());
+            Ok::<_, Error>(())
+        })?;
+        Ok(())
+    }
+    
+    #[test]
     fn test_crypto_digest_with_lossy_input() -> Result<()> {
         let mut config = Config::default();
         config.crypto(true);
