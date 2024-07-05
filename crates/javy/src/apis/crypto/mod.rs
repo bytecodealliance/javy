@@ -1,4 +1,4 @@
-use crate::quickjs::{context::Intrinsic, qjs, Ctx, Function, Object, String as JSString, Value};
+use crate::quickjs::{context::Intrinsic, qjs, Ctx, CatchResultExt, Function, Object, String as JSString, Value, Promise, function::Func, function::This};
 use crate::{hold, hold_and_release, to_js_error, val_to_string, Args};
 use anyhow::{bail, Error, Result};
 
@@ -38,7 +38,7 @@ fn register(this: Ctx<'_>) -> Result<()> {
 /// Arg[0] - secret
 /// Arg[1] - message
 /// returns - hex encoded string of hmac.
-fn hmac_sha256(args: Args<'_>) -> Result<Value<'_>> {
+fn hmac_sha256(args: Args<'_>) -> Result<Promise<'_>> {
     let (ctx, args) = args.release();
 
     if args.len() != 3 {
@@ -64,8 +64,31 @@ fn hmac_sha256(args: Args<'_>) -> Result<Value<'_>> {
     // Convert result to JSString
     let js_string_digest = JSString::from_str(ctx.clone(), &string_digest?)
     .map_err(|e| rquickjs::Exception::throw_type(&ctx, &format!("Failed to convert result to JSString: {}", e)))?;
+    //Value::from_string(js_string_digest);
+    let string = Value::from_string(js_string_digest);
+    // let promise = Promise::from_value(string)
+    //     .map_err(|e| rquickjs::Exception::throw_type(&ctx, &format!("Failed to convert value to promise: {}", e)))?;
+    
+    // let promise = Promise::from_value(string);
+    Ok(build_promise_from_value(string)?)
+}
 
-    Ok(Value::from_string(js_string_digest))
+fn build_promise_from_value(value: Value<'_>) -> Result<Promise<'_>> {
+    let ctx = value.ctx();
+    let (promise, resolve, _) = Promise::new(&ctx).unwrap();
+    let cb = Func::new( || {
+        "hello world"
+    });
+
+    promise
+        .get::<_, Function>("then")
+        .catch(&ctx)
+        .unwrap()
+        .call::<_, ()>((This(promise.clone()), cb))
+        .catch(&ctx)
+        .unwrap();
+
+    return Ok(promise)
 }
 
 /// hmac_sha256_result applies the HMAC sha256 algorithm for signing.
@@ -94,7 +117,9 @@ mod tests {
             let result: Value<'_> = this.eval(
                 r#"
                     let expectedHex = "97d2a569059bbcd8ead4444ff99071f4c01d005bcefe0d3567e1be628e5fdcd9";
-                    let result = crypto.subtle.sign({name: "HMAC", hash: "sha-256"}, "my secret and secure key", "input message");
+                    let result = null;
+                    crypto.subtle.sign({name: "HMAC", hash: "sha-256"}, "my secret and secure key", "input message").then(function(sig) { result = sig });
+                    console.log(result);
                     result === expectedHex;
             "#,
             )?;
@@ -129,17 +154,24 @@ mod tests {
         let runtime = Runtime::new(config)?;
 
         runtime.context().with(|this| {
-            let result: Value<'_> = this.eval(
+            let result = this.eval::<Value<'_>, _>(
                 r#"
                     // matched tested behavior in node v18
                     let expectedHex = "c06ae855290abd8f397af6975e9c2f72fe27a90a3e0f0bb73b4f991567501980";
-                    let result = crypto.subtle.sign({name: "HMAC", hash: "sha-256"}, "\uD800\uD800\uD800\uD800\uD800", "\uD800\uD800\uD800\uD800\uD800");
-                    console.log(result);
-                    console.log("Match?", result === expectedHex);
+                    let result = null;
+                    result = crypto.subtle.sign({name: "HMAC", hash: "sha-256"}, "\uD800\uD800\uD800\uD800\uD800", "\uD800\uD800\uD800\uD800\uD800")
+                    // .then(function(signature) {
+                    //   result = signature;
+                    // });
+                    // console.log(result);
+                    // console.log("Match?", result === expectedHex);
                     result === expectedHex;
             "#,
-            )?;
-            assert!(result.as_bool().unwrap());
+            );
+            // assert!(result.is_err());
+            // let e = result.map_err(|e| from_js_error(this.clone(), e)).unwrap_err();
+            // assert_eq!("", e.to_string());
+            assert!(result.unwrap().as_bool().unwrap());
             Ok::<_, Error>(())
         })?;
         Ok(())
