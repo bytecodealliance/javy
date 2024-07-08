@@ -95,3 +95,17 @@ jobs:
         run: |
           cargo fmt -- --check
           CARGO_PROFILE_RELEASE_LTO=off cargo clippy --package=javy-cli --release --all-targets -- -D warnings
+
+  check-fuzz:
+    name: Build fuzz targets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install cargo fuzz
+        run: cargo install cargo-fuzz --version=0.12.0
+      # Smoke test to ensure that the fuzz targets build correctly.
+      # Build in development mode and without sanitizers to speed up this step.
+      - name: Build fuzz targets
+        run: cargo fuzz build --dev -s none
+
+
