@@ -45,11 +45,7 @@ fn exec(data: &ArbitraryValue) -> Result<()> {
         let result: Result<(), _> = cx.eval(JSON_PROGRAM);
 
         if let Err(e) = result {
-            panic!(
-                "{}\n{}",
-                from_js_error(cx.clone(), e).to_string(),
-                data.to_string()
-            );
+            panic!("{}\n{}", from_js_error(cx.clone(), e), **data,);
         }
 
         output = globals.get("OUTPUT")?;
@@ -64,11 +60,7 @@ fn exec(data: &ArbitraryValue) -> Result<()> {
         let result: Result<(), _> = cx.eval(JSON_PROGRAM);
 
         if let Err(e) = result {
-            panic!(
-                "{}\n{}",
-                from_js_error(cx.clone(), e).to_string(),
-                data.to_string()
-            );
+            panic!("{}\n{}", from_js_error(cx.clone(), e), **data);
         }
 
         ref_output = globals.get("OUTPUT")?;
