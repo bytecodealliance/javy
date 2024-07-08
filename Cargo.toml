@@ -9,6 +9,7 @@ members = [
   "crates/test-macros",
   "crates/config",
   "crates/runner",
+  "fuzz",
 ]
 resolver = "2"
 
