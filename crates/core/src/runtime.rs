@@ -11,8 +11,8 @@ pub(crate) fn new(shared_config: SharedConfig) -> Result<Runtime> {
         // Due to an issue with our custom serializer and property accesses
         // we're disabling this temporarily. It will be enabled once we have a
         // fix forward.
-        .override_json_parse_and_stringify(true)
-        .javy_json(true);
+        .override_json_parse_and_stringify(false)
+        .javy_json(false);
 
     Runtime::new(std::mem::take(config))
 }
