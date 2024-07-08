@@ -16,23 +16,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Read pinned nightly version
-        id: nightly_and_argo_fuzz_version
+        id: nightly_version
         shell: bash
         run: |
           NIGHTLY_VERSION=$(cat pinned-nightly-version)
-          CARGO_FUZZ_VERSION$(cat pinned-cargo-fuzz-version)
           echo "::set-output name=nightly_version::$NIGHTLY_VERSION"
+
+      - name: Read cargo fuzz version
+        id: cargo_fuzz_version
+        shell: bash
+        run: |
+          CARGO_FUZZ_VERSION=$(cat pinned-cargo-fuzz-version)
           echo "::set-output name=cargo_fuzz_version::$CARGO_FUZZ_VERSION"
 
       - name: Install nightly
-        run: rustup install +${{ steps.nightly_and_cargo_fuzz_version.outputs.nightly_version }}
+        run: rustup install +${{ steps.nightly_version.outputs.nightly_version }}
 
       - name: Install cargo fuzz
-        run: cargo install cargo-fuzz --version=${{ steps.nightly_and_cargo_fuzz_version.output.cargo_fuzz_version }}
+        run: cargo install cargo-fuzz --version=${{ steps.cargo_fuzz_version.output.cargo_fuzz_version }}
 
       - name: Build fuzz targets
-        run: cargo +${{ steps.nightly_and_cargo_fuzz_version.outputs.nightly_version }} fuzz build --dev
+        run: cargo +${{ steps.nightly_version.outputs.nightly_version }} fuzz build --dev
 
       - name: Lint
-        run: cargo +${{ steps.nightly_and_cargo_fuzz_version.outputs.nightly_version }} clippy --package=javy-fuzz -- -D warnings
+        run: cargo +${{ steps.nightly_version.outputs.nightly_version }} clippy --package=javy-fuzz -- -D warnings
 
