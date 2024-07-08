@@ -22,4 +22,6 @@ jobs:
         run: cargo install cargo-fuzz --version=0.12.0
       - name: Build fuzz targets
         run: cargo +nightly fuzz build --dev
+      - name: Lint
+        run: cargo +nightly clippy --package=javy-fuzz -- -D warnings
 
