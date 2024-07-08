@@ -3,10 +3,10 @@
 # and there's currently no way to define multiple toolchains through the 
 # `rust-toolchain.toml` configuration file.
 name: Build Fuzz Targets
-  on:
-    push:
-      branches:
-        - main
+on:
+  push:
+    branches:
+      - main
     pull_request:
 
 jobs:
