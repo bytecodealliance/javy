@@ -15,13 +15,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install nightly
+      - name: Read pinned nightly version
+        id: nightly_and_argo_fuzz_version
+        shell: bash
+        run: |
+          NIGHTLY_VERSION=$(cat pinned-nightly-version)
+          CARGO_FUZZ_VERSION$(cat pinned-cargo-fuzz-version)
+          echo "::set-output name=nightly_version::$NIGHTLY_VERSION"
+          echo "::set-output name=cargo_fuzz_version::$CARGO_FUZZ_VERSION"
 
-        run: rustup install nightly-2024-07-07
+      - name: Install nightly
+        run: rustup install +${{ steps.nightly_and_cargo_fuzz_version.outputs.nightly_version }}
+
       - name: Install cargo fuzz
-        run: cargo install cargo-fuzz --version=0.12.0
+        run: cargo install cargo-fuzz --version=${{ steps.nightly_and_cargo_fuzz_version.output.cargo_fuzz_version }}
+
       - name: Build fuzz targets
-        run: cargo +nightly fuzz build --dev
+        run: cargo +${{ steps.nightly_and_cargo_fuzz_version.outputs.nightly_version }} fuzz build --dev
+
       - name: Lint
-        run: cargo +nightly clippy --package=javy-fuzz -- -D warnings
+        run: cargo +${{ steps.nightly_and_cargo_fuzz_version.outputs.nightly_version }} clippy --package=javy-fuzz -- -D warnings
 
