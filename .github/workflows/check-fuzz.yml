@@ -30,14 +30,18 @@ jobs:
           echo "::set-output name=cargo_fuzz_version::$CARGO_FUZZ_VERSION"
 
       - name: Install nightly
-        run: rustup install ${{ steps.nightly_version.outputs.nightly_version }}
+        run: |
+          rustup install ${{ steps.nightly_version.outputs.nightly_version }}
+          rustup default ${{ steps.nightly_version.outputs.nightly_version }}
+          rustup component add clippy
 
       - name: Install cargo fuzz
         run: cargo install cargo-fuzz --version=${{ steps.cargo_fuzz_version.outputs.cargo_fuzz_version }}
 
       - name: Build fuzz targets
-        run: cargo +${{ steps.nightly_version.outputs.nightly_version }} fuzz build --dev
+        run: cargo fuzz build --dev
 
       - name: Lint
-        run: cargo +${{ steps.nightly_version.outputs.nightly_version }} clippy --package=javy-fuzz -- -D warnings
+        run: |
+          cargo clippy --package=javy-fuzz -- -D warnings
 
