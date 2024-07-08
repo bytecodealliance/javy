@@ -183,6 +183,7 @@ impl Config {
 
     /// Whether the `crypto` intrinsic will be available.
     /// Disabled by default.
+    #[cfg(feature = "crypto")]
     pub fn crypto(&mut self, enable: bool) -> &mut Self {
         self.intrinsics.set(JSIntrinsics::CRYPTO, enable);
         self

@@ -1,12 +1,16 @@
-use crate::quickjs::{context::Intrinsic, qjs, Ctx, CatchResultExt, Function, Object, String as JSString, Value, Promise, function::Func, function::This};
+use crate::quickjs::{
+    context::{EvalOptions, Intrinsic},
+    qjs, Ctx, Function, String as JSString, Value,
+};
 use crate::{hold, hold_and_release, to_js_error, val_to_string, Args};
 use anyhow::{bail, Error, Result};
 
 use hmac::{Hmac, Mac};
 use sha2::Sha256;
 
-/// An implemetation of crypto APIs to optimize fuel.
-/// Currently, hmacSHA256 is the only function implemented.
+/// A Winter CG compatible implementation of the Crypto API.
+/// Currently, the following methods are implemented:
+/// * `crypto.subtle.sign`, with HMAC sha256
 pub struct Crypto;
 
 impl Intrinsic for Crypto {
@@ -17,19 +21,17 @@ impl Intrinsic for Crypto {
 
 fn register(this: Ctx<'_>) -> Result<()> {
     let globals = this.globals();
-    let crypto_obj = Object::new(this.clone())?;
-    let subtle_obj = Object::new(this.clone())?;
 
-    subtle_obj.set(
-        "sign",
+    globals.set(
+        "__javy_cryptoSubtleSign",
         Function::new(this.clone(), |this, args| {
             let (this, args) = hold_and_release!(this, args);
             hmac_sha256(hold!(this.clone(), args)).map_err(|e| to_js_error(this, e))
         }),
     )?;
-
-    crypto_obj.set("subtle", subtle_obj)?;
-    globals.set("crypto", crypto_obj)?;
+    let mut opts = EvalOptions::default();
+    opts.strict = false;
+    this.eval_with_options(include_str!("crypto.js"), opts)?;
 
     Ok::<_, Error>(())
 }
@@ -38,7 +40,7 @@ fn register(this: Ctx<'_>) -> Result<()> {
 /// Arg[0] - secret
 /// Arg[1] - message
 /// returns - hex encoded string of hmac.
-fn hmac_sha256(args: Args<'_>) -> Result<Promise<'_>> {
+fn hmac_sha256(args: Args<'_>) -> Result<Value<'_>> {
     let (ctx, args) = args.release();
 
     if args.len() != 3 {
@@ -47,54 +49,28 @@ fn hmac_sha256(args: Args<'_>) -> Result<Promise<'_>> {
 
     let protocol = args[0].as_object();
 
-    let js_protocol_name: Value = protocol.expect("protocol struct required").get("name").unwrap();
+    let js_protocol_name: Value = protocol.expect("protocol struct required").get("name")?;
     if val_to_string(&ctx, js_protocol_name.clone())? != "HMAC" {
         bail!("only name=HMAC supported");
     }
 
-    let js_protocol_name: Value = protocol.expect("protocol struct required").get("hash").unwrap();
+    let js_protocol_name: Value = protocol.expect("protocol struct required").get("hash")?;
     if val_to_string(&ctx, js_protocol_name.clone())? != "sha-256" {
         bail!("only hash=sha-256 supported");
     }
     let secret = val_to_string(&ctx, args[1].clone())?;
     let message = val_to_string(&ctx, args[2].clone())?;
 
-    let string_digest = hmac_sha256_result(secret, message);
-
-    // Convert result to JSString
-    let js_string_digest = JSString::from_str(ctx.clone(), &string_digest?)
-    .map_err(|e| rquickjs::Exception::throw_type(&ctx, &format!("Failed to convert result to JSString: {}", e)))?;
-    //Value::from_string(js_string_digest);
-    let string = Value::from_string(js_string_digest);
-    // let promise = Promise::from_value(string)
-    //     .map_err(|e| rquickjs::Exception::throw_type(&ctx, &format!("Failed to convert value to promise: {}", e)))?;
-    
-    // let promise = Promise::from_value(string);
-    Ok(build_promise_from_value(string)?)
-}
-
-fn build_promise_from_value(value: Value<'_>) -> Result<Promise<'_>> {
-    let ctx = value.ctx();
-    let (promise, resolve, _) = Promise::new(&ctx).unwrap();
-    let cb = Func::new( || {
-        "hello world"
-    });
-
-    promise
-        .get::<_, Function>("then")
-        .catch(&ctx)
-        .unwrap()
-        .call::<_, ()>((This(promise.clone()), cb))
-        .catch(&ctx)
-        .unwrap();
-
-    return Ok(promise)
+    let string_digest = hmac_sha256_result(secret, message)?;
+    let result = JSString::from_str(ctx.clone(), &string_digest)?;
+    Ok(result.into())
 }
 
 /// hmac_sha256_result applies the HMAC sha256 algorithm for signing.
 fn hmac_sha256_result(secret: String, message: String) -> Result<String> {
     type HmacSha256 = Hmac<Sha256>;
-    let mut hmac = HmacSha256::new_from_slice(secret.as_bytes()).expect("HMAC can take key of any size");
+    let mut hmac =
+        HmacSha256::new_from_slice(secret.as_bytes()).expect("HMAC can take key of any size");
     hmac.update(message.as_bytes());
     let result = hmac.finalize();
     let code_bytes = result.into_bytes();
@@ -119,7 +95,6 @@ mod tests {
                     let expectedHex = "97d2a569059bbcd8ead4444ff99071f4c01d005bcefe0d3567e1be628e5fdcd9";
                     let result = null;
                     crypto.subtle.sign({name: "HMAC", hash: "sha-256"}, "my secret and secure key", "input message").then(function(sig) { result = sig });
-                    console.log(result);
                     result === expectedHex;
             "#,
             )?;
@@ -134,19 +109,24 @@ mod tests {
         let runtime = Runtime::new(Config::default())?;
 
         runtime.context().with(|this| {
-            let result= this.eval::<Value<'_>, _>(
+            let result = this.eval::<Value<'_>, _>(
                 r#"
                     crypto.subtle;
             "#,
             );
             assert!(result.is_err());
-            let e = result.map_err(|e| from_js_error(this.clone(), e)).unwrap_err();
-            assert_eq!("Error:2:21 'crypto' is not defined\n    at <eval> (eval_script:2:21)\n", e.to_string());
+            let e = result
+                .map_err(|e| from_js_error(this.clone(), e))
+                .unwrap_err();
+            assert_eq!(
+                "Error:2:21 'crypto' is not defined\n    at <eval> (eval_script:2:21)\n",
+                e.to_string()
+            );
             Ok::<_, Error>(())
         })?;
         Ok(())
     }
-    
+
     #[test]
     fn test_crypto_digest_with_lossy_input() -> Result<()> {
         let mut config = Config::default();

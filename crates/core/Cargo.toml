@@ -21,4 +21,4 @@ javy-config = { workspace = true }
 
 [features]
 experimental_event_loop = []
-experimental_crypto = []
+crypto = ["experimental_event_loop", "javy/crypto"]

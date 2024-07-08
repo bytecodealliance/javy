@@ -25,8 +25,8 @@ quickcheck = "1"
 bitflags = { workspace = true }
 fastrand = "2.1.0"
 simd-json = { version = "0.13.10", optional = true, default-features = false, features = ["big-int-as-float", "serde_impl"] }
-sha2 = "0.10.8"
-hmac = "0.12.1"
+sha2 = { version = "0.10.8", optional = true }
+hmac = { version = "0.12.1", optional = true }
 
 [dev-dependencies]
 javy-test-macros = { path = "../test-macros/" }
@@ -42,3 +42,5 @@ messagepack = ["rmp-serde", "serde-transcode"]
 # implications of enabling by default (due to the extra dependencies) and also
 # because the native implementation is probably fine for most use-cases.
 json = ["serde_json", "serde-transcode", "simd-json"]
+# Enable support for WinterCG-compatible Crypto APIs
+crypto = ["dep:sha2", "dep:hmac"]
