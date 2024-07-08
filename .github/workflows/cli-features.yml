@@ -1,4 +1,4 @@
-# Tests extra CLI features as and their dependency with core features.
+# Tests extra CLI features and their dependency with core features.
 name: Test CLI Features
 on:
   push:
@@ -21,6 +21,3 @@ jobs:
         run: |
           cargo build --package=javy-core --target=wasm32-wasi --release --features=experimental_event_loop
           cargo test --package=javy-cli --features=experimental_event_loop --release -- --nocapture
-
-
-    
