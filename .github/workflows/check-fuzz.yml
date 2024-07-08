@@ -33,7 +33,7 @@ jobs:
         run: rustup install ${{ steps.nightly_version.outputs.nightly_version }}
 
       - name: Install cargo fuzz
-        run: cargo install cargo-fuzz --version=${{ steps.cargo_fuzz_version.output.cargo_fuzz_version }}
+        run: cargo install cargo-fuzz --version=${{ steps.cargo_fuzz_version.outputs.cargo_fuzz_version }}
 
       - name: Build fuzz targets
         run: cargo +${{ steps.nightly_version.outputs.nightly_version }} fuzz build --dev
