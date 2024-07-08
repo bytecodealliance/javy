@@ -32,7 +32,7 @@ jobs:
       - name: Install nightly
         run: |
           rustup install ${{ steps.nightly_version.outputs.nightly_version }}
-          rustup default ${{ steps.nightly_version.outputs.nightly_version }}
+          rustup override set ${{ steps.nightly_version.outputs.nightly_version }}
           rustup component add clippy
 
       - name: Install cargo fuzz
