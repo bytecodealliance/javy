@@ -30,7 +30,7 @@ jobs:
           echo "::set-output name=cargo_fuzz_version::$CARGO_FUZZ_VERSION"
 
       - name: Install nightly
-        run: rustup install +${{ steps.nightly_version.outputs.nightly_version }}
+        run: rustup install ${{ steps.nightly_version.outputs.nightly_version }}
 
       - name: Install cargo fuzz
         run: cargo install cargo-fuzz --version=${{ steps.cargo_fuzz_version.output.cargo_fuzz_version }}
