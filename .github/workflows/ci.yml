@@ -86,14 +86,7 @@ jobs:
           path: target/wasm32-wasi/release/
 
       - name: Test CLI
-        env:
-          CARGO_PROFILE_RELEASE_LTO: off
-        run: |
-          cargo build --package=javy-core --target=wasm32-wasi --release
-          cargo test --package=javy-cli --release -- --nocapture
-
-          cargo build --package=javy-core --target=wasm32-wasi --release --features=experimental_event_loop
-          cargo test --package=javy-cli --features=experimental_event_loop --release -- --nocapture
+        run: CARGO_PROFILE_RELEASE_LTO=off cargo test --package=javy-cli --release -- --nocapture
 
       - name: Check benchmarks
         run: CARGO_PROFILE_RELEASE_LTO=off cargo check --package=javy-cli --release --benches

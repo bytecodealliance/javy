@@ -96,11 +96,7 @@ fn test_logging() -> Result<()> {
         "hello world from console.log\nhello world from console.error\n",
         logs.as_str(),
     );
-    if cfg!(feature = "experimental_event_loop") {
-        assert_fuel_consumed_within_threshold(39602, fuel_consumed);
-    } else {
-        assert_fuel_consumed_within_threshold(34169, fuel_consumed);
-    }
+    assert_fuel_consumed_within_threshold(34169, fuel_consumed);
     Ok(())
 }
 
