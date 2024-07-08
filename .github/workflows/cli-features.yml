@@ -9,7 +9,7 @@ on:
 jobs:
   cli:
     name: Test CLI Features
-    runs_on: ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
