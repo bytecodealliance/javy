@@ -1,0 +1,23 @@
+# Tests extra CLI features and their dependency with core features.
+name: Test CLI Features
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  cli:
+    name: Test CLI Features
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/ci-shared-setup
+        with:
+          os: linux
+
+      - name: Test `experimental_event_loop`
+        run: |
+          cargo build --package=javy-core --target=wasm32-wasi --release --features=experimental_event_loop
+          cargo test --package=javy-cli --features=experimental_event_loop --release -- --nocapture

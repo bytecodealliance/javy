@@ -147,6 +147,20 @@ fn test_promises() -> Result<()> {
     Ok(())
 }
 
+#[cfg(feature = "experimental_event_loop")]
+#[test]
+fn test_promise_top_level_await() -> Result<()> {
+    let mut runner = Builder::default()
+        .bin(BIN)
+        .root(sample_scripts())
+        .input("top-level-await.js")
+        .build()?;
+    let (out, _, _) = run(&mut runner, &[]);
+
+    assert_eq!("bar", String::from_utf8(out)?);
+    Ok(())
+}
+
 #[test]
 fn test_exported_functions() -> Result<()> {
     let mut runner = Builder::default()
