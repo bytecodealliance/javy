@@ -88,12 +88,10 @@ fn handle_maybe_promise(this: Ctx, value: Value) -> javy::quickjs::Result<()> {
 fn ensure_pending_jobs(rt: &Runtime) -> Result<()> {
     if cfg!(feature = "experimental_event_loop") {
         rt.resolve_pending_jobs()
+    } else if rt.has_pending_jobs() {
+        bail!(EVENT_LOOP_ERR);
     } else {
-        if rt.has_pending_jobs() {
-            bail!(EVENT_LOOP_ERR);
-        } else {
-            Ok(())
-        }
+        Ok(())
     }
 }
 
