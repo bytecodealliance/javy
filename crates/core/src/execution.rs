@@ -3,7 +3,7 @@ use std::process;
 use anyhow::{anyhow, bail, Error, Result};
 use javy::{
     from_js_error,
-    quickjs::{context::EvalOptions, Module, Value},
+    quickjs::{context::EvalOptions, Ctx, Error as JSError, Module, Value},
     to_js_error, Runtime,
 };
 
@@ -24,21 +24,10 @@ pub fn run_bytecode(runtime: &Runtime, bytecode: &[u8]) {
             let module = unsafe { Module::load(this.clone(), bytecode)? };
             let (_, promise) = module.eval()?;
 
-            if cfg!(feature = "experimental_event_loop") {
-                // If the experimental event loop is enabled, trigger it.
-                promise.finish::<Value>().map(|_| ())
-            } else {
-                // Else we simply expect the promise to resolve immediately.
-                match promise.result() {
-                    None => Err(to_js_error(this, anyhow!(EVENT_LOOP_ERR))),
-                    Some(r) => r,
-                }
-            }
+            handle_maybe_promise(this.clone(), promise.into())
         })
         .map_err(|e| runtime.context().with(|cx| from_js_error(cx.clone(), e)))
-        // Prefer calling `process_event_loop` *outside* of the `with` callback,
-        // to avoid errors regarding multiple mutable borrows.
-        .and_then(|_| process_event_loop(runtime))
+        .and_then(|_: ()| ensure_pending_jobs(runtime))
         .unwrap_or_else(handle_error)
 }
 
@@ -63,34 +52,49 @@ pub fn invoke_function(runtime: &Runtime, fn_module: &str, fn_name: &str) {
             opts.global = false;
             let value = this.eval_with_options::<Value<'_>, _>(js, opts)?;
 
-            if let Some(promise) = value.as_promise() {
-                if cfg!(feature = "experimental_event_loop") {
-                    // If the experimental event loop is enabled, trigger it.
-                    promise.finish::<Value>().map(|_| ())
-                } else {
-                    // Else we simply expect the promise to resolve immediately.
-                    match promise.result() {
-                        None => Err(to_js_error(this, anyhow!(EVENT_LOOP_ERR))),
-                        Some(r) => r,
-                    }
-                }
-            } else {
-                Ok(())
-            }
+            handle_maybe_promise(this.clone(), value)
         })
         .map_err(|e| runtime.context().with(|cx| from_js_error(cx.clone(), e)))
-        .and_then(|_: ()| process_event_loop(runtime))
+        .and_then(|_: ()| ensure_pending_jobs(runtime))
         .unwrap_or_else(handle_error)
 }
 
-fn process_event_loop(rt: &Runtime) -> Result<()> {
-    if cfg!(feature = "experimental_event_loop") {
-        rt.resolve_pending_jobs()?
-    } else if rt.has_pending_jobs() {
-        bail!(EVENT_LOOP_ERR);
+/// Handles the promise returned by evaluating the JS bytecode.
+fn handle_maybe_promise(this: Ctx, value: Value) -> javy::quickjs::Result<()> {
+    match value.as_promise() {
+        Some(promise) => {
+            if cfg!(feature = "experimental_event_loop") {
+                // If the experimental event loop is enabled, trigger it.
+                let resolved = promise.finish::<Value>();
+                // `Promise::finish` returns Err(Wouldblock) when the all
+                // pending jobs have been handled.
+                if let Err(JSError::WouldBlock) = resolved {
+                    Ok(())
+                } else {
+                    resolved.map(|_| ())
+                }
+            } else {
+                // Else we simply expect the promise to resolve immediately.
+                match promise.result() {
+                    None => Err(to_js_error(this, anyhow!(EVENT_LOOP_ERR))),
+                    Some(r) => r,
+                }
+            }
+        }
+        None => Ok(()),
     }
+}
 
-    Ok(())
+fn ensure_pending_jobs(rt: &Runtime) -> Result<()> {
+    if cfg!(feature = "experimental_event_loop") {
+        rt.resolve_pending_jobs()
+    } else {
+        if rt.has_pending_jobs() {
+            bail!(EVENT_LOOP_ERR);
+        } else {
+            Ok(())
+        }
+    }
 }
 
 fn handle_error(e: Error) {
