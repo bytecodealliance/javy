@@ -45,7 +45,12 @@ jobs:
         run: cargo test --package=javy-runner
 
       - name: Lint
-        run: cargo clippy --workspace --exclude=javy-cli --exclude=javy-runner --target=wasm32-wasi --all-targets -- -D warnings
+        run: |
+          cargo clippy --workspace \
+          --exclude=javy-cli \
+          --exclude=javy-runner \
+          --exclude=javy-fuzz \
+          --target=wasm32-wasi --all-targets -- -D warnings
         
       # We need to specify a different job for linting `javy-runner` given that 
       # it depends on Wasmtime and Cranelift cannot be compiled to `wasm32-wasi`

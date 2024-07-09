@@ -1,0 +1,22 @@
+[package]
+name = "javy-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+arbitrary-json = "0.1.1"
+libfuzzer-sys = "0.4"
+serde_json = "1.0"
+javy = { path = "../crates/javy/", features = ["json"] }
+anyhow = { workspace = true }
+
+[[bin]]
+name = "json-differential"
+path = "fuzz_targets/json_differential.rs"
+test = false
+doc = false
+bench = false
