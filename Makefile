@@ -22,7 +22,7 @@ docs:
 	cargo doc --package=javy-core --open --target=wasm32-wasi
 
 test-javy:
-	CARGO_TARGET_WASM32_WASI_RUNNER="wasmtime --dir=."  cargo wasi test --package=javy --features json,messagepack -- --nocapture
+	CARGO_TARGET_WASM32_WASI_RUNNER="wasmtime --dir=."  cargo wasi test --package=javy --features json,messagepack,crypto -- --nocapture
 
 test-core:
 	cargo wasi test --package=javy-core -- --nocapture
