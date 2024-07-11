@@ -12,7 +12,7 @@ use clap::Parser;
 use js::JS;
 use std::fs;
 use std::fs::File;
-use std::io::Write;
+use std::io::{Read, Write};
 use wasm_generator::dynamic as dynamic_generator;
 
 fn main() -> Result<()> {
@@ -21,7 +21,14 @@ fn main() -> Result<()> {
     match args.command {
         Command::EmitProvider(opts) => emit_provider(&opts),
         Command::Compile(opts) => {
-            let js = JS::from_file(&opts.input)?;
+            let js = match opts.input.to_str() {
+                Some("-") => {
+                    let mut content = String::new();
+                    std::io::stdin().read_to_string(&mut content)?;
+                    JS::from_string(content)
+                }
+                _ => JS::from_file(&opts.input)?,
+            };
             let exports = match (&opts.wit, &opts.wit_world) {
                 (None, None) => Ok(vec![]),
                 (None, Some(_)) => Ok(vec![]),
@@ -33,7 +40,12 @@ fn main() -> Result<()> {
             } else {
                 static_generator::generate(&js, exports, opts.no_source_compression)?
             };
-            fs::write(&opts.output, wasm)?;
+            match opts.output.to_str() {
+                Some("-") => {
+                    std::io::stdout().write_all(&wasm)?;
+                }
+                _ => fs::write(&opts.output, wasm)?,
+            }
             Ok(())
         }
     }
