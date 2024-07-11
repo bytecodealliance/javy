@@ -8,6 +8,11 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Circular dependency checks for the custom, SIMD-based, `JSON.stringify`
+  (https://github.com/bytecodealliance/javy/pull/700)
+
 ## [3.0.0] - 2024-06-12
 
 ### Changed

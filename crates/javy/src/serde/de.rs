@@ -2,12 +2,12 @@ use crate::quickjs::{
     function::This,
     object::ObjectIter,
     qjs::{JS_GetClassID, JS_GetProperty},
-    Array, Exception, Filter, String as JSString, Value,
+    Array, Exception, Filter, Object, String as JSString, Value,
 };
 use crate::serde::err::{Error, Result};
 use crate::serde::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER};
 use crate::to_string_lossy;
-use anyhow::anyhow;
+use anyhow::{anyhow, bail};
 use rquickjs::{atom::PredefinedAtom, Function, Null};
 use serde::de::{self, Error as SerError};
 use serde::forward_to_deserialize_any;
@@ -61,6 +61,7 @@ impl<'de> From<Value<'de>> for Deserializer<'de> {
         }
     }
 }
+
 impl<'js> Deserializer<'js> {
     fn deserialize_number<'de, V>(&mut self, visitor: V) -> Result<V::Value>
     where
@@ -95,6 +96,15 @@ impl<'js> Deserializer<'js> {
             return visitor.visit_f64(f64_representation);
         }
         unreachable!()
+    }
+
+    /// Pops the last visited value present in the stack.
+    fn pop_visited(&mut self) -> Result<Value<'js>> {
+        let v = self
+            .stack
+            .pop()
+            .ok_or_else(|| anyhow!("No entries found in the deserializer stack"))?;
+        Ok(v)
     }
 
     /// When stringifying, circular dependencies are not allowed. This function
@@ -176,39 +186,15 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         }
 
         if self.value.is_array() {
-            self.check_cycles()
-                .map(|_| self.stack.push(self.value.clone()))?;
             let arr = self.value.as_array().unwrap().clone();
-            // Retrieve the `length` property from the object itself rather than
-            // using the bindings `Array::len` given that according to the spec
-            // it's fine to return any value, not just a number from the
-            // `length` property.
-            let value: Value = arr.as_object().get(PredefinedAtom::Length)?;
-            let length: usize = if value.is_number() {
-                value.as_number().unwrap() as usize
-            } else {
-                let value_of: Function = value
-                    .as_object()
-                    .expect("length to be an object")
-                    .get(PredefinedAtom::ValueOf)?;
-                value_of.call(())?
-            };
-            let seq_access = SeqAccess {
-                de: self,
-                length,
-                seq: arr,
-                index: 0,
-            };
+
+            let seq_access = SeqAccess::new(self, arr)?;
             let result = visitor.visit_seq(seq_access);
-            self.stack.pop();
             return result;
         }
 
         if self.value.is_object() {
-            ensure_supported(&self.value).and_then(|_| {
-                self.check_cycles()
-                    .map(|_| self.stack.push(self.value.clone()))
-            })?;
+            ensure_supported(&self.value)?;
 
             if let Some(f) = get_to_json(&self.value) {
                 let v: Value = f.call((This(self.value.clone()),))?;
@@ -221,18 +207,8 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
                 return self.deserialize_any(visitor);
             }
 
-            let filter = Filter::new().enum_only().string();
-            let obj = self.value.as_object().unwrap();
-            let properties: ObjectIter<'_, _, Value<'_>> =
-                obj.own_props::<Value<'_>, Value<'_>>(filter);
-            self.stack.push(self.value.clone());
-            let map_access = MapAccess {
-                de: self,
-                properties,
-            };
-
+            let map_access = MapAccess::new(self, self.value.clone().into_object().unwrap())?;
             let result = visitor.visit_map(map_access);
-            self.stack.pop();
             return result;
         }
 
@@ -293,9 +269,42 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
     }
 }
 
+/// A helper struct for deserializing objects.
 struct MapAccess<'a, 'de: 'a> {
+    /// The deserializer.
     de: &'a mut Deserializer<'de>,
+    /// The object properties.
     properties: ObjectIter<'de, Value<'de>, Value<'de>>,
+    /// The current object.
+    obj: Object<'de>,
+}
+
+impl<'a, 'de> MapAccess<'a, 'de> {
+    fn new(de: &'a mut Deserializer<'de>, obj: Object<'de>) -> Result<Self> {
+        let filter = Filter::new().enum_only().string();
+        let properties: ObjectIter<'_, _, Value<'_>> =
+            obj.own_props::<Value<'_>, Value<'_>>(filter);
+
+        let val = obj.clone().into_value();
+        de.stack.push(val.clone());
+
+        Ok(Self {
+            de,
+            properties,
+            obj,
+        })
+    }
+
+    /// Pops the top level value representing this sequence.
+    /// Errors if a different value is popped.
+    fn pop(&mut self) -> anyhow::Result<()> {
+        let v = self.de.pop_visited()?;
+        if v != self.obj.clone().into_value() {
+            bail!("Popped a mismatched value. Expected the top level sequence value");
+        }
+
+        Ok(())
+    }
 }
 
 impl<'a, 'de> de::MapAccess<'de> for MapAccess<'a, 'de> {
@@ -344,6 +353,7 @@ impl<'a, 'de> de::MapAccess<'de> for MapAccess<'a, 'de> {
 
                 return seed.deserialize(&mut *self.de).map(Some);
             } else {
+                self.pop()?;
                 return Ok(None);
             }
         }
@@ -354,15 +364,62 @@ impl<'a, 'de> de::MapAccess<'de> for MapAccess<'a, 'de> {
         V: de::DeserializeSeed<'de>,
     {
         self.de.value = self.de.current_kv.clone().unwrap().1;
+        self.de.check_cycles()?;
         seed.deserialize(&mut *self.de)
     }
 }
 
+/// A helper struct for deserializing sequences.
 struct SeqAccess<'a, 'de: 'a> {
+    /// The deserializer.
     de: &'a mut Deserializer<'de>,
+    /// The sequence, represented as a JavaScript array.
     seq: Array<'de>,
+    /// The sequence length.
     length: usize,
+    /// The current index.
     index: usize,
+}
+
+impl<'a, 'de: 'a> SeqAccess<'a, 'de> {
+    /// Creates a new `SeqAccess` ensuring that the top-level value is added
+    /// to the `Deserializer` visitor stack.
+    fn new(de: &'a mut Deserializer<'de>, seq: Array<'de>) -> Result<Self> {
+        de.stack.push(seq.clone().into_value());
+
+        // Retrieve the `length` property from the object itself rather than
+        // using the bindings `Array::len` given that according to the spec
+        // it's fine to return any value, not just a number from the
+        // `length` property.
+        let value: Value = seq.as_object().get(PredefinedAtom::Length)?;
+        let length: usize = if value.is_number() {
+            value.as_number().unwrap() as usize
+        } else {
+            let value_of: Function = value
+                .as_object()
+                .expect("length to be an object")
+                .get(PredefinedAtom::ValueOf)?;
+            value_of.call(())?
+        };
+
+        Ok(Self {
+            de,
+            seq,
+            length,
+            index: 0,
+        })
+    }
+
+    /// Pops the top level value representing this sequence.
+    /// Errors if a different value is popped.
+    fn pop(&mut self) -> anyhow::Result<()> {
+        let v = self.de.pop_visited()?;
+        if v != self.seq.clone().into_value() {
+            bail!("Popped a mismatched value. Expected the top level sequence value");
+        }
+
+        Ok(())
+    }
 }
 
 impl<'a, 'de> de::SeqAccess<'de> for SeqAccess<'a, 'de> {
@@ -385,8 +442,13 @@ impl<'a, 'de> de::SeqAccess<'de> for SeqAccess<'a, 'de> {
                 self.de.value = Null.into_value(self.seq.ctx().clone())
             }
             self.index += 1;
+            // Check cycles right before starting the deserialization for the
+            // sequence elements.
+            self.de.check_cycles()?;
             seed.deserialize(&mut *self.de).map(Some)
         } else {
+            // Pop the sequence when there are no more elements.
+            self.pop()?;
             Ok(None)
         }
     }

@@ -28,7 +28,7 @@ anyhow = "1.0"
 once_cell = "1.19"
 bitflags = "2.6.0"
 javy-config = { path = "crates/config" }
-javy = { path = "crates/javy", version = "3.0.0" }
+javy = { path = "crates/javy", version = "3.0.1-alpha.1" }
 tempfile = "3.10.1"
 uuid = { version = "1.9", features = ["v4"] }
 
