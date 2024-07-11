@@ -103,7 +103,7 @@ impl<'js> Deserializer<'js> {
         let v = self
             .stack
             .pop()
-            .ok_or_else(|| anyhow!("No entries found in the deserialiazer stack"))?;
+            .ok_or_else(|| anyhow!("No entries found in the deserializer stack"))?;
         Ok(v)
     }
 
@@ -442,7 +442,7 @@ impl<'a, 'de> de::SeqAccess<'de> for SeqAccess<'a, 'de> {
                 self.de.value = Null.into_value(self.seq.ctx().clone())
             }
             self.index += 1;
-            // Check cycles right before kicking the deserialiazation for the
+            // Check cycles right before starting the deserialization for the
             // sequence elements.
             self.de.check_cycles()?;
             seed.deserialize(&mut *self.de).map(Some)
