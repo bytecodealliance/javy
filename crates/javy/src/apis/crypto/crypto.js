@@ -13,5 +13,5 @@
   }
 
   globalThis.crypto = crypto;
-  Reflect.deleteProperty(globalThis, "__javy_cryptoSubtleSign");
+  // Reflect.deleteProperty(globalThis, "__javy_cryptoSubtleSign");
 })();

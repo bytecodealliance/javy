@@ -80,25 +80,24 @@ fn hmac_sha256_result(secret: String, message: String) -> Result<String> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{from_js_error, quickjs::Value, Config, Runtime};
+    use crate::{from_js_error, val_to_string, quickjs::Value, Config, Runtime};
     use anyhow::{Error, Result};
 
     #[test]
-    fn test_crypto_digest() -> Result<()> {
+    fn test_crypto_digest_internal() -> Result<()> {
         let mut config = Config::default();
         config.crypto(true);
         let runtime = Runtime::new(config)?;
 
         runtime.context().with(|this| {
-            let result: Value<'_> = this.eval(
+            let result = this.eval::<Value<'_>, _>(
                 r#"
-                    let expectedHex = "97d2a569059bbcd8ead4444ff99071f4c01d005bcefe0d3567e1be628e5fdcd9";
-                    let result = null;
-                    crypto.subtle.sign({name: "HMAC", hash: "sha-256"}, "my secret and secure key", "input message").then(function(sig) { result = sig });
-                    result === expectedHex;
+                    const __javy_cryptoSubtleSign = globalThis.__javy_cryptoSubtleSign;
+                    //crypto.subtle.sign({name: "HMAC", hash: "sha-256"}, "my secret and secure key", "input message").then(function(sig) { result = sig });
+                    __javy_cryptoSubtleSign({name: "HMAC", hash: "sha-256"}, "my secret and secure key", "input message");
             "#,
-            )?;
-            assert!(result.as_bool().unwrap());
+            );
+            assert_eq!(val_to_string(&this, result.unwrap()).unwrap(), "97d2a569059bbcd8ead4444ff99071f4c01d005bcefe0d3567e1be628e5fdcd9");
             Ok::<_, Error>(())
         })?;
         Ok(())
@@ -137,21 +136,12 @@ mod tests {
             let result = this.eval::<Value<'_>, _>(
                 r#"
                     // matched tested behavior in node v18
-                    let expectedHex = "c06ae855290abd8f397af6975e9c2f72fe27a90a3e0f0bb73b4f991567501980";
-                    let result = null;
-                    result = crypto.subtle.sign({name: "HMAC", hash: "sha-256"}, "\uD800\uD800\uD800\uD800\uD800", "\uD800\uD800\uD800\uD800\uD800")
-                    // .then(function(signature) {
-                    //   result = signature;
-                    // });
-                    // console.log(result);
-                    // console.log("Match?", result === expectedHex);
-                    result === expectedHex;
+                    // result = crypto.subtle.sign({name: "HMAC", hash: "sha-256"}, "\uD800\uD800\uD800\uD800\uD800", "\uD800\uD800\uD800\uD800\uD800")
+                    const __javy_cryptoSubtleSign = globalThis.__javy_cryptoSubtleSign;
+                    __javy_cryptoSubtleSign({name: "HMAC", hash: "sha-256"}, "\uD800\uD800\uD800\uD800\uD800", "\uD800\uD800\uD800\uD800\uD800");
             "#,
-            );
-            // assert!(result.is_err());
-            // let e = result.map_err(|e| from_js_error(this.clone(), e)).unwrap_err();
-            // assert_eq!("", e.to_string());
-            assert!(result.unwrap().as_bool().unwrap());
+            )?;
+            assert_eq!(val_to_string(&this, result).unwrap(), "c06ae855290abd8f397af6975e9c2f72fe27a90a3e0f0bb73b4f991567501980");
             Ok::<_, Error>(())
         })?;
         Ok(())
@@ -186,12 +176,15 @@ mod tests {
         runtime.context().with(|this| {
             let result= this.eval::<Value<'_>, _>(
                 r#"
-                    let result = crypto.subtle.sign({name: "not-HMAC", hash: "not-sha-256"}, "my secret and secure key", "input message");
+                    // let result = crypto.subtle.sign({name: "not-HMAC", hash: "not-sha-256"}, "my secret and secure key", "input message");
+                    const __javy_cryptoSubtleSign = globalThis.__javy_cryptoSubtleSign;
+                    __javy_cryptoSubtleSign({name: "not-HMAC", hash: "not-sha-256"}, "my secret and secure key", "input message");
+
             "#,
             );
             assert!(result.is_err());
             let e = result.map_err(|e| from_js_error(this.clone(), e)).unwrap_err();
-            assert_eq!("Error:2:48 only name=HMAC supported\n    at <eval> (eval_script:2:48)\n", e.to_string());
+            assert_eq!("Error:4:21 only name=HMAC supported\n    at <eval> (eval_script:4:21)\n", e.to_string());
             Ok::<_, Error>(())
         })?;
         Ok(())
@@ -206,12 +199,14 @@ mod tests {
         runtime.context().with(|this| {
             let result= this.eval::<Value<'_>, _>(
                 r#"
-                    let result = crypto.subtle.sign({name: "HMAC", hash: "not-sha-256"}, "my secret and secure key", "input message");
+                    // let result = crypto.subtle.sign({name: "HMAC", hash: "not-sha-256"}, "my secret and secure key", "input message");
+                    const __javy_cryptoSubtleSign = globalThis.__javy_cryptoSubtleSign;
+                    __javy_cryptoSubtleSign(this, "my secret and secure key", "input message");
             "#,
             );
             assert!(result.is_err());
             let e = result.map_err(|e| from_js_error(this.clone(), e)).unwrap_err();
-            assert_eq!("Error:2:48 only hash=sha-256 supported\n    at <eval> (eval_script:2:48)\n", e.to_string());
+            assert_eq!("Error:4:21 only name=HMAC supported\n    at <eval> (eval_script:4:21)\n", e.to_string());
             Ok::<_, Error>(())
         })?;
         Ok(())
