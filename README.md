@@ -18,7 +18,7 @@
 You can install b7s using either curl or wget:
 
 ```bash
-sh -c "curl https://raw.githubusercontent.com/blocklessnetwork/b7s/main/download.sh | bash"
+sh -c "curl https://raw.githubusercontent.com/blocklessnetwork/bls-javy/main/download.sh | bash"
 ```
 
 ## About this repo
