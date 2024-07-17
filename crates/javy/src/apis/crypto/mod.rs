@@ -80,8 +80,64 @@ fn hmac_sha256_result(secret: String, message: String) -> Result<String> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{from_js_error, val_to_string, quickjs::Value, Config, Runtime};
-    use anyhow::{Error, Result};
+    use crate::{
+        from_js_error, quickjs::Ctx, quickjs::Error as JSError, quickjs::Value, val_to_string,
+        Config, Runtime,
+    };
+    use anyhow::{bail, Error, Result};
+
+    fn extract_promise_to_string<'a>(ctx: Ctx<'a>, value: Value<'a>) -> Result<String, Error> {
+        match value.as_promise() {
+            Some(promise) => {
+                let resolved = promise.finish::<Value>();
+                if let Err(JSError::WouldBlock) = resolved {
+                    bail!("unexpected JSError::WouldBlock");
+                } else {
+                    Ok(val_to_string(&ctx, resolved.unwrap()).unwrap())
+                }
+            }
+            None => {
+                bail!("Expected promise");
+            }
+        }
+    }
+
+    fn extract_promise_to_err<'a>(ctx: Ctx<'a>, value: Value<'a>) -> Result<Error, Error> {
+        match value.as_promise() {
+            Some(promise) => {
+                let resolved = promise.finish::<Value>();
+                if let Err(JSError::WouldBlock) = resolved {
+                    bail!("unexpected JSError::WouldBlock");
+                } else {
+                    assert!(resolved.is_err());
+                    let e = resolved
+                        .map_err(|e| from_js_error(ctx.clone(), e))
+                        .unwrap_err();
+                    Ok(e)
+                }
+            }
+            None => {
+                bail!("Expected promise");
+            }
+        }
+    }
+
+    #[test]
+    fn test_crypto_digest() -> Result<()> {
+        let mut config = Config::default();
+        config.crypto(true);
+        let runtime = Runtime::new(config)?;
+
+        runtime.context().with(|this| {
+            let value = this.eval::<Value<'_>, _>(
+                r#"crypto.subtle.sign({name: "HMAC", hash: "sha-256"}, "my secret and secure key", "input message");"#,
+            );
+            let result = extract_promise_to_string(this.clone(), value.unwrap().clone());
+            assert_eq!(result?, "97d2a569059bbcd8ead4444ff99071f4c01d005bcefe0d3567e1be628e5fdcd9");
+            Ok::<_, Error>(())
+        })?;
+        Ok(())
+    }
 
     #[test]
     fn test_crypto_digest_internal() -> Result<()> {
@@ -91,11 +147,7 @@ mod tests {
 
         runtime.context().with(|this| {
             let result = this.eval::<Value<'_>, _>(
-                r#"
-                    const __javy_cryptoSubtleSign = globalThis.__javy_cryptoSubtleSign;
-                    //crypto.subtle.sign({name: "HMAC", hash: "sha-256"}, "my secret and secure key", "input message").then(function(sig) { result = sig });
-                    __javy_cryptoSubtleSign({name: "HMAC", hash: "sha-256"}, "my secret and secure key", "input message");
-            "#,
+                r#"globalThis.__javy_cryptoSubtleSign({name: "HMAC", hash: "sha-256"}, "my secret and secure key", "input message");"#,
             );
             assert_eq!(val_to_string(&this, result.unwrap()).unwrap(), "97d2a569059bbcd8ead4444ff99071f4c01d005bcefe0d3567e1be628e5fdcd9");
             Ok::<_, Error>(())
@@ -133,15 +185,11 @@ mod tests {
         let runtime = Runtime::new(config)?;
 
         runtime.context().with(|this| {
-            let result = this.eval::<Value<'_>, _>(
-                r#"
-                    // matched tested behavior in node v18
-                    // result = crypto.subtle.sign({name: "HMAC", hash: "sha-256"}, "\uD800\uD800\uD800\uD800\uD800", "\uD800\uD800\uD800\uD800\uD800")
-                    const __javy_cryptoSubtleSign = globalThis.__javy_cryptoSubtleSign;
-                    __javy_cryptoSubtleSign({name: "HMAC", hash: "sha-256"}, "\uD800\uD800\uD800\uD800\uD800", "\uD800\uD800\uD800\uD800\uD800");
-            "#,
-            )?;
-            assert_eq!(val_to_string(&this, result).unwrap(), "c06ae855290abd8f397af6975e9c2f72fe27a90a3e0f0bb73b4f991567501980");
+            let value = this.eval::<Value<'_>, _>(
+                r#"crypto.subtle.sign({name: "HMAC", hash: "sha-256"}, "\uD800\uD800\uD800\uD800\uD800", "\uD800\uD800\uD800\uD800\uD800");"#,
+            );
+            let result = extract_promise_to_string(this.clone(), value.unwrap().clone());
+            assert_eq!(result?, "c06ae855290abd8f397af6975e9c2f72fe27a90a3e0f0bb73b4f991567501980");
             Ok::<_, Error>(())
         })?;
         Ok(())
@@ -174,17 +222,11 @@ mod tests {
         let runtime = Runtime::new(config)?;
 
         runtime.context().with(|this| {
-            let result= this.eval::<Value<'_>, _>(
-                r#"
-                    // let result = crypto.subtle.sign({name: "not-HMAC", hash: "not-sha-256"}, "my secret and secure key", "input message");
-                    const __javy_cryptoSubtleSign = globalThis.__javy_cryptoSubtleSign;
-                    __javy_cryptoSubtleSign({name: "not-HMAC", hash: "not-sha-256"}, "my secret and secure key", "input message");
-
-            "#,
+            let value = this.eval::<Value<'_>, _>(
+                r#"crypto.subtle.sign({name: "not-HMAC", hash: "not-sha-256"}, "my secret and secure key", "input message");"#,
             );
-            assert!(result.is_err());
-            let e = result.map_err(|e| from_js_error(this.clone(), e)).unwrap_err();
-            assert_eq!("Error:4:21 only name=HMAC supported\n    at <eval> (eval_script:4:21)\n", e.to_string());
+            let e = extract_promise_to_err(this.clone(), value.unwrap().clone())?;
+            assert_eq!("Error:11:15 only name=HMAC supported\n    at <anonymous> (eval_script:11:15)\n    at Promise (native)\n    at <anonymous> (eval_script:12:12)\n    at <eval> (eval_script:1:15)\n", e.to_string());
             Ok::<_, Error>(())
         })?;
         Ok(())
@@ -197,16 +239,11 @@ mod tests {
         let runtime = Runtime::new(config)?;
 
         runtime.context().with(|this| {
-            let result= this.eval::<Value<'_>, _>(
-                r#"
-                    // let result = crypto.subtle.sign({name: "HMAC", hash: "not-sha-256"}, "my secret and secure key", "input message");
-                    const __javy_cryptoSubtleSign = globalThis.__javy_cryptoSubtleSign;
-                    __javy_cryptoSubtleSign(this, "my secret and secure key", "input message");
-            "#,
+            let value = this.eval::<Value<'_>, _>(
+                r#"crypto.subtle.sign({name: "HMAC", hash: "not-sha-256"}, "my secret and secure key", "input message");"#,
             );
-            assert!(result.is_err());
-            let e = result.map_err(|e| from_js_error(this.clone(), e)).unwrap_err();
-            assert_eq!("Error:4:21 only name=HMAC supported\n    at <eval> (eval_script:4:21)\n", e.to_string());
+            let e = extract_promise_to_err(this.clone(), value.unwrap().clone())?;
+            assert_eq!("Error:11:15 only hash=sha-256 supported\n    at <anonymous> (eval_script:11:15)\n    at Promise (native)\n    at <anonymous> (eval_script:12:12)\n    at <eval> (eval_script:1:15)\n", e.to_string());
             Ok::<_, Error>(())
         })?;
         Ok(())
