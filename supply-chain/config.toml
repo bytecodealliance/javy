@@ -443,11 +443,11 @@ version = "11.1.4"
 criteria = "safe-to-run"
 
 [[exemptions.openssl]]
-version = "0.10.64"
+version = "0.10.66"
 criteria = "safe-to-deploy"
 
 [[exemptions.openssl-sys]]
-version = "0.9.102"
+version = "0.9.103"
 criteria = "safe-to-deploy"
 
 [[exemptions.outref]]
@@ -718,10 +718,6 @@ criteria = "safe-to-deploy"
 version = "3.10.1"
 criteria = "safe-to-deploy"
 
-[[exemptions.tinyvec]]
-version = "1.8.0"
-criteria = "safe-to-deploy"
-
 [[exemptions.tinyvec_macros]]
 version = "0.1.1"
 criteria = "safe-to-deploy"
@@ -864,10 +860,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.zerocopy-derive]]
 version = "0.7.35"
-criteria = "safe-to-deploy"
-
-[[exemptions.zerovec]]
-version = "0.10.4"
 criteria = "safe-to-deploy"
 
 [[exemptions.zstd]]
