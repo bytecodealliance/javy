@@ -48,7 +48,8 @@ fn exec(data: &ArbitraryValue) -> Result<()> {
             panic!("{}\n{}", from_js_error(cx.clone(), e), **data,);
         }
 
-        output = globals.get("OUTPUT")?;
+        let result: String = globals.get("OUTPUT")?;
+        output = serde_json::from_str(&result).ok();
 
         Ok::<(), Error>(())
     })?;
@@ -63,7 +64,8 @@ fn exec(data: &ArbitraryValue) -> Result<()> {
             panic!("{}\n{}", from_js_error(cx.clone(), e), **data);
         }
 
-        ref_output = globals.get("OUTPUT")?;
+        let result: String = globals.get("OUTPUT")?;
+        ref_output = serde_json::from_str(&result).ok();
 
         Ok::<(), Error>(())
     })?;
