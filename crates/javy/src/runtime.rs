@@ -144,6 +144,13 @@ impl Runtime {
                     JavyJson::add_intrinsic(ctx.as_raw())
                 }
             }
+
+            if intrinsics.contains(JSIntrinsics::CRYPTO) {
+                #[cfg(feature = "crypto")]
+                unsafe {
+                    crate::apis::Crypto::add_intrinsic(ctx.as_raw())
+                }
+            }
         });
 
         Ok(ManuallyDrop::new(context))

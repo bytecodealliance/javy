@@ -22,7 +22,7 @@ docs:
 	cargo doc --package=javy-core --open --target=wasm32-wasi
 
 test-javy:
-	CARGO_TARGET_WASM32_WASI_RUNNER="wasmtime --dir=."  cargo wasi test --package=javy --features json,messagepack -- --nocapture
+	CARGO_TARGET_WASM32_WASI_RUNNER="wasmtime --dir=."  cargo wasi test --package=javy --features json,messagepack,crypto -- --nocapture
 
 test-core:
 	cargo wasi test --package=javy-core -- --nocapture
@@ -37,7 +37,7 @@ test-runner:
 	cargo test --package=javy-runner -- --nocapture
 
 # WPT requires a Javy build with the experimental_event_loop feature to pass
-test-wpt: export CORE_FEATURES ?= experimental_event_loop
+test-wpt: export CORE_FEATURES ?= experimental_event_loop,crypto
 test-wpt:
 # Can't use a prerequisite here b/c a prequisite will not cause a rebuild of the CLI
 	$(MAKE) cli

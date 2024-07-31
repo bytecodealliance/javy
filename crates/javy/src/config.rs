@@ -19,6 +19,7 @@ bitflags! {
         const OPERATORS = 1 << 12;
         const BIGNUM_EXTENSION = 1 << 13;
         const TEXT_ENCODING = 1 << 14;
+        const CRYPTO = 1 << 15;
     }
 }
 
@@ -66,6 +67,7 @@ impl Default for Config {
     fn default() -> Self {
         let mut intrinsics = JSIntrinsics::all();
         intrinsics.set(JSIntrinsics::TEXT_ENCODING, false);
+        intrinsics.set(JSIntrinsics::CRYPTO, false);
         Self {
             intrinsics,
             javy_intrinsics: JavyIntrinsics::empty(),
@@ -176,6 +178,14 @@ impl Config {
     #[cfg(feature = "json")]
     pub fn javy_json(&mut self, enable: bool) -> &mut Self {
         self.javy_intrinsics.set(JavyIntrinsics::JSON, enable);
+        self
+    }
+
+    /// Whether the `crypto` intrinsic will be available.
+    /// Disabled by default.
+    #[cfg(feature = "crypto")]
+    pub fn crypto(&mut self, enable: bool) -> &mut Self {
+        self.intrinsics.set(JSIntrinsics::CRYPTO, enable);
         self
     }
 
