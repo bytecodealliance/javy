@@ -10,14 +10,14 @@ import cachedir from "cachedir";
 
 const REPO = "bytecodealliance/javy";
 const NAME = "javy";
+const VERSION = "v3.0.1";
 
 async function main() {
 	try {
-		const version = await getDesiredVersionNumber();
-		if (!(await isBinaryDownloaded(version))) {
-			await downloadBinary(version);
+		if (!(await isBinaryDownloaded(VERSION))) {
+			await downloadBinary(VERSION);
 		}
-		const result = childProcess.spawnSync(binaryPath(version), getArgs(), {
+		const result = childProcess.spawnSync(binaryPath(VERSION), getArgs(), {
 			stdio: "inherit",
 		});
 		process.exitCode = result.status === null ? 1 : result.status;
@@ -30,7 +30,7 @@ async function main() {
 			// We delete the cached binary because that cached binary will never run successfully and
 			// stops `javy-cli` from redownloading the binary.
 			console.error(`${NAME} was not downloaded correctly. Please retry.`);
-			fs.unlinkSync(binaryPath(version));
+			fs.unlinkSync(binaryPath(VERSION));
 		}
 	} catch (e) {
 		console.error(e);
@@ -78,33 +78,6 @@ async function downloadBinary(version) {
 	});
 
 	await fs.promises.chmod(binaryPath(version), 0o775);
-}
-
-/**
- * getDesiredVersionNumber returns the version number of the release that
- * should be downloaded and launched. If the FORCE_RELEASE env variable is set,
- * that will be used as the desired version number, if not, we determine the
- * latest release available on GitHub.
- *
- * GitHub has a public Release API, but  rate limits it per IP, so that the
- * CLI can end up breaking. Instead, we use a little trick. You can download
- * artifacts from the latest release by using `latest` as your version number.
- * The server will respond with a 302 redirect to the artifact's URL. That URL
- * contains the actual release version number, which we can extract.
- */
-async function getDesiredVersionNumber() {
-	if (process.env.FORCE_RELEASE) return process.env.FORCE_RELEASE;
-	const resp = await fetch(
-		`https://github.com/${REPO}/releases/latest/download/lol`,
-		{ redirect: "manual" }
-	);
-	if (resp.status != 302) {
-		throw Error(
-			`Could not determine latest release using the GitHub (Status code ${resp.status
-			}): ${await resp.text().catch(() => "<No error message>")}`
-		);
-	}
-	return resp.headers.get("location").split("/").at(-2);
 }
 
 function binaryUrl(version) {
