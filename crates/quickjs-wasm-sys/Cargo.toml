@@ -10,11 +10,11 @@ repository = "https://github.com/bytecodealliance/javy/tree/main/crates/quickjs-
 categories = ["external-ffi-bindings"]
 
 [build-dependencies]
-cc = "1.0"
+cc = "1.1"
 bindgen = "0.69.4"
 walkdir = "2"
 anyhow.workspace = true
-tokio = { version = "1.38", default-features = false, features = ["rt", "macros"] }
+tokio = { version = "1.39", default-features = false, features = ["rt", "macros"] }
 http-body-util = "0.1.1"
 hyper = "1.4"
 hyper-tls = "0.6.0"
