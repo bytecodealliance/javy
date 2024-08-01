@@ -24,6 +24,8 @@ quickcheck = "1"
 bitflags = { workspace = true }
 fastrand = "2.1.0"
 simd-json = { version = "0.13.10", optional = true, default-features = false, features = ["big-int-as-float", "serde_impl"] }
+sha2 = "0.10.8"
+hmac = "0.12.1"
 
 [dev-dependencies]
 javy-test-macros = { path = "../test-macros/" }

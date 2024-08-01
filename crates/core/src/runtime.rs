@@ -12,7 +12,8 @@ pub(crate) fn new(shared_config: SharedConfig) -> Result<Runtime> {
         // we're disabling this temporarily. It will be enabled once we have a
         // fix forward.
         .override_json_parse_and_stringify(false)
-        .javy_json(false);
+        .javy_json(false)
+        .crypto(shared_config.contains(SharedConfig::CRYPTO));
 
     Runtime::new(std::mem::take(config))
 }
