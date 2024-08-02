@@ -161,6 +161,9 @@ fn allocate_memory(
     let orig_ptr = 0;
     let orig_size = 0;
     realloc_func
-        .call(store, (orig_ptr, orig_size, alignment, new_size))
+        .call(
+            store.as_context_mut(),
+            (orig_ptr, orig_size, alignment, new_size),
+        )
         .map_err(Into::into)
 }
