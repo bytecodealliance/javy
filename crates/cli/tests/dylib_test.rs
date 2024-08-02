@@ -2,7 +2,7 @@ use anyhow::Result;
 use std::boxed::Box;
 use std::str;
 use wasi_common::{pipe::WritePipe, sync::WasiCtxBuilder, WasiCtx, WasiFile};
-use wasmtime::{Engine, Instance, Linker, Store};
+use wasmtime::{AsContextMut, Engine, Instance, Linker, Store};
 
 mod common;
 
@@ -49,9 +49,10 @@ fn run_js_src<T: WasiFile + Clone + 'static>(js_src: &str, stderr: &T) -> Result
     let (instance, mut store) = create_wasm_env(stderr)?;
 
     let eval_bytecode_func =
-        instance.get_typed_func::<(u32, u32), ()>(&mut store, "eval_bytecode")?;
-    let (bytecode_ptr, bytecode_len) = compile_src(js_src.as_bytes(), &instance, &mut store)?;
-    eval_bytecode_func.call(&mut store, (bytecode_ptr, bytecode_len))?;
+        instance.get_typed_func::<(u32, u32), ()>(store.as_context_mut(), "eval_bytecode")?;
+    let (bytecode_ptr, bytecode_len) =
+        compile_src(js_src.as_bytes(), &instance, store.as_context_mut())?;
+    eval_bytecode_func.call(store.as_context_mut(), (bytecode_ptr, bytecode_len))?;
     Ok(())
 }
 
@@ -62,11 +63,14 @@ fn run_invoke<T: WasiFile + Clone + 'static>(
 ) -> Result<()> {
     let (instance, mut store) = create_wasm_env(stderr)?;
 
-    let invoke_func = instance.get_typed_func::<(u32, u32, u32, u32), ()>(&mut store, "invoke")?;
-    let (bytecode_ptr, bytecode_len) = compile_src(js_src.as_bytes(), &instance, &mut store)?;
-    let (fn_name_ptr, fn_name_len) = copy_func_name(fn_to_invoke, &instance, &mut store)?;
+    let invoke_func =
+        instance.get_typed_func::<(u32, u32, u32, u32), ()>(store.as_context_mut(), "invoke")?;
+    let (bytecode_ptr, bytecode_len) =
+        compile_src(js_src.as_bytes(), &instance, store.as_context_mut())?;
+    let (fn_name_ptr, fn_name_len) =
+        copy_func_name(fn_to_invoke, &instance, store.as_context_mut())?;
     invoke_func.call(
-        &mut store,
+        store.as_context_mut(),
         (bytecode_ptr, bytecode_len, fn_name_ptr, fn_name_len),
     )?;
     Ok(())
@@ -84,7 +88,7 @@ fn create_wasm_env<T: WasiFile + Clone + 'static>(
     let module = common::create_quickjs_provider_module(&engine)?;
 
     let mut store = Store::new(&engine, wasi);
-    let instance = linker.instantiate(&mut store, &module)?;
+    let instance = linker.instantiate(store.as_context_mut(), &module)?;
 
     Ok((instance, store))
 }
@@ -92,17 +96,28 @@ fn create_wasm_env<T: WasiFile + Clone + 'static>(
 fn compile_src(
     js_src: &[u8],
     instance: &Instance,
-    mut store: &mut Store<WasiCtx>,
+    mut store: impl AsContextMut,
 ) -> Result<(u32, u32)> {
-    let memory = instance.get_memory(&mut store, "memory").unwrap();
-    let compile_src_func = instance.get_typed_func::<(u32, u32), u32>(&mut store, "compile_src")?;
+    let memory = instance
+        .get_memory(store.as_context_mut(), "memory")
+        .unwrap();
+    let compile_src_func =
+        instance.get_typed_func::<(u32, u32), u32>(store.as_context_mut(), "compile_src")?;
 
-    let js_src_ptr = allocate_memory(instance, store, 1, js_src.len().try_into()?)?;
-    memory.write(&mut store, js_src_ptr.try_into()?, js_src)?;
+    let js_src_ptr = allocate_memory(
+        instance,
+        store.as_context_mut(),
+        1,
+        js_src.len().try_into()?,
+    )?;
+    memory.write(store.as_context_mut(), js_src_ptr.try_into()?, js_src)?;
 
-    let ret_ptr = compile_src_func.call(&mut store, (js_src_ptr, js_src.len().try_into()?))?;
+    let ret_ptr = compile_src_func.call(
+        store.as_context_mut(),
+        (js_src_ptr, js_src.len().try_into()?),
+    )?;
     let mut ret_buffer = [0; 8];
-    memory.read(&mut store, ret_ptr.try_into()?, &mut ret_buffer)?;
+    memory.read(store.as_context(), ret_ptr.try_into()?, &mut ret_buffer)?;
     let bytecode_ptr = u32::from_le_bytes(ret_buffer[0..4].try_into()?);
     let bytecode_len = u32::from_le_bytes(ret_buffer[4..8].try_into()?);
 
@@ -112,27 +127,40 @@ fn compile_src(
 fn copy_func_name(
     fn_name: &str,
     instance: &Instance,
-    mut store: &mut Store<WasiCtx>,
+    mut store: impl AsContextMut,
 ) -> Result<(u32, u32)> {
-    let memory = instance.get_memory(&mut store, "memory").unwrap();
+    let memory = instance
+        .get_memory(store.as_context_mut(), "memory")
+        .unwrap();
     let fn_name_bytes = fn_name.as_bytes();
-    let fn_name_ptr = allocate_memory(instance, store, 1, fn_name_bytes.len().try_into()?)?;
-    memory.write(&mut store, fn_name_ptr.try_into()?, fn_name_bytes)?;
+    let fn_name_ptr = allocate_memory(
+        instance,
+        store.as_context_mut(),
+        1,
+        fn_name_bytes.len().try_into()?,
+    )?;
+    memory.write(
+        store.as_context_mut(),
+        fn_name_ptr.try_into()?,
+        fn_name_bytes,
+    )?;
 
     Ok((fn_name_ptr, fn_name_bytes.len().try_into()?))
 }
 
 fn allocate_memory(
     instance: &Instance,
-    mut store: &mut Store<WasiCtx>,
+    mut store: impl AsContextMut,
     alignment: u32,
     new_size: u32,
 ) -> Result<u32> {
-    let realloc_func = instance
-        .get_typed_func::<(u32, u32, u32, u32), u32>(&mut store, "canonical_abi_realloc")?;
+    let realloc_func = instance.get_typed_func::<(u32, u32, u32, u32), u32>(
+        store.as_context_mut(),
+        "canonical_abi_realloc",
+    )?;
     let orig_ptr = 0;
     let orig_size = 0;
     realloc_func
-        .call(&mut store, (orig_ptr, orig_size, alignment, new_size))
+        .call(store, (orig_ptr, orig_size, alignment, new_size))
         .map_err(Into::into)
 }
