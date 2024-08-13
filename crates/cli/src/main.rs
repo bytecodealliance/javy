@@ -41,9 +41,8 @@ fn main() -> Result<()> {
                     opts.wit.clone(),
                     opts.wit_world.clone(),
                 ))?)
-                .source_compression(!opts.no_source_compression);
-
-            builder.provider_version("2");
+                .source_compression(!opts.no_source_compression)
+                .provider_version("2");
 
             let mut gen = if opts.dynamic {
                 builder.build::<DynamicGenerator>()?
