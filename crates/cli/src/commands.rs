@@ -29,10 +29,7 @@ pub enum Command {
 impl Command {
     /// Returns true if it is [`Command::Compile`].
     pub fn is_compile(&self) -> bool {
-        match self {
-            Self::Compile(_) => true,
-            _ => false,
-        }
+        matches!(self, Command::Compile(_))
     }
 }
 

@@ -18,7 +18,7 @@ fn main() -> Result<()> {
     let args = Cli::parse();
 
     match &args.command {
-        Command::EmitProvider(opts) => emit_provider(&opts),
+        Command::EmitProvider(opts) => emit_provider(opts),
         c @ Command::Compile(opts) | c @ Command::Build(opts) => {
             if c.is_compile() {
                 println!(
