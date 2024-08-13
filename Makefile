@@ -49,15 +49,11 @@ test-config:
 
 tests: test-javy test-core test-runner test-cli test-wpt test-config
 
-fmt: fmt-javy fmt-apis fmt-core fmt-cli
+fmt: fmt-javy fmt-core fmt-cli
 
 fmt-javy:
 	cargo fmt --package=javy -- --check
 	cargo clippy --package=javy --target=wasm32-wasi --all-targets -- -D warnings
-
-fmt-apis:
-	cargo fmt --package=javy-apis -- --check
-	cargo clippy --package=javy-apis --all-features --target=wasm32-wasi --all-targets -- -D warnings
 
 fmt-core:
 	cargo fmt --package=javy-core -- --check
