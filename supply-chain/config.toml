@@ -28,22 +28,12 @@ audit-as-crates-io = false
 [policy.javy-apis]
 audit-as-crates-io = false
 
-[policy.quickjs-wasm-rs]
-audit-as-crates-io = false
-
-[policy.quickjs-wasm-sys]
-audit-as-crates-io = false
-
 [[exemptions.Inflector]]
 version = "0.11.4"
 criteria = "safe-to-deploy"
 
 [[exemptions.addr2line]]
 version = "0.19.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.addr2line]]
-version = "0.22.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.ahash]]
@@ -110,10 +100,6 @@ criteria = "safe-to-deploy"
 version = "4.0.1"
 criteria = "safe-to-deploy"
 
-[[exemptions.bumpalo]]
-version = "3.16.0"
-criteria = "safe-to-deploy"
-
 [[exemptions.bytes]]
 version = "1.6.0"
 criteria = "safe-to-deploy"
@@ -156,10 +142,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.cpufeatures]]
 version = "0.2.12"
-criteria = "safe-to-deploy"
-
-[[exemptions.crc32fast]]
-version = "1.4.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.criterion]]
@@ -216,10 +198,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.fallible-iterator]]
 version = "0.2.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.fastrand]]
-version = "2.1.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.float-cmp]]
@@ -402,16 +380,8 @@ criteria = "safe-to-deploy"
 version = "0.2.1"
 criteria = "safe-to-deploy"
 
-[[exemptions.miniz_oxide]]
-version = "0.7.4"
-criteria = "safe-to-deploy"
-
 [[exemptions.mio]]
 version = "0.8.11"
-criteria = "safe-to-deploy"
-
-[[exemptions.native-tls]]
-version = "0.2.12"
 criteria = "safe-to-deploy"
 
 [[exemptions.new_debug_unreachable]]
@@ -442,14 +412,6 @@ criteria = "safe-to-deploy"
 version = "11.1.4"
 criteria = "safe-to-run"
 
-[[exemptions.openssl]]
-version = "0.10.66"
-criteria = "safe-to-deploy"
-
-[[exemptions.openssl-sys]]
-version = "0.9.103"
-criteria = "safe-to-deploy"
-
 [[exemptions.outref]]
 version = "0.1.0"
 criteria = "safe-to-deploy"
@@ -468,18 +430,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.phf_shared]]
 version = "0.10.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.pin-project]]
-version = "1.1.5"
-criteria = "safe-to-deploy"
-
-[[exemptions.pin-project-internal]]
-version = "1.1.5"
-criteria = "safe-to-deploy"
-
-[[exemptions.pin-project-lite]]
-version = "0.2.14"
 criteria = "safe-to-deploy"
 
 [[exemptions.pkg-config]]
@@ -562,10 +512,6 @@ criteria = "safe-to-deploy"
 version = "0.6.1"
 criteria = "safe-to-deploy"
 
-[[exemptions.rustc-demangle]]
-version = "0.1.24"
-criteria = "safe-to-deploy"
-
 [[exemptions.rustc_version]]
 version = "0.2.3"
 criteria = "safe-to-deploy"
@@ -574,20 +520,8 @@ criteria = "safe-to-deploy"
 version = "1.0.1"
 criteria = "safe-to-deploy"
 
-[[exemptions.schannel]]
-version = "0.1.23"
-criteria = "safe-to-deploy"
-
 [[exemptions.scoped-tls]]
 version = "1.0.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.security-framework]]
-version = "2.11.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.security-framework-sys]]
-version = "2.11.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.semver]]
@@ -722,18 +656,6 @@ criteria = "safe-to-deploy"
 version = "0.1.1"
 criteria = "safe-to-deploy"
 
-[[exemptions.tower]]
-version = "0.4.13"
-criteria = "safe-to-deploy"
-
-[[exemptions.tower-layer]]
-version = "0.3.2"
-criteria = "safe-to-deploy"
-
-[[exemptions.tower-service]]
-version = "0.3.2"
-criteria = "safe-to-deploy"
-
 [[exemptions.tracing]]
 version = "0.1.40"
 criteria = "safe-to-deploy"
@@ -748,10 +670,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.triomphe]]
 version = "0.1.13"
-criteria = "safe-to-deploy"
-
-[[exemptions.try-lock]]
-version = "0.2.5"
 criteria = "safe-to-deploy"
 
 [[exemptions.typed-arena]]
@@ -800,10 +718,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.walrus-macro]]
 version = "0.19.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.want]]
-version = "0.3.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.wasi]]
