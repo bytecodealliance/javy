@@ -7,7 +7,7 @@ use uuid::Uuid;
 use wasi_common::pipe::{ReadPipe, WritePipe};
 use wasi_common::sync::WasiCtxBuilder;
 use wasi_common::WasiCtx;
-use wasmtime::{Config, Engine, ExternType, Linker, Module, Store};
+use wasmtime::{AsContextMut, Config, Engine, ExternType, Linker, Module, Store};
 
 mod common;
 
@@ -223,15 +223,16 @@ fn invoke_fn_on_generated_module(
     let quickjs_provider_module = common::create_quickjs_provider_module(&engine)?;
     let js_module = Module::from_binary(&engine, &js_wasm)?;
 
-    let quickjs_provider_instance = linker.instantiate(&mut store, &quickjs_provider_module)?;
+    let quickjs_provider_instance =
+        linker.instantiate(store.as_context_mut(), &quickjs_provider_module)?;
     linker.instance(
-        &mut store,
+        store.as_context_mut(),
         "javy_quickjs_provider_v2",
         quickjs_provider_instance,
     )?;
-    let js_instance = linker.instantiate(&mut store, &js_module)?;
-    let func = js_instance.get_typed_func::<(), ()>(&mut store, func)?;
-    func.call(&mut store, ())?;
+    let js_instance = linker.instantiate(store.as_context_mut(), &js_module)?;
+    let func = js_instance.get_typed_func::<(), ()>(store.as_context_mut(), func)?;
+    func.call(store.as_context_mut(), ())?;
 
     drop(store); // Need to drop store to access contents of stderr.
     let log_output = stderr.try_into_inner().unwrap().into_inner();

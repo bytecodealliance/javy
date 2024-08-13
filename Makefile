@@ -49,15 +49,7 @@ test-config:
 
 tests: test-javy test-core test-runner test-cli test-wpt test-config
 
-fmt: fmt-quickjs-wasm-sys fmt-quickjs-wasm-rs fmt-javy fmt-apis fmt-core fmt-cli
-
-fmt-quickjs-wasm-sys:
-	cargo fmt --package=quickjs-wasm-sys -- --check
-	cargo clippy --package=quickjs-wasm-sys --target=wasm32-wasi --all-targets -- -D warnings
-
-fmt-quickjs-wasm-rs:
-	cargo fmt --package=quickjs-wasm-rs -- --check
-	cargo clippy --package=quickjs-wasm-rs --target=wasm32-wasi --all-targets -- -D warnings
+fmt: fmt-javy fmt-apis fmt-core fmt-cli
 
 fmt-javy:
 	cargo fmt --package=javy -- --check
