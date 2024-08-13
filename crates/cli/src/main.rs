@@ -21,7 +21,7 @@ fn main() -> Result<()> {
         Command::EmitProvider(opts) => emit_provider(opts),
         c @ Command::Compile(opts) | c @ Command::Build(opts) => {
             if c.is_compile() {
-                println!(
+                eprintln!(
                     r#"
                 The `compile` command will be deprecated in the next major
                 release of the CLI (v4.0.0)
