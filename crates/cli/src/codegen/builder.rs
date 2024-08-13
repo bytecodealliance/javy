@@ -50,7 +50,7 @@ pub(crate) struct CodeGenBuilder {
     provider_version: Option<&'static str>,
     /// WIT options for code generation.
     wit_opts: WitOptions,
-    /// Whether to embed the compressed JS source in the generated module.
+    /// Whether to compress the original JS source.
     source_compression: bool,
 }
 
