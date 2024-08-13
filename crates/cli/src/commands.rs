@@ -17,14 +17,27 @@ pub struct Cli {
 pub enum Command {
     /// Compiles JavaScript to WebAssembly.
     #[command(arg_required_else_help = true)]
-    Compile(CompileCommandOpts),
+    Compile(CompileAndBuildCommandOpts),
+    /// Generates WebAssembly from a JavaScript source.
+    #[command(arg_required_else_help = true)]
+    Build(CompileAndBuildCommandOpts),
     /// Emits the provider binary that is required to run dynamically
     /// linked WebAssembly modules.
     EmitProvider(EmitProviderCommandOpts),
 }
 
+impl Command {
+    /// Returns true if it is [`Command::Compile`].
+    pub fn is_compile(&self) -> bool {
+        match self {
+            Self::Compile(_) => true,
+            _ => false,
+        }
+    }
+}
+
 #[derive(Debug, Parser)]
-pub struct CompileCommandOpts {
+pub struct CompileAndBuildCommandOpts {
     #[arg(value_name = "INPUT", required = true)]
     /// Path of the JavaScript input file.
     pub input: PathBuf,

@@ -6,7 +6,7 @@ use walrus::{CustomSection, IdsToIndices, ModuleConfig, ModuleProducers};
 use crate::js::JS;
 
 #[derive(Debug)]
-pub struct SourceCodeSection {
+pub(crate) struct SourceCodeSection {
     source_code: Vec<u8>,
 }
 
@@ -34,13 +34,13 @@ impl CustomSection for SourceCodeSection {
     }
 }
 
-pub fn module_config() -> ModuleConfig {
+pub(crate) fn module_config() -> ModuleConfig {
     let mut config = ModuleConfig::new();
     config.generate_name_section(false);
     config
 }
 
-pub fn add_producers_section(producers: &mut ModuleProducers) {
+pub(crate) fn add_producers_section(producers: &mut ModuleProducers) {
     producers.clear(); // removes Walrus and Rust
     producers.add_language("JavaScript", "ES2020");
     producers.add_processed_by("Javy", env!("CARGO_PKG_VERSION"));
