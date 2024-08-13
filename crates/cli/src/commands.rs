@@ -16,6 +16,16 @@ pub struct Cli {
 #[derive(Debug, Subcommand)]
 pub enum Command {
     /// Compiles JavaScript to WebAssembly.
+    ///
+    /// NOTICE:
+    ///
+    /// This command will be deprecated in
+    /// the next major release of the CLI (v4.0.0)
+    ///
+    /// Refer to https://github.com/bytecodealliance/javy/issues/702 for
+    /// details.
+    ///
+    /// Use the `build` command instead.
     #[command(arg_required_else_help = true)]
     Compile(CompileAndBuildCommandOpts),
     /// Generates WebAssembly from a JavaScript source.
