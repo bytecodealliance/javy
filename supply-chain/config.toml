@@ -713,7 +713,7 @@ version = "8.3.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.walrus]]
-version = "0.20.3"
+version = "0.21.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.walrus-macro]]

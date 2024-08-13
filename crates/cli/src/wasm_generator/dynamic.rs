@@ -87,7 +87,8 @@ pub fn generate(
     let (eval_bytecode_fn, _) =
         module.add_import_func(IMPORT_NAMESPACE, "eval_bytecode", eval_bytecode_type);
 
-    let (memory, _) = module.add_import_memory(IMPORT_NAMESPACE, "memory", false, 0, None);
+    let (memory, _) =
+        module.add_import_memory(IMPORT_NAMESPACE, "memory", false, false, 0, None, None);
 
     transform::add_producers_section(&mut module.producers);
     if no_source_compression {

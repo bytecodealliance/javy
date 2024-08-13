@@ -22,7 +22,7 @@ wasmprinter = { version = "0.212.0", optional = true }
 wasmtime = { workspace = true }
 wasmtime-wasi = { workspace = true }
 wasi-common = { workspace = true }
-walrus = "0.20.3"
+walrus = "0.21.1"
 swc_core = { version = "0.96.0", features = [
     "common_sourcemap",
     "ecma_ast",
