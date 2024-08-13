@@ -32,7 +32,7 @@ impl WitOptions {
         self.path.is_some() && self.world.is_some()
     }
 
-    /// Unwraps a refernce to the .wit file.
+    /// Unwraps a refernce to the .wit file path.
     pub fn unwrap_path(&self) -> &PathBuf {
         self.path.as_ref().unwrap()
     }
@@ -66,12 +66,13 @@ impl CodeGenBuilder {
         self
     }
 
-    /// Set the wit options
+    /// Set the wit options.
     pub fn wit_opts(&mut self, opts: WitOptions) -> &mut Self {
         self.wit_opts = opts;
         self
     }
 
+    /// Whether to compress the JS source.
     pub fn source_compression(&mut self, compress: bool) -> &mut Self {
         self.source_compression = compress;
         self
