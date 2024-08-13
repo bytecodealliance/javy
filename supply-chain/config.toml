@@ -25,9 +25,6 @@ url = "https://raw.githubusercontent.com/mozilla/supply-chain/main/audits.toml"
 [policy.javy]
 audit-as-crates-io = false
 
-[policy.javy-apis]
-audit-as-crates-io = false
-
 [[exemptions.Inflector]]
 version = "0.11.4"
 criteria = "safe-to-deploy"
