@@ -1,0 +1,5 @@
+package local:main
+
+world foo-test {
+  export foo-bar: func()
+}

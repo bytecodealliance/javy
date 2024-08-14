@@ -1,5 +1,3 @@
-mod common;
-
 use anyhow::Result;
 use javy_runner::{Builder, Runner, RunnerError};
 use std::path::PathBuf;
@@ -228,8 +226,8 @@ fn test_producers_section_present() -> Result<()> {
         .bin(BIN)
         .input("readme.js")
         .build()?;
-    common::assert_producers_section_is_correct(&runner.wasm).unwrap();
-    Ok(())
+
+    runner.assert_producers()
 }
 
 #[test]
@@ -315,12 +313,17 @@ fn run_fn(r: &mut Runner, func: &str, stdin: &[u8]) -> (Vec<u8>, String, u64) {
     (output, logs, fuel_consumed)
 }
 
-/// Used to detect any significant changes in the fuel consumption when making changes in Javy.
+/// Used to detect any significant changes in the fuel consumption when making
+/// changes in Javy.
 ///
-/// A threshold is used here so that we can decide how much of a change is acceptable. The threshold value needs to be sufficiently large enough to account for fuel differences between different operating systems.
+/// A threshold is used here so that we can decide how much of a change is
+/// acceptable. The threshold value needs to be sufficiently large enough to
+/// account for fuel differences between different operating systems.
 ///
-/// If the fuel_consumed is less than target_fuel, then great job decreasing the fuel consumption!
-/// However, if the fuel_consumed is greater than target_fuel and over the threshold, please consider if the changes are worth the increase in fuel consumption.
+/// If the fuel_consumed is less than target_fuel, then great job decreasing the
+/// fuel consumption! However, if the fuel_consumed is greater than target_fuel
+/// and over the threshold, please consider if the changes are worth the
+/// increase in fuel consumption.
 fn assert_fuel_consumed_within_threshold(target_fuel: u64, fuel_consumed: u64) {
     let target_fuel = target_fuel as f64;
     let fuel_consumed = fuel_consumed as f64;
