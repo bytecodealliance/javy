@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+
+- Download version 3.0.1 of Javy instead of the latest released version of Javy.
+
 ## [0.2.0] - 2023-08-17
 
 ### Removed

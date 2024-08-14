@@ -148,7 +148,7 @@ impl JS {
 
     fn parse_module(&self) -> Result<Module> {
         let source_map: SourceMap = Default::default();
-        let file = source_map.new_source_file_from(FileName::Anon, self.source_code.clone());
+        let file = source_map.new_source_file_from(FileName::Anon.into(), self.source_code.clone());
         let mut errors = vec![];
         parser::parse_file_as_module(
             &file,

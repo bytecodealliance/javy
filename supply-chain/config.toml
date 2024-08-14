@@ -464,6 +464,14 @@ criteria = "safe-to-deploy"
 version = "0.1.21"
 criteria = "safe-to-deploy"
 
+[[exemptions.ptr_meta]]
+version = "0.1.4"
+criteria = "safe-to-deploy"
+
+[[exemptions.ptr_meta_derive]]
+version = "0.1.4"
+criteria = "safe-to-deploy"
+
 [[exemptions.radium]]
 version = "0.7.0"
 criteria = "safe-to-deploy"
@@ -581,7 +589,7 @@ version = "0.4.4"
 criteria = "safe-to-deploy"
 
 [[exemptions.sourcemap]]
-version = "8.0.1"
+version = "9.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.stable_deref_trait]]
@@ -600,36 +608,40 @@ criteria = "safe-to-deploy"
 version = "0.11.1"
 criteria = "safe-to-deploy"
 
+[[exemptions.swc_allocator]]
+version = "0.1.8"
+criteria = "safe-to-deploy"
+
 [[exemptions.swc_atoms]]
 version = "0.6.7"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_common]]
-version = "0.34.4"
+version = "0.37.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_core]]
-version = "0.96.9"
+version = "0.100.6"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_ast]]
-version = "0.115.1"
+version = "0.118.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_parser]]
-version = "0.146.12"
+version = "0.149.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_transforms_base]]
-version = "0.140.3"
+version = "0.144.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_utils]]
-version = "0.130.3"
+version = "0.134.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_visit]]
-version = "0.101.0"
+version = "0.104.5"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_eq_ignore_macros]]
@@ -641,11 +653,7 @@ version = "0.3.11"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_visit]]
-version = "0.5.14"
-criteria = "safe-to-deploy"
-
-[[exemptions.swc_visit_macros]]
-version = "0.5.12"
+version = "0.6.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.tempfile]]
@@ -685,7 +693,7 @@ version = "0.3.4"
 criteria = "safe-to-deploy"
 
 [[exemptions.unicode-id-start]]
-version = "1.0.4"
+version = "1.2.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.unicode-width]]
