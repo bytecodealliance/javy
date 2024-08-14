@@ -10,7 +10,7 @@ fn test_dylib() -> Result<()> {
     let js_src = "console.log(42);";
     let mut runner = Runner::with_dylib(provider_module()?)?;
 
-    let (_, logs, _) = runner.exec_through_dylib(&js_src, None)?;
+    let (_, logs, _) = runner.exec_through_dylib(js_src, None)?;
     assert_eq!("42\n", str::from_utf8(&logs)?);
 
     Ok(())
@@ -22,7 +22,7 @@ fn test_dylib_with_error() -> Result<()> {
 
     let mut runner = Runner::with_dylib(provider_module()?)?;
 
-    let res = runner.exec_through_dylib(&js_src, None);
+    let res = runner.exec_through_dylib(js_src, None);
 
     assert!(res.is_err());
 
@@ -42,7 +42,7 @@ fn test_dylib_with_exported_func() -> Result<()> {
 
     let mut runner = Runner::with_dylib(provider_module()?)?;
 
-    let (_, logs, _) = runner.exec_through_dylib(&js_src, Some("foo"))?;
+    let (_, logs, _) = runner.exec_through_dylib(js_src, Some("foo"))?;
     assert_eq!("Toplevel\nIn foo\n", str::from_utf8(&logs)?);
 
     Ok(())
