@@ -81,8 +81,15 @@ impl DynamicGenerator {
         let (eval_bytecode_fn_id, _) =
             module.add_import_func(&self.import_namespace, "eval_bytecode", eval_bytecode_type);
 
-        let (memory_id, _) =
-            module.add_import_memory(&self.import_namespace, "memory", false, 0, None);
+        let (memory_id, _) = module.add_import_memory(
+            &self.import_namespace,
+            "memory",
+            false,
+            false,
+            0,
+            None,
+            None,
+        );
 
         Ok(Imports::new(
             canonical_abi_realloc_fn_id,
