@@ -109,7 +109,3 @@ You should gate your feature with a cargo feature if:
 ### `javy`
 
 A JS library providing ergonomic helpers around the lower level APIs for I/O exposed by the `javy` crate.
-
-### `javy-cli`
-
-The package that enables using the `javy-cli` through NPM. You can use `npx javy-cli` to run various Javy commands.
