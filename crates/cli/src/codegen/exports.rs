@@ -4,12 +4,14 @@ use std::{env, path::Path};
 
 use crate::{js::JS, wit};
 
-pub struct Export {
+pub(crate) type Exports = Vec<Export>;
+
+pub(crate) struct Export {
     pub wit: String,
     pub js: String,
 }
 
-pub fn process_exports(js: &JS, wit: &Path, wit_world: &str) -> Result<Vec<Export>> {
+pub(crate) fn process_exports(js: &JS, wit: &Path, wit_world: &str) -> Result<Vec<Export>> {
     let js_exports = js.exports()?;
     parse_wit_exports(wit, wit_world)?
         .into_iter()

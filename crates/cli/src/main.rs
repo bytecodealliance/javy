@@ -1,38 +1,57 @@
 mod bytecode;
+mod codegen;
 mod commands;
-mod exports;
 mod js;
-mod wasm_generator;
 mod wit;
 
+use crate::codegen::{DynamicGenerator, StaticGenerator, WitOptions};
 use crate::commands::{Cli, Command, EmitProviderCommandOpts};
-use crate::wasm_generator::r#static as static_generator;
-use anyhow::{bail, Result};
+use anyhow::Result;
 use clap::Parser;
+use codegen::CodeGenBuilder;
 use js::JS;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
-use wasm_generator::dynamic as dynamic_generator;
 
 fn main() -> Result<()> {
     let args = Cli::parse();
 
-    match args.command {
-        Command::EmitProvider(opts) => emit_provider(&opts),
-        Command::Compile(opts) => {
+    match &args.command {
+        Command::EmitProvider(opts) => emit_provider(opts),
+        c @ Command::Compile(opts) | c @ Command::Build(opts) => {
+            if c.is_compile() {
+                eprintln!(
+                    r#"
+                The `compile` command will be deprecated in the next major
+                release of the CLI (v4.0.0)
+
+                Refer to https://github.com/bytecodealliance/javy/issues/702 for
+                details.
+                
+                Use the `build` command instead.
+            "#
+                );
+            }
+
             let js = JS::from_file(&opts.input)?;
-            let exports = match (&opts.wit, &opts.wit_world) {
-                (None, None) => Ok(vec![]),
-                (None, Some(_)) => Ok(vec![]),
-                (Some(_), None) => bail!("Must provide WIT world when providing WIT file"),
-                (Some(wit), Some(world)) => exports::process_exports(&js, wit, world),
-            }?;
-            let wasm = if opts.dynamic {
-                dynamic_generator::generate(&js, exports, opts.no_source_compression)?
+            let mut builder = CodeGenBuilder::new();
+            builder
+                .wit_opts(WitOptions::from_tuple((
+                    opts.wit.clone(),
+                    opts.wit_world.clone(),
+                ))?)
+                .source_compression(!opts.no_source_compression)
+                .provider_version("2");
+
+            let mut gen = if opts.dynamic {
+                builder.build::<DynamicGenerator>()?
             } else {
-                static_generator::generate(&js, exports, opts.no_source_compression)?
+                builder.build::<StaticGenerator>()?
             };
+
+            let wasm = gen.generate(&js)?;
+
             fs::write(&opts.output, wasm)?;
             Ok(())
         }
