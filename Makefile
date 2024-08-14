@@ -69,6 +69,3 @@ clean: clean-wasi-sdk clean-cargo
 
 clean-cargo:
 	cargo clean
-
-clean-wasi-sdk:
-	rm -r crates/quickjs-wasm-sys/wasi-sdk 2> /dev/null || true

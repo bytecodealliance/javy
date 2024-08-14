@@ -1,5 +1,3 @@
-crates/quickjs-wasm-sys/quickjs/* linguist-vendored
-
 # Some people try to run shell scripts in WSL after cloning the repo in Windows.
 # If they clone the repo in Windows and the default `core.autocrlf` settings
 # are used, the shell script line endings are converted to Windows line
