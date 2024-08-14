@@ -405,6 +405,18 @@ user-id = 539 # Josh Stone (cuviper)
 start = "2019-06-13"
 end = "2024-07-12"
 
+[[trusted.ref-cast]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-05-05"
+end = "2025-08-14"
+
+[[trusted.ref-cast-impl]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-05-05"
+end = "2025-08-14"
+
 [[trusted.regex]]
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
@@ -481,7 +493,7 @@ end = "2024-07-12"
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-02-28"
-end = "2024-07-12"
+end = "2025-08-14"
 
 [[trusted.serde_spanned]]
 criteria = "safe-to-deploy"
@@ -499,7 +511,7 @@ end = "2025-01-03"
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-03-01"
-end = "2024-07-12"
+end = "2025-08-14"
 
 [[trusted.system-interface]]
 criteria = "safe-to-deploy"
