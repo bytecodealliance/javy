@@ -17,12 +17,6 @@ updates:
       interval: "monthly"
     open-pull-requests-limit: 100
 
-  - package-ecosystem: npm
-    directory: "/npm/javy-cli"
-    schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 100
-
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

@@ -324,7 +324,3 @@ We do not anticipate changes to this library requiring a new cargo feature. Plea
 ### `javy`
 
 A JS library providing ergonomic helpers around the lower level APIs for I/O exposed by `javy-apis`.
-
-### `javy-cli`
-
-The package that enables using the `javy-cli` through NPM. You can use `npx javy-cli` to run various Javy commands.
