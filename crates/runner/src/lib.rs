@@ -315,8 +315,8 @@ impl Runner {
     }
 
     fn base_build_args(
-        input: &PathBuf,
-        out: &PathBuf,
+        input: &Path,
+        out: &Path,
         wit: &Option<PathBuf>,
         world: &Option<String>,
     ) -> Vec<String> {
@@ -368,7 +368,7 @@ impl Runner {
     }
 
     fn setup_store(engine: &Engine, input: &[u8]) -> Result<Store<StoreContext>> {
-        let mut store = Store::new(&engine, StoreContext::new(usize::MAX, input));
+        let mut store = Store::new(engine, StoreContext::new(usize::MAX, input));
         store.set_fuel(u64::MAX)?;
         Ok(store)
     }
@@ -382,7 +382,7 @@ impl Runner {
         let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
 
         if let Some((name, bytes)) = &self.preload {
-            let module = Module::from_binary(self.linker.engine(), &bytes)?;
+            let module = Module::from_binary(self.linker.engine(), bytes)?;
             let instance = self.linker.instantiate(store.as_context_mut(), &module)?;
             self.linker.allow_shadowing(true);
             self.linker
