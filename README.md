@@ -277,10 +277,6 @@ $ wasmtime run --preload javy_quickjs_provider_v2=provider.wasm my_code.wasm
 hello world!
 ```
 
-## Using quickjs-wasm-rs to build your own toolchain
-
-The `quickjs-wasm-rs` crate that is part of this project can be used as part of a Rust crate targeting Wasm to customize how that Rust crate interacts with QuickJS. This may be useful when trying to use JavaScript inside a Wasm module and Javy does not fit your needs as `quickjs-wasm-rs` contains serializers that make it easier to send structured data (for example, strings or objects) between host code and Wasm code.
-
 ## Releasing
 
 1. Update the root `Cargo.toml` with the new version

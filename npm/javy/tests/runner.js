@@ -1,4 +1,6 @@
 import { spawn } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
 import * as stream from "node:stream";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -9,6 +11,7 @@ import {
 	TextEncoderStream,
 } from "node:stream/web";
 import { unlink } from "node:fs/promises";
+import * as gzip from "node:zlib";
 
 import { rollup } from "rollup";
 import swc from "rollup-plugin-swc";
@@ -16,10 +19,14 @@ import nodeResolve from "@rollup/plugin-node-resolve";
 
 import * as tests from "./tests.js";
 
+const JAVY_VERSION = "v3.0.1";
+
+const javyPath = path.join(tmpdir(), "javy");
+
 async function main() {
 	console.log("Running tests...");
 
-	await forceJavyDownload(); // trying to download Javy in parallel causes problems with the tests
+	await downloadJavy(JAVY_VERSION);
 
 	const resultPromises = Object.entries(tests).map(
 		async ([testName, testFunc]) => {
@@ -40,13 +47,6 @@ async function main() {
 	process.exit(results.every(r => r.success) ? 0 : 1);
 }
 await main();
-
-async function forceJavyDownload() {
-	let { exitCode, stderr } = await runCommand("javy", ["--version"]);
-	if (await exitCode !== 0) {
-		throw Error(await collectStream(stderr));
-	}
-}
 
 /**
  * Passes the stream's controller to a callback where strings can be enqueue.
@@ -123,7 +123,7 @@ export async function runJS({ source, stdin, expectedOutput }) {
 }
 
 async function compileWithJavy(infile, outfile) {
-	const { exitCode, stdout, stderr } = await runCommand("javy", [
+	const { exitCode, stdout, stderr } = await runCommand(javyPath, [
 		"compile",
 		"-o",
 		outfile,
@@ -172,4 +172,35 @@ function emptyStream() {
 			controller.close();
 		},
 	});
+}
+
+async function downloadJavy(version) {
+	let platformArch;
+	if (process.platform === "linux" && (process.arch === "arm" || process.arch === "arm64")) {
+		platformArch = "arm-linux";
+	} else if (process.platform === "linux" && process.arch === "x64") {
+		platformArch = "x86_64-linux";
+	} else if (process.platform === "darwin" && (process.arch === "arm" || process.arch === "arm64")) {
+		platformArch = "arm-macos";
+	} else if (process.platform === "darwin" && process.arch === "x64") {
+		platformArch = "x86_64-macos";
+	} else if (process.platform === "win32" && (process.arch === "x64" || process.arch === "ia32")) {
+		platformArch = "x86_64-windows";
+	} else {
+		throw new Error(`Platform and architecture unsupported: ${process.platform}/${process.arch}`);
+	}
+	const url = `https://github.com/bytecodealliance/javy/releases/download/${version}/javy-${platformArch}-${version}.gz`;
+	const response = await fetch(url);
+	if (!response.ok) {
+		throw new Error(`Error downloading Javy from ${url}: ${response.status}: ${response.statusText}`);
+	}
+	const gunzip = gzip.createGunzip();
+	const output = fs.createWriteStream(javyPath);
+	await new Promise((resolve, reject) => {
+		stream.pipeline(response.body, gunzip, output, (err, val) => {
+			if (err) return reject(err);
+			return resolve(val);
+		});
+	});
+	await fs.promises.chmod(javyPath, 0o775);
 }

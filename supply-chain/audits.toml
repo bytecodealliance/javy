@@ -6,21 +6,6 @@ who = "Jeff Charles <jeff.charles@shopify.com>"
 criteria = "safe-to-deploy"
 version = "1.0.0"
 
-[[audits.javy-apis]]
-who = "Jeff Charles <jeff.charles@shopify.com>"
-criteria = "safe-to-deploy"
-version = "1.0.0"
-
-[[audits.quickjs-wasm-rs]]
-who = "Jeff Charles <jeff.charles@shopify.com>"
-criteria = "safe-to-deploy"
-version = "1.0.0"
-
-[[audits.quickjs-wasm-sys]]
-who = "Jeff Charles <jeff.charles@shopify.com>"
-criteria = "safe-to-deploy"
-version = "1.0.0"
-
 [[trusted.aho-corasick]]
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
