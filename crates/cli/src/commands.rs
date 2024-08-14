@@ -16,15 +16,35 @@ pub struct Cli {
 #[derive(Debug, Subcommand)]
 pub enum Command {
     /// Compiles JavaScript to WebAssembly.
+    ///
+    /// NOTICE:
+    ///
+    /// This command will be deprecated in
+    /// the next major release of the CLI (v4.0.0)
+    ///
+    /// Refer to https://github.com/bytecodealliance/javy/issues/702 for
+    /// details.
+    ///
+    /// Use the `build` command instead.
     #[command(arg_required_else_help = true)]
-    Compile(CompileCommandOpts),
+    Compile(CompileAndBuildCommandOpts),
+    /// Generates WebAssembly from a JavaScript source.
+    #[command(arg_required_else_help = true)]
+    Build(CompileAndBuildCommandOpts),
     /// Emits the provider binary that is required to run dynamically
     /// linked WebAssembly modules.
     EmitProvider(EmitProviderCommandOpts),
 }
 
+impl Command {
+    /// Returns true if it is [`Command::Compile`].
+    pub fn is_compile(&self) -> bool {
+        matches!(self, Command::Compile(_))
+    }
+}
+
 #[derive(Debug, Parser)]
-pub struct CompileCommandOpts {
+pub struct CompileAndBuildCommandOpts {
     #[arg(value_name = "INPUT", required = true)]
     /// Path of the JavaScript input file.
     pub input: PathBuf,

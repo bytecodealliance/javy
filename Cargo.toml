@@ -1,7 +1,6 @@
 [workspace]
 members = [
   "crates/javy",
-  "crates/apis",
   "crates/core",
   "crates/cli",
   "crates/test-macros",
