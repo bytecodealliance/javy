@@ -9,6 +9,7 @@ use crate::commands::{Cli, Command, EmitProviderCommandOpts};
 use anyhow::Result;
 use clap::Parser;
 use codegen::CodeGenBuilder;
+use commands::CodegenOptionGroup;
 use js::JS;
 use std::fs;
 use std::fs::File;
@@ -19,10 +20,9 @@ fn main() -> Result<()> {
 
     match &args.command {
         Command::EmitProvider(opts) => emit_provider(opts),
-        c @ Command::Compile(opts) | c @ Command::Build(opts) => {
-            if c.is_compile() {
-                eprintln!(
-                    r#"
+        Command::Compile(opts) => {
+            eprintln!(
+                r#"
                 The `compile` command will be deprecated in the next major
                 release of the CLI (v4.0.0)
 
@@ -31,8 +31,7 @@ fn main() -> Result<()> {
                 
                 Use the `build` command instead.
             "#
-                );
-            }
+            );
 
             let js = JS::from_file(&opts.input)?;
             let mut builder = CodeGenBuilder::new();
@@ -45,6 +44,29 @@ fn main() -> Result<()> {
                 .provider_version("2");
 
             let mut gen = if opts.dynamic {
+                builder.build::<DynamicGenerator>()?
+            } else {
+                builder.build::<StaticGenerator>()?
+            };
+
+            let wasm = gen.generate(&js)?;
+
+            fs::write(&opts.output, wasm)?;
+            Ok(())
+        }
+        Command::Build(opts) => {
+            let js = JS::from_file(&opts.input)?;
+            let codegen: CodegenOptionGroup = opts.codegen.clone().into();
+            let mut builder = CodeGenBuilder::new();
+            builder
+                .wit_opts(WitOptions::from_tuple((
+                    codegen.wit.clone(),
+                    codegen.wit_world.clone(),
+                ))?)
+                .source_compression(!codegen.no_source_compression)
+                .provider_version("2");
+
+            let mut gen = if codegen.dynamic {
                 builder.build::<DynamicGenerator>()?
             } else {
                 builder.build::<StaticGenerator>()?

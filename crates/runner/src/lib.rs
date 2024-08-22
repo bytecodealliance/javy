@@ -13,6 +13,7 @@ use wasmtime::{
     AsContextMut, Config, Engine, ExternType, Instance, Linker, Module, OptLevel, Store,
 };
 
+#[derive(Clone)]
 pub struct Builder {
     /// The JS source.
     input: PathBuf,
@@ -27,6 +28,8 @@ pub struct Builder {
     built: bool,
     /// Preload the module at path, using the given instance name.
     preload: Option<(String, PathBuf)>,
+    /// Whether to use the `compile` or `build` command.
+    use_compile: bool,
 }
 
 impl Default for Builder {
@@ -39,6 +42,7 @@ impl Default for Builder {
             root: Default::default(),
             built: false,
             preload: None,
+            use_compile: false,
         }
     }
 }
@@ -74,6 +78,11 @@ impl Builder {
         self
     }
 
+    pub fn use_compile(&mut self) -> &mut Self {
+        self.use_compile = true;
+        self
+    }
+
     pub fn build(&mut self) -> Result<Runner> {
         if self.built {
             bail!("Builder already used to build a runner")
@@ -93,14 +102,19 @@ impl Builder {
             root,
             built: _,
             preload,
+            use_compile,
         } = std::mem::take(self);
 
         self.built = true;
 
-        if let Some(preload) = preload {
-            Runner::build_dynamic(bin_path, root, input, wit, world, preload)
+        if use_compile {
+            if let Some(preload) = preload {
+                Runner::compile_dynamic(bin_path, root, input, wit, world, preload)
+            } else {
+                Runner::compile_static(bin_path, root, input, wit, world)
+            }
         } else {
-            Runner::build_static(bin_path, root, input, wit, world)
+            Runner::build(bin_path, root, input, wit, world, preload)
         }
     }
 }
@@ -156,7 +170,46 @@ impl StoreContext {
 }
 
 impl Runner {
-    fn build_static(
+    fn build(
+        bin: String,
+        root: PathBuf,
+        source: impl AsRef<Path>,
+        wit: Option<PathBuf>,
+        world: Option<String>,
+        preload: Option<(String, PathBuf)>,
+    ) -> Result<Self> {
+        // This directory is unique and will automatically get deleted
+        // when `tempdir` goes out of scope.
+        let tempdir = tempfile::tempdir()?;
+        let wasm_file = Self::out_wasm(&tempdir);
+        let js_file = root.join(source);
+        let wit_file = wit.map(|p| root.join(p));
+
+        let args = Self::build_args(&js_file, &wasm_file, &wit_file, &world, preload.is_some());
+
+        Self::exec_command(bin, root, args)?;
+
+        let wasm = fs::read(&wasm_file)?;
+
+        let engine = Self::setup_engine();
+        let linker = Self::setup_linker(&engine)?;
+
+        let preload = preload
+            .map(|(name, path)| {
+                let module = fs::read(path)?;
+                Ok::<(String, Vec<u8>), anyhow::Error>((name, module))
+            })
+            .transpose()?;
+
+        Ok(Self {
+            wasm,
+            linker,
+            initial_fuel: u64::MAX,
+            preload,
+        })
+    }
+
+    fn compile_static(
         bin: String,
         root: PathBuf,
         source: impl AsRef<Path>,
@@ -170,7 +223,7 @@ impl Runner {
         let js_file = root.join(source);
         let wit_file = wit.map(|p| root.join(p));
 
-        let args = Self::base_build_args(&js_file, &wasm_file, &wit_file, &world);
+        let args = Self::base_compile_args(&js_file, &wasm_file, &wit_file, &world);
 
         Self::exec_command(bin, root, args)?;
 
@@ -187,7 +240,7 @@ impl Runner {
         })
     }
 
-    pub fn build_dynamic(
+    pub fn compile_dynamic(
         bin: String,
         root: PathBuf,
         source: impl AsRef<Path>,
@@ -200,7 +253,7 @@ impl Runner {
         let js_file = root.join(source);
         let wit_file = wit.map(|p| root.join(p));
 
-        let mut args = Self::base_build_args(&js_file, &wasm_file, &wit_file, &world);
+        let mut args = Self::base_compile_args(&js_file, &wasm_file, &wit_file, &world);
         args.push("-d".to_string());
 
         Self::exec_command(bin, root, args)?;
@@ -314,7 +367,36 @@ impl Runner {
         file
     }
 
-    fn base_build_args(
+    fn build_args(
+        input: &Path,
+        out: &Path,
+        wit: &Option<PathBuf>,
+        world: &Option<String>,
+        dynamic: bool,
+    ) -> Vec<String> {
+        let mut args = vec![
+            "build".to_string(),
+            input.to_str().unwrap().to_string(),
+            "-o".to_string(),
+            out.to_str().unwrap().to_string(),
+        ];
+
+        if let (Some(wit), Some(world)) = (wit, world) {
+            args.push("-C".to_string());
+            args.push(format!("wit={}", wit.to_str().unwrap()));
+            args.push("-C".to_string());
+            args.push(format!("wit-world={world}"));
+        }
+
+        if dynamic {
+            args.push("-C".to_string());
+            args.push("dynamic".to_string());
+        }
+
+        args
+    }
+
+    fn base_compile_args(
         input: &Path,
         out: &Path,
         wit: &Option<PathBuf>,
