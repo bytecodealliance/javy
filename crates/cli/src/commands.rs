@@ -39,13 +39,6 @@ pub enum Command {
     EmitProvider(EmitProviderCommandOpts),
 }
 
-impl Command {
-    /// Returns true if it is [`Command::Compile`].
-    pub fn is_compile(&self) -> bool {
-        matches!(self, Command::Compile(_))
-    }
-}
-
 #[derive(Debug, Parser)]
 pub struct CompileCommandOpts {
     #[arg(value_name = "INPUT", required = true)]
