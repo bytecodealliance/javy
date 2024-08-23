@@ -14,6 +14,12 @@ use wasmtime::{
 };
 
 #[derive(Clone)]
+pub enum JavyCommand {
+    Build,
+    Compile,
+}
+
+#[derive(Clone)]
 pub struct Builder {
     /// The JS source.
     input: PathBuf,
@@ -29,7 +35,7 @@ pub struct Builder {
     /// Preload the module at path, using the given instance name.
     preload: Option<(String, PathBuf)>,
     /// Whether to use the `compile` or `build` command.
-    use_compile: bool,
+    command: JavyCommand,
 }
 
 impl Default for Builder {
@@ -42,7 +48,7 @@ impl Default for Builder {
             root: Default::default(),
             built: false,
             preload: None,
-            use_compile: false,
+            command: JavyCommand::Build,
         }
     }
 }
@@ -78,8 +84,8 @@ impl Builder {
         self
     }
 
-    pub fn use_compile(&mut self) -> &mut Self {
-        self.use_compile = true;
+    pub fn command(&mut self, command: JavyCommand) -> &mut Self {
+        self.command = command;
         self
     }
 
@@ -102,19 +108,20 @@ impl Builder {
             root,
             built: _,
             preload,
-            use_compile,
+            command,
         } = std::mem::take(self);
 
         self.built = true;
 
-        if use_compile {
-            if let Some(preload) = preload {
-                Runner::compile_dynamic(bin_path, root, input, wit, world, preload)
-            } else {
-                Runner::compile_static(bin_path, root, input, wit, world)
+        match command {
+            JavyCommand::Compile => {
+                if let Some(preload) = preload {
+                    Runner::compile_dynamic(bin_path, root, input, wit, world, preload)
+                } else {
+                    Runner::compile_static(bin_path, root, input, wit, world)
+                }
             }
-        } else {
-            Runner::build(bin_path, root, input, wit, world, preload)
+            JavyCommand::Build => Runner::build(bin_path, root, input, wit, world, preload),
         }
     }
 }
