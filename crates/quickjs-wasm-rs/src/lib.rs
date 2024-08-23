@@ -50,9 +50,9 @@
 //! serialization formats and `JSValueRef`:
 //! - `messagepack` provides `quickjs_wasm_rs::messagepack` for msgpack, using `rmp_serde`.
 //! - `json` provides `quickjs_wasm_rs::json` for JSON, using `serde_json`.
-
-//! msgpack example:
-
+//!
+//!   msgpack example:
+//!
 //! ```rust
 //! use quickjs_wasm_rs::{messagepack, JSContextRef, JSValueRef};
 

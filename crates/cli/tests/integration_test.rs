@@ -62,10 +62,12 @@ fn test_encoding() {
 fn test_logging() {
     let mut runner = Runner::new("logging.js");
 
-    let (_output, logs, fuel_consumed) = run(&mut runner, &[]);
+    let (output, logs, fuel_consumed) = run_fn(&mut runner, "_start", &[]);
+    let mut output = String::from_utf8(output).unwrap();
+    output.push_str(&logs);
     assert_eq!(
         "hello world from console.log\nhello world from console.error\n",
-        logs.as_str(),
+        output.as_str(),
     );
     assert_fuel_consumed_within_threshold(22_296, fuel_consumed);
 }
@@ -104,10 +106,10 @@ fn test_promises() {
 #[test]
 fn test_exported_functions() {
     let mut runner = Runner::new_with_exports("exported-fn.js", "exported-fn.wit", "exported-fn");
-    let (_, logs, fuel_consumed) = run_fn(&mut runner, "foo", &[]);
+    let (logs, _, fuel_consumed) = run_fn_stdout(&mut runner, "foo", &[]);
     assert_eq!("Hello from top-level\nHello from foo\n", logs);
     assert_fuel_consumed_within_threshold(54610, fuel_consumed);
-    let (_, logs, _) = run_fn(&mut runner, "foo-bar", &[]);
+    let (logs, _, _) = run_fn_stdout(&mut runner, "foo-bar", &[]);
     assert_eq!("Hello from top-level\nHello from fooBar\n", logs);
 }
 
@@ -178,7 +180,7 @@ fn test_exported_default_arrow_fn() {
         "exported-default-arrow-fn.wit",
         "exported-arrow",
     );
-    let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", &[]);
+    let (logs, _, fuel_consumed) = run_fn_stdout(&mut runner, "default", &[]);
     assert_eq!(logs, "42\n");
     assert_fuel_consumed_within_threshold(48_628, fuel_consumed);
 }
@@ -190,7 +192,7 @@ fn test_exported_default_fn() {
         "exported-default-fn.wit",
         "exported-default",
     );
-    let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", &[]);
+    let (logs, _, fuel_consumed) = run_fn_stdout(&mut runner, "default", &[]);
     assert_eq!(logs, "42\n");
     assert_fuel_consumed_within_threshold(49_748, fuel_consumed);
 }
@@ -208,6 +210,12 @@ fn run(r: &mut Runner, stdin: &[u8]) -> (Vec<u8>, String, u64) {
 fn run_fn(r: &mut Runner, func: &str, stdin: &[u8]) -> (Vec<u8>, String, u64) {
     let (output, logs, fuel_consumed) = r.exec_func(func, stdin).unwrap();
     let logs = String::from_utf8(logs).unwrap();
+    (output, logs, fuel_consumed)
+}
+
+fn run_fn_stdout(r: &mut Runner, func: &str, stdin: &[u8]) -> (String, Vec<u8>, u64) {
+    let (output, logs, fuel_consumed) = r.exec_func(func, stdin).unwrap();
+    let output = String::from_utf8(output).unwrap();
     (output, logs, fuel_consumed)
 }
 

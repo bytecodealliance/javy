@@ -13,7 +13,7 @@ mod common;
 #[test]
 pub fn test_dynamic_linking() -> Result<()> {
     let js_src = "console.log(42);";
-    let log_output = invoke_fn_on_generated_module(js_src, "_start", None)?;
+    let log_output = invoke_fn_on_generated_module(js_src, "_start", None, false)?;
     assert_eq!("42\n", &log_output);
     Ok(())
 }
@@ -28,7 +28,8 @@ pub fn test_dynamic_linking_with_func() -> Result<()> {
             export foo-bar: func()
         }
     ";
-    let log_output = invoke_fn_on_generated_module(js_src, "foo-bar", Some((wit, "foo-test")))?;
+    let log_output =
+        invoke_fn_on_generated_module(js_src, "foo-bar", Some((wit, "foo-test")), false)?;
     assert_eq!("Toplevel\nIn foo\n", &log_output);
     Ok(())
 }
@@ -36,7 +37,7 @@ pub fn test_dynamic_linking_with_func() -> Result<()> {
 #[test]
 pub fn test_dynamic_linking_with_func_without_flag() -> Result<()> {
     let js_src = "export function foo() { console.log('In foo'); }; console.log('Toplevel');";
-    let res = invoke_fn_on_generated_module(js_src, "foo", None);
+    let res = invoke_fn_on_generated_module(js_src, "foo", None, true);
     assert_eq!(
         "failed to find function export `foo`",
         res.err().unwrap().to_string()
@@ -49,7 +50,7 @@ pub fn check_for_new_imports() -> Result<()> {
     // If you need to change this test, then you've likely made a breaking change.
     let js_src = "console.log(42);";
     let wasm = create_dynamically_linked_wasm_module(js_src, None)?;
-    let (engine, _linker, _store) = create_wasm_env(WritePipe::new_in_memory())?;
+    let (engine, _linker, _store) = create_wasm_env(WritePipe::new_in_memory(), false)?;
     let module = Module::from_binary(&engine, &wasm)?;
     for import in module.imports() {
         match (import.module(), import.name(), import.ty()) {
@@ -78,7 +79,7 @@ pub fn check_for_new_imports_for_exports() -> Result<()> {
         }
     ";
     let wasm = create_dynamically_linked_wasm_module(js_src, Some((wit, "foo-test")))?;
-    let (engine, _linker, _store) = create_wasm_env(WritePipe::new_in_memory())?;
+    let (engine, _linker, _store) = create_wasm_env(WritePipe::new_in_memory(), false)?;
     let module = Module::from_binary(&engine, &wasm)?;
     for import in module.imports() {
         match (import.module(), import.name(), import.ty()) {
@@ -110,7 +111,7 @@ pub fn test_dynamic_linking_with_arrow_fn() -> Result<()> {
         }
     ";
     let log_output =
-        invoke_fn_on_generated_module(js_src, "default", Some((wit, "exported-arrow")))?;
+        invoke_fn_on_generated_module(js_src, "default", Some((wit, "exported-arrow")), false)?;
     assert_eq!("42\n", log_output);
     Ok(())
 }
@@ -166,11 +167,12 @@ fn invoke_fn_on_generated_module(
     js_src: &str,
     func: &str,
     wit: Option<(&str, &str)>,
+    is_stderr: bool,
 ) -> Result<String> {
     let js_wasm = create_dynamically_linked_wasm_module(js_src, wit)?;
 
     let stderr = WritePipe::new_in_memory();
-    let (engine, mut linker, mut store) = create_wasm_env(stderr.clone())?;
+    let (engine, mut linker, mut store) = create_wasm_env(stderr.clone(), is_stderr)?;
     let quickjs_provider_module = common::create_quickjs_provider_module(&engine)?;
     let js_module = Module::from_binary(&engine, &js_wasm)?;
 
@@ -192,11 +194,16 @@ fn invoke_fn_on_generated_module(
 
 fn create_wasm_env(
     stderr: WritePipe<Cursor<Vec<u8>>>,
+    is_stderr: bool,
 ) -> Result<(Engine, Linker<WasiCtx>, Store<WasiCtx>)> {
     let engine = Engine::new(Config::new().wasm_multi_memory(true))?;
     let mut linker = Linker::new(&engine);
     wasmtime_wasi::add_to_linker(&mut linker, |s| s)?;
-    let wasi = WasiCtxBuilder::new().stderr(Box::new(stderr)).build();
+    let wasi = if is_stderr {
+        WasiCtxBuilder::new().stderr(Box::new(stderr)).build()
+    } else {
+        WasiCtxBuilder::new().stdout(Box::new(stderr)).build()
+    };
     let store = Store::new(&engine, wasi);
     Ok((engine, linker, store))
 }

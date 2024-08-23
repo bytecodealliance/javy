@@ -11,7 +11,7 @@ mod common;
 fn test_dylib() -> Result<()> {
     let js_src = "console.log(42);";
     let stderr = WritePipe::new_in_memory();
-    run_js_src(js_src, &stderr)?;
+    run_js_src(js_src, &stderr, false)?;
 
     let output = stderr.try_into_inner().unwrap().into_inner();
     assert_eq!("42\n", str::from_utf8(&output)?);
@@ -23,7 +23,7 @@ fn test_dylib() -> Result<()> {
 fn test_dylib_with_error() -> Result<()> {
     let js_src = "function foo() { throw new Error('foo error'); } foo();";
     let stderr = WritePipe::new_in_memory();
-    let result = run_js_src(js_src, &stderr);
+    let result = run_js_src(js_src, &stderr, true);
 
     assert!(result.is_err());
     let output = stderr.try_into_inner().unwrap().into_inner();
@@ -37,17 +37,21 @@ fn test_dylib_with_error() -> Result<()> {
 #[test]
 fn test_dylib_with_exported_func() -> Result<()> {
     let js_src = "export function foo() { console.log('In foo'); }; console.log('Toplevel');";
-    let stderr = WritePipe::new_in_memory();
-    run_invoke(js_src, "foo", &stderr)?;
+    let stdout = WritePipe::new_in_memory();
+    run_invoke(js_src, "foo", &stdout)?;
 
-    let output = stderr.try_into_inner().unwrap().into_inner();
+    let output = stdout.try_into_inner().unwrap().into_inner();
     assert_eq!("Toplevel\nIn foo\n", str::from_utf8(&output)?);
 
     Ok(())
 }
 
-fn run_js_src<T: WasiFile + Clone + 'static>(js_src: &str, stderr: &T) -> Result<()> {
-    let (instance, mut store) = create_wasm_env(stderr)?;
+fn run_js_src<T: WasiFile + Clone + 'static>(
+    js_src: &str,
+    stderr: &T,
+    is_stderr: bool,
+) -> Result<()> {
+    let (instance, mut store) = create_wasm_env(stderr, is_stderr)?;
 
     let eval_bytecode_func =
         instance.get_typed_func::<(u32, u32), ()>(&mut store, "eval_bytecode")?;
@@ -59,9 +63,9 @@ fn run_js_src<T: WasiFile + Clone + 'static>(js_src: &str, stderr: &T) -> Result
 fn run_invoke<T: WasiFile + Clone + 'static>(
     js_src: &str,
     fn_to_invoke: &str,
-    stderr: &T,
+    stdout: &T,
 ) -> Result<()> {
-    let (instance, mut store) = create_wasm_env(stderr)?;
+    let (instance, mut store) = create_wasm_env(stdout, false)?;
 
     let invoke_func = instance.get_typed_func::<(u32, u32, u32, u32), ()>(&mut store, "invoke")?;
     let (bytecode_ptr, bytecode_len) = compile_src(js_src.as_bytes(), &instance, &mut store)?;
@@ -75,13 +79,20 @@ fn run_invoke<T: WasiFile + Clone + 'static>(
 
 fn create_wasm_env<T: WasiFile + Clone + 'static>(
     stderr: &T,
+    is_stderr: bool,
 ) -> Result<(Instance, Store<WasiCtx>)> {
     let engine = Engine::default();
     let mut linker = Linker::new(&engine);
     wasmtime_wasi::add_to_linker(&mut linker, |s| s)?;
-    let wasi = WasiCtxBuilder::new()
-        .stderr(Box::new(stderr.clone()))
-        .build();
+    let wasi = if is_stderr {
+        WasiCtxBuilder::new()
+            .stderr(Box::new(stderr.clone()))
+            .build()
+    } else {
+        WasiCtxBuilder::new()
+            .stdout(Box::new(stderr.clone()))
+            .build()
+    };
     let module = common::create_quickjs_provider_module(&engine)?;
 
     let mut store = Store::new(&engine, wasi);
@@ -90,6 +101,7 @@ fn create_wasm_env<T: WasiFile + Clone + 'static>(
     Ok((instance, store))
 }
 
+#[allow(clippy::needless_borrows_for_generic_args)]
 fn compile_src(
     js_src: &[u8],
     instance: &Instance,
@@ -110,6 +122,7 @@ fn compile_src(
     Ok((bytecode_ptr, bytecode_len))
 }
 
+#[allow(clippy::needless_borrows_for_generic_args)]
 fn copy_func_name(
     fn_name: &str,
     instance: &Instance,
@@ -123,6 +136,7 @@ fn copy_func_name(
     Ok((fn_name_ptr, fn_name_bytes.len().try_into()?))
 }
 
+#[allow(clippy::needless_borrows_for_generic_args)]
 fn allocate_memory(
     instance: &Instance,
     mut store: &mut Store<WasiCtx>,

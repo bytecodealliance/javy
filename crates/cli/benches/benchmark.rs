@@ -84,6 +84,7 @@ impl FunctionCase {
         Ok(function_case)
     }
 
+    #[allow(clippy::needless_borrows_for_generic_args)]
     pub fn run(&self, linker: &mut Linker<WasiCtx>, mut store: &mut Store<WasiCtx>) -> Result<()> {
         let js_module = match &self.precompiled_elf_bytes {
             Some(bytes) => unsafe { Module::deserialize(&self.engine, bytes) }?,
