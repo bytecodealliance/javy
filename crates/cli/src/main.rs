@@ -63,7 +63,7 @@ fn main() -> Result<()> {
                     codegen.wit.clone(),
                     codegen.wit_world.clone(),
                 ))?)
-                .source_compression(!codegen.no_source_compression)
+                .source_compression(codegen.source_compression)
                 .provider_version("2");
 
             let mut gen = if codegen.dynamic {

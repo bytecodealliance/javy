@@ -90,7 +90,7 @@ pub struct BuildCommandOpts {
 -C dynamic[=y|n] -- Creates a smaller module that requires a dynamically linked QuickJS provider Wasm module to execute (see `emit-provider` command).
 -C wit=path -- Optional path to WIT file describing exported functions. Only supports function exports with no arguments and no return values.
 -C wit-world=val -- Optional WIT world name for WIT file. Must be specified if WIT is file path is specified.
--C no-source-compression[=y|n] -- Disable source code compression, which reduces compile time at the expense of generating larger WebAssembly files.
+-C source-compression[=y|n] -- Enable source code compression, which generates smaller WebAssembly files at the cost of increased compile time. Defaults to enabled.
     "
     )]
     /// Codegen options.
@@ -115,8 +115,8 @@ pub struct CodegenOptionGroup {
     /// Optional path to WIT file describing exported functions.
     /// Only supports function exports with no arguments and no return values.
     pub wit_world: Option<String>,
-    /// Disable source code compression, which reduces compile time at the expense of generating larger WebAssembly files.
-    pub no_source_compression: bool,
+    /// Enable source code compression, which generates smaller WebAssembly files at the cost of increased compile time. Defaults to enabled.
+    pub source_compression: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -130,8 +130,8 @@ pub enum CodegenOption {
     /// Optional path to WIT file describing exported functions.
     /// Only supports function exports with no arguments and no return values.
     WitWorld(String),
-    /// Disable source code compression, which reduces compile time at the expense of generating larger WebAssembly files.
-    NoSourceCompression(bool),
+    /// Enable source code compression, which generates smaller WebAssembly files at the cost of increased compile time. Defaults to enabled.
+    SourceCompression(bool),
 }
 
 impl FromStr for CodegenOption {
@@ -156,11 +156,11 @@ impl FromStr for CodegenOption {
                     .ok_or_else(|| anyhow!("Must provide value for wit-world"))?
                     .to_string(),
             ),
-            "no-source-compression" => Self::NoSourceCompression(match value {
+            "source-compression" => Self::SourceCompression(match value {
                 None => true,
                 Some("y") => true,
                 Some("n") => false,
-                _ => bail!("Invalid value for no-source-compression"),
+                _ => bail!("Invalid value for source-compression"),
             }),
             _ => bail!("Invalid codegen key"),
         };
@@ -173,14 +173,14 @@ impl From<Vec<CodegenOption>> for CodegenOptionGroup {
         let mut dynamic = false;
         let mut wit = None;
         let mut wit_world = None;
-        let mut no_source_compression = false;
+        let mut source_compression = true;
 
         for option in value {
             match option {
                 CodegenOption::Dynamic(enabled) => dynamic = enabled,
                 CodegenOption::Wit(path) => wit = Some(path),
                 CodegenOption::WitWorld(world) => wit_world = Some(world),
-                CodegenOption::NoSourceCompression(enabled) => no_source_compression = enabled,
+                CodegenOption::SourceCompression(enabled) => source_compression = enabled,
             }
         }
 
@@ -188,7 +188,7 @@ impl From<Vec<CodegenOption>> for CodegenOptionGroup {
             dynamic,
             wit,
             wit_world,
-            no_source_compression,
+            source_compression,
         }
     }
 }
