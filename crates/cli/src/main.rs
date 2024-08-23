@@ -56,13 +56,10 @@ fn main() -> Result<()> {
         }
         Command::Build(opts) => {
             let js = JS::from_file(&opts.input)?;
-            let codegen: CodegenOptionGroup = opts.codegen.clone().into();
+            let codegen: CodegenOptionGroup = opts.codegen.clone().try_into()?;
             let mut builder = CodeGenBuilder::new();
             builder
-                .wit_opts(WitOptions::from_tuple((
-                    codegen.wit.clone(),
-                    codegen.wit_world.clone(),
-                ))?)
+                .wit_opts(codegen.wit)
                 .source_compression(codegen.source_compression)
                 .provider_version("2");
 

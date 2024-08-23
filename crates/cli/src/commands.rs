@@ -2,6 +2,8 @@ use anyhow::{anyhow, bail};
 use clap::{Parser, Subcommand};
 use std::{path::PathBuf, str::FromStr};
 
+use crate::codegen::WitOptions;
+
 #[derive(Debug, Parser)]
 #[command(
     name = "javy",
@@ -104,17 +106,12 @@ pub struct EmitProviderCommandOpts {
     pub out: Option<PathBuf>,
 }
 
-#[derive(Clone, Debug, Parser)]
 pub struct CodegenOptionGroup {
     /// Creates a smaller module that requires a dynamically linked QuickJS provider Wasm
     /// module to execute (see `emit-provider` command).
     pub dynamic: bool,
-    /// Optional path to WIT file describing exported functions.
-    /// Only supports function exports with no arguments and no return values.
-    pub wit: Option<PathBuf>,
-    /// Optional path to WIT file describing exported functions.
-    /// Only supports function exports with no arguments and no return values.
-    pub wit_world: Option<String>,
+    /// The WIT options.
+    pub wit: WitOptions,
     /// Enable source code compression, which generates smaller WebAssembly files at the cost of increased compile time. Defaults to enabled.
     pub source_compression: bool,
 }
@@ -168,8 +165,10 @@ impl FromStr for CodegenOption {
     }
 }
 
-impl From<Vec<CodegenOption>> for CodegenOptionGroup {
-    fn from(value: Vec<CodegenOption>) -> Self {
+impl TryFrom<Vec<CodegenOption>> for CodegenOptionGroup {
+    type Error = anyhow::Error;
+
+    fn try_from(value: Vec<CodegenOption>) -> Result<Self, Self::Error> {
         let mut dynamic = false;
         let mut wit = None;
         let mut wit_world = None;
@@ -184,11 +183,10 @@ impl From<Vec<CodegenOption>> for CodegenOptionGroup {
             }
         }
 
-        Self {
+        Ok(Self {
             dynamic,
-            wit,
-            wit_world,
+            wit: WitOptions::from_tuple((wit, wit_world))?,
             source_compression,
-        }
+        })
     }
 }
