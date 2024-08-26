@@ -33,6 +33,7 @@ convert_case = "0.6.0"
 wasm-opt = "0.116.1"
 tempfile = { workspace = true }
 clap = { version = "4.5.15", features = ["derive"] }
+javy-config = { workspace = true }
 
 [dev-dependencies]
 serde_json = "1.0"
