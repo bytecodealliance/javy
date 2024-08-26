@@ -81,6 +81,7 @@ pub struct BuildCommandOpts {
 
     #[arg(
         short = 'C',
+        long = "codegen",
         long_help = "Available codegen options:
 -C dynamic[=y|n] -- Creates a smaller module that requires a dynamically linked QuickJS provider Wasm module to execute (see `emit-provider` command).
 -C wit=path -- Optional path to WIT file describing exported functions. Only supports function exports with no arguments and no return values.

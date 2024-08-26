@@ -147,7 +147,7 @@ $ echo '{ "n": 2, "bar": "baz" }' | wasmtime index.wasm
 If you have a lot of JavaScript and you want to reduce compile times, try using the `--no-source-compression` flag. It will skip compressing the JavaScript source code when generating the Wasm module but will result in the Wasm module being larger.
 
 ```bash
-javy build index.js -o destination/index.wasm --no-source-compression
+javy build index.js -o destination/index.wasm -C source-compression=n
 ```
 
 ### Exporting functions
@@ -176,7 +176,7 @@ world index-world {
 
 In the terminal:
 ```bash
-$ javy build index.js --wit index.wit -n index-world -o index.wasm
+$ javy build index.js -C wit=index.wit -C wit-world=index-world -o index.wasm
 $ wasmtime run --invoke foo index.wasm
 Hello world!
 Hello from foo!
@@ -206,7 +206,7 @@ world index {
 
 In the terminal:
 ```bash
-$ javy build index.js --wit index.wit -n index -o index.wasm
+$ javy build index.js -C wit=index.wit -C wit-world=index -o index.wasm
 $ wasmtime run --invoke foo-bar index.wasm
 In foo-bar
 ```
@@ -233,7 +233,7 @@ world index {
 
 In the terminal:
 ```bash
-$ javy build index.js --wit index.wit -n index -o index.wasm
+$ javy build index.js -C wit=index.wit -C wit-world=index -o index.wasm
 $ wasmtime run --invoke default index.wasm
 In default
 ```
@@ -271,7 +271,7 @@ The `javy_quickjs_provider.wasm` module is available as an asset on the Javy rel
 
 ```
 $ echo 'console.log("hello world!");' > my_code.js
-$ javy build -d -o my_code.wasm my_code.js
+$ javy build -C dynamic -o my_code.wasm my_code.js
 $ javy emit-provider -o provider.wasm
 $ wasmtime run --preload javy_quickjs_provider_v2=provider.wasm my_code.wasm
 hello world!
