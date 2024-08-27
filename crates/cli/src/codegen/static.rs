@@ -1,6 +1,7 @@
 use std::{collections::HashMap, fs, rc::Rc, sync::OnceLock};
 
 use anyhow::Result;
+use javy_config::Config;
 use walrus::{DataKind, ExportItem, FunctionBuilder, FunctionId, MemoryId, ValType};
 use wasi_common::{pipe::ReadPipe, sync::WasiCtxBuilder, WasiCtx};
 use wasm_opt::{OptimizationOptions, ShrinkLevel};
@@ -69,6 +70,10 @@ impl CodeGen for StaticGenerator {
             WASI.get_mut()
                 .unwrap()
                 .set_stdin(Box::new(ReadPipe::from(js.as_bytes())));
+
+            WASI.get_mut()
+                .unwrap()
+                .push_env("JS_RUNTIME_CONFIG", &Config::all().bits().to_string())?;
         };
 
         let wasm = Wizer::new()

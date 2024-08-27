@@ -1468,6 +1468,7 @@ dependencies = [
  "clap",
  "convert_case",
  "criterion",
+ "javy-config",
  "javy-runner",
  "lazy_static",
  "num-format",
