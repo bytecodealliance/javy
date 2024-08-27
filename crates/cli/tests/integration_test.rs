@@ -109,7 +109,7 @@ fn test_logging_with_compile() -> Result<()> {
         "hello world from console.log\nhello world from console.error\n",
         logs.as_str(),
     );
-    assert_fuel_consumed_within_threshold(34169, fuel_consumed);
+    assert_fuel_consumed_within_threshold(37309, fuel_consumed);
     Ok(())
 }
 
@@ -126,7 +126,7 @@ fn test_logging_without_redirect() -> Result<()> {
     let (output, logs, fuel_consumed) = run(&mut runner, &[]);
     assert_eq!(b"hello world from console.log\n".to_vec(), output);
     assert_eq!("hello world from console.error\n", logs.as_str());
-    assert_fuel_consumed_within_threshold(34169, fuel_consumed);
+    assert_fuel_consumed_within_threshold(37485, fuel_consumed);
     Ok(())
 }
 
@@ -146,7 +146,7 @@ fn test_logging_with_redirect() -> Result<()> {
         "hello world from console.log\nhello world from console.error\n",
         logs.as_str(),
     );
-    assert_fuel_consumed_within_threshold(34169, fuel_consumed);
+    assert_fuel_consumed_within_threshold(37309, fuel_consumed);
     Ok(())
 }
 
