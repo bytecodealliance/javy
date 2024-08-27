@@ -64,8 +64,3 @@ fmt-core:
 fmt-cli:
 	cargo fmt --package=javy-cli -- --check
 	CARGO_PROFILE_RELEASE_LTO=off cargo clippy --package=javy-cli --release --all-targets -- -D warnings
-
-clean: clean-wasi-sdk clean-cargo
-
-clean-cargo:
-	cargo clean
