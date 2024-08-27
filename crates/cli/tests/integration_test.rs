@@ -1,5 +1,5 @@
 use anyhow::Result;
-use javy_runner::{Runner, RunnerError};
+use javy_runner::{Builder, Runner, RunnerError};
 use std::path::PathBuf;
 use std::str;
 
@@ -95,22 +95,59 @@ fn test_encoding() -> Result<()> {
 }
 
 #[test]
-fn test_logging() -> Result<()> {
-    run_with_compile_and_build(|builder| {
-        let mut runner = builder
-            .root(sample_scripts())
-            .bin(BIN)
-            .input("logging.js")
-            .build()?;
+fn test_logging_with_compile() -> Result<()> {
+    let mut runner = Builder::default()
+        .root(sample_scripts())
+        .bin(BIN)
+        .input("logging.js")
+        .command(javy_runner::JavyCommand::Compile)
+        .build()?;
 
-        let (_output, logs, fuel_consumed) = run(&mut runner, &[]);
-        assert_eq!(
-            "hello world from console.log\nhello world from console.error\n",
-            logs.as_str(),
-        );
-        assert_fuel_consumed_within_threshold(34169, fuel_consumed);
-        Ok(())
-    })
+    let (output, logs, fuel_consumed) = run(&mut runner, &[]);
+    assert!(output.is_empty());
+    assert_eq!(
+        "hello world from console.log\nhello world from console.error\n",
+        logs.as_str(),
+    );
+    assert_fuel_consumed_within_threshold(34169, fuel_consumed);
+    Ok(())
+}
+
+#[test]
+fn test_logging_without_redirect() -> Result<()> {
+    let mut runner = Builder::default()
+        .root(sample_scripts())
+        .bin(BIN)
+        .input("logging.js")
+        .command(javy_runner::JavyCommand::Build)
+        .redirect_stdout_to_stderr(false)
+        .build()?;
+
+    let (output, logs, fuel_consumed) = run(&mut runner, &[]);
+    assert_eq!(b"hello world from console.log\n".to_vec(), output);
+    assert_eq!("hello world from console.error\n", logs.as_str());
+    assert_fuel_consumed_within_threshold(34169, fuel_consumed);
+    Ok(())
+}
+
+#[test]
+fn test_logging_with_redirect() -> Result<()> {
+    let mut runner = Builder::default()
+        .root(sample_scripts())
+        .bin(BIN)
+        .input("logging.js")
+        .command(javy_runner::JavyCommand::Build)
+        .redirect_stdout_to_stderr(true)
+        .build()?;
+
+    let (output, logs, fuel_consumed) = run(&mut runner, &[]);
+    assert!(output.is_empty());
+    assert_eq!(
+        "hello world from console.log\nhello world from console.error\n",
+        logs.as_str(),
+    );
+    assert_fuel_consumed_within_threshold(34169, fuel_consumed);
+    Ok(())
 }
 
 #[test]

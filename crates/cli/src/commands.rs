@@ -1,5 +1,6 @@
 use anyhow::{anyhow, bail};
 use clap::{Parser, Subcommand};
+use javy_config::Config;
 use std::{path::PathBuf, str::FromStr};
 
 use crate::codegen::WitOptions;
@@ -91,6 +92,16 @@ pub struct BuildCommandOpts {
     )]
     /// Codegen options.
     pub codegen: Vec<CodegenOption>,
+
+    #[arg(
+        short = 'J',
+        long = "js",
+        long_help = "Available JS runtime options:
+-J redirect-stdout-to-stderr[=y|n] -- Redirects console.log to stderr.
+        "
+    )]
+    /// JS runtime options.
+    pub js_runtime: Vec<JsRuntimeOption>,
 }
 
 #[derive(Debug, Parser)]
@@ -108,6 +119,16 @@ pub struct CodegenOptionGroup {
     pub wit: WitOptions,
     /// Enable source code compression, which generates smaller WebAssembly files at the cost of increased compile time. Defaults to enabled.
     pub source_compression: bool,
+}
+
+impl Default for CodegenOptionGroup {
+    fn default() -> Self {
+        Self {
+            dynamic: false,
+            wit: WitOptions::default(),
+            source_compression: true,
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -163,24 +184,89 @@ impl TryFrom<Vec<CodegenOption>> for CodegenOptionGroup {
     type Error = anyhow::Error;
 
     fn try_from(value: Vec<CodegenOption>) -> Result<Self, Self::Error> {
-        let mut dynamic = false;
+        let mut options = Self::default();
         let mut wit = None;
         let mut wit_world = None;
-        let mut source_compression = true;
 
         for option in value {
             match option {
-                CodegenOption::Dynamic(enabled) => dynamic = enabled,
+                CodegenOption::Dynamic(enabled) => options.dynamic = enabled,
                 CodegenOption::Wit(path) => wit = Some(path),
                 CodegenOption::WitWorld(world) => wit_world = Some(world),
-                CodegenOption::SourceCompression(enabled) => source_compression = enabled,
+                CodegenOption::SourceCompression(enabled) => options.source_compression = enabled,
             }
         }
 
-        Ok(Self {
-            dynamic,
-            wit: WitOptions::from_tuple((wit, wit_world))?,
-            source_compression,
-        })
+        options.wit = WitOptions::from_tuple((wit, wit_world))?;
+        Ok(options)
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct JsRuntimeOptionGroup {
+    /// Whether to redirect console.log to stderr.
+    pub redirect_stdout_to_stderr: bool,
+}
+
+impl Default for JsRuntimeOptionGroup {
+    fn default() -> Self {
+        Self {
+            redirect_stdout_to_stderr: true,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum JsRuntimeOption {
+    /// Whether to redirect console.log to stderr.
+    RedirectStdoutToStderr(bool),
+}
+
+impl FromStr for JsRuntimeOption {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        let mut parts = s.splitn(2, '=');
+        let key = parts
+            .next()
+            .ok_or_else(|| anyhow!("Invalid JS runtime key"))?;
+        let value = parts.next();
+        let option = match key {
+            "redirect-stdout-to-stderr" => Self::RedirectStdoutToStderr(match value {
+                None => true,
+                Some("y") => true,
+                Some("n") => false,
+                _ => bail!("Invalid value for redirect-stdout-to-stderr"),
+            }),
+            _ => bail!("Invalid JS runtime key"),
+        };
+        Ok(option)
+    }
+}
+
+impl From<Vec<JsRuntimeOption>> for JsRuntimeOptionGroup {
+    fn from(value: Vec<JsRuntimeOption>) -> Self {
+        let mut group = Self::default();
+
+        for option in value {
+            match option {
+                JsRuntimeOption::RedirectStdoutToStderr(enabled) => {
+                    group.redirect_stdout_to_stderr = enabled;
+                }
+            }
+        }
+
+        group
+    }
+}
+
+impl From<JsRuntimeOptionGroup> for Config {
+    fn from(value: JsRuntimeOptionGroup) -> Self {
+        let mut config = Self::all();
+        config.set(
+            Config::REDIRECT_STDOUT_TO_STDERR,
+            value.redirect_stdout_to_stderr,
+        );
+        config
     }
 }

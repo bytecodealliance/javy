@@ -4,12 +4,13 @@ mod commands;
 mod js;
 mod wit;
 
-use crate::codegen::{DynamicGenerator, StaticGenerator, WitOptions};
+use crate::codegen::WitOptions;
 use crate::commands::{Cli, Command, EmitProviderCommandOpts};
-use anyhow::Result;
+use anyhow::{bail, Result};
 use clap::Parser;
 use codegen::CodeGenBuilder;
-use commands::CodegenOptionGroup;
+use commands::{CodegenOptionGroup, JsRuntimeOptionGroup};
+use javy_config::Config;
 use js::JS;
 use std::fs;
 use std::fs::File;
@@ -44,9 +45,10 @@ fn main() -> Result<()> {
                 .provider_version("2");
 
             let mut gen = if opts.dynamic {
-                builder.build::<DynamicGenerator>()?
+                builder.build_dynamic()?
             } else {
-                builder.build::<StaticGenerator>()?
+                let config = Config::all();
+                builder.build_static(config)?
             };
 
             let wasm = gen.generate(&js)?;
@@ -63,10 +65,14 @@ fn main() -> Result<()> {
                 .source_compression(codegen.source_compression)
                 .provider_version("2");
 
+            let js_runtime_options: JsRuntimeOptionGroup = opts.js_runtime.clone().into();
             let mut gen = if codegen.dynamic {
-                builder.build::<DynamicGenerator>()?
+                if js_runtime_options != JsRuntimeOptionGroup::default() {
+                    bail!("Cannot set JS runtime options when building a dynamic module");
+                }
+                builder.build_dynamic()?
             } else {
-                builder.build::<StaticGenerator>()?
+                builder.build_static(js_runtime_options.into())?
             };
 
             let wasm = gen.generate(&js)?;

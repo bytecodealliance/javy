@@ -1,5 +1,5 @@
 use anyhow::Result;
-use javy_runner::Builder;
+use javy_runner::{Builder, JavyCommand};
 use std::path::{Path, PathBuf};
 use std::str;
 
@@ -150,6 +150,22 @@ fn test_producers_section_present() -> Result<()> {
 
         runner.assert_producers()
     })
+}
+
+#[test]
+fn test_using_runtime_flag_with_dynamic_triggers_error() -> Result<()> {
+    let build_result = Builder::default()
+        .root(root())
+        .bin(BIN)
+        .input("console.js")
+        .preload("javy_quickjs_provider_v2".into(), provider_module_path())
+        .command(JavyCommand::Build)
+        .redirect_stdout_to_stderr(false)
+        .build();
+    assert!(build_result.is_err_and(|e| e
+        .to_string()
+        .contains("Error: Cannot set JS runtime options when building a dynamic module")));
+    Ok(())
 }
 
 #[test]
