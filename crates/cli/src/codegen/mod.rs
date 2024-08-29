@@ -49,9 +49,20 @@ pub(crate) use exports::*;
 
 use crate::JS;
 
+pub(crate) enum CodeGenType {
+    /// Static code generation.
+    Static,
+    /// Dynamic code generation.
+    Dynamic,
+}
+
 /// Code generator trait to abstract the multiple JS to Wasm code generation
 /// paths.
 pub(crate) trait CodeGen {
     /// Generate Wasm from a given JS source.
     fn generate(&mut self, source: &JS) -> anyhow::Result<Vec<u8>>;
+    /// Classify the [`CodeGen`] type.
+    fn classify() -> CodeGenType
+    where
+        Self: Sized;
 }
