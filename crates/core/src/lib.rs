@@ -17,7 +17,7 @@ static mut RUNTIME: OnceCell<Runtime> = OnceCell::new();
 /// Used by Wizer to preinitialize the module.
 #[export_name = "wizer.initialize"]
 pub extern "C" fn init() {
-    let runtime = runtime::new(Config::all()).unwrap();
+    let runtime = runtime::new(Config::default()).unwrap();
     unsafe {
         RUNTIME
             .set(runtime)
@@ -44,7 +44,7 @@ pub extern "C" fn init() {
 #[export_name = "compile_src"]
 pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -> *const u32 {
     // Use fresh runtime to avoid depending on Wizened runtime
-    let runtime = runtime::new(Config::all()).unwrap();
+    let runtime = runtime::new(Config::default()).unwrap();
     let js_src = str::from_utf8(slice::from_raw_parts(js_src_ptr, js_src_len)).unwrap();
 
     let bytecode = runtime

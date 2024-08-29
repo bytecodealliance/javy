@@ -44,7 +44,7 @@ fn main() -> Result<()> {
                 .source_compression(!opts.no_source_compression)
                 .provider_version("2");
 
-            let config = Config::all();
+            let config = Config::default();
             let mut gen = if opts.dynamic {
                 builder.build::<DynamicGenerator>(config)?
             } else {

@@ -8,11 +8,10 @@ pub(crate) fn new(shared_config: SharedConfig) -> Result<Runtime> {
         .text_encoding(shared_config.contains(SharedConfig::TEXT_ENCODING))
         .redirect_stdout_to_stderr(shared_config.contains(SharedConfig::REDIRECT_STDOUT_TO_STDERR))
         .javy_stream_io(shared_config.contains(SharedConfig::JAVY_STREAM_IO))
-        // Due to an issue with our custom serializer and property accesses
-        // we're disabling this temporarily. It will be enabled once we have a
-        // fix forward.
-        .override_json_parse_and_stringify(false)
-        .javy_json(false);
+        .override_json_parse_and_stringify(
+            shared_config.contains(SharedConfig::OVERRIDE_JSON_PARSE_AND_STRINGIFY),
+        )
+        .javy_json(shared_config.contains(SharedConfig::JAVY_JSON));
 
     Runtime::new(std::mem::take(config))
 }

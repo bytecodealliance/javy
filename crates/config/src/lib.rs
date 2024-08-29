@@ -34,6 +34,18 @@ bitflags! {
     }
 }
 
+impl Default for Config {
+    fn default() -> Self {
+        let mut config = Config::empty();
+        config.set(Config::OVERRIDE_JSON_PARSE_AND_STRINGIFY, false);
+        config.set(Config::JAVY_JSON, false);
+        config.set(Config::JAVY_STREAM_IO, true);
+        config.set(Config::REDIRECT_STDOUT_TO_STDERR, true);
+        config.set(Config::TEXT_ENCODING, true);
+        config
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::Config;

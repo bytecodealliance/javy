@@ -210,9 +210,7 @@ pub struct JsRuntimeOptionGroup {
 
 impl Default for JsRuntimeOptionGroup {
     fn default() -> Self {
-        Self {
-            redirect_stdout_to_stderr: true,
-        }
+        Config::default().into()
     }
 }
 
@@ -262,11 +260,19 @@ impl From<Vec<JsRuntimeOption>> for JsRuntimeOptionGroup {
 
 impl From<JsRuntimeOptionGroup> for Config {
     fn from(value: JsRuntimeOptionGroup) -> Self {
-        let mut config = Self::all();
+        let mut config = Self::default();
         config.set(
             Config::REDIRECT_STDOUT_TO_STDERR,
             value.redirect_stdout_to_stderr,
         );
         config
+    }
+}
+
+impl From<Config> for JsRuntimeOptionGroup {
+    fn from(value: Config) -> Self {
+        Self {
+            redirect_stdout_to_stderr: value.contains(Config::REDIRECT_STDOUT_TO_STDERR),
+        }
     }
 }
