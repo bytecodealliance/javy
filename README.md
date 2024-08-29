@@ -70,7 +70,7 @@ If you are going to recompile frequently, you may want to prepend `CARGO_PROFILE
 
 Pre-compiled binaries of the Javy CLI can be found on [the releases page](https://github.com/bytecodealliance/javy/releases).
 
-Javy supports ECMA2020 JavaScript. Javy does _not_ provide support for NodeJS or CommonJS APIs.
+Javy supports ES2023 JavaScript. Javy does _not_ provide support for NodeJS or CommonJS APIs.
 
 ### Compiling to WebAssembly
 
