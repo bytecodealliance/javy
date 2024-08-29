@@ -26,17 +26,20 @@ pub(crate) struct StaticGenerator {
     function_exports: Exports,
     /// WIT options for code generation.
     pub wit_opts: WitOptions,
+    /// JS runtime options for code generation.
+    pub js_runtime_config: Config,
 }
 
 impl StaticGenerator {
     /// Creates a new [`StaticGenerator`].
-    pub fn new() -> Self {
+    pub fn new(js_runtime_config: Config) -> Self {
         let engine = include_bytes!(concat!(env!("OUT_DIR"), "/engine.wasm"));
         Self {
             engine,
             source_compression: Default::default(),
             function_exports: Default::default(),
             wit_opts: Default::default(),
+            js_runtime_config,
         }
     }
 }
@@ -71,9 +74,10 @@ impl CodeGen for StaticGenerator {
                 .unwrap()
                 .set_stdin(Box::new(ReadPipe::from(js.as_bytes())));
 
-            WASI.get_mut()
-                .unwrap()
-                .push_env("JS_RUNTIME_CONFIG", &Config::all().bits().to_string())?;
+            WASI.get_mut().unwrap().push_env(
+                "JS_RUNTIME_CONFIG",
+                &self.js_runtime_config.bits().to_string(),
+            )?;
         };
 
         let wasm = Wizer::new()

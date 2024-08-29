@@ -1,5 +1,6 @@
 use crate::codegen::{CodeGen, CodeGenType, DynamicGenerator, StaticGenerator};
 use anyhow::{bail, Result};
+use javy_config::Config;
 use std::path::PathBuf;
 
 /// Options for using WIT in the code generation process.
@@ -79,18 +80,23 @@ impl CodeGenBuilder {
     }
 
     /// Build a [`CodeGenerator`].
-    pub fn build<T>(self) -> Result<Box<dyn CodeGen>>
+    pub fn build<T>(self, js_runtime_config: Config) -> Result<Box<dyn CodeGen>>
     where
         T: CodeGen,
     {
         match T::classify() {
-            CodeGenType::Static => self.build_static(),
-            CodeGenType::Dynamic => self.build_dynamic(),
+            CodeGenType::Static => self.build_static(js_runtime_config),
+            CodeGenType::Dynamic => {
+                if js_runtime_config != Config::all() {
+                    bail!("Cannot set JS runtime options when building a dynamic module")
+                }
+                self.build_dynamic()
+            }
         }
     }
 
-    fn build_static(self) -> Result<Box<dyn CodeGen>> {
-        let mut static_gen = Box::new(StaticGenerator::new());
+    fn build_static(self, js_runtime_config: Config) -> Result<Box<dyn CodeGen>> {
+        let mut static_gen = Box::new(StaticGenerator::new(js_runtime_config));
 
         static_gen.source_compression = self.source_compression;
         static_gen.wit_opts = self.wit_opts;

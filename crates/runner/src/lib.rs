@@ -31,6 +31,8 @@ pub struct Builder {
     wit: Option<PathBuf>,
     /// The name of the wit world.
     world: Option<String>,
+    /// Whether console.log should write to stderr.
+    redirect_stdout_to_stderr: Option<bool>,
     built: bool,
     /// Preload the module at path, using the given instance name.
     preload: Option<(String, PathBuf)>,
@@ -49,6 +51,7 @@ impl Default for Builder {
             built: false,
             preload: None,
             command: JavyCommand::Build,
+            redirect_stdout_to_stderr: None,
         }
     }
 }
@@ -84,6 +87,11 @@ impl Builder {
         self
     }
 
+    pub fn redirect_stdout_to_stderr(&mut self, enabled: bool) -> &mut Self {
+        self.redirect_stdout_to_stderr = Some(enabled);
+        self
+    }
+
     pub fn command(&mut self, command: JavyCommand) -> &mut Self {
         self.command = command;
         self
@@ -106,6 +114,7 @@ impl Builder {
             wit,
             world,
             root,
+            redirect_stdout_to_stderr,
             built: _,
             preload,
             command,
@@ -121,7 +130,15 @@ impl Builder {
                     Runner::compile_static(bin_path, root, input, wit, world)
                 }
             }
-            JavyCommand::Build => Runner::build(bin_path, root, input, wit, world, preload),
+            JavyCommand::Build => Runner::build(
+                bin_path,
+                root,
+                input,
+                wit,
+                world,
+                redirect_stdout_to_stderr,
+                preload,
+            ),
         }
     }
 }
@@ -183,6 +200,7 @@ impl Runner {
         source: impl AsRef<Path>,
         wit: Option<PathBuf>,
         world: Option<String>,
+        redirect_stdout_to_stderr: Option<bool>,
         preload: Option<(String, PathBuf)>,
     ) -> Result<Self> {
         // This directory is unique and will automatically get deleted
@@ -192,7 +210,14 @@ impl Runner {
         let js_file = root.join(source);
         let wit_file = wit.map(|p| root.join(p));
 
-        let args = Self::build_args(&js_file, &wasm_file, &wit_file, &world, preload.is_some());
+        let args = Self::build_args(
+            &js_file,
+            &wasm_file,
+            &wit_file,
+            &world,
+            preload.is_some(),
+            &redirect_stdout_to_stderr,
+        );
 
         Self::exec_command(bin, root, args)?;
 
@@ -380,6 +405,7 @@ impl Runner {
         wit: &Option<PathBuf>,
         world: &Option<String>,
         dynamic: bool,
+        redirect_stdout_to_stderr: &Option<bool>,
     ) -> Vec<String> {
         let mut args = vec![
             "build".to_string(),
@@ -398,6 +424,14 @@ impl Runner {
         if dynamic {
             args.push("-C".to_string());
             args.push("dynamic".to_string());
+        }
+
+        if let Some(redirect_stdout_to_stderr) = *redirect_stdout_to_stderr {
+            args.push("-J".to_string());
+            args.push(format!(
+                "redirect-stdout-to-stderr={}",
+                if redirect_stdout_to_stderr { "y" } else { "n" }
+            ));
         }
 
         args
@@ -433,7 +467,11 @@ impl Runner {
         io::stderr().write_all(&output.stderr)?;
 
         if !output.status.success() {
-            bail!("terminated with status = {}", output.status);
+            bail!(
+                "terminated with status = {}, stderr = {}",
+                output.status,
+                std::str::from_utf8(&output.stderr).unwrap(),
+            );
         }
 
         Ok(())
