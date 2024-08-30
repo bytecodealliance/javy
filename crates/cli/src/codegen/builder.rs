@@ -87,7 +87,7 @@ impl CodeGenBuilder {
         match T::classify() {
             CodeGenType::Static => self.build_static(js_runtime_config),
             CodeGenType::Dynamic => {
-                if js_runtime_config != Config::all() {
+                if js_runtime_config != Config::default() {
                     bail!("Cannot set JS runtime options when building a dynamic module")
                 }
                 self.build_dynamic()
