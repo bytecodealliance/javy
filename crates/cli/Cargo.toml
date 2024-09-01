@@ -18,12 +18,12 @@ experimental_event_loop = []
 wizer = { workspace = true }
 anyhow = { workspace = true }
 brotli = "6.0.0"
-wasmprinter = { version = "0.215.0", optional = true }
+wasmprinter = { version = "0.216.0", optional = true }
 wasmtime = { workspace = true }
 wasmtime-wasi = { workspace = true }
 wasi-common = { workspace = true }
 walrus = "0.21.1"
-swc_core = { version = "0.100.7", features = [
+swc_core = { version = "0.102.2", features = [
     "common_sourcemap",
     "ecma_ast",
     "ecma_parser",
@@ -32,7 +32,7 @@ wit-parser = "0.212.0"
 convert_case = "0.6.0"
 wasm-opt = "0.116.1"
 tempfile = { workspace = true }
-clap = { version = "4.5.15", features = ["derive"] }
+clap = { version = "4.5.16", features = ["derive"] }
 javy-config = { workspace = true }
 
 [dev-dependencies]
@@ -41,7 +41,7 @@ lazy_static = "1.5"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 criterion = "0.5"
 num-format = "0.4.4"
-wasmparser = "0.215.0"
+wasmparser = "0.216.0"
 javy-runner = { path = "../runner/" }
 uuid = { workspace = true }
 

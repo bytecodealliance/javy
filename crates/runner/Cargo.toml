@@ -13,4 +13,4 @@ wasi-common = { workspace = true }
 anyhow = { workspace = true }
 tempfile = { workspace = true }
 uuid = { workspace = true }
-wasmparser = "0.215.0"
+wasmparser = "0.216.0"
