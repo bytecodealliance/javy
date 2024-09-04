@@ -12,14 +12,14 @@ pub struct OptionMeta {
 pub fn fmt_help(cmd: &str, short: &str, meta: &[OptionMeta]) {
     println!("Available options for {}", cmd);
     for opt in meta {
-        print!("\n");
+        println!();
         print!("-{:<3}", short);
         print!("{:>3}", opt.name);
-        print!("{} \n", opt.help);
-        for line in opt.doc.split("\n") {
+        println!("{}", opt.help);
+        for line in opt.doc.split('\n') {
             print!("{}", line);
         }
-        print!("\n");
+        println!();
     }
 }
 
@@ -66,8 +66,8 @@ macro_rules! option_group {
                     })
                     .collect::<String>();
 
-                    let kebab_case = if kebab_case.starts_with('-') {
-                        &kebab_case[1..]
+                    if let Some(stripped) =  kebab_case.strip_prefix('-') {
+                        stripped
                     } else {
                         &kebab_case
                     };

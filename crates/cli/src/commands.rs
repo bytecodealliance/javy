@@ -187,12 +187,12 @@ impl TypedValueParser for CodegenOptionGroupParser {
         let long = arg.get_long().expect("long version to be defined");
 
         if val == "help" {
-            fmt_help(&long, &short.to_string(), &CodegenOption::options());
+            fmt_help(long, &short.to_string(), &CodegenOption::options());
             std::process::exit(0);
         }
 
         let mut options = vec![];
-        for opt in val.split(",").into_iter() {
+        for opt in val.split(',') {
             options.push(CodegenOption::from_str(opt).map_err(|e| {
                 clap::Error::raw(clap::error::ErrorKind::InvalidValue, format!("{}", e))
             })?);
@@ -291,20 +291,18 @@ impl TypedValueParser for JsOptionGroupParser {
         let long = arg.get_long().expect("long version to be defined");
 
         if val == "help" {
-            fmt_help(&long, &short.to_string(), &JsOption::options());
+            fmt_help(long, &short.to_string(), &JsOption::options());
             std::process::exit(0);
         }
 
         let mut options = vec![];
-        for opt in val.split(",").into_iter() {
+        for opt in val.split(',') {
             options.push(JsOption::from_str(opt).map_err(|e| {
                 clap::Error::raw(clap::error::ErrorKind::InvalidValue, format!("{}", e))
             })?);
         }
 
-        options.try_into().map_err(|e| {
-            clap::Error::raw(clap::error::ErrorKind::InvalidValue, format!("{}", e)).with_cmd(cmd)
-        })
+        Ok(options.into())
     }
 }
 
