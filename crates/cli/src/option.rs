@@ -6,6 +6,7 @@ use std::path::PathBuf;
 pub struct OptionMeta {
     pub name: String,
     pub doc: String,
+    pub help: String,
 }
 
 pub fn fmt_help(cmd: &str, short: &str, meta: &[OptionMeta]) {
@@ -13,7 +14,8 @@ pub fn fmt_help(cmd: &str, short: &str, meta: &[OptionMeta]) {
     for opt in meta {
         print!("\n");
         print!("-{:<3}", short);
-        print!("{:>3} \n", opt.name);
+        print!("{:>3}", opt.name);
+        print!("{} \n", opt.help);
         for line in opt.doc.split("\n") {
             print!("{}", line);
         }
@@ -72,6 +74,7 @@ macro_rules! option_group {
                     options.push($crate::option::OptionMeta {
                         name: kebab_case.into(),
                         doc: concat!($($doc, "\n",)*).into(),
+                        help: <$type>::help().to_string(),
                     });
                 )+
 
@@ -83,12 +86,17 @@ macro_rules! option_group {
 
 /// Represents all values that can be parsed.
 pub trait OptionValue {
+    fn help() -> &'static str;
     fn parse(val: Option<&str>) -> Result<Self>
     where
         Self: Sized;
 }
 
 impl OptionValue for bool {
+    fn help() -> &'static str {
+        "[=y|n]"
+    }
+
     fn parse(val: Option<&str>) -> Result<Self>
     where
         Self: Sized,
@@ -103,6 +111,10 @@ impl OptionValue for bool {
 }
 
 impl OptionValue for String {
+    fn help() -> &'static str {
+        "=val"
+    }
+
     fn parse(val: Option<&str>) -> Result<Self>
     where
         Self: Sized,
@@ -115,6 +127,10 @@ impl OptionValue for String {
 }
 
 impl OptionValue for PathBuf {
+    fn help() -> &'static str {
+        "=path"
+    }
+
     fn parse(val: Option<&str>) -> Result<Self>
     where
         Self: Sized,

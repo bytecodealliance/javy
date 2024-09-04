@@ -243,7 +243,7 @@ impl Default for JsOptionGroup {
 option_group! {
     #[derive(Clone, Debug)]
     pub enum JsOption {
-        /// Whether to redirect console.log to stderr.
+        /// Whether to redirect the output of console.log to standard error.
         RedirectStdoutToStderr(bool),
     }
 }
