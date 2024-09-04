@@ -88,12 +88,12 @@ pub struct BuildCommandOpts {
     #[arg(short = 'C', long = "codegen")]
     /// Code generation options.
     /// Use `-C help` for more details.
-    pub codegen: CodegenOptionGroup,
+    pub codegen: Option<CodegenOptionGroup>,
 
     #[arg(short = 'J', long = "javascript")]
     /// JS runtime options.
     /// Use `-J help` for more details.
-    pub js: JsOptionGroup,
+    pub js: Option<JsOptionGroup>,
 }
 
 #[derive(Debug, Parser)]
