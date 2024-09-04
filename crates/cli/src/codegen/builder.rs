@@ -4,7 +4,7 @@ use javy_config::Config;
 use std::path::PathBuf;
 
 /// Options for using WIT in the code generation process.
-#[derive(Default)]
+#[derive(Default, Clone, Debug)]
 pub(crate) struct WitOptions {
     /// The path of the .wit file to use.
     pub path: Option<PathBuf>,

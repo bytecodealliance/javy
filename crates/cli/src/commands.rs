@@ -1,9 +1,14 @@
-use anyhow::{anyhow, bail};
-use clap::{Parser, Subcommand};
+use crate::option_group;
+use anyhow::{anyhow, bail, Result};
+use clap::{
+    builder::{StringValueParser, TypedValueParser, ValueParserFactory},
+    Parser, Subcommand,
+};
 use javy_config::Config;
 use std::{path::PathBuf, str::FromStr};
 
 use crate::codegen::WitOptions;
+use crate::option::{fmt_help, OptionGroup, OptionValue};
 
 #[derive(Debug, Parser)]
 #[command(
@@ -80,28 +85,15 @@ pub struct BuildCommandOpts {
     /// Desired path of the WebAssembly output file.
     pub output: PathBuf,
 
-    #[arg(
-        short = 'C',
-        long = "codegen",
-        long_help = "Available codegen options:
--C dynamic[=y|n] -- Creates a smaller module that requires a dynamically linked QuickJS provider Wasm module to execute (see `emit-provider` command).
--C wit=path -- Optional path to WIT file describing exported functions. Only supports function exports with no arguments and no return values.
--C wit-world=val -- Optional WIT world name for WIT file. Must be specified if WIT is file path is specified.
--C source-compression[=y|n] -- Enable source code compression, which generates smaller WebAssembly files at the cost of increased compile time. Defaults to enabled.
-    "
-    )]
-    /// Codegen options.
-    pub codegen: Vec<CodegenOption>,
+    #[arg(short = 'C', long = "codegen")]
+    /// Code generation options.
+    /// Use `-C help` for more details.
+    pub codegen: CodegenOptionGroup,
 
-    #[arg(
-        short = 'J',
-        long = "js",
-        long_help = "Available JS runtime options:
--J redirect-stdout-to-stderr[=y|n] -- Redirects console.log to stderr.
-        "
-    )]
+    #[arg(short = 'J', long = "javascript")]
     /// JS runtime options.
-    pub js_runtime: Vec<JsRuntimeOption>,
+    /// Use `-J help` for more details.
+    pub js: JsOptionGroup,
 }
 
 #[derive(Debug, Parser)]
@@ -111,6 +103,10 @@ pub struct EmitProviderCommandOpts {
     pub out: Option<PathBuf>,
 }
 
+// Code generation options.
+
+/// Code generation option group.
+#[derive(Clone, Debug)]
 pub struct CodegenOptionGroup {
     /// Creates a smaller module that requires a dynamically linked QuickJS provider Wasm
     /// module to execute (see `emit-provider` command).
@@ -131,19 +127,21 @@ impl Default for CodegenOptionGroup {
     }
 }
 
-#[derive(Clone, Debug)]
-pub enum CodegenOption {
-    /// Creates a smaller module that requires a dynamically linked QuickJS provider Wasm
-    /// module to execute (see `emit-provider` command).
-    Dynamic(bool),
-    /// Optional path to WIT file describing exported functions.
-    /// Only supports function exports with no arguments and no return values.
-    Wit(PathBuf),
-    /// Optional path to WIT file describing exported functions.
-    /// Only supports function exports with no arguments and no return values.
-    WitWorld(String),
-    /// Enable source code compression, which generates smaller WebAssembly files at the cost of increased compile time. Defaults to enabled.
-    SourceCompression(bool),
+option_group! {
+    #[derive(Clone, Debug)]
+    pub enum CodegenOption {
+        /// Creates a smaller module that requires a dynamically linked QuickJS provider Wasm
+        /// module to execute (see `emit-provider` command).
+        Dynamic(bool),
+        /// Optional path to WIT file describing exported functions.
+        /// Only supports function exports with no arguments and no return values.
+        Wit(PathBuf),
+        /// Optional path to WIT file describing exported functions.
+        /// Only supports function exports with no arguments and no return values.
+        WitWorld(String),
+        /// Enable source code compression, which generates smaller WebAssembly files at the cost of increased compile time. Defaults to enabled.
+        SourceCompression(bool),
+    }
 }
 
 impl FromStr for CodegenOption {
@@ -154,29 +152,55 @@ impl FromStr for CodegenOption {
         let key = parts.next().ok_or_else(|| anyhow!("Invalid codegen key"))?;
         let value = parts.next();
         let option = match key {
-            "dynamic" => Self::Dynamic(match value {
-                None => true,
-                Some("y") => true,
-                Some("n") => false,
-                _ => bail!("Invalid value for dynamic"),
-            }),
-            "wit" => Self::Wit(PathBuf::from(
-                value.ok_or_else(|| anyhow!("Must provide value for wit"))?,
-            )),
-            "wit-world" => Self::WitWorld(
-                value
-                    .ok_or_else(|| anyhow!("Must provide value for wit-world"))?
-                    .to_string(),
-            ),
-            "source-compression" => Self::SourceCompression(match value {
-                None => true,
-                Some("y") => true,
-                Some("n") => false,
-                _ => bail!("Invalid value for source-compression"),
-            }),
+            "dynamic" => Self::Dynamic(OptionValue::parse(value)?),
+            "wit" => Self::Wit(OptionValue::parse(value)?),
+            "wit-world" => Self::WitWorld(OptionValue::parse(value)?),
+            "source-compression" => Self::SourceCompression(OptionValue::parse(value)?),
             _ => bail!("Invalid codegen key"),
         };
         Ok(option)
+    }
+}
+
+#[derive(Clone)]
+pub struct CodegenOptionGroupParser {}
+
+impl ValueParserFactory for CodegenOptionGroup {
+    type Parser = CodegenOptionGroupParser;
+
+    fn value_parser() -> Self::Parser {
+        CodegenOptionGroupParser {}
+    }
+}
+
+impl TypedValueParser for CodegenOptionGroupParser {
+    type Value = CodegenOptionGroup;
+    fn parse_ref(
+        &self,
+        cmd: &clap::Command,
+        arg: Option<&clap::Arg>,
+        value: &std::ffi::OsStr,
+    ) -> Result<Self::Value, clap::Error> {
+        let val = StringValueParser::new().parse_ref(cmd, arg, value)?;
+        let arg = arg.expect("argument to be defined");
+        let short = arg.get_short().expect("short version to be defined");
+        let long = arg.get_long().expect("long version to be defined");
+
+        if val == "help" {
+            fmt_help(&long, &short.to_string(), &CodegenOption::options());
+            std::process::exit(0);
+        }
+
+        let mut options = vec![];
+        for opt in val.split(",").into_iter() {
+            options.push(CodegenOption::from_str(opt).map_err(|e| {
+                clap::Error::raw(clap::error::ErrorKind::InvalidValue, format!("{}", e))
+            })?);
+        }
+
+        options
+            .try_into()
+            .map_err(|e| clap::Error::raw(clap::error::ErrorKind::InvalidValue, format!("{}", e)))
     }
 }
 
@@ -202,25 +226,29 @@ impl TryFrom<Vec<CodegenOption>> for CodegenOptionGroup {
     }
 }
 
-#[derive(Debug, PartialEq)]
-pub struct JsRuntimeOptionGroup {
+// JS option group.
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct JsOptionGroup {
     /// Whether to redirect console.log to stderr.
     pub redirect_stdout_to_stderr: bool,
 }
 
-impl Default for JsRuntimeOptionGroup {
+impl Default for JsOptionGroup {
     fn default() -> Self {
         Config::default().into()
     }
 }
 
-#[derive(Clone, Debug)]
-pub enum JsRuntimeOption {
-    /// Whether to redirect console.log to stderr.
-    RedirectStdoutToStderr(bool),
+option_group! {
+    #[derive(Clone, Debug)]
+    pub enum JsOption {
+        /// Whether to redirect console.log to stderr.
+        RedirectStdoutToStderr(bool),
+    }
 }
 
-impl FromStr for JsRuntimeOption {
+impl FromStr for JsOption {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
@@ -230,25 +258,63 @@ impl FromStr for JsRuntimeOption {
             .ok_or_else(|| anyhow!("Invalid JS runtime key"))?;
         let value = parts.next();
         let option = match key {
-            "redirect-stdout-to-stderr" => Self::RedirectStdoutToStderr(match value {
-                None => true,
-                Some("y") => true,
-                Some("n") => false,
-                _ => bail!("Invalid value for redirect-stdout-to-stderr"),
-            }),
+            "redirect-stdout-to-stderr" => Self::RedirectStdoutToStderr(OptionValue::parse(value)?),
             _ => bail!("Invalid JS runtime key"),
         };
         Ok(option)
     }
 }
 
-impl From<Vec<JsRuntimeOption>> for JsRuntimeOptionGroup {
-    fn from(value: Vec<JsRuntimeOption>) -> Self {
+#[derive(Clone)]
+pub struct JsOptionGroupParser {}
+
+impl ValueParserFactory for JsOptionGroup {
+    type Parser = JsOptionGroupParser;
+
+    fn value_parser() -> Self::Parser {
+        JsOptionGroupParser {}
+    }
+}
+
+impl TypedValueParser for JsOptionGroupParser {
+    type Value = JsOptionGroup;
+
+    fn parse_ref(
+        &self,
+        cmd: &clap::Command,
+        arg: Option<&clap::Arg>,
+        value: &std::ffi::OsStr,
+    ) -> std::prelude::v1::Result<Self::Value, clap::Error> {
+        let val = StringValueParser::new().parse_ref(cmd, arg, value)?;
+        let arg = arg.expect("argument to be defined");
+        let short = arg.get_short().expect("short version to be defined");
+        let long = arg.get_long().expect("long version to be defined");
+
+        if val == "help" {
+            fmt_help(&long, &short.to_string(), &JsOption::options());
+            std::process::exit(0);
+        }
+
+        let mut options = vec![];
+        for opt in val.split(",").into_iter() {
+            options.push(JsOption::from_str(opt).map_err(|e| {
+                clap::Error::raw(clap::error::ErrorKind::InvalidValue, format!("{}", e))
+            })?);
+        }
+
+        options.try_into().map_err(|e| {
+            clap::Error::raw(clap::error::ErrorKind::InvalidValue, format!("{}", e)).with_cmd(cmd)
+        })
+    }
+}
+
+impl From<Vec<JsOption>> for JsOptionGroup {
+    fn from(value: Vec<JsOption>) -> Self {
         let mut group = Self::default();
 
         for option in value {
             match option {
-                JsRuntimeOption::RedirectStdoutToStderr(enabled) => {
+                JsOption::RedirectStdoutToStderr(enabled) => {
                     group.redirect_stdout_to_stderr = enabled;
                 }
             }
@@ -258,8 +324,8 @@ impl From<Vec<JsRuntimeOption>> for JsRuntimeOptionGroup {
     }
 }
 
-impl From<JsRuntimeOptionGroup> for Config {
-    fn from(value: JsRuntimeOptionGroup) -> Self {
+impl From<JsOptionGroup> for Config {
+    fn from(value: JsOptionGroup) -> Self {
         let mut config = Self::default();
         config.set(
             Config::REDIRECT_STDOUT_TO_STDERR,
@@ -269,7 +335,7 @@ impl From<JsRuntimeOptionGroup> for Config {
     }
 }
 
-impl From<Config> for JsRuntimeOptionGroup {
+impl From<Config> for JsOptionGroup {
     fn from(value: Config) -> Self {
         Self {
             redirect_stdout_to_stderr: value.contains(Config::REDIRECT_STDOUT_TO_STDERR),
