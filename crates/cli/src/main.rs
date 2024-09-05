@@ -10,7 +10,7 @@ use crate::commands::{Cli, Command, EmitProviderCommandOpts};
 use anyhow::Result;
 use clap::Parser;
 use codegen::{CodeGenBuilder, DynamicGenerator, StaticGenerator};
-use commands::JsOptionGroup;
+use commands::{CodegenOptionGroup, JsOptionGroup};
 use javy_config::Config;
 use js::JS;
 use std::fs;
@@ -59,14 +59,14 @@ fn main() -> Result<()> {
         }
         Command::Build(opts) => {
             let js = JS::from_file(&opts.input)?;
-            let codegen = opts.codegen.clone().unwrap_or_default();
+            let codegen: CodegenOptionGroup = opts.codegen.clone().try_into()?;
             let mut builder = CodeGenBuilder::new();
             builder
                 .wit_opts(codegen.wit)
                 .source_compression(codegen.source_compression)
                 .provider_version("2");
 
-            let js_opts: JsOptionGroup = opts.js.clone().unwrap_or_default();
+            let js_opts: JsOptionGroup = opts.js.clone().into();
             let mut gen = if codegen.dynamic {
                 builder.build::<DynamicGenerator>(js_opts.into())?
             } else {

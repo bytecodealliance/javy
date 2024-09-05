@@ -1,6 +1,13 @@
 use anyhow::{bail, Result};
 use std::path::PathBuf;
 
+/// An option group used for parsing strings to their group option representation.
+#[derive(Clone, Debug)]
+pub struct GroupOption<T>(pub Vec<T>);
+
+#[derive(Clone)]
+pub struct GroupOptionParser<T>(pub std::marker::PhantomData<T>);
+
 /// Generic option attributes.
 #[derive(Debug)]
 pub struct OptionMeta {
@@ -26,8 +33,35 @@ pub fn fmt_help(cmd: &str, short: &str, meta: &[OptionMeta]) {
 /// Commonalities between all option groups.
 // Until we make more extensive use of this trait.
 #[allow(dead_code)]
-pub trait OptionGroup {
+pub trait GroupDescriptor {
     fn options() -> Vec<OptionMeta>;
+}
+
+pub trait GroupOptionBuilder: Clone + Sized + Send + Sync + 'static {
+    fn parse(val: &str) -> anyhow::Result<Self>
+    where
+        Self: Sized;
+}
+
+pub fn to_kebab_case(val: &str) -> String {
+    let kebab_case = val
+        .chars()
+        .flat_map(|c| {
+            if c.is_uppercase() {
+                vec!['-', c.to_ascii_lowercase()]
+            } else {
+                vec![c]
+            }
+        })
+        .collect::<String>();
+
+    let name = if let Some(stripped) = kebab_case.strip_prefix('-') {
+        stripped
+    } else {
+        &kebab_case
+    };
+
+    name.to_string()
 }
 
 #[macro_export]
@@ -50,35 +84,35 @@ macro_rules! option_group {
             )+
         }
 
-        impl $crate::option::OptionGroup for $opts {
+        impl $crate::option::GroupDescriptor for $opts {
             fn options() -> Vec<$crate::option::OptionMeta> {
                 let mut options = vec![];
                 $(
-                    let name = stringify!($opt);
-                    let kebab_case = name
-                    .chars()
-                    .flat_map(|c| {
-                        if c.is_uppercase() {
-                            vec!['-', c.to_ascii_lowercase()]
-                        } else {
-                            vec![c]
-                        }
-                    })
-                    .collect::<String>();
-
-                    if let Some(stripped) =  kebab_case.strip_prefix('-') {
-                        stripped
-                    } else {
-                        &kebab_case
-                    };
+                    let name = $crate::option::to_kebab_case(stringify!($opt));
                     options.push($crate::option::OptionMeta {
-                        name: kebab_case.into(),
+                        name: name.to_string(),
                         doc: concat!($($doc, "\n",)*).into(),
                         help: <$type>::help().to_string(),
                     });
                 )+
 
                 options
+            }
+        }
+
+        impl $crate::option::GroupOptionBuilder for $opts {
+            fn parse(val: &str) -> anyhow::Result<Self> {
+                let mut parts = val.splitn(2, '=');
+                let key = parts.next().ok_or_else(|| anyhow!("Expected key. None found"))?;
+                let val = parts.next();
+
+                $(
+                    if key == $crate::option::to_kebab_case(stringify!($opt)) {
+                        return Ok($opts::$opt($crate::option::OptionValue::parse(val)?));
+                    }
+                )+
+
+                    Err(anyhow!("Invalid argument"))
             }
         }
     };

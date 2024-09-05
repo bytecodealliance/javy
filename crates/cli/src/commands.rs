@@ -1,14 +1,16 @@
 use crate::option_group;
-use anyhow::{anyhow, bail, Result};
+use anyhow::{anyhow, Result};
 use clap::{
     builder::{StringValueParser, TypedValueParser, ValueParserFactory},
     Parser, Subcommand,
 };
 use javy_config::Config;
-use std::{path::PathBuf, str::FromStr};
+use std::path::PathBuf;
 
 use crate::codegen::WitOptions;
-use crate::option::{fmt_help, OptionGroup, OptionValue};
+use crate::option::{
+    fmt_help, GroupDescriptor, GroupOption, GroupOptionBuilder, GroupOptionParser, OptionValue,
+};
 
 #[derive(Debug, Parser)]
 #[command(
@@ -88,12 +90,12 @@ pub struct BuildCommandOpts {
     #[arg(short = 'C', long = "codegen")]
     /// Code generation options.
     /// Use `-C help` for more details.
-    pub codegen: Option<CodegenOptionGroup>,
+    pub codegen: Vec<GroupOption<CodegenOption>>,
 
     #[arg(short = 'J', long = "javascript")]
-    /// JS runtime options.
+    /// JavaScript runtime options.
     /// Use `-J help` for more details.
-    pub js: Option<JsOptionGroup>,
+    pub js: Vec<GroupOption<JsOption>>,
 }
 
 #[derive(Debug, Parser)]
@@ -103,7 +105,50 @@ pub struct EmitProviderCommandOpts {
     pub out: Option<PathBuf>,
 }
 
-// Code generation options.
+impl<T> ValueParserFactory for GroupOption<T>
+where
+    T: GroupDescriptor,
+{
+    type Parser = GroupOptionParser<T>;
+
+    fn value_parser() -> Self::Parser {
+        GroupOptionParser(std::marker::PhantomData)
+    }
+}
+
+impl<T> TypedValueParser for GroupOptionParser<T>
+where
+    T: GroupDescriptor + GroupOptionBuilder,
+{
+    type Value = GroupOption<T>;
+
+    fn parse_ref(
+        &self,
+        cmd: &clap::Command,
+        arg: Option<&clap::Arg>,
+        value: &std::ffi::OsStr,
+    ) -> Result<Self::Value, clap::Error> {
+        let val = StringValueParser::new().parse_ref(cmd, arg, value)?;
+        let arg = arg.expect("argument to be defined");
+        let short = arg.get_short().expect("short version to be defined");
+        let long = arg.get_long().expect("long version to be defined");
+
+        if val == "help" {
+            fmt_help(long, &short.to_string(), &T::options());
+            std::process::exit(0);
+        }
+
+        let mut opts = vec![];
+
+        for val in val.split(',') {
+            opts.push(T::parse(val).map_err(|e| {
+                clap::Error::raw(clap::error::ErrorKind::InvalidValue, format!("{}", e))
+            })?)
+        }
+
+        Ok(GroupOption(opts))
+    }
+}
 
 /// Code generation option group.
 #[derive(Clone, Debug)]
@@ -144,89 +189,27 @@ option_group! {
     }
 }
 
-impl FromStr for CodegenOption {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        let mut parts = s.splitn(2, '=');
-        let key = parts.next().ok_or_else(|| anyhow!("Invalid codegen key"))?;
-        let value = parts.next();
-        let option = match key {
-            "dynamic" => Self::Dynamic(OptionValue::parse(value)?),
-            "wit" => Self::Wit(OptionValue::parse(value)?),
-            "wit-world" => Self::WitWorld(OptionValue::parse(value)?),
-            "source-compression" => Self::SourceCompression(OptionValue::parse(value)?),
-            _ => bail!("Invalid codegen key"),
-        };
-        Ok(option)
-    }
-}
-
-#[derive(Clone)]
-pub struct CodegenOptionGroupParser {}
-
-impl ValueParserFactory for CodegenOptionGroup {
-    type Parser = CodegenOptionGroupParser;
-
-    fn value_parser() -> Self::Parser {
-        CodegenOptionGroupParser {}
-    }
-}
-
-impl TypedValueParser for CodegenOptionGroupParser {
-    type Value = CodegenOptionGroup;
-    fn parse_ref(
-        &self,
-        cmd: &clap::Command,
-        arg: Option<&clap::Arg>,
-        value: &std::ffi::OsStr,
-    ) -> Result<Self::Value, clap::Error> {
-        let val = StringValueParser::new().parse_ref(cmd, arg, value)?;
-        let arg = arg.expect("argument to be defined");
-        let short = arg.get_short().expect("short version to be defined");
-        let long = arg.get_long().expect("long version to be defined");
-
-        if val == "help" {
-            fmt_help(long, &short.to_string(), &CodegenOption::options());
-            std::process::exit(0);
-        }
-
-        let mut options = vec![];
-        for opt in val.split(',') {
-            options.push(CodegenOption::from_str(opt).map_err(|e| {
-                clap::Error::raw(clap::error::ErrorKind::InvalidValue, format!("{}", e))
-            })?);
-        }
-
-        options
-            .try_into()
-            .map_err(|e| clap::Error::raw(clap::error::ErrorKind::InvalidValue, format!("{}", e)))
-    }
-}
-
-impl TryFrom<Vec<CodegenOption>> for CodegenOptionGroup {
+impl TryFrom<Vec<GroupOption<CodegenOption>>> for CodegenOptionGroup {
     type Error = anyhow::Error;
 
-    fn try_from(value: Vec<CodegenOption>) -> Result<Self, Self::Error> {
+    fn try_from(value: Vec<GroupOption<CodegenOption>>) -> Result<Self, Self::Error> {
         let mut options = Self::default();
         let mut wit = None;
         let mut wit_world = None;
 
-        for option in value {
+        for option in value.iter().flat_map(|i| i.0.iter()) {
             match option {
-                CodegenOption::Dynamic(enabled) => options.dynamic = enabled,
+                CodegenOption::Dynamic(enabled) => options.dynamic = *enabled,
                 CodegenOption::Wit(path) => wit = Some(path),
                 CodegenOption::WitWorld(world) => wit_world = Some(world),
-                CodegenOption::SourceCompression(enabled) => options.source_compression = enabled,
+                CodegenOption::SourceCompression(enabled) => options.source_compression = *enabled,
             }
         }
 
-        options.wit = WitOptions::from_tuple((wit, wit_world))?;
+        options.wit = WitOptions::from_tuple((wit.cloned(), wit_world.cloned()))?;
         Ok(options)
     }
 }
-
-// JS option group.
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct JsOptionGroup {
@@ -248,72 +231,14 @@ option_group! {
     }
 }
 
-impl FromStr for JsOption {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        let mut parts = s.splitn(2, '=');
-        let key = parts
-            .next()
-            .ok_or_else(|| anyhow!("Invalid JS runtime key"))?;
-        let value = parts.next();
-        let option = match key {
-            "redirect-stdout-to-stderr" => Self::RedirectStdoutToStderr(OptionValue::parse(value)?),
-            _ => bail!("Invalid JS runtime key"),
-        };
-        Ok(option)
-    }
-}
-
-#[derive(Clone)]
-pub struct JsOptionGroupParser {}
-
-impl ValueParserFactory for JsOptionGroup {
-    type Parser = JsOptionGroupParser;
-
-    fn value_parser() -> Self::Parser {
-        JsOptionGroupParser {}
-    }
-}
-
-impl TypedValueParser for JsOptionGroupParser {
-    type Value = JsOptionGroup;
-
-    fn parse_ref(
-        &self,
-        cmd: &clap::Command,
-        arg: Option<&clap::Arg>,
-        value: &std::ffi::OsStr,
-    ) -> std::prelude::v1::Result<Self::Value, clap::Error> {
-        let val = StringValueParser::new().parse_ref(cmd, arg, value)?;
-        let arg = arg.expect("argument to be defined");
-        let short = arg.get_short().expect("short version to be defined");
-        let long = arg.get_long().expect("long version to be defined");
-
-        if val == "help" {
-            fmt_help(long, &short.to_string(), &JsOption::options());
-            std::process::exit(0);
-        }
-
-        let mut options = vec![];
-        for opt in val.split(',') {
-            options.push(JsOption::from_str(opt).map_err(|e| {
-                clap::Error::raw(clap::error::ErrorKind::InvalidValue, format!("{}", e))
-            })?);
-        }
-
-        Ok(options.into())
-    }
-}
-
-impl From<Vec<JsOption>> for JsOptionGroup {
-    fn from(value: Vec<JsOption>) -> Self {
+impl From<Vec<GroupOption<JsOption>>> for JsOptionGroup {
+    fn from(value: Vec<GroupOption<JsOption>>) -> Self {
         let mut group = Self::default();
 
-        for option in value {
+        for option in value.iter().flat_map(|e| e.0.iter()) {
             match option {
                 JsOption::RedirectStdoutToStderr(enabled) => {
-                    group.redirect_stdout_to_stderr = enabled;
+                    group.redirect_stdout_to_stderr = *enabled;
                 }
             }
         }
