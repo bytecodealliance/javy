@@ -44,7 +44,7 @@ pub trait GroupOptionBuilder: Clone + Sized + Send + Sync + 'static {
 }
 
 pub fn to_kebab_case(val: &str) -> String {
-    let kebab_case = val
+    let mut kebab_case = val
         .chars()
         .flat_map(|c| {
             if c.is_uppercase() {
@@ -55,13 +55,11 @@ pub fn to_kebab_case(val: &str) -> String {
         })
         .collect::<String>();
 
-    let name = if let Some(stripped) = kebab_case.strip_prefix('-') {
-        stripped
-    } else {
-        &kebab_case
-    };
+    if kebab_case.starts_with('-') {
+        kebab_case.remove(0);
+    }
 
-    name.to_string()
+    kebab_case
 }
 
 #[macro_export]
