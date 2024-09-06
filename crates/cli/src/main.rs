@@ -64,7 +64,7 @@ fn main() -> Result<()> {
             builder
                 .wit_opts(codegen.wit)
                 .source_compression(codegen.source_compression)
-                .provider_version("2");
+                .provider_version("3");
 
             let js_opts: JsOptionGroup = opts.js.clone().into();
             let mut gen = if codegen.dynamic {

@@ -24,7 +24,7 @@
 use bitflags::bitflags;
 
 bitflags! {
-    #[derive(Eq, PartialEq)]
+    #[derive(Eq, PartialEq, Debug)]
     pub struct Config: u32 {
         const OVERRIDE_JSON_PARSE_AND_STRINGIFY = 1;
         const JAVY_JSON = 1 << 1;
@@ -37,8 +37,8 @@ bitflags! {
 impl Default for Config {
     fn default() -> Self {
         let mut config = Config::empty();
-        config.set(Config::OVERRIDE_JSON_PARSE_AND_STRINGIFY, false);
-        config.set(Config::JAVY_JSON, false);
+        config.set(Config::OVERRIDE_JSON_PARSE_AND_STRINGIFY, true);
+        config.set(Config::JAVY_JSON, true);
         config.set(Config::JAVY_STREAM_IO, true);
         config.set(Config::REDIRECT_STDOUT_TO_STDERR, true);
         config.set(Config::TEXT_ENCODING, true);

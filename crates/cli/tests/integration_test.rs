@@ -1,107 +1,71 @@
 use anyhow::Result;
 use javy_runner::{Builder, Runner, RunnerError};
-use std::path::PathBuf;
 use std::str;
 
-mod common;
-use common::run_with_compile_and_build;
+use javy_test_macros::javy_cli_test;
 
-static BIN: &str = env!("CARGO_BIN_EXE_javy");
-static ROOT: &str = env!("CARGO_MANIFEST_DIR");
+#[javy_cli_test]
+fn test_identity(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder.build()?;
 
-#[test]
-fn test_identity() -> Result<()> {
-    run_with_compile_and_build(|builder| {
-        let mut runner = builder.root(sample_scripts()).bin(BIN).build()?;
-
-        let (output, _, fuel_consumed) = run_with_u8s(&mut runner, 42);
-        assert_eq!(42, output);
-        assert_fuel_consumed_within_threshold(47_773, fuel_consumed);
-        Ok(())
-    })
+    let (output, _, fuel_consumed) = run_with_u8s(&mut runner, 42);
+    assert_eq!(42, output);
+    assert_fuel_consumed_within_threshold(47_773, fuel_consumed);
+    Ok(())
 }
 
-#[test]
-fn test_fib() -> Result<()> {
-    run_with_compile_and_build(|builder| {
-        let mut runner = builder
-            .root(sample_scripts())
-            .bin(BIN)
-            .input("fib.js")
-            .build()?;
+#[javy_cli_test]
+fn test_fib(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder.input("fib.js").build()?;
 
-        let (output, _, fuel_consumed) = run_with_u8s(&mut runner, 5);
-        assert_eq!(8, output);
-        assert_fuel_consumed_within_threshold(66_007, fuel_consumed);
-        Ok(())
-    })
+    let (output, _, fuel_consumed) = run_with_u8s(&mut runner, 5);
+    assert_eq!(8, output);
+    assert_fuel_consumed_within_threshold(66_007, fuel_consumed);
+    Ok(())
 }
 
-#[test]
-fn test_recursive_fib() -> Result<()> {
-    run_with_compile_and_build(|builder| {
-        let mut runner = builder
-            .bin(BIN)
-            .root(sample_scripts())
-            .input("recursive-fib.js")
-            .build()?;
+#[javy_cli_test]
+fn test_recursive_fib(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder.input("recursive-fib.js").build()?;
 
-        let (output, _, fuel_consumed) = run_with_u8s(&mut runner, 5);
-        assert_eq!(8, output);
-        assert_fuel_consumed_within_threshold(69_306, fuel_consumed);
-        Ok(())
-    })
+    let (output, _, fuel_consumed) = run_with_u8s(&mut runner, 5);
+    assert_eq!(8, output);
+    assert_fuel_consumed_within_threshold(69_306, fuel_consumed);
+    Ok(())
 }
 
-#[test]
-fn test_str() -> Result<()> {
-    run_with_compile_and_build(|builder| {
-        let mut runner = builder
-            .root(sample_scripts())
-            .bin(BIN)
-            .input("str.js")
-            .build()?;
+#[javy_cli_test]
+fn test_str(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder.input("str.js").build()?;
 
-        let (output, _, fuel_consumed) = run(&mut runner, "hello".as_bytes());
-        assert_eq!("world".as_bytes(), output);
-        assert_fuel_consumed_within_threshold(142_849, fuel_consumed);
-        Ok(())
-    })
+    let (output, _, fuel_consumed) = run(&mut runner, "hello".as_bytes());
+    assert_eq!("world".as_bytes(), output);
+    assert_fuel_consumed_within_threshold(142_849, fuel_consumed);
+    Ok(())
 }
 
-#[test]
-fn test_encoding() -> Result<()> {
-    run_with_compile_and_build(|builder| {
-        let mut runner = builder
-            .root(sample_scripts())
-            .bin(BIN)
-            .input("text-encoding.js")
-            .build()?;
+#[javy_cli_test]
+fn test_encoding(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder.input("text-encoding.js").build()?;
 
-        let (output, _, fuel_consumed) = run(&mut runner, "hello".as_bytes());
-        assert_eq!("el".as_bytes(), output);
-        assert_fuel_consumed_within_threshold(258_197, fuel_consumed);
+    let (output, _, fuel_consumed) = run(&mut runner, "hello".as_bytes());
+    assert_eq!("el".as_bytes(), output);
+    assert_fuel_consumed_within_threshold(258_197, fuel_consumed);
 
-        let (output, _, _) = run(&mut runner, "invalid".as_bytes());
-        assert_eq!("true".as_bytes(), output);
+    let (output, _, _) = run(&mut runner, "invalid".as_bytes());
+    assert_eq!("true".as_bytes(), output);
 
-        let (output, _, _) = run(&mut runner, "invalid_fatal".as_bytes());
-        assert_eq!("The encoded data was not valid utf-8".as_bytes(), output);
+    let (output, _, _) = run(&mut runner, "invalid_fatal".as_bytes());
+    assert_eq!("The encoded data was not valid utf-8".as_bytes(), output);
 
-        let (output, _, _) = run(&mut runner, "test".as_bytes());
-        assert_eq!("test2".as_bytes(), output);
-        Ok(())
-    })
+    let (output, _, _) = run(&mut runner, "test".as_bytes());
+    assert_eq!("test2".as_bytes(), output);
+    Ok(())
 }
 
-#[test]
-fn test_logging_with_compile() -> Result<()> {
-    let mut runner = Builder::default()
-        .root(sample_scripts())
-        .bin(BIN)
-        .input("logging.js")
-        .command(javy_runner::JavyCommand::Compile)
-        .build()?;
+#[javy_cli_test(commands(not(Build)))]
+fn test_logging_with_compile(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder.input("logging.js").build()?;
 
     let (output, logs, fuel_consumed) = run(&mut runner, &[]);
     assert!(output.is_empty());
@@ -113,13 +77,10 @@ fn test_logging_with_compile() -> Result<()> {
     Ok(())
 }
 
-#[test]
-fn test_logging_without_redirect() -> Result<()> {
-    let mut runner = Builder::default()
-        .root(sample_scripts())
-        .bin(BIN)
+#[javy_cli_test(commands(not(Compile)))]
+fn test_logging_without_redirect(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder
         .input("logging.js")
-        .command(javy_runner::JavyCommand::Build)
         .redirect_stdout_to_stderr(false)
         .build()?;
 
@@ -130,13 +91,10 @@ fn test_logging_without_redirect() -> Result<()> {
     Ok(())
 }
 
-#[test]
-fn test_logging_with_redirect() -> Result<()> {
-    let mut runner = Builder::default()
-        .root(sample_scripts())
-        .bin(BIN)
+#[javy_cli_test(commands(not(Compile)))]
+fn test_logging_with_redirect(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder
         .input("logging.js")
-        .command(javy_runner::JavyCommand::Build)
         .redirect_stdout_to_stderr(true)
         .build()?;
 
@@ -150,231 +108,183 @@ fn test_logging_with_redirect() -> Result<()> {
     Ok(())
 }
 
-#[test]
-fn test_readme_script() -> Result<()> {
-    run_with_compile_and_build(|builder| {
-        let mut runner = builder
-            .root(sample_scripts())
-            .bin(BIN)
-            .input("readme.js")
-            .build()?;
+#[javy_cli_test(commands(not(Compile)), root = "tests/dynamic-linking-scripts")]
+fn test_javy_json_enabled(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder.input("javy-json-id.js").build()?;
 
-        let (output, _, fuel_consumed) = run(&mut runner, r#"{ "n": 2, "bar": "baz" }"#.as_bytes());
-        assert_eq!(r#"{"foo":3,"newBar":"baz!"}"#.as_bytes(), output);
-        assert_fuel_consumed_within_threshold(270_919, fuel_consumed);
-        Ok(())
-    })
+    let input = "{\"x\":5}";
+    let (output, logs, _) = run(&mut runner, input.as_bytes());
+
+    assert_eq!(logs, "undefined\n");
+    assert_eq!(String::from_utf8(output)?, input);
+
+    Ok(())
+}
+
+#[javy_cli_test(commands(not(Compile)), root = "tests/dynamic-linking-scripts")]
+fn test_javy_json_disabled(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder
+        .input("javy-json-id.js")
+        .javy_stream_io(false)
+        .build()?;
+
+    let result = runner.exec(&[]);
+    assert!(result.is_err());
+
+    Ok(())
+}
+
+#[javy_cli_test]
+fn test_readme_script(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder.input("readme.js").build()?;
+
+    let (output, _, fuel_consumed) = run(&mut runner, r#"{ "n": 2, "bar": "baz" }"#.as_bytes());
+    assert_eq!(r#"{"foo":3,"newBar":"baz!"}"#.as_bytes(), output);
+    assert_fuel_consumed_within_threshold(270_919, fuel_consumed);
+    Ok(())
 }
 
 #[cfg(feature = "experimental_event_loop")]
-#[test]
-fn test_promises() -> Result<()> {
-    run_with_compile_and_build(|builder| {
-        let mut runner = builder
-            .bin(BIN)
-            .root(sample_scripts())
-            .input("promise.js")
-            .build()?;
+#[javy_cli_test]
+fn test_promises(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder.input("promise.js").build()?;
 
-        let (output, _, _) = run(&mut runner, &[]);
-        assert_eq!("\"foo\"\"bar\"".as_bytes(), output);
-        Ok(())
-    })
+    let (output, _, _) = run(&mut runner, &[]);
+    assert_eq!("\"foo\"\"bar\"".as_bytes(), output);
+    Ok(())
 }
 
 #[cfg(not(feature = "experimental_event_loop"))]
-#[test]
-fn test_promises() -> Result<()> {
+#[javy_cli_test]
+fn test_promises(builder: &mut Builder) -> Result<()> {
     use javy_runner::RunnerError;
 
-    run_with_compile_and_build(|builder| {
-        let mut runner = builder
-            .root(sample_scripts())
-            .bin(BIN)
-            .input("promise.js")
-            .build()?;
-        let res = runner.exec(&[]);
-        let err = res.err().unwrap().downcast::<RunnerError>().unwrap();
-        assert!(str::from_utf8(&err.stderr)
-            .unwrap()
-            .contains("Pending jobs in the event queue."));
+    let mut runner = builder.input("promise.js").build()?;
+    let res = runner.exec(&[]);
+    let err = res.err().unwrap().downcast::<RunnerError>().unwrap();
+    assert!(str::from_utf8(&err.stderr)
+        .unwrap()
+        .contains("Pending jobs in the event queue."));
 
-        Ok(())
-    })
+    Ok(())
 }
 
 #[cfg(feature = "experimental_event_loop")]
-#[test]
-fn test_promise_top_level_await() -> Result<()> {
-    run_with_compile_and_build(|builder| {
-        let mut runner = builder
-            .bin(BIN)
-            .root(sample_scripts())
-            .input("top-level-await.js")
-            .build()?;
-        let (out, _, _) = run(&mut runner, &[]);
+#[javy_cli_test]
+fn test_promise_top_level_await(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder.input("top-level-await.js").build()?;
+    let (out, _, _) = run(&mut runner, &[]);
 
-        assert_eq!("bar", String::from_utf8(out)?);
-        Ok(())
-    })
+    assert_eq!("bar", String::from_utf8(out)?);
+    Ok(())
 }
 
-#[test]
-fn test_exported_functions() -> Result<()> {
-    run_with_compile_and_build(|builder| {
-        let mut runner = builder
-            .bin(BIN)
-            .root(sample_scripts())
-            .input("exported-fn.js")
-            .wit("exported-fn.wit")
-            .world("exported-fn")
-            .build()?;
-        let (_, logs, fuel_consumed) = run_fn(&mut runner, "foo", &[]);
-        assert_eq!("Hello from top-level\nHello from foo\n", logs);
-        assert_fuel_consumed_within_threshold(80023, fuel_consumed);
-        let (_, logs, _) = run_fn(&mut runner, "foo-bar", &[]);
-        assert_eq!("Hello from top-level\nHello from fooBar\n", logs);
-        Ok(())
-    })
+#[javy_cli_test]
+fn test_exported_functions(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder
+        .input("exported-fn.js")
+        .wit("exported-fn.wit")
+        .world("exported-fn")
+        .build()?;
+    let (_, logs, fuel_consumed) = run_fn(&mut runner, "foo", &[]);
+    assert_eq!("Hello from top-level\nHello from foo\n", logs);
+    assert_fuel_consumed_within_threshold(80023, fuel_consumed);
+    let (_, logs, _) = run_fn(&mut runner, "foo-bar", &[]);
+    assert_eq!("Hello from top-level\nHello from fooBar\n", logs);
+    Ok(())
 }
 
 #[cfg(feature = "experimental_event_loop")]
-#[test]
-fn test_exported_promises() -> Result<()> {
-    use clap::builder;
-
-    run_with_compile_and_build(|builder| {
-        let mut runner = builder
-            .bin(BIN)
-            .root(sample_scripts())
-            .input("exported-promise-fn.js")
-            .wit("exported-promise-fn.wit")
-            .world("exported-promise-fn")
-            .build()?;
-        let (_, logs, _) = run_fn(&mut runner, "foo", &[]);
-        assert_eq!("Top-level\ninside foo\n", logs);
-        Ok(())
-    })
+#[javy_cli_test]
+fn test_exported_promises(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder
+        .input("exported-promise-fn.js")
+        .wit("exported-promise-fn.wit")
+        .world("exported-promise-fn")
+        .build()?;
+    let (_, logs, _) = run_fn(&mut runner, "foo", &[]);
+    assert_eq!("Top-level\ninside foo\n", logs);
+    Ok(())
 }
 
-#[test]
-fn test_exported_functions_without_flag() -> Result<()> {
-    run_with_compile_and_build(|builder| {
-        let mut runner = builder
-            .root(sample_scripts())
-            .bin(BIN)
-            .input("exported-fn.js")
-            .build()?;
-        let res = runner.exec_func("foo", &[]);
-        assert_eq!(
-            "failed to find function export `foo`",
-            res.err().unwrap().to_string()
-        );
-        Ok(())
-    })
+#[javy_cli_test]
+fn test_exported_functions_without_flag(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder.input("exported-fn.js").build()?;
+    let res = runner.exec_func("foo", &[]);
+    assert_eq!(
+        "failed to find function export `foo`",
+        res.err().unwrap().to_string()
+    );
+    Ok(())
 }
 
-#[test]
-fn test_exported_function_without_semicolons() -> Result<()> {
-    run_with_compile_and_build(|builder| {
-        let mut runner = builder
-            .root(sample_scripts())
-            .bin(BIN)
-            .input("exported-fn-no-semicolon.js")
-            .wit("exported-fn-no-semicolon.wit")
-            .world("exported-fn")
-            .build()?;
-        run_fn(&mut runner, "foo", &[]);
-        Ok(())
-    })
+#[javy_cli_test]
+fn test_exported_function_without_semicolons(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder
+        .input("exported-fn-no-semicolon.js")
+        .wit("exported-fn-no-semicolon.wit")
+        .world("exported-fn")
+        .build()?;
+    run_fn(&mut runner, "foo", &[]);
+    Ok(())
 }
 
-#[test]
-fn test_producers_section_present() -> Result<()> {
-    run_with_compile_and_build(|builder| {
-        let runner = builder
-            .root(sample_scripts())
-            .bin(BIN)
-            .input("readme.js")
-            .build()?;
+#[javy_cli_test]
+fn test_producers_section_present(builder: &mut Builder) -> Result<()> {
+    let runner = builder.input("readme.js").build()?;
 
-        runner.assert_producers()
-    })
+    runner.assert_producers()
 }
 
-#[test]
-fn test_error_handling() -> Result<()> {
-    run_with_compile_and_build(|builder| {
-        let mut runner = builder
-            .root(sample_scripts())
-            .bin(BIN)
-            .input("error.js")
-            .build()?;
-        let result = runner.exec(&[]);
-        let err = result.err().unwrap().downcast::<RunnerError>().unwrap();
+#[javy_cli_test]
+fn test_error_handling(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder.input("error.js").build()?;
+    let result = runner.exec(&[]);
+    let err = result.err().unwrap().downcast::<RunnerError>().unwrap();
 
-        let expected_log_output = "Error:2:9 error\n    at error (function.mjs:2:9)\n    at <anonymous> (function.mjs:5:1)\n\n";
+    let expected_log_output = "Error:2:9 error\n    at error (function.mjs:2:9)\n    at <anonymous> (function.mjs:5:1)\n\n";
 
-        assert_eq!(expected_log_output, str::from_utf8(&err.stderr).unwrap());
-        Ok(())
-    })
+    assert_eq!(expected_log_output, str::from_utf8(&err.stderr).unwrap());
+    Ok(())
 }
 
-#[test]
-fn test_same_module_outputs_different_random_result() -> Result<()> {
-    run_with_compile_and_build(|builder| {
-        let mut runner = builder
-            .bin(BIN)
-            .root(sample_scripts())
-            .input("random.js")
-            .build()?;
-        let (output, _, _) = runner.exec(&[]).unwrap();
-        let (output2, _, _) = runner.exec(&[]).unwrap();
-        // In theory these could be equal with a correct implementation but it's very unlikely.
-        assert!(output != output2);
-        // Don't check fuel consumed because fuel consumed can be different from run to run. See
-        // https://github.com/bytecodealliance/javy/issues/401 for investigating the cause.
-        Ok(())
-    })
+#[javy_cli_test]
+fn test_same_module_outputs_different_random_result(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder.input("random.js").build()?;
+    let (output, _, _) = runner.exec(&[]).unwrap();
+    let (output2, _, _) = runner.exec(&[]).unwrap();
+    // In theory these could be equal with a correct implementation but it's very unlikely.
+    assert!(output != output2);
+    // Don't check fuel consumed because fuel consumed can be different from run to run. See
+    // https://github.com/bytecodealliance/javy/issues/401 for investigating the cause.
+    Ok(())
 }
 
-#[test]
-fn test_exported_default_arrow_fn() -> Result<()> {
-    run_with_compile_and_build(|builder| {
-        let mut runner = builder
-            .bin(BIN)
-            .root(sample_scripts())
-            .input("exported-default-arrow-fn.js")
-            .wit("exported-default-arrow-fn.wit")
-            .world("exported-arrow")
-            .build()?;
+#[javy_cli_test]
+fn test_exported_default_arrow_fn(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder
+        .input("exported-default-arrow-fn.js")
+        .wit("exported-default-arrow-fn.wit")
+        .world("exported-arrow")
+        .build()?;
 
-        let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", &[]);
-        assert_eq!(logs, "42\n");
-        assert_fuel_consumed_within_threshold(76706, fuel_consumed);
-        Ok(())
-    })
+    let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", &[]);
+    assert_eq!(logs, "42\n");
+    assert_fuel_consumed_within_threshold(76706, fuel_consumed);
+    Ok(())
 }
 
-#[test]
-fn test_exported_default_fn() -> Result<()> {
-    run_with_compile_and_build(|builder| {
-        let mut runner = builder
-            .bin(BIN)
-            .root(sample_scripts())
-            .input("exported-default-fn.js")
-            .wit("exported-default-fn.wit")
-            .world("exported-default")
-            .build()?;
-        let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", &[]);
-        assert_eq!(logs, "42\n");
-        assert_fuel_consumed_within_threshold(77909, fuel_consumed);
-        Ok(())
-    })
-}
-
-fn sample_scripts() -> PathBuf {
-    PathBuf::from(ROOT).join("tests").join("sample-scripts")
+#[javy_cli_test]
+fn test_exported_default_fn(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder
+        .input("exported-default-fn.js")
+        .wit("exported-default-fn.wit")
+        .world("exported-default")
+        .build()?;
+    let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", &[]);
+    assert_eq!(logs, "42\n");
+    assert_fuel_consumed_within_threshold(77909, fuel_consumed);
+    Ok(())
 }
 
 fn run_with_u8s(r: &mut Runner, stdin: u8) -> (u8, String, u64) {
