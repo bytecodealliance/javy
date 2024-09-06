@@ -36,7 +36,7 @@ fn register(this: Ctx<'_>) -> Result<()> {
     )?;
     let mut opts = EvalOptions::default();
     opts.strict = false;
-    this.eval_with_options(include_str!("./text-encoding.js"), opts)?;
+    this.eval_with_options::<(), _>(include_str!("./text-encoding.js"), opts)?;
 
     Ok::<_, Error>(())
 }

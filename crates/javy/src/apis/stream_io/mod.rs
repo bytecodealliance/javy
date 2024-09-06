@@ -37,7 +37,7 @@ fn register(this: Ctx<'_>) -> Result<()> {
         }),
     )?;
 
-    this.eval(include_str!("io.js"))?;
+    this.eval::<(), _>(include_str!("io.js"))?;
     Ok::<_, Error>(())
 }
 

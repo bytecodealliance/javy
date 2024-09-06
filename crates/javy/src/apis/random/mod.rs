@@ -31,7 +31,7 @@ mod tests {
         runtime.context().with(|this| {
             let mut eval_opts = EvalOptions::default();
             eval_opts.strict = false;
-            this.eval_with_options("result = Math.random()", eval_opts)?;
+            this.eval_with_options::<(), _>("result = Math.random()", eval_opts)?;
             let result: f64 = this
                 .globals()
                 .get::<&str, Value<'_>>("result")?
