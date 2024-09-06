@@ -318,39 +318,47 @@ mod tests {
 
         let raw = vec![GroupOption(vec![JsOption::RedirectStdoutToStderr(false)])];
         let group: JsOptionGroup = raw.into();
-        let mut expected = JsOptionGroup::default();
+        let expected = JsOptionGroup {
+            redirect_stdout_to_stderr: false,
+            ..Default::default()
+        };
 
-        expected.redirect_stdout_to_stderr = false;
         assert_eq!(group, expected);
 
         let raw = vec![GroupOption(vec![JsOption::JavyJson(false)])];
         let group: JsOptionGroup = raw.into();
-        let mut expected = JsOptionGroup::default();
-
-        expected.javy_json = false;
+        let expected = JsOptionGroup {
+            javy_json: false,
+            ..Default::default()
+        };
         assert_eq!(group, expected);
 
         let raw = vec![GroupOption(vec![JsOption::JavyStreamIo(false)])];
         let group: JsOptionGroup = raw.into();
-        let mut expected = JsOptionGroup::default();
-
-        expected.javy_stream_io = false;
+        let expected = JsOptionGroup {
+            javy_stream_io: false,
+            ..Default::default()
+        };
         assert_eq!(group, expected);
 
         let raw = vec![GroupOption(vec![JsOption::OverrideJsonParseAndStringify(
             false,
         )])];
         let group: JsOptionGroup = raw.into();
-        let mut expected = JsOptionGroup::default();
 
-        expected.override_json_parse_and_stringify = false;
+        let expected = JsOptionGroup {
+            override_json_parse_and_stringify: false,
+            ..Default::default()
+        };
         assert_eq!(group, expected);
 
         let raw = vec![GroupOption(vec![JsOption::TextEncoding(false)])];
         let group: JsOptionGroup = raw.into();
-        let mut expected = JsOptionGroup::default();
 
-        expected.text_encoding = false;
+        let expected = JsOptionGroup {
+            text_encoding: false,
+            ..Default::default()
+        };
         assert_eq!(group, expected);
 
         let raw = vec![GroupOption(vec![
@@ -361,14 +369,13 @@ mod tests {
             JsOption::OverrideJsonParseAndStringify(false),
         ])];
         let group: JsOptionGroup = raw.into();
-        let mut expected = JsOptionGroup::default();
-
-        expected.text_encoding = false;
-        expected.override_json_parse_and_stringify = false;
-        expected.javy_json = false;
-        expected.javy_stream_io = false;
-        expected.redirect_stdout_to_stderr = false;
-
+        let expected = JsOptionGroup {
+            javy_stream_io: false,
+            javy_json: false,
+            redirect_stdout_to_stderr: false,
+            text_encoding: false,
+            override_json_parse_and_stringify: false,
+        };
         assert_eq!(group, expected);
 
         Ok(())
@@ -381,15 +388,19 @@ mod tests {
 
         let raw = vec![GroupOption(vec![CodegenOption::Dynamic(true)])];
         let group: CodegenOptionGroup = raw.try_into()?;
-        let mut expected = CodegenOptionGroup::default();
-        expected.dynamic = true;
+        let expected = CodegenOptionGroup {
+            dynamic: true,
+            ..Default::default()
+        };
 
         assert_eq!(group, expected);
 
         let raw = vec![GroupOption(vec![CodegenOption::SourceCompression(false)])];
         let group: CodegenOptionGroup = raw.try_into()?;
-        let mut expected = CodegenOptionGroup::default();
-        expected.source_compression = false;
+        let expected = CodegenOptionGroup {
+            source_compression: false,
+            ..Default::default()
+        };
 
         assert_eq!(group, expected);
 
