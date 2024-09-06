@@ -11,12 +11,6 @@ use wasi_common::sync::WasiCtxBuilder;
 use wasi_common::WasiCtx;
 use wasmtime::{AsContextMut, Config, Engine, Instance, Linker, Module, OptLevel, Store};
 
-// TODO: Some of the methods in the Runner could be refactored to take structs
-// as parameters rather than individual parameters to avoid verbosity.
-//
-// This refactoring will be a bit challenging until we fully deprecate the
-// `compile` command.
-
 #[derive(Clone)]
 pub enum JavyCommand {
     Build,
@@ -258,6 +252,7 @@ impl StoreContext {
 }
 
 impl Runner {
+    #[allow(clippy::too_many_arguments)]
     fn build(
         bin: String,
         root: PathBuf,
@@ -499,6 +494,13 @@ impl Runner {
         file
     }
 
+    // TODO: Some of the methods in the Runner (`build`, `build_args`)  could be
+    // refactored to take structs as parameters rather than individual
+    // parameters to avoid verbosity.
+    //
+    // This refactoring will be a bit challenging until we fully deprecate the
+    // `compile` command.
+    #[allow(clippy::too_many_arguments)]
     fn build_args(
         input: &Path,
         out: &Path,
