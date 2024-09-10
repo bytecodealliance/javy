@@ -141,7 +141,7 @@ fn gen_tests(
                 fn #test_name() {
                     let mut config = ::javy::Config::default();
                     config
-                        .override_json_parse_and_stringify(true);
+                        .simd_json_builtins(true);
                     let runtime = ::javy::Runtime::new(config).expect("runtime to be created");
                     let harness_path = ::std::path::PathBuf::from(#harness_str);
 
