@@ -26,7 +26,7 @@ use bitflags::bitflags;
 bitflags! {
     #[derive(Eq, PartialEq, Debug)]
     pub struct Config: u32 {
-        const OVERRIDE_JSON_PARSE_AND_STRINGIFY = 1;
+        const SIMD_JSON_BUILTINS = 1;
         const JAVY_JSON = 1 << 1;
         const JAVY_STREAM_IO = 1 << 2;
         const REDIRECT_STDOUT_TO_STDERR = 1 << 3;
@@ -37,7 +37,7 @@ bitflags! {
 impl Default for Config {
     fn default() -> Self {
         let mut config = Config::empty();
-        config.set(Config::OVERRIDE_JSON_PARSE_AND_STRINGIFY, true);
+        config.set(Config::SIMD_JSON_BUILTINS, true);
         config.set(Config::JAVY_JSON, true);
         config.set(Config::JAVY_STREAM_IO, true);
         config.set(Config::REDIRECT_STDOUT_TO_STDERR, true);
@@ -51,7 +51,7 @@ mod tests {
     use super::Config;
     #[test]
     fn check_bits() {
-        assert!(Config::OVERRIDE_JSON_PARSE_AND_STRINGIFY == Config::from_bits(1).unwrap());
+        assert!(Config::SIMD_JSON_BUILTINS == Config::from_bits(1).unwrap());
         assert!(Config::JAVY_JSON == Config::from_bits(1 << 1).unwrap());
         assert!(Config::JAVY_STREAM_IO == Config::from_bits(1 << 2).unwrap());
         assert!(Config::REDIRECT_STDOUT_TO_STDERR == Config::from_bits(1 << 3).unwrap());

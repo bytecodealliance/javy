@@ -221,7 +221,7 @@ impl TryFrom<Vec<GroupOption<CodegenOption>>> for CodegenOptionGroup {
 pub struct JsOptionGroup {
     pub redirect_stdout_to_stderr: bool,
     pub javy_json: bool,
-    pub override_json_parse_and_stringify: bool,
+    pub simd_json_builtins: bool,
     pub javy_stream_io: bool,
     pub text_encoding: bool,
 }
@@ -244,7 +244,7 @@ option_group! {
         /// Whether to override the `JSON.parse` and `JSON.stringify`
         /// implementations with an alternative, more performant, SIMD based
         /// implemetation.
-        OverrideJsonParseAndStringify(bool),
+        SimdJsonBuiltins(bool),
         /// Whether to enable support for the `TextEncoder` and `TextDecoder`
         /// APIs.
         TextEncoding(bool),
@@ -261,9 +261,7 @@ impl From<Vec<GroupOption<JsOption>>> for JsOptionGroup {
                     group.redirect_stdout_to_stderr = *enabled;
                 }
                 JsOption::JavyJson(enable) => group.javy_json = *enable,
-                JsOption::OverrideJsonParseAndStringify(enable) => {
-                    group.override_json_parse_and_stringify = *enable
-                }
+                JsOption::SimdJsonBuiltins(enable) => group.simd_json_builtins = *enable,
                 JsOption::TextEncoding(enable) => group.text_encoding = *enable,
                 JsOption::JavyStreamIo(enable) => group.javy_stream_io = *enable,
             }
@@ -281,10 +279,7 @@ impl From<JsOptionGroup> for Config {
             value.redirect_stdout_to_stderr,
         );
         config.set(Config::JAVY_JSON, value.javy_json);
-        config.set(
-            Config::OVERRIDE_JSON_PARSE_AND_STRINGIFY,
-            value.override_json_parse_and_stringify,
-        );
+        config.set(Config::SIMD_JSON_BUILTINS, value.simd_json_builtins);
         config.set(Config::JAVY_STREAM_IO, value.javy_stream_io);
         config.set(Config::TEXT_ENCODING, value.text_encoding);
         config
@@ -296,8 +291,7 @@ impl From<Config> for JsOptionGroup {
         Self {
             redirect_stdout_to_stderr: value.contains(Config::REDIRECT_STDOUT_TO_STDERR),
             javy_json: value.contains(Config::JAVY_JSON),
-            override_json_parse_and_stringify: value
-                .contains(Config::OVERRIDE_JSON_PARSE_AND_STRINGIFY),
+            simd_json_builtins: value.contains(Config::SIMD_JSON_BUILTINS),
             javy_stream_io: value.contains(Config::JAVY_STREAM_IO),
             text_encoding: value.contains(Config::TEXT_ENCODING),
         }
@@ -341,13 +335,11 @@ mod tests {
         };
         assert_eq!(group, expected);
 
-        let raw = vec![GroupOption(vec![JsOption::OverrideJsonParseAndStringify(
-            false,
-        )])];
+        let raw = vec![GroupOption(vec![JsOption::SimdJsonBuiltins(false)])];
         let group: JsOptionGroup = raw.into();
 
         let expected = JsOptionGroup {
-            override_json_parse_and_stringify: false,
+            simd_json_builtins: false,
             ..Default::default()
         };
         assert_eq!(group, expected);
@@ -366,7 +358,7 @@ mod tests {
             JsOption::JavyJson(false),
             JsOption::RedirectStdoutToStderr(false),
             JsOption::TextEncoding(false),
-            JsOption::OverrideJsonParseAndStringify(false),
+            JsOption::SimdJsonBuiltins(false),
         ])];
         let group: JsOptionGroup = raw.into();
         let expected = JsOptionGroup {
@@ -374,7 +366,7 @@ mod tests {
             javy_json: false,
             redirect_stdout_to_stderr: false,
             text_encoding: false,
-            override_json_parse_and_stringify: false,
+            simd_json_builtins: false,
         };
         assert_eq!(group, expected);
 

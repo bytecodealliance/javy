@@ -37,7 +37,7 @@ pub struct Builder {
     javy_stream_io: Option<bool>,
     /// Whether to override JSON.parse and JSON.stringify with a SIMD based
     /// implementation.
-    override_json_parse_and_stringify: Option<bool>,
+    simd_json_builtins: Option<bool>,
     /// Whether to enable the `TextEncoder` and `TextDecoder` APIs.
     text_encoding: Option<bool>,
     built: bool,
@@ -64,7 +64,7 @@ impl Default for Builder {
             redirect_stdout_to_stderr: None,
             javy_stream_io: None,
             javy_json: None,
-            override_json_parse_and_stringify: None,
+            simd_json_builtins: None,
             text_encoding: None,
             provider_version: 3,
         }
@@ -117,8 +117,8 @@ impl Builder {
         self
     }
 
-    pub fn override_json_parse_and_stringify(&mut self, enabled: bool) -> &mut Self {
-        self.override_json_parse_and_stringify = Some(enabled);
+    pub fn simd_json_builtins(&mut self, enabled: bool) -> &mut Self {
+        self.simd_json_builtins = Some(enabled);
         self
     }
 
@@ -157,7 +157,7 @@ impl Builder {
             redirect_stdout_to_stderr,
             javy_json,
             javy_stream_io,
-            override_json_parse_and_stringify,
+            simd_json_builtins,
             text_encoding,
             built: _,
             preload,
@@ -192,7 +192,7 @@ impl Builder {
                 redirect_stdout_to_stderr,
                 javy_json,
                 javy_stream_io,
-                override_json_parse_and_stringify,
+                simd_json_builtins,
                 text_encoding,
                 preload,
             ),
@@ -510,7 +510,7 @@ impl Runner {
         redirect_stdout_to_stderr: &Option<bool>,
         javy_json: &Option<bool>,
         javy_stream_io: &Option<bool>,
-        override_json_parse_and_stringify: &Option<bool>,
+        simd_json_builtins: &Option<bool>,
         text_encoding: &Option<bool>,
     ) -> Vec<String> {
         let mut args = vec![
@@ -553,10 +553,10 @@ impl Runner {
             ));
         }
 
-        if let Some(enabled) = *override_json_parse_and_stringify {
+        if let Some(enabled) = *simd_json_builtins {
             args.push("-J".to_string());
             args.push(format!(
-                "override-json-parse-and-stringify={}",
+                "simd-json-builtins={}",
                 if enabled { "y" } else { "n" }
             ));
         }

@@ -125,7 +125,7 @@ fn test_javy_json_enabled(builder: &mut Builder) -> Result<()> {
 fn test_javy_json_disabled(builder: &mut Builder) -> Result<()> {
     let mut runner = builder
         .input("javy-json-id.js")
-        .javy_stream_io(false)
+        .simd_json_builtins(false)
         .build()?;
 
     let result = runner.exec(&[]);
