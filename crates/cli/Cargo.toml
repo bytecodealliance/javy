@@ -44,6 +44,7 @@ num-format = "0.4.4"
 wasmparser = "0.215.0"
 javy-runner = { path = "../runner/" }
 uuid = { workspace = true }
+javy-test-macros = { path = "../test-macros/" }
 
 [build-dependencies]
 anyhow = "1.0.86"

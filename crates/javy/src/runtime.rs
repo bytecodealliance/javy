@@ -85,7 +85,7 @@ impl Runtime {
                 unsafe { intrinsic::Json::add_intrinsic(ctx.as_raw()) }
             }
 
-            if cfg.override_json_parse_and_stringify {
+            if cfg.simd_json_builtins {
                 #[cfg(feature = "json")]
                 unsafe {
                     Json::add_intrinsic(ctx.as_raw())

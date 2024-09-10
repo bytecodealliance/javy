@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{anyhow, bail, Result};
 use std::error::Error;
 use std::fmt::{self, Display, Formatter};
 use std::io::{self, Cursor, Write};
@@ -9,9 +9,7 @@ use tempfile::TempDir;
 use wasi_common::pipe::{ReadPipe, WritePipe};
 use wasi_common::sync::WasiCtxBuilder;
 use wasi_common::WasiCtx;
-use wasmtime::{
-    AsContextMut, Config, Engine, ExternType, Instance, Linker, Module, OptLevel, Store,
-};
+use wasmtime::{AsContextMut, Config, Engine, Instance, Linker, Module, OptLevel, Store};
 
 #[derive(Clone)]
 pub enum JavyCommand {
@@ -33,11 +31,23 @@ pub struct Builder {
     world: Option<String>,
     /// Whether console.log should write to stderr.
     redirect_stdout_to_stderr: Option<bool>,
+    /// Whether to enable the `Javy.JSON` builtins.
+    javy_json: Option<bool>,
+    /// Whether to enable the `Javy.IO` builtins.
+    javy_stream_io: Option<bool>,
+    /// Whether to override JSON.parse and JSON.stringify with a SIMD based
+    /// implementation.
+    simd_json_builtins: Option<bool>,
+    /// Whether to enable the `TextEncoder` and `TextDecoder` APIs.
+    text_encoding: Option<bool>,
     built: bool,
     /// Preload the module at path, using the given instance name.
     preload: Option<(String, PathBuf)>,
     /// Whether to use the `compile` or `build` command.
     command: JavyCommand,
+    /// The javy provider version.
+    /// Used for import validation purposes only.
+    provider_version: u8,
 }
 
 impl Default for Builder {
@@ -52,6 +62,11 @@ impl Default for Builder {
             preload: None,
             command: JavyCommand::Build,
             redirect_stdout_to_stderr: None,
+            javy_stream_io: None,
+            javy_json: None,
+            simd_json_builtins: None,
+            text_encoding: None,
+            provider_version: 3,
         }
     }
 }
@@ -92,8 +107,33 @@ impl Builder {
         self
     }
 
+    pub fn javy_json(&mut self, enabled: bool) -> &mut Self {
+        self.javy_json = Some(enabled);
+        self
+    }
+
+    pub fn javy_stream_io(&mut self, enabled: bool) -> &mut Self {
+        self.javy_stream_io = Some(enabled);
+        self
+    }
+
+    pub fn simd_json_builtins(&mut self, enabled: bool) -> &mut Self {
+        self.simd_json_builtins = Some(enabled);
+        self
+    }
+
+    pub fn text_encoding(&mut self, enabled: bool) -> &mut Self {
+        self.text_encoding = Some(enabled);
+        self
+    }
+
     pub fn command(&mut self, command: JavyCommand) -> &mut Self {
         self.command = command;
+        self
+    }
+
+    pub fn provider_version(&mut self, vsn: u8) -> &mut Self {
+        self.provider_version = vsn;
         self
     }
 
@@ -115,9 +155,14 @@ impl Builder {
             world,
             root,
             redirect_stdout_to_stderr,
+            javy_json,
+            javy_stream_io,
+            simd_json_builtins,
+            text_encoding,
             built: _,
             preload,
             command,
+            provider_version,
         } = std::mem::take(self);
 
         self.built = true;
@@ -125,9 +170,17 @@ impl Builder {
         match command {
             JavyCommand::Compile => {
                 if let Some(preload) = preload {
-                    Runner::compile_dynamic(bin_path, root, input, wit, world, preload)
+                    Runner::compile_dynamic(
+                        bin_path,
+                        root,
+                        input,
+                        wit,
+                        world,
+                        preload,
+                        provider_version,
+                    )
                 } else {
-                    Runner::compile_static(bin_path, root, input, wit, world)
+                    Runner::compile_static(bin_path, root, input, wit, world, provider_version)
                 }
             }
             JavyCommand::Build => Runner::build(
@@ -137,6 +190,10 @@ impl Builder {
                 wit,
                 world,
                 redirect_stdout_to_stderr,
+                javy_json,
+                javy_stream_io,
+                simd_json_builtins,
+                text_encoding,
                 preload,
             ),
         }
@@ -148,6 +205,7 @@ pub struct Runner {
     linker: Linker<StoreContext>,
     initial_fuel: u64,
     preload: Option<(String, Vec<u8>)>,
+    provider_version: u8,
 }
 
 #[derive(Debug)]
@@ -194,6 +252,7 @@ impl StoreContext {
 }
 
 impl Runner {
+    #[allow(clippy::too_many_arguments)]
     fn build(
         bin: String,
         root: PathBuf,
@@ -201,6 +260,10 @@ impl Runner {
         wit: Option<PathBuf>,
         world: Option<String>,
         redirect_stdout_to_stderr: Option<bool>,
+        javy_json: Option<bool>,
+        javy_stream_io: Option<bool>,
+        override_json_parse_and_stringify: Option<bool>,
+        text_encoding: Option<bool>,
         preload: Option<(String, PathBuf)>,
     ) -> Result<Self> {
         // This directory is unique and will automatically get deleted
@@ -217,6 +280,10 @@ impl Runner {
             &world,
             preload.is_some(),
             &redirect_stdout_to_stderr,
+            &javy_json,
+            &javy_stream_io,
+            &override_json_parse_and_stringify,
+            &text_encoding,
         );
 
         Self::exec_command(bin, root, args)?;
@@ -238,6 +305,7 @@ impl Runner {
             linker,
             initial_fuel: u64::MAX,
             preload,
+            provider_version: 3,
         })
     }
 
@@ -247,6 +315,7 @@ impl Runner {
         source: impl AsRef<Path>,
         wit: Option<PathBuf>,
         world: Option<String>,
+        vsn: u8,
     ) -> Result<Self> {
         // This directory is unique and will automatically get deleted
         // when `tempdir` goes out of scope.
@@ -269,6 +338,7 @@ impl Runner {
             linker,
             initial_fuel: u64::MAX,
             preload: None,
+            provider_version: vsn,
         })
     }
 
@@ -279,6 +349,7 @@ impl Runner {
         wit: Option<PathBuf>,
         world: Option<String>,
         preload: (String, PathBuf),
+        vsn: u8,
     ) -> Result<Self> {
         let tempdir = tempfile::tempdir()?;
         let wasm_file = Self::out_wasm(&tempdir);
@@ -301,6 +372,7 @@ impl Runner {
             linker,
             initial_fuel: u64::MAX,
             preload: Some((preload.0, preload_module)),
+            provider_version: vsn,
         })
     }
 
@@ -311,48 +383,71 @@ impl Runner {
             linker: Self::setup_linker(&engine)?,
             initial_fuel: u64::MAX,
             preload: None,
+            provider_version: 3,
         })
     }
 
     pub fn assert_known_base_imports(&self) -> Result<()> {
         let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
+        let instance_name = format!("javy_quickjs_provider_v{}", self.provider_version);
 
-        for import in module.imports() {
-            match (import.module(), import.name(), import.ty()) {
-                ("javy_quickjs_provider_v2", "canonical_abi_realloc", ExternType::Func(f))
-                    if f.params().map(|t| t.is_i32()).eq([true, true, true, true])
-                        && f.results().map(|t| t.is_i32()).eq([true]) => {}
-                ("javy_quickjs_provider_v2", "eval_bytecode", ExternType::Func(f))
-                    if f.params().map(|t| t.is_i32()).eq([true, true])
-                        && f.results().len() == 0 => {}
-                ("javy_quickjs_provider_v2", "memory", ExternType::Memory(_)) => (),
-                _ => panic!("Unknown import {:?}", import),
+        let result = module.imports().filter(|i| {
+            if i.module() == instance_name && i.name() == "canonical_abi_realloc" {
+                let ty = i.ty();
+                let f = ty.unwrap_func();
+                return f.params().all(|p| p.is_i32())
+                    && f.params().len() == 4
+                    && f.results().len() == 1
+                    && f.results().all(|r| r.is_i32());
             }
-        }
 
-        Ok(())
+            if i.module() == instance_name && i.name() == "eval_bytecode" {
+                let ty = i.ty();
+                let f = ty.unwrap_func();
+                return f.params().all(|p| p.is_i32())
+                    && f.params().len() == 2
+                    && f.results().len() == 0;
+            }
+
+            if i.module() == instance_name && i.name() == "memory" {
+                let ty = i.ty();
+                return ty.memory().is_some();
+            }
+
+            false
+        });
+
+        let count = result.count();
+        if count == 3 {
+            Ok(())
+        } else {
+            Err(anyhow!("Unexpected number of imports: {}", count))
+        }
     }
 
     pub fn assert_known_named_function_imports(&self) -> Result<()> {
+        self.assert_known_base_imports()?;
+
         let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
+        let instance_name = format!("javy_quickjs_provider_v{}", self.provider_version);
+        let result = module.imports().filter(|i| {
+            if i.module() == instance_name && i.name() == "invoke" {
+                let ty = i.ty();
+                let f = ty.unwrap_func();
 
-        for import in module.imports() {
-            match (import.module(), import.name(), import.ty()) {
-                ("javy_quickjs_provider_v2", "canonical_abi_realloc", ExternType::Func(f))
-                    if f.params().map(|t| t.is_i32()).eq([true, true, true, true])
-                        && f.results().map(|t| t.is_i32()).eq([true]) => {}
-                ("javy_quickjs_provider_v2", "eval_bytecode", ExternType::Func(f))
-                    if f.params().map(|t| t.is_i32()).eq([true, true])
-                        && f.results().len() == 0 => {}
-                ("javy_quickjs_provider_v2", "memory", ExternType::Memory(_)) => (),
-                ("javy_quickjs_provider_v2", "invoke", ExternType::Func(f))
-                    if f.params().map(|t| t.is_i32()).eq([true, true, true, true])
-                        && f.results().len() == 0 => {}
-                _ => panic!("Unknown import {:?}", import),
+                return f.params().len() == 4
+                    && f.params().all(|p| p.is_i32())
+                    && f.results().len() == 0;
             }
-        }
 
-        Ok(())
+            false
+        });
+        let count = result.count();
+        if count == 1 {
+            Ok(())
+        } else {
+            Err(anyhow!("Unexpected number of imports: {}", count))
+        }
     }
 
     pub fn assert_producers(&self) -> Result<()> {
@@ -399,6 +494,13 @@ impl Runner {
         file
     }
 
+    // TODO: Some of the methods in the Runner (`build`, `build_args`)  could be
+    // refactored to take structs as parameters rather than individual
+    // parameters to avoid verbosity.
+    //
+    // This refactoring will be a bit challenging until we fully deprecate the
+    // `compile` command.
+    #[allow(clippy::too_many_arguments)]
     fn build_args(
         input: &Path,
         out: &Path,
@@ -406,6 +508,10 @@ impl Runner {
         world: &Option<String>,
         dynamic: bool,
         redirect_stdout_to_stderr: &Option<bool>,
+        javy_json: &Option<bool>,
+        javy_stream_io: &Option<bool>,
+        simd_json_builtins: &Option<bool>,
+        text_encoding: &Option<bool>,
     ) -> Vec<String> {
         let mut args = vec![
             "build".to_string(),
@@ -432,6 +538,32 @@ impl Runner {
                 "redirect-stdout-to-stderr={}",
                 if redirect_stdout_to_stderr { "y" } else { "n" }
             ));
+        }
+
+        if let Some(enabled) = *javy_json {
+            args.push("-J".to_string());
+            args.push(format!("javy-json={}", if enabled { "y" } else { "n" }));
+        }
+
+        if let Some(enabled) = *javy_stream_io {
+            args.push("-J".to_string());
+            args.push(format!(
+                "javy-stream-io={}",
+                if enabled { "y" } else { "n" }
+            ));
+        }
+
+        if let Some(enabled) = *simd_json_builtins {
+            args.push("-J".to_string());
+            args.push(format!(
+                "simd-json-builtins={}",
+                if enabled { "y" } else { "n" }
+            ));
+        }
+
+        if let Some(enabled) = *text_encoding {
+            args.push("-J".to_string());
+            args.push(format!("text-encoding={}", if enabled { "y" } else { "n" }));
         }
 
         args

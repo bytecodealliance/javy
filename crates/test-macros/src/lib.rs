@@ -15,7 +15,7 @@ use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
 use std::path::{Path, PathBuf};
-use syn::{parse_macro_input, Ident, LitStr, Result};
+use syn::{meta::ParseNestedMeta, parse_macro_input, Ident, LitBool, LitStr, Result, ReturnType};
 
 struct Config262 {
     root: PathBuf,
@@ -61,7 +61,7 @@ pub fn t262(stream: TokenStream) -> TokenStream {
 
     parse_macro_input!(stream with config_parser);
 
-    match expand(&config) {
+    match expand_262(&config) {
         Ok(tok) => tok,
         Err(e) => e.into_compile_error().into(),
     }
@@ -84,7 +84,7 @@ fn ignore(test_name: &str) -> bool {
     .contains(&test_name)
 }
 
-fn expand(config: &Config262) -> Result<TokenStream> {
+fn expand_262(config: &Config262) -> Result<TokenStream> {
     let harness = config.root.join("harness");
     let harness_str = harness.into_os_string().into_string().unwrap();
     let json_parse = config
@@ -141,7 +141,7 @@ fn gen_tests(
                 fn #test_name() {
                     let mut config = ::javy::Config::default();
                     config
-                        .override_json_parse_and_stringify(true);
+                        .simd_json_builtins(true);
                     let runtime = ::javy::Runtime::new(config).expect("runtime to be created");
                     let harness_path = ::std::path::PathBuf::from(#harness_str);
 
@@ -171,4 +171,170 @@ fn gen_tests(
     quote! {
         #(#spec)*
     }
+}
+
+struct CliTestConfig {
+    /// Root directory to load test scripts from, relative to the crate's
+    /// directory (i.e., `CARGO_MANIFEST_DIR`)
+    scripts_root: String,
+    /// Which commands to generate the test for. It can be either `compile` or
+    /// `build`.
+    commands: Vec<Ident>,
+    /// Tests Javy's dynamic linking capabilities.
+    dynamic: bool,
+}
+
+impl CliTestConfig {
+    fn commands_from(&mut self, meta: &ParseNestedMeta) -> Result<()> {
+        meta.parse_nested_meta(|meta| {
+            if meta.path.is_ident("not") {
+                meta.parse_nested_meta(|meta| {
+                    if meta.path.is_ident("Compile") || meta.path.is_ident("Build") {
+                        let id = meta.path.require_ident()?.clone();
+                        self.commands.retain(|s| *s != id);
+                        Ok(())
+                    } else {
+                        Err(meta.error("Unknown command"))
+                    }
+                })
+            } else {
+                Err(meta.error("Unknown identifier"))
+            }
+        })?;
+        Ok(())
+    }
+
+    fn root_from(&mut self, meta: &ParseNestedMeta) -> Result<()> {
+        if meta.path.is_ident("root") {
+            let val = meta.value()?;
+            let val: LitStr = val.parse()?;
+            self.scripts_root = val.value();
+            Ok(())
+        } else {
+            Err(meta.error("Unknown value"))
+        }
+    }
+
+    fn dynamic_from(&mut self, meta: &ParseNestedMeta) -> Result<()> {
+        if meta.path.is_ident("dyn") {
+            let val = meta.value()?;
+            let val: LitBool = val.parse()?;
+            self.dynamic = val.value();
+            Ok(())
+        } else {
+            Err(meta.error("Unknown value"))
+        }
+    }
+}
+
+impl Default for CliTestConfig {
+    fn default() -> Self {
+        Self {
+            scripts_root: String::from("tests/sample-scripts"),
+            commands: vec![
+                Ident::new("Compile", Span::call_site()),
+                Ident::new("Build", Span::call_site()),
+            ],
+            dynamic: false,
+        }
+    }
+}
+
+#[proc_macro_attribute]
+pub fn javy_cli_test(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    let mut config = CliTestConfig::default();
+    let config_parser = syn::meta::parser(|meta| {
+        if meta.path.is_ident("commands") {
+            config.commands_from(&meta)
+        } else if meta.path.is_ident("root") {
+            config.root_from(&meta)
+        } else if meta.path.is_ident("dyn") {
+            config.dynamic_from(&meta)
+        } else {
+            Err(meta.error("Unsupported attributes"))
+        }
+    });
+
+    parse_macro_input!(attrs with config_parser);
+
+    match expand_cli_tests(&config, parse_macro_input!(item as syn::ItemFn)) {
+        Ok(tok) => tok,
+        Err(e) => e.into_compile_error().into(),
+    }
+}
+
+fn expand_cli_tests(test_config: &CliTestConfig, func: syn::ItemFn) -> Result<TokenStream> {
+    let mut tests = vec![quote! { #func }];
+    let attrs = &func.attrs;
+
+    for ident in &test_config.commands {
+        let command_name = ident.to_string();
+        let func_name = &func.sig.ident;
+        let ret = match &func.sig.output {
+            ReturnType::Default => quote! { () },
+            ReturnType::Type(_, ty) => quote! { -> #ty },
+        };
+        let test_name = Ident::new(
+            &format!("{}_{}", command_name.to_lowercase(), func_name),
+            func_name.span(),
+        );
+
+        let preload_setup = if test_config.dynamic {
+            // The compile commmand will remain frozen until it becomes
+            // deprecated in Javy v4.0.0. Until then we test with a frozen
+            // artifact downloaded from the releases.
+            if command_name == "Compile" {
+                quote! {
+                    let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+                    builder.preload(
+                        "javy_quickjs_provider_v2".into(),
+                        root.join("tests").join("javy_quickjs_provider_v2.wasm")
+                    );
+                    builder.provider_version(2);
+                }
+            } else {
+                quote! {
+                    let mut root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+                    root.pop();
+                    root.pop();
+                    root = root.join(
+                        std::path::Path::new("target")
+                            .join("wasm32-wasi")
+                            .join("release")
+                            .join("javy_quickjs_provider_wizened.wasm"),
+                    );
+                    // TODO: Deriving the current provider version could be done
+                    // automatically somehow. It's fine for now, given that if the
+                    // version changes and this is not updated, tests will fail.
+                    builder.preload("javy_quickjs_provider_v3".into(), root);
+                    builder.provider_version(3);
+                }
+            }
+        } else {
+            quote! {}
+        };
+
+        let root = test_config.scripts_root.clone();
+
+        let tok = quote! {
+            #[test]
+            #(#attrs)*
+            fn #test_name() #ret {
+                let mut builder = javy_runner::Builder::default();
+                builder.command(javy_runner::JavyCommand::#ident);
+                builder.root(std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(#root));
+                builder.bin(env!("CARGO_BIN_EXE_javy"));
+
+                #preload_setup
+
+                #func_name(&mut builder)
+            }
+        };
+
+        tests.push(tok);
+    }
+    Ok(quote! {
+        #(#tests)*
+    }
+    .into())
 }

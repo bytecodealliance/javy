@@ -1470,6 +1470,7 @@ dependencies = [
  "criterion",
  "javy-config",
  "javy-runner",
+ "javy-test-macros",
  "lazy_static",
  "num-format",
  "serde",

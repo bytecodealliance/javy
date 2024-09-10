@@ -112,12 +112,12 @@ mod tests {
 
         ctx.with(|this| {
             register(this.clone(), stream.clone(), stream.clone()).unwrap();
-            this.eval("console.log(\"hello world\");")?;
+            this.eval::<(), _>("console.log(\"hello world\");")?;
             assert_eq!(b"hello world\n", stream.buffer.borrow().as_slice());
             stream.clear();
             macro_rules! test_console_log {
                 ($js:expr, $expected:expr) => {{
-                    this.eval($js)?;
+                    this.eval::<(), _>($js)?;
                     assert_eq!(
                         $expected,
                         std::str::from_utf8(stream.buffer.borrow().as_slice()).unwrap()
@@ -195,13 +195,13 @@ mod tests {
 
         ctx.with(|this| {
             register(this.clone(), log_stream.clone(), error_stream.clone()).unwrap();
-            this.eval("console.log(\"hello world\");")?;
+            this.eval::<(), _>("console.log(\"hello world\");")?;
             assert_eq!(b"hello world\n", log_stream.buffer.borrow().as_slice());
             assert!(error_stream.buffer.borrow().is_empty());
 
             log_stream.clear();
 
-            this.eval("console.error(\"hello world\");")?;
+            this.eval::<(), _>("console.error(\"hello world\");")?;
             assert_eq!(b"hello world\n", error_stream.buffer.borrow().as_slice());
             assert!(log_stream.buffer.borrow().is_empty());
 

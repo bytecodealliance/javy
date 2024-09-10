@@ -7,7 +7,7 @@ use javy::{quickjs::context::EvalOptions, Config, Runtime};
 #[test]
 fn string_keys_and_ref_counting() -> Result<()> {
     let mut config = Config::default();
-    config.override_json_parse_and_stringify(true);
+    config.simd_json_builtins(true);
 
     let source = include_bytes!("string_keys_and_ref_counting.js");
     let rt = Runtime::new(config)?;
@@ -26,7 +26,7 @@ fn string_keys_and_ref_counting() -> Result<()> {
 #[test]
 fn json_stringify_cycle_checks() -> Result<()> {
     let mut config = Config::default();
-    config.override_json_parse_and_stringify(true);
+    config.simd_json_builtins(true);
 
     let source = include_bytes!("stringify_cycle.js");
     let rt = Runtime::new(config)?;

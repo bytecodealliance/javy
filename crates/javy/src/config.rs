@@ -58,7 +58,7 @@ pub struct Config {
     /// serde_json and simd_json.
     /// This setting requires the `JSON` intrinsic to be enabled, and the `json`
     /// crate feature to be enabled as well.
-    pub(crate) override_json_parse_and_stringify: bool,
+    pub(crate) simd_json_builtins: bool,
 }
 
 impl Default for Config {
@@ -70,7 +70,7 @@ impl Default for Config {
             intrinsics,
             javy_intrinsics: JavyIntrinsics::empty(),
             redirect_stdout_to_stderr: false,
-            override_json_parse_and_stringify: false,
+            simd_json_builtins: false,
         }
     }
 }
@@ -193,13 +193,13 @@ impl Config {
     /// crate feature to be enabled as well.
     /// Disabled by default.
     #[cfg(feature = "json")]
-    pub fn override_json_parse_and_stringify(&mut self, enable: bool) -> &mut Self {
-        self.override_json_parse_and_stringify = enable;
+    pub fn simd_json_builtins(&mut self, enable: bool) -> &mut Self {
+        self.simd_json_builtins = enable;
         self
     }
 
     pub(crate) fn validate(self) -> Result<Self> {
-        if self.override_json_parse_and_stringify && !self.intrinsics.contains(JSIntrinsics::JSON) {
+        if self.simd_json_builtins && !self.intrinsics.contains(JSIntrinsics::JSON) {
             bail!("JSON Intrinsic is required to override JSON.parse and JSON.stringify");
         }
 
@@ -215,7 +215,7 @@ mod tests {
     #[test]
     fn err_config_validation() {
         let mut config = Config::default();
-        config.override_json_parse_and_stringify(true);
+        config.simd_json_builtins(true);
         config.json(false);
 
         assert!(config.validate().is_err());
@@ -224,7 +224,7 @@ mod tests {
     #[test]
     fn ok_config_validation() {
         let mut config = Config::default();
-        config.override_json_parse_and_stringify(true);
+        config.simd_json_builtins(true);
 
         assert!(config.validate().is_ok());
     }
