@@ -18,9 +18,7 @@ static SETUP: Once = Once::new();
 fuzz_target!(|data: ArbitraryValue| {
     SETUP.call_once(|| {
         let mut config = Config::default();
-        config
-            .override_json_parse_and_stringify(true)
-            .javy_json(true);
+        config.simd_json_builtins(true).javy_json(true);
 
         unsafe {
             RT = Some(Runtime::new(std::mem::take(&mut config)).expect("Runtime to be created"));
