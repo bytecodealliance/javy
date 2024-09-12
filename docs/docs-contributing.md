@@ -2,7 +2,7 @@
 
 ## Architecture
 
-See our [./docs-contributing-architecture document](contributing-architecture.md) for more
+See our [architecture documentation](./docs-contributing-architecture) for more
 information about how the project is organized.
 
 ## Adding additional JS APIs
