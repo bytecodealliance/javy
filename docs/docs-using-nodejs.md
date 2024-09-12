@@ -13,7 +13,7 @@ This example shows how to use a dynamically linked Javy compiled WASM module. We
 
 1. The first step is to compile the `embedded.js` with Javy using dynamic linking:
 ```shell
-javy compile embedded.js -d -o embedded.wasm
+javy build -C dynamic -o embedded.wasm embedded.js
 ```
 2. Next emit the Javy provider
 ```shell
@@ -149,7 +149,7 @@ async function runJavy(providerModule, embeddedModule, input) {
       wasi.getImportObject(),
     );
     const instance = await WebAssembly.instantiate(embeddedModule, {
-      javy_quickjs_provider_v2: providerInstance.exports,
+      javy_quickjs_provider_v3: providerInstance.exports,
     });
 
     // Javy provider is a WASI reactor see https://github.com/WebAssembly/WASI/blob/main/legacy/application-abi.md?plain=1
