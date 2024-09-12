@@ -1,4 +1,4 @@
-# Extending Javy
+# Extending
 
 If you want to use Javy for your own project, you may find that the existing
 code is not sufficient since you may want to offer custom APIs or use different
@@ -13,7 +13,7 @@ and consider making the change upstream instead of in your fork so all users of
 the `javy` crate can benefit.
 
 See our documentation on [using complex data types in Wasm
-functions](./docs/contributing-complex-data-types.md) for how to support Wasm
+functions](./contributing-complex-data-types.md) for how to support Wasm
 functions that need to use byte arrays, strings, or structured data.
 
 For a visual representation of how we expect forks to consume our crates:
