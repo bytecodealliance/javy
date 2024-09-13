@@ -6,6 +6,7 @@
 * [Extending](./docs-using-extending.md)
 * [Exporting functions](./docs-using-exports.md)
 * [Invoking modules](./docs-using-invoking.md)
+* [JavaScript API Support](./docs-using-js-api-support.md)
 
 ## Contributing
 
