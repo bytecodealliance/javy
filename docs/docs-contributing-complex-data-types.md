@@ -1,10 +1,24 @@
 # Using complex data types in Wasm functions
 
-Core WebAssembly currently only supports using numbers for arguments and return values for exported and imported functions. This presents a problem when you want to pass strings, byte arrays, or structured data to and from imported/exported functions. The WebAssembly Component Model provides one approach to solving this problem but we have not yet added support for producing WebAssembly components to Javy. This document will provide an overview for an approach using Core WebAssembly to consider.
+Core WebAssembly currently only supports using numbers for arguments and return
+values for exported and imported functions. This presents a problem when you
+want to pass strings, byte arrays, or structured data to and from
+imported/exported functions. The WebAssembly Component Model provides one
+approach to solving this problem but we have not yet added support for producing
+WebAssembly components to Javy. This document will provide an overview for an
+approach using Core WebAssembly to consider.
 
-At a high level, byte arrays can be passed using a pair of integers with the first integer representing the address of the start of the byte array in the instance's linear memory and the second integer representing the length of the byte array. Strings can be passed by encoding the string into a UTF-8 byte array and using the previous solution to pass the byte array. Structured data can be encoded to a JSON string and that string can be passed by encoding it into a UTF-8 byte array and using the previous solution. Other serialization formats can also be used to encode the structured data to a byte array.
+At a high level, byte arrays can be passed using a pair of integers with the
+first integer representing the address of the start of the byte array in the
+instance's linear memory and the second integer representing the length of the
+byte array. Strings can be passed by encoding the string into a UTF-8 byte array
+and using the previous solution to pass the byte array. Structured data can be
+encoded to a JSON string and that string can be passed by encoding it into
+a UTF-8 byte array and using the previous solution. Other serialization formats
+can also be used to encode the structured data to a byte array.
 
-The examples below use Rust and Wasmtime to on the host however any programming language and WebAssembly runtime should support using the same approach.
+The examples below use Rust and Wasmtime to on the host however any programming
+language and WebAssembly runtime should support using the same approach.
 
 ## For exported functions
 
@@ -45,9 +59,12 @@ fn call_the_export(bytes: &[u8], instance: wasmtime::Instance, store: &mut wasmt
 }
 ```
 
-You can export the `canonical_abi_realloc` function by enabling the `export_alloc_fns` feature in the `javy` crate.
+You can export the `canonical_abi_realloc` function by enabling the
+`export_alloc_fns` feature in the `javy` crate.
 
-In the WebAssembly instance when receiving a byte array in the exported function, you can use the `std::slice::from_raw_parts` function to get the slice.
+In the WebAssembly instance when receiving a byte array in the exported
+function, you can use the `std::slice::from_raw_parts` function to get the
+slice.
 
 ```rust
 #[export_name = "your_fn"]
@@ -66,7 +83,9 @@ Given an exported WebAssembly function that returns a byte array and looks like:
 )
 ```
 
-To return a byte array from that exported function in a WebAssembly instance, you need to leak the byte array and we recommend using a static wide pointer for storing the pointer and length.
+To return a byte array from that exported function in a WebAssembly instance,
+you need to leak the byte array and we recommend using a static wide pointer for
+storing the pointer and length.
 
 ```rust
 static mut BYTES_RET_AREA: [u32; 2] = [0; 2];
@@ -82,7 +101,9 @@ pub unsafe extern "C" fn your_fn() -> *const u32 {
 }
 ```
 
-On the host, you can use `memory.read` to populate a vector with the byte array. WebAssembly uses little-endian integers so we read 32-bit integers using `from_le_bytes`.
+On the host, you can use `memory.read` to populate a vector with the byte array.
+WebAssembly uses little-endian integers so we read 32-bit integers using
+`from_le_bytes`.
 
 ```rust
 fn get_slice(instance: wasmtime::Instance, store: &mut wasmtime::Store) -> Result<Vec<u8>> {
@@ -106,7 +127,8 @@ fn get_slice(instance: wasmtime::Instance, store: &mut wasmtime::Store) -> Resul
 
 ## For imported functions
 
-Given an imported WebAssembly function that receives a byte array as an argument and looks like:
+Given an imported WebAssembly function that receives a byte array as an argument
+and looks like:
 
 ```wat
 (module
@@ -114,7 +136,8 @@ Given an imported WebAssembly function that receives a byte array as an argument
 )
 ```
 
-When passing a byte array to the host from the WebAssembly instance, we pass the pointer and length to the imported function:
+When passing a byte array to the host from the WebAssembly instance, we pass the
+pointer and length to the imported function:
 
 ```rust
 use anyhow::Result;
@@ -129,7 +152,8 @@ fn call_the_import(bytes: &[u8]) -> Result<()> {
 }
 ```
 
-When receiving a byte array from the WebAssembly instance on the host, we use `memory.read` along with the pointer and length to get the byte array:
+When receiving a byte array from the WebAssembly instance on the host, we use
+`memory.read` along with the pointer and length to get the byte array:
 
 ```rust
 use anyhow::Result;
@@ -169,7 +193,12 @@ Given an imported WebAssembly function that returns a byte array and looks like:
 )
 ```
 
-When returning a byte array from the host, things get a little more complicated. Below we use a wide pointer to return the byte array. This requires two memory allocations in the instance, one for the byte array and one for the wide pointer, and using `memory.write` to place the array and wide pointer into the allocated memory. Since the byte array is copied into the instance's memory, there is no need to leak the original byte array.
+When returning a byte array from the host, things get a little more complicated.
+Below we use a wide pointer to return the byte array. This requires two memory
+allocations in the instance, one for the byte array and one for the wide
+pointer, and using `memory.write` to place the array and wide pointer into the
+allocated memory. Since the byte array is copied into the instance's memory,
+there is no need to leak the original byte array.
 
 ```rust
 fn setup(linker: &mut wasmtime::Linker<wasmtime_wasi::WasiContext>) -> Result<()> {
@@ -221,9 +250,12 @@ fn setup(linker: &mut wasmtime::Linker<wasmtime_wasi::WasiContext>) -> Result<()
 }
 ```
 
-You can export the `canonical_abi_realloc` function by enabling the `export_alloc_fns` feature in the `javy` crate.
+You can export the `canonical_abi_realloc` function by enabling the
+`export_alloc_fns` feature in the `javy` crate.
 
-When reading a returned byte array from the host, we extract the pointer and length from the wide pointer and then use the pointer and length to read a slice from memory:
+When reading a returned byte array from the host, we extract the pointer and
+length from the wide pointer and then use the pointer and length to read a slice
+from memory:
 
 ```rust
 #[link(wasm_import_module = "host")]
