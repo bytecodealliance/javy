@@ -10,7 +10,7 @@
   <p>
     <a href="https://github.com/bytecodealliance/javy/actions/workflows/ci.yml"><img alt="Build status" src="https://github.com/bytecodealliance/javy/actions/workflows/ci.yml/badge.svg?branch=main" /></a>
     <a href="https://bytecodealliance.zulipchat.com/#narrow/stream/370816-javy"><img src="https://img.shields.io/badge/zulip-join_chat-brightgreen.svg" alt="zulip chat" /></a>
-  </p> 
+  </p>
 </div>
 
 ## About this repo

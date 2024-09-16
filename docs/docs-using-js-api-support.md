@@ -1,7 +1,7 @@
 # JavaScript API Support
 
-Javy by default supports all the JavaScript features and APIs provided by
-QuickJS, plus partial support for additional APIs. 
+Javy by default supports ES2023, plus partial support for additional APIs.
+NodeJS APIs are not supported.
 
 This document aims to give an overview of the additional APIs provided by Javy.
 

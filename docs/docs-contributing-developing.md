@@ -1,4 +1,3 @@
-
 # Development requirements
 
 - `wasmtime-cli`, can be installed via `cargo install wasmtime-cli` (required for
