@@ -8,6 +8,11 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- Updated `simd-json` to version that removes dependency on `lexical-core` with
+  a security vulnerability.
+
 ### Fixed
 
 - Circular dependency checks for the custom, SIMD-based, `JSON.stringify`
