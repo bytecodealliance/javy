@@ -304,3 +304,20 @@ fn print_wat(wasm_binary: &[u8]) -> Result<()> {
 fn print_wat(_wasm_binary: &[u8]) -> Result<()> {
     Ok(())
 }
+
+#[cfg(test)]
+mod test {
+    use super::DynamicGenerator;
+    use super::WitOptions;
+    use anyhow::Result;
+
+    #[test]
+    fn default_values() -> Result<()> {
+        let gen = DynamicGenerator::new();
+        assert!(gen.source_compression);
+        assert_eq!(gen.import_namespace, "");
+        assert_eq!(gen.wit_opts, WitOptions::default());
+
+        Ok(())
+    }
+}

@@ -201,3 +201,20 @@ fn optimize_wasm(wasm: &[u8]) -> Result<Vec<u8>> {
 
     Ok(fs::read(&tempfile_path)?)
 }
+
+#[cfg(test)]
+mod test {
+    use super::StaticGenerator;
+    use super::WitOptions;
+    use anyhow::Result;
+    use javy_config::Config;
+
+    #[test]
+    fn default_values() -> Result<()> {
+        let gen = StaticGenerator::new(Config::default());
+        assert!(gen.source_compression);
+        assert_eq!(gen.wit_opts, WitOptions::default());
+
+        Ok(())
+    }
+}
