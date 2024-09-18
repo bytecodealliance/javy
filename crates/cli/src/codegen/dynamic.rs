@@ -49,7 +49,7 @@ pub(crate) struct DynamicGenerator {
     /// JavaScript function exports.
     function_exports: Exports,
     /// Whether to embed the compressed JS source in the generated module.
-    source_compression: bool,
+    pub source_compression: bool,
     /// WIT options for code generation.
     pub wit_opts: WitOptions,
 }
@@ -58,7 +58,7 @@ impl DynamicGenerator {
     /// Creates a new [`DynamicGenerator`].
     pub fn new() -> Self {
         Self {
-            source_compression: Default::default(),
+            source_compression: true,
             import_namespace: "".into(),
             function_exports: Default::default(),
             wit_opts: Default::default(),

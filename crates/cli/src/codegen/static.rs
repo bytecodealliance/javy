@@ -36,7 +36,7 @@ impl StaticGenerator {
         let engine = include_bytes!(concat!(env!("OUT_DIR"), "/engine.wasm"));
         Self {
             engine,
-            source_compression: Default::default(),
+            source_compression: true,
             function_exports: Default::default(),
             wit_opts: Default::default(),
             js_runtime_config,
