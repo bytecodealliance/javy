@@ -1520,7 +1520,7 @@ dependencies = [
 
 [[package]]
 name = "javy"
-version = "3.0.1-alpha.1"
+version = "3.0.1"
 dependencies = [
  "anyhow",
  "bitflags",

@@ -8,6 +8,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [3.0.1] - 2024-09-18
+
 ### Changed
 
 - Updated `simd-json` to version that removes dependency on `lexical-core` with
