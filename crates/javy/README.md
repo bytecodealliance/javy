@@ -45,4 +45,6 @@ context.with(|cx| {
 
 ## Publishing to crates.io
 
-To publish this crate to crates.io, run `./publish.sh`.
+To publish this crate to crates.io, run `./publish.sh`. You will likely need to
+run `git submodule deinit test262` so the working tree is small enough for the
+publishing to succeed.
