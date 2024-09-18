@@ -36,7 +36,7 @@ impl StaticGenerator {
         let engine = include_bytes!(concat!(env!("OUT_DIR"), "/engine.wasm"));
         Self {
             engine,
-            source_compression: Default::default(),
+            source_compression: true,
             function_exports: Default::default(),
             wit_opts: Default::default(),
             js_runtime_config,
@@ -200,4 +200,21 @@ fn optimize_wasm(wasm: &[u8]) -> Result<Vec<u8>> {
         .run(&tempfile_path, &tempfile_path)?;
 
     Ok(fs::read(&tempfile_path)?)
+}
+
+#[cfg(test)]
+mod test {
+    use super::StaticGenerator;
+    use super::WitOptions;
+    use anyhow::Result;
+    use javy_config::Config;
+
+    #[test]
+    fn default_values() -> Result<()> {
+        let gen = StaticGenerator::new(Config::default());
+        assert!(gen.source_compression);
+        assert_eq!(gen.wit_opts, WitOptions::default());
+
+        Ok(())
+    }
 }

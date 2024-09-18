@@ -49,7 +49,7 @@ pub(crate) struct DynamicGenerator {
     /// JavaScript function exports.
     function_exports: Exports,
     /// Whether to embed the compressed JS source in the generated module.
-    source_compression: bool,
+    pub source_compression: bool,
     /// WIT options for code generation.
     pub wit_opts: WitOptions,
 }
@@ -58,7 +58,7 @@ impl DynamicGenerator {
     /// Creates a new [`DynamicGenerator`].
     pub fn new() -> Self {
         Self {
-            source_compression: Default::default(),
+            source_compression: true,
             import_namespace: "".into(),
             function_exports: Default::default(),
             wit_opts: Default::default(),
@@ -303,4 +303,21 @@ fn print_wat(wasm_binary: &[u8]) -> Result<()> {
 #[cfg(not(feature = "dump_wat"))]
 fn print_wat(_wasm_binary: &[u8]) -> Result<()> {
     Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    use super::DynamicGenerator;
+    use super::WitOptions;
+    use anyhow::Result;
+
+    #[test]
+    fn default_values() -> Result<()> {
+        let gen = DynamicGenerator::new();
+        assert!(gen.source_compression);
+        assert_eq!(gen.import_namespace, "");
+        assert_eq!(gen.wit_opts, WitOptions::default());
+
+        Ok(())
+    }
 }

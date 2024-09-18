@@ -106,6 +106,7 @@ impl CodeGenBuilder {
 
     fn build_dynamic(self) -> Result<Box<dyn CodeGen>> {
         let mut dynamic_gen = Box::new(DynamicGenerator::new());
+        dynamic_gen.source_compression = self.source_compression;
 
         if let Some(v) = self.provider_version {
             dynamic_gen.import_namespace = String::from("javy_quickjs_provider_v");
