@@ -14,18 +14,12 @@ fn main() -> Result<()> {
     }
 }
 
-// When using clippy, we need to write stubbed engine.wasm and provider.wasm files to ensure
-// compilation succeeds. This skips building the actual engine.wasm and provider.wasm that would
+// When using clippy, we need to write stubbed provider.wasm file to ensure
+// compilation succeeds. This skips building the actual provider.wasm that would
 // be injected into the CLI binary.
 fn stub_javy_core_for_clippy() -> Result<()> {
     let out_dir = PathBuf::from(env::var("OUT_DIR")?);
-    let engine_path = out_dir.join("engine.wasm");
     let provider_path = out_dir.join("provider.wasm");
-
-    if !engine_path.exists() {
-        std::fs::write(engine_path, [])?;
-        println!("cargo:warning=using stubbed engine.wasm for static analysis purposes...");
-    }
 
     if !provider_path.exists() {
         std::fs::write(provider_path, [])?;
@@ -49,30 +43,27 @@ fn copy_javy_core() -> Result<()> {
         .parent()
         .unwrap()
         .join("target/wasm32-wasi/release");
-    let engine_path = module_path.join("javy_core.wasm");
     let quickjs_provider_path = module_path.join("javy_quickjs_provider.wasm");
     let quickjs_provider_wizened_path = module_path.join("javy_quickjs_provider_wizened.wasm");
 
     let mut wizer = wizer::Wizer::new();
     let wizened = wizer
+        .keep_init_func(true)
+        .init_func("initialize_runtime")
         .allow_wasi(true)?
         .wasm_bulk_memory(true)
         .run(read_file(&quickjs_provider_path)?.as_slice())?;
     fs::File::create(&quickjs_provider_wizened_path)?.write_all(&wizened)?;
 
-    println!("cargo:rerun-if-changed={}", engine_path.to_str().unwrap());
     println!(
         "cargo:rerun-if-changed={}",
         quickjs_provider_path.to_str().unwrap()
     );
     println!("cargo:rerun-if-changed=build.rs");
 
-    if engine_path.exists() {
+    if quickjs_provider_wizened_path.exists() {
         let out_dir = env::var("OUT_DIR")?;
-        let copied_engine_path = Path::new(&out_dir).join("engine.wasm");
         let copied_provider_path = Path::new(&out_dir).join("provider.wasm");
-
-        fs::copy(&engine_path, copied_engine_path)?;
         fs::copy(&quickjs_provider_wizened_path, copied_provider_path)?;
     }
     Ok(())

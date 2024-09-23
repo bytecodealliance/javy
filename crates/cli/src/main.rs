@@ -9,7 +9,7 @@ use crate::codegen::WitOptions;
 use crate::commands::{Cli, Command, EmitProviderCommandOpts};
 use anyhow::Result;
 use clap::Parser;
-use codegen::{CodeGenBuilder, DynamicGenerator, StaticGenerator};
+use codegen::CodeGenBuilder;
 use commands::{CodegenOptionGroup, JsOptionGroup};
 use javy_config::Config;
 use js::JS;
@@ -47,9 +47,9 @@ fn main() -> Result<()> {
 
             let config = Config::default();
             let mut gen = if opts.dynamic {
-                builder.build::<DynamicGenerator>(config)?
+                builder.build_dynamic()?
             } else {
-                builder.build::<StaticGenerator>(config)?
+                builder.build_static(config)?
             };
 
             let wasm = gen.generate(&js)?;
@@ -68,9 +68,9 @@ fn main() -> Result<()> {
 
             let js_opts: JsOptionGroup = opts.js.clone().into();
             let mut gen = if codegen.dynamic {
-                builder.build::<DynamicGenerator>(js_opts.into())?
+                builder.build_dynamic()?
             } else {
-                builder.build::<StaticGenerator>(js_opts.into())?
+                builder.build_static(js_opts.into())?
             };
 
             let wasm = gen.generate(&js)?;

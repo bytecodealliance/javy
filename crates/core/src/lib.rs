@@ -2,6 +2,7 @@ use anyhow::anyhow;
 use javy::Runtime;
 use javy_config::Config;
 use once_cell::sync::OnceCell;
+use std::env;
 use std::slice;
 use std::str;
 
@@ -14,18 +15,29 @@ static mut COMPILE_SRC_RET_AREA: [u32; 2] = [0; 2];
 
 static mut RUNTIME: OnceCell<Runtime> = OnceCell::new();
 
-/// Used by Wizer to preinitialize the module.
-#[export_name = "wizer.initialize"]
-pub extern "C" fn init() {
-    let runtime = runtime::new(Config::default()).unwrap();
+#[export_name = "initialize_runtime"]
+pub extern "C" fn initialize_runtime() {
+    let js_runtime_config = if let Ok(js_runtime_config_str) = env::var("JS_RUNTIME_CONFIG") {
+        Config::from_bits(
+            js_runtime_config_str
+                .parse()
+                .expect("JS_RUNTIME_CONFIG should be a u32"),
+        )
+        .expect("JS_RUNTIME_CONFIG should only contain valid flags")
+    } else {
+        Config::default()
+    };
+
+    let runtime = runtime::new(js_runtime_config).unwrap();
     unsafe {
+        RUNTIME.take();
         RUNTIME
             .set(runtime)
             // `set` requires `T` to implement `Debug` but quickjs::{Runtime,
             // Context} don't.
             .map_err(|_| anyhow!("Could not pre-initialize javy::Runtime"))
             .unwrap();
-    };
+    }
 }
 
 /// Compiles JS source code to QuickJS bytecode.
@@ -57,18 +69,6 @@ pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -
     COMPILE_SRC_RET_AREA[0] = bytecode_ptr as u32;
     COMPILE_SRC_RET_AREA[1] = len.try_into().unwrap();
     COMPILE_SRC_RET_AREA.as_ptr()
-}
-
-/// Evaluates QuickJS bytecode
-///
-/// # Safety
-///
-/// * `bytecode_ptr` must reference a valid array of unsigned bytes of `bytecode_len` length
-#[export_name = "eval_bytecode"]
-pub unsafe extern "C" fn eval_bytecode(bytecode_ptr: *const u8, bytecode_len: usize) {
-    let runtime = RUNTIME.get().unwrap();
-    let bytecode = slice::from_raw_parts(bytecode_ptr, bytecode_len);
-    execution::run_bytecode(runtime, bytecode);
 }
 
 /// Evaluates QuickJS bytecode and optionally invokes exported JS function with

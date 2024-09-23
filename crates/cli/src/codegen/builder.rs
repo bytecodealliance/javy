@@ -1,4 +1,4 @@
-use crate::codegen::{CodeGen, CodeGenType, DynamicGenerator, StaticGenerator};
+use crate::codegen::{CodeGen, Generator};
 use anyhow::{bail, Result};
 use javy_config::Config;
 use std::path::PathBuf;
@@ -79,44 +79,22 @@ impl CodeGenBuilder {
         self
     }
 
-    /// Build a [`CodeGenerator`].
-    pub fn build<T>(self, js_runtime_config: Config) -> Result<Box<dyn CodeGen>>
-    where
-        T: CodeGen,
-    {
-        match T::classify() {
-            CodeGenType::Static => self.build_static(js_runtime_config),
-            CodeGenType::Dynamic => {
-                if js_runtime_config != Config::default() {
-                    bail!("Cannot set JS runtime options when building a dynamic module")
-                }
-                self.build_dynamic()
-            }
-        }
+    pub fn build_static(self, js_runtime_config: Config) -> Result<Box<dyn CodeGen>> {
+        Ok(Box::new(Generator::new(
+            super::LinkingStrategy::Static { js_runtime_config },
+            self.wit_opts,
+        )))
     }
 
-    fn build_static(self, js_runtime_config: Config) -> Result<Box<dyn CodeGen>> {
-        let mut static_gen = Box::new(StaticGenerator::new(js_runtime_config));
-
-        static_gen.source_compression = self.source_compression;
-        static_gen.wit_opts = self.wit_opts;
-
-        Ok(static_gen)
-    }
-
-    fn build_dynamic(self) -> Result<Box<dyn CodeGen>> {
-        let mut dynamic_gen = Box::new(DynamicGenerator::new());
-        dynamic_gen.source_compression = self.source_compression;
-
-        if let Some(v) = self.provider_version {
-            dynamic_gen.import_namespace = String::from("javy_quickjs_provider_v");
-            dynamic_gen.import_namespace.push_str(v);
+    pub fn build_dynamic(self) -> Result<Box<dyn CodeGen>> {
+        let import_namespace = if let Some(v) = self.provider_version {
+            format!("javy_quickjs_provider_v{v}")
         } else {
             bail!("Provider version not specified")
-        }
-
-        dynamic_gen.wit_opts = self.wit_opts;
-
-        Ok(dynamic_gen)
+        };
+        Ok(Box::new(Generator::new(
+            super::LinkingStrategy::Dynamic { import_namespace },
+            self.wit_opts,
+        )))
     }
 }
