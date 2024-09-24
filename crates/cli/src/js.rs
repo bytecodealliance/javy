@@ -51,11 +51,8 @@ impl JS {
     }
 
     /// Compiles a JavaScript source to bytecode using the QuickJS provider.
-    pub fn compile(&self) -> Result<Vec<u8>> {
-        bytecode::compile_source(
-            bytecode::QUICKJS_PROVIDER_MODULE,
-            self.source_code.as_bytes(),
-        )
+    pub fn compile(&self, provider_module: &[u8]) -> Result<Vec<u8>> {
+        bytecode::compile_source(provider_module, self.source_code.as_bytes())
     }
 
     /// Similar to [`Self::compile`]. Instead of using the most up to date

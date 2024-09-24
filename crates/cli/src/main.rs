@@ -8,6 +8,7 @@ mod wit;
 use crate::codegen::WitOptions;
 use crate::commands::{Cli, Command, EmitProviderCommandOpts};
 use anyhow::Result;
+use bytecode::QUICKJS_PROVIDER_MODULE;
 use clap::Parser;
 use codegen::CodeGenBuilder;
 use commands::{CodegenOptionGroup, JsOptionGroup};
@@ -16,6 +17,7 @@ use js::JS;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
+use wizer::Wizer;
 
 fn main() -> Result<()> {
     let args = Cli::parse();
@@ -47,12 +49,12 @@ fn main() -> Result<()> {
 
             let config = Config::default();
             let mut gen = if opts.dynamic {
-                builder.build_dynamic()?
+                builder.build_dynamic(None)?
             } else {
-                builder.build_static(config)?
+                builder.build_static(config, None)?
             };
 
-            let wasm = gen.generate(&js)?;
+            let wasm = gen.generate(&js, QUICKJS_PROVIDER_MODULE)?;
 
             fs::write(&opts.output, wasm)?;
             Ok(())
@@ -66,16 +68,35 @@ fn main() -> Result<()> {
                 .source_compression(codegen.source_compression)
                 .provider_version("3");
 
-            let js_opts: JsOptionGroup = opts.js.clone().into();
-            let mut gen = if codegen.dynamic {
-                builder.build_dynamic()?
+            let provider_module = if let Some(plugin) = opts.plugin.clone() {
+                &fs::read(plugin)?
             } else {
-                builder.build_static(js_opts.into())?
+                QUICKJS_PROVIDER_MODULE
+            };
+            let js_opts: JsOptionGroup = opts.js.clone().into();
+
+            let mut gen = if codegen.dynamic {
+                let import_namespace = bytecode::import_namespace(provider_module)?;
+                builder.build_dynamic(Some(import_namespace.to_string()))?
+            } else {
+                builder.build_static(js_opts.into(), opts.plugin.clone())?
             };
 
-            let wasm = gen.generate(&js)?;
+            let wasm = gen.generate(&js, provider_module)?;
 
             fs::write(&opts.output, wasm)?;
+            Ok(())
+        }
+        Command::InitializePlugin(opts) => {
+            let wasm = fs::read(&opts.plugin)?;
+            let wasm = Wizer::new()
+                .allow_wasi(true)?
+                .inherit_stdio(true)
+                .init_func("initialize_runtime")
+                .keep_init_func(true)
+                .wasm_bulk_memory(true)
+                .run(&wasm)?;
+            fs::write(&opts.out, wasm)?;
             Ok(())
         }
     }

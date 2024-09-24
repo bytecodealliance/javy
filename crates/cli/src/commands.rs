@@ -45,6 +45,7 @@ pub enum Command {
     /// Emits the provider binary that is required to run dynamically
     /// linked WebAssembly modules.
     EmitProvider(EmitProviderCommandOpts),
+    InitializePlugin(InitializePlugCommandOpts),
 }
 
 #[derive(Debug, Parser)]
@@ -96,6 +97,10 @@ pub struct BuildCommandOpts {
     /// JavaScript runtime options.
     /// Use `-J help` for more details.
     pub js: Vec<GroupOption<JsOption>>,
+
+    #[arg(short = 'P', long = "plugin")]
+    /// Plugin module to use.
+    pub plugin: Option<PathBuf>,
 }
 
 #[derive(Debug, Parser)]
@@ -103,6 +108,14 @@ pub struct EmitProviderCommandOpts {
     #[structopt(short, long)]
     /// Output path for the provider binary (default is stdout).
     pub out: Option<PathBuf>,
+}
+
+#[derive(Debug, Parser)]
+pub struct InitializePlugCommandOpts {
+    #[arg(short = 'p', long = "plugin")]
+    pub plugin: PathBuf,
+    #[arg(short = 'o', long = "out")]
+    pub out: PathBuf,
 }
 
 impl<T> ValueParserFactory for GroupOption<T>

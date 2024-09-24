@@ -34,7 +34,7 @@
 //! features requsted by the JavaScript bytecode.
 
 mod builder;
-use std::{env, rc::Rc, sync::OnceLock};
+use std::{env, fs, path::PathBuf, rc::Rc, sync::OnceLock};
 
 pub(crate) use builder::*;
 
@@ -51,7 +51,7 @@ use crate::JS;
 
 pub(crate) trait CodeGen {
     /// Generate Wasm from a given JS source.
-    fn generate(&mut self, source: &JS) -> anyhow::Result<Vec<u8>>;
+    fn generate(&mut self, source: &JS, provider_module: &[u8]) -> anyhow::Result<Vec<u8>>;
 }
 
 pub(crate) use crate::codegen::WitOptions;
@@ -85,8 +85,13 @@ struct FunctionsAndMemory {
 }
 
 enum LinkingStrategy {
-    Static { js_runtime_config: Config },
-    Dynamic { import_namespace: String },
+    Static {
+        js_runtime_config: Config,
+        plugin: Option<PathBuf>,
+    },
+    Dynamic {
+        import_namespace: String,
+    },
 }
 
 static mut WASI: OnceLock<WasiCtx> = OnceLock::new();
@@ -95,7 +100,10 @@ impl LinkingStrategy {
     fn module(&self) -> Result<walrus::Module> {
         let config = transform::module_config();
         let module = match self {
-            LinkingStrategy::Static { js_runtime_config } => {
+            LinkingStrategy::Static {
+                js_runtime_config,
+                plugin,
+            } => {
                 unsafe {
                     WASI.get_or_init(|| {
                         WasiCtxBuilder::new()
@@ -105,6 +113,11 @@ impl LinkingStrategy {
                             .unwrap()
                             .build()
                     });
+                };
+                let provider = if let Some(plugin) = plugin {
+                    &fs::read(plugin)?[..]
+                } else {
+                    include_bytes!(concat!(env!("OUT_DIR"), "/provider.wasm"))
                 };
                 let wasm = Wizer::new()
                     .make_linker(Some(Rc::new(|engine| {
@@ -116,7 +129,7 @@ impl LinkingStrategy {
                     })))?
                     .wasm_bulk_memory(true)
                     .init_func("initialize_runtime")
-                    .run(include_bytes!(concat!(env!("OUT_DIR"), "/provider.wasm")))?;
+                    .run(provider)?;
                 let module = config.parse(&wasm)?;
                 module
             }
@@ -223,8 +236,9 @@ impl Generator {
         module: &mut Module,
         js: &JS,
         functions_and_memory: &FunctionsAndMemory,
+        provider_module: &[u8],
     ) -> Result<BytecodeMetadata> {
-        let bytecode = js.compile()?;
+        let bytecode = js.compile(provider_module)?;
         let bytecode_len: i32 = bytecode.len().try_into()?;
         let bytecode_data = module.data.add(DataKind::Passive, bytecode);
 
@@ -379,7 +393,7 @@ impl CodeGen for Generator {
     //    (data (;0;) "\02\05\18function.mjs\06foo\0econsole\06log\06bar\0f\bc\03\00\01\00\00\be\03\00\00\0e\00\06\01\a0\01\00\00\00\03\01\01\1a\00\be\03\00\01\08\ea\05\c0\00\e1)8\e0\00\00\00B\e1\00\00\00\04\e2\00\00\00$\01\00)\bc\03\01\04\01\00\07\0a\0eC\06\01\be\03\00\00\00\03\00\00\13\008\e0\00\00\00B\e1\00\00\00\04\df\00\00\00$\01\00)\bc\03\01\02\03]")
     //    (data (;1;) "foo")
     //  )
-    fn generate(&mut self, js: &JS) -> Result<Vec<u8>> {
+    fn generate(&mut self, js: &JS, provider_module: &[u8]) -> Result<Vec<u8>> {
         if self.wit_opts.defined() {
             self.function_exports = exports::process_exports(
                 js,
@@ -390,7 +404,8 @@ impl CodeGen for Generator {
 
         let mut module = self.linking_strategy.module()?;
         let functions_and_memory = self.linking_strategy.functions_and_memory(&mut module)?;
-        let bc_metadata = self.generate_main(&mut module, js, &functions_and_memory)?;
+        let bc_metadata =
+            self.generate_main(&mut module, js, &functions_and_memory, provider_module)?;
         self.generate_exports(&mut module, &functions_and_memory, &bc_metadata)?;
         self.linking_strategy.cleanup(&mut module)?;
 

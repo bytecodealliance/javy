@@ -47,6 +47,7 @@ use std::str;
 
 pub mod alloc;
 mod config;
+pub mod exported_fns;
 mod runtime;
 mod serde;
 

@@ -7,7 +7,7 @@ use crate::{
 };
 
 #[cfg(feature = "json")]
-use crate::apis::{JavyJson, Json};
+use crate::apis::Json;
 
 use anyhow::{bail, Result};
 use rquickjs::{
@@ -136,13 +136,6 @@ impl Runtime {
 
             if javy_intrinsics.contains(JavyIntrinsics::STREAM_IO) {
                 unsafe { StreamIO::add_intrinsic(ctx.as_raw()) }
-            }
-
-            if javy_intrinsics.contains(JavyIntrinsics::JSON) {
-                #[cfg(feature = "json")]
-                unsafe {
-                    JavyJson::add_intrinsic(ctx.as_raw())
-                }
             }
         });
 

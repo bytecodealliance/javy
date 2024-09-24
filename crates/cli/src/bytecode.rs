@@ -1,5 +1,7 @@
 use anyhow::{anyhow, Result};
+use std::str;
 use wasi_common::{sync::WasiCtxBuilder, WasiCtx};
+use wasmparser::Payload;
 use wasmtime::{AsContextMut, Engine, Instance, Linker, Memory, Module, Store};
 
 pub const QUICKJS_PROVIDER_MODULE: &[u8] =
@@ -7,6 +9,27 @@ pub const QUICKJS_PROVIDER_MODULE: &[u8] =
 
 /// Use the legacy provider when using the `compile -d` command.
 pub const QUICKJS_PROVIDER_V2_MODULE: &[u8] = include_bytes!("./javy_quickjs_provider_v2.wasm");
+
+pub fn import_namespace(provider_module: &[u8]) -> Result<&str> {
+    wasmparser::Parser::new(0)
+        .parse_all(provider_module)
+        .find_map(|payload| {
+            payload
+                .map(|payload| {
+                    if let Payload::CustomSection(custom_section) = payload {
+                        if custom_section.name() == "import_namespace" {
+                            Some(str::from_utf8(custom_section.data()).unwrap())
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                })
+                .unwrap_or_else(|_| None)
+        })
+        .ok_or_else(|| anyhow!("Plugin missing import_namespace custom section"))
+}
 
 pub fn compile_source(provider: &[u8], js_source_code: &[u8]) -> Result<Vec<u8>> {
     let (mut store, instance, memory) = create_wasm_env(provider)?;

@@ -11,6 +11,7 @@ categories = ["wasm"]
 
 [dependencies]
 anyhow = { workspace = true }
+javy-config = { workspace = true }
 rquickjs = { version = "=0.6.1", features = ["array-buffer", "bindgen"] }
 rquickjs-core = "=0.6.1"
 rquickjs-sys = "=0.6.1"
@@ -42,3 +43,4 @@ messagepack = ["rmp-serde", "serde-transcode"]
 # implications of enabling by default (due to the extra dependencies) and also
 # because the native implementation is probably fine for most use-cases.
 json = ["serde_json", "serde-transcode", "simd-json"]
+experimental_event_loop = []

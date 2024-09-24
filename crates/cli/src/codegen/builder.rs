@@ -79,21 +79,25 @@ impl CodeGenBuilder {
         self
     }
 
-    pub fn build_static(self, js_runtime_config: Config) -> Result<Box<dyn CodeGen>> {
+    pub fn build_static(
+        self,
+        js_runtime_config: Config,
+        plugin: Option<PathBuf>,
+    ) -> Result<Box<dyn CodeGen>> {
         Ok(Box::new(Generator::new(
-            super::LinkingStrategy::Static { js_runtime_config },
+            super::LinkingStrategy::Static {
+                js_runtime_config,
+                plugin,
+            },
             self.wit_opts,
         )))
     }
 
-    pub fn build_dynamic(self) -> Result<Box<dyn CodeGen>> {
-        let import_namespace = if let Some(v) = self.provider_version {
-            format!("javy_quickjs_provider_v{v}")
-        } else {
-            bail!("Provider version not specified")
-        };
+    pub fn build_dynamic(self, import_namespace: Option<String>) -> Result<Box<dyn CodeGen>> {
         Ok(Box::new(Generator::new(
-            super::LinkingStrategy::Dynamic { import_namespace },
+            super::LinkingStrategy::Dynamic {
+                import_namespace: import_namespace.unwrap(),
+            },
             self.wit_opts,
         )))
     }

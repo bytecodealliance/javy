@@ -1516,6 +1516,7 @@ dependencies = [
  "anyhow",
  "bitflags",
  "fastrand",
+ "javy-config",
  "javy-test-macros",
  "quickcheck",
  "rmp-serde",
@@ -1569,10 +1570,7 @@ dependencies = [
 name = "javy-core"
 version = "0.2.0"
 dependencies = [
- "anyhow",
  "javy",
- "javy-config",
- "once_cell",
 ]
 
 [[package]]

@@ -1,5 +1,6 @@
 use anyhow::{bail, Result};
 use bitflags::bitflags;
+use javy_config::Config as SharedConfig;
 
 bitflags! {
     /// Flags to represent available JavaScript features.
@@ -204,6 +205,19 @@ impl Config {
         }
 
         Ok(self)
+    }
+}
+
+impl From<SharedConfig> for Config {
+    fn from(value: SharedConfig) -> Self {
+        let mut config = Config::default();
+        config
+            .text_encoding(value.contains(SharedConfig::TEXT_ENCODING))
+            .redirect_stdout_to_stderr(value.contains(SharedConfig::REDIRECT_STDOUT_TO_STDERR))
+            .javy_stream_io(value.contains(SharedConfig::JAVY_STREAM_IO))
+            .simd_json_builtins(value.contains(SharedConfig::SIMD_JSON_BUILTINS))
+            .javy_json(value.contains(SharedConfig::JAVY_JSON));
+        config
     }
 }
 
