@@ -10,6 +10,6 @@
     "test": "npm run bundle && npm run javy && npm run wasmtime"
   },
   "devDependencies": {
-    "rollup": "^3.5.0"
+    "rollup": "^3.29.5"
   }
 }
