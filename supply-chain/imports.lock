@@ -128,22 +128,22 @@ user-login = "emilio"
 user-name = "Emilio Cobos Álvarez"
 
 [[publisher.clap]]
-version = "4.5.17"
-when = "2024-09-04"
+version = "4.5.19"
+when = "2024-10-01"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.clap_builder]]
-version = "4.5.17"
-when = "2024-09-04"
+version = "4.5.19"
+when = "2024-10-01"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.clap_derive]]
-version = "4.5.13"
-when = "2024-07-31"
+version = "4.5.18"
+when = "2024-09-20"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
@@ -531,8 +531,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.syn]]
-version = "2.0.77"
-when = "2024-08-31"
+version = "2.0.79"
+when = "2024-09-27"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -713,8 +713,8 @@ user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmparser]]
-version = "0.217.0"
-when = "2024-09-10"
+version = "0.218.0"
+when = "2024-09-30"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -725,8 +725,8 @@ user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmprinter]]
-version = "0.217.0"
-when = "2024-09-10"
+version = "0.218.0"
+when = "2024-09-30"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -1674,6 +1674,11 @@ who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
 delta = "0.1.21 -> 0.1.24"
 
+[[audits.bytecode-alliance.audits.rustix]]
+who = "Dan Gohman <dev@sunfishcode.online>"
+criteria = "safe-to-deploy"
+delta = "0.38.34 -> 0.38.37"
+
 [[audits.bytecode-alliance.audits.slice-group-by]]
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
@@ -2104,6 +2109,11 @@ delta = "1.17.2 -> 1.18.0"
 who = "Brandon Pitman <bran@bran.land>"
 criteria = "safe-to-deploy"
 delta = "1.18.0 -> 1.19.0"
+
+[[audits.isrg.audits.once_cell]]
+who = "David Cook <dcook@divviup.org>"
+criteria = "safe-to-deploy"
+delta = "1.19.0 -> 1.20.1"
 
 [[audits.isrg.audits.rand_chacha]]
 who = "David Cook <dcook@divviup.org>"
