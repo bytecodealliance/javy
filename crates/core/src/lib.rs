@@ -71,14 +71,15 @@ pub unsafe extern "C" fn eval_bytecode(bytecode_ptr: *const u8, bytecode_len: us
     execution::run_bytecode(runtime, bytecode);
 }
 
-/// Evaluates QuickJS bytecode and invokes the exported JS function name.
+/// Evaluates QuickJS bytecode and optionally invokes exported JS function with
+/// name.
 ///
 /// # Safety
 ///
 /// * `bytecode_ptr` must reference a valid array of bytes of `bytecode_len`
 ///   length.
-/// * `fn_name_ptr` must reference a UTF-8 string with `fn_name_len` byte
-///   length.
+/// * If `fn_name_ptr` is not 0, it must reference a UTF-8 string with
+///   `fn_name_len` byte length.
 #[export_name = "invoke"]
 pub unsafe extern "C" fn invoke(
     bytecode_ptr: *const u8,
@@ -88,7 +89,9 @@ pub unsafe extern "C" fn invoke(
 ) {
     let runtime = RUNTIME.get().unwrap();
     let bytecode = slice::from_raw_parts(bytecode_ptr, bytecode_len);
-    let fn_name = str::from_utf8_unchecked(slice::from_raw_parts(fn_name_ptr, fn_name_len));
     execution::run_bytecode(runtime, bytecode);
-    execution::invoke_function(runtime, FUNCTION_MODULE_NAME, fn_name);
+    if !fn_name_ptr.is_null() && fn_name_len != 0 {
+        let fn_name = str::from_utf8_unchecked(slice::from_raw_parts(fn_name_ptr, fn_name_len));
+        execution::invoke_function(runtime, FUNCTION_MODULE_NAME, fn_name);
+    }
 }

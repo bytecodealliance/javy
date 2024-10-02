@@ -251,6 +251,12 @@ impl StoreContext {
     }
 }
 
+pub enum UseExportedFn {
+    EvalBytecode,
+    Invoke,
+    InvokeWithFn(&'static str),
+}
+
 impl Runner {
     #[allow(clippy::too_many_arguments)]
     fn build(
@@ -659,26 +665,35 @@ impl Runner {
     pub fn exec_through_dylib(
         &mut self,
         src: &str,
-        named: Option<&'static str>,
+        use_exported_fn: UseExportedFn,
     ) -> Result<(Vec<u8>, Vec<u8>, u64)> {
         let mut store = Self::setup_store(self.linker.engine(), &[])?;
         let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
 
         let instance = self.linker.instantiate(store.as_context_mut(), &module)?;
 
-        let res = if let Some(invoke) = named {
-            let invoke_fn = instance
-                .get_typed_func::<(u32, u32, u32, u32), ()>(store.as_context_mut(), "invoke")?;
-            let (bc_ptr, bc_len) =
-                Self::compile(src.as_bytes(), store.as_context_mut(), &instance)?;
-            let (ptr, len) = Self::copy_func_name(invoke, &instance, store.as_context_mut())?;
+        let res = match use_exported_fn {
+            UseExportedFn::InvokeWithFn(func) => {
+                let invoke_fn = instance
+                    .get_typed_func::<(u32, u32, u32, u32), ()>(store.as_context_mut(), "invoke")?;
+                let (bc_ptr, bc_len) =
+                    Self::compile(src.as_bytes(), store.as_context_mut(), &instance)?;
+                let (ptr, len) = Self::copy_func_name(func, &instance, store.as_context_mut())?;
 
-            invoke_fn.call(store.as_context_mut(), (bc_ptr, bc_len, ptr, len))
-        } else {
-            let eval = instance
-                .get_typed_func::<(u32, u32), ()>(store.as_context_mut(), "eval_bytecode")?;
-            let (ptr, len) = Self::compile(src.as_bytes(), store.as_context_mut(), &instance)?;
-            eval.call(store.as_context_mut(), (ptr, len))
+                invoke_fn.call(store.as_context_mut(), (bc_ptr, bc_len, ptr, len))
+            }
+            UseExportedFn::EvalBytecode => {
+                let eval = instance
+                    .get_typed_func::<(u32, u32), ()>(store.as_context_mut(), "eval_bytecode")?;
+                let (ptr, len) = Self::compile(src.as_bytes(), store.as_context_mut(), &instance)?;
+                eval.call(store.as_context_mut(), (ptr, len))
+            }
+            UseExportedFn::Invoke => {
+                let eval = instance
+                    .get_typed_func::<(u32, u32, u32, u32), ()>(store.as_context_mut(), "invoke")?;
+                let (ptr, len) = Self::compile(src.as_bytes(), store.as_context_mut(), &instance)?;
+                eval.call(store.as_context_mut(), (ptr, len, 0, 0))
+            }
         };
 
         self.extract_store_data(res, store)
