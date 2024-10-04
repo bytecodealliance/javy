@@ -288,7 +288,7 @@ fn expand_cli_tests(test_config: &CliTestConfig, func: syn::ItemFn) -> Result<To
                     let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
                     builder.preload(
                         "javy_quickjs_provider_v2".into(),
-                        root.join("tests").join("javy_quickjs_provider_v2.wasm")
+                        root.join("src").join("javy_quickjs_provider_v2.wasm")
                     );
                     builder.provider_version(2);
                 }

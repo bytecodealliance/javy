@@ -105,7 +105,11 @@ impl DynamicGenerator {
         js: &JS,
         imports: &Imports,
     ) -> Result<BytecodeMetadata> {
-        let bytecode = js.compile()?;
+        let bytecode = if self.import_namespace == "javy_quickjs_provider_v2" {
+            js.compile_legacy()?
+        } else {
+            js.compile()?
+        };
         let bytecode_len: i32 = bytecode.len().try_into()?;
         let bytecode_data = module.data.add(DataKind::Passive, bytecode);
 
