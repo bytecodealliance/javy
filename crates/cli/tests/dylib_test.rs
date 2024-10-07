@@ -21,7 +21,7 @@ fn test_dylib_with_invoke_with_no_fn_name() -> Result<()> {
     let js_src = "console.log(42);";
     let mut runner = Runner::with_dylib(provider_module()?)?;
 
-    let (_, logs, _) = runner.exec_through_dylib(js_src, UseExportedFn::Invoke)?;
+    let (_, logs, _) = runner.exec_through_dylib(js_src, UseExportedFn::Invoke(None))?;
     assert_eq!("42\n", str::from_utf8(&logs)?);
 
     Ok(())
@@ -53,7 +53,7 @@ fn test_dylib_with_exported_func() -> Result<()> {
 
     let mut runner = Runner::with_dylib(provider_module()?)?;
 
-    let (_, logs, _) = runner.exec_through_dylib(js_src, UseExportedFn::InvokeWithFn("foo"))?;
+    let (_, logs, _) = runner.exec_through_dylib(js_src, UseExportedFn::Invoke(Some("foo")))?;
     assert_eq!("Toplevel\nIn foo\n", str::from_utf8(&logs)?);
 
     Ok(())

@@ -253,8 +253,7 @@ impl StoreContext {
 
 pub enum UseExportedFn {
     EvalBytecode,
-    Invoke,
-    InvokeWithFn(&'static str),
+    Invoke(Option<&'static str>),
 }
 
 impl Runner {
@@ -672,27 +671,19 @@ impl Runner {
 
         let instance = self.linker.instantiate(store.as_context_mut(), &module)?;
 
+        let (bc_ptr, bc_len) = Self::compile(src.as_bytes(), store.as_context_mut(), &instance)?;
         let res = match use_exported_fn {
-            UseExportedFn::InvokeWithFn(func) => {
-                let invoke_fn = instance
-                    .get_typed_func::<(u32, u32, u32, u32), ()>(store.as_context_mut(), "invoke")?;
-                let (bc_ptr, bc_len) =
-                    Self::compile(src.as_bytes(), store.as_context_mut(), &instance)?;
-                let (ptr, len) = Self::copy_func_name(func, &instance, store.as_context_mut())?;
-
-                invoke_fn.call(store.as_context_mut(), (bc_ptr, bc_len, ptr, len))
-            }
-            UseExportedFn::EvalBytecode => {
-                let eval = instance
-                    .get_typed_func::<(u32, u32), ()>(store.as_context_mut(), "eval_bytecode")?;
-                let (ptr, len) = Self::compile(src.as_bytes(), store.as_context_mut(), &instance)?;
-                eval.call(store.as_context_mut(), (ptr, len))
-            }
-            UseExportedFn::Invoke => {
-                let eval = instance
-                    .get_typed_func::<(u32, u32, u32, u32), ()>(store.as_context_mut(), "invoke")?;
-                let (ptr, len) = Self::compile(src.as_bytes(), store.as_context_mut(), &instance)?;
-                eval.call(store.as_context_mut(), (ptr, len, 0, 0))
+            UseExportedFn::EvalBytecode => instance
+                .get_typed_func::<(u32, u32), ()>(store.as_context_mut(), "eval_bytecode")?
+                .call(store.as_context_mut(), (bc_ptr, bc_len)),
+            UseExportedFn::Invoke(func) => {
+                let (fn_ptr, fn_len) = match func {
+                    Some(func) => Self::copy_func_name(func, &instance, store.as_context_mut())?,
+                    None => (0, 0),
+                };
+                instance
+                    .get_typed_func::<(u32, u32, u32, u32), ()>(store.as_context_mut(), "invoke")?
+                    .call(store.as_context_mut(), (bc_ptr, bc_len, fn_ptr, fn_len))
             }
         };
 
