@@ -17,9 +17,9 @@ pub fn compile_source(provider: &[u8], js_source_code: &[u8]) -> Result<Vec<u8>>
     Ok(bytecode)
 }
 
-fn create_wasm_env(bytes: &[u8]) -> Result<(Store<WasiCtx>, Instance, Memory)> {
+fn create_wasm_env(provider_bytes: &[u8]) -> Result<(Store<WasiCtx>, Instance, Memory)> {
     let engine = Engine::default();
-    let module = Module::new(&engine, bytes)?;
+    let module = Module::new(&engine, provider_bytes)?;
     let mut linker = Linker::new(&engine);
     wasi_common::sync::snapshots::preview_1::add_wasi_snapshot_preview1_to_linker(
         &mut linker,
