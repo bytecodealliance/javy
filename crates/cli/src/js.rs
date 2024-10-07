@@ -50,8 +50,23 @@ impl JS {
         self.source_code.as_bytes()
     }
 
+    /// Compiles a JavaScript source to bytecode using the QuickJS provider.
     pub fn compile(&self) -> Result<Vec<u8>> {
-        bytecode::compile_source(self.source_code.as_bytes())
+        bytecode::compile_source(
+            bytecode::QUICKJS_PROVIDER_MODULE,
+            self.source_code.as_bytes(),
+        )
+    }
+
+    /// Similar to [`Self::compile`]. Instead of using the most up to date
+    /// provider, it uses the v2 provider.
+    ///
+    /// NB that this is temporary until the `compile` command is deprecated.
+    pub fn compile_legacy(&self) -> Result<Vec<u8>> {
+        bytecode::compile_source(
+            bytecode::QUICKJS_PROVIDER_V2_MODULE,
+            self.source_code.as_bytes(),
+        )
     }
 
     pub fn compress(&self) -> Result<Vec<u8>> {

@@ -5,8 +5,11 @@ use wasmtime::{AsContextMut, Engine, Instance, Linker, Memory, Module, Store};
 pub const QUICKJS_PROVIDER_MODULE: &[u8] =
     include_bytes!(concat!(env!("OUT_DIR"), "/provider.wasm"));
 
-pub fn compile_source(js_source_code: &[u8]) -> Result<Vec<u8>> {
-    let (mut store, instance, memory) = create_wasm_env()?;
+/// Use the legacy provider when using the `compile -d` command.
+pub const QUICKJS_PROVIDER_V2_MODULE: &[u8] = include_bytes!("./javy_quickjs_provider_v2.wasm");
+
+pub fn compile_source(provider: &[u8], js_source_code: &[u8]) -> Result<Vec<u8>> {
+    let (mut store, instance, memory) = create_wasm_env(provider)?;
     let (js_src_ptr, js_src_len) =
         copy_source_code_into_instance(js_source_code, store.as_context_mut(), &instance, &memory)?;
     let ret_ptr = call_compile(js_src_ptr, js_src_len, store.as_context_mut(), &instance)?;
@@ -14,9 +17,9 @@ pub fn compile_source(js_source_code: &[u8]) -> Result<Vec<u8>> {
     Ok(bytecode)
 }
 
-fn create_wasm_env() -> Result<(Store<WasiCtx>, Instance, Memory)> {
+fn create_wasm_env(provider_bytes: &[u8]) -> Result<(Store<WasiCtx>, Instance, Memory)> {
     let engine = Engine::default();
-    let module = Module::new(&engine, QUICKJS_PROVIDER_MODULE)?;
+    let module = Module::new(&engine, provider_bytes)?;
     let mut linker = Linker::new(&engine);
     wasi_common::sync::snapshots::preview_1::add_wasi_snapshot_preview1_to_linker(
         &mut linker,
