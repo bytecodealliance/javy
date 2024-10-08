@@ -1530,7 +1530,7 @@ dependencies = [
 
 [[package]]
 name = "javy-cli"
-version = "3.1.1"
+version = "3.1.2"
 dependencies = [
  "anyhow",
  "brotli",
@@ -1560,7 +1560,7 @@ dependencies = [
 
 [[package]]
 name = "javy-config"
-version = "3.1.1"
+version = "3.1.2"
 dependencies = [
  "bitflags",
 ]
@@ -1588,7 +1588,7 @@ dependencies = [
 
 [[package]]
 name = "javy-runner"
-version = "3.1.1"
+version = "3.1.2"
 dependencies = [
  "anyhow",
  "tempfile",
@@ -1601,7 +1601,7 @@ dependencies = [
 
 [[package]]
 name = "javy-test-macros"
-version = "3.1.1"
+version = "3.1.2"
 dependencies = [
  "anyhow",
  "proc-macro2",
