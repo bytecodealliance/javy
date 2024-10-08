@@ -83,9 +83,9 @@ pub struct BuildCommandOpts {
     /// Path of the JavaScript input file.
     pub input: PathBuf,
 
-    #[arg(short, default_value = "index.wasm")]
+    #[arg(short)]
     /// Desired path of the WebAssembly output file.
-    pub output: PathBuf,
+    pub output: Option<PathBuf>,
 
     #[arg(short = 'C', long = "codegen")]
     /// Code generation options.

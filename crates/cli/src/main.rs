@@ -15,7 +15,7 @@ use javy_config::Config;
 use js::JS;
 use std::fs;
 use std::fs::File;
-use std::io::Write;
+use std::io::{Read, Write};
 
 fn main() -> Result<()> {
     let args = Cli::parse();
@@ -58,7 +58,14 @@ fn main() -> Result<()> {
             Ok(())
         }
         Command::Build(opts) => {
-            let js = JS::from_file(&opts.input)?;
+            let js = match opts.input.to_str() {
+                Some("-") => {
+                    let mut content = String::new();
+                    std::io::stdin().read_to_string(&mut content)?;
+                    JS::from_string(content)
+                }
+                _ => JS::from_file(&opts.input)?,
+            };
             let codegen: CodegenOptionGroup = opts.codegen.clone().try_into()?;
             let mut builder = CodeGenBuilder::new();
             builder
@@ -74,8 +81,11 @@ fn main() -> Result<()> {
             };
 
             let wasm = gen.generate(&js)?;
-
-            fs::write(&opts.output, wasm)?;
+            if let Some(path) = opts.output.as_ref() {
+                fs::write(path, wasm)?;
+            } else {
+                std::io::stdout().write_all(&wasm)?;
+            }
             Ok(())
         }
     }
