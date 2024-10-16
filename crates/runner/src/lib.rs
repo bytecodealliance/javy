@@ -670,12 +670,18 @@ impl Runner {
         let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
 
         let instance = self.linker.instantiate(store.as_context_mut(), &module)?;
+        let bytecode = Self::compile(src.as_bytes(), store.as_context_mut(), &instance)?;
 
-        let (bc_ptr, bc_len) = Self::compile(src.as_bytes(), store.as_context_mut(), &instance)?;
+        // Need to use a fresh instance so we get a fresh wizened runtime,
+        // otherwise the JS in the outermost scope will be executed a second
+        // time if an exported JS function is invoked.
+        let instance = self.linker.instantiate(store.as_context_mut(), &module)?;
+        let bc_ptr = Self::copy_into_instance(&bytecode, &instance, store.as_context_mut())?;
+
         let res = match use_exported_fn {
             UseExportedFn::EvalBytecode => instance
                 .get_typed_func::<(u32, u32), ()>(store.as_context_mut(), "eval_bytecode")?
-                .call(store.as_context_mut(), (bc_ptr, bc_len)),
+                .call(store.as_context_mut(), (bc_ptr, bytecode.len().try_into()?)),
             UseExportedFn::Invoke(func) => {
                 let (fn_ptr, fn_len) = match func {
                     Some(func) => Self::copy_func_name(func, &instance, store.as_context_mut())?,
@@ -683,7 +689,10 @@ impl Runner {
                 };
                 instance
                     .get_typed_func::<(u32, u32, u32, u32), ()>(store.as_context_mut(), "invoke")?
-                    .call(store.as_context_mut(), (bc_ptr, bc_len, fn_ptr, fn_len))
+                    .call(
+                        store.as_context_mut(),
+                        (bc_ptr, bytecode.len().try_into()?, fn_ptr, fn_len),
+                    )
             }
         };
 
@@ -695,30 +704,30 @@ impl Runner {
         instance: &Instance,
         mut store: impl AsContextMut,
     ) -> Result<(u32, u32)> {
+        let name_bytes = name.as_bytes();
+        let ptr = Self::copy_into_instance(name_bytes, instance, store.as_context_mut())?;
+        Ok((ptr, name_bytes.len().try_into()?))
+    }
+
+    fn copy_into_instance(
+        data: &[u8],
+        instance: &Instance,
+        mut store: impl AsContextMut,
+    ) -> Result<u32> {
         let memory = instance
             .get_memory(store.as_context_mut(), "memory")
             .unwrap();
-        let fn_name_bytes = name.as_bytes();
-        let fn_name_ptr = Self::allocate_memory(
-            instance,
-            store.as_context_mut(),
-            1,
-            fn_name_bytes.len().try_into()?,
-        )?;
-        memory.write(
-            store.as_context_mut(),
-            fn_name_ptr.try_into()?,
-            fn_name_bytes,
-        )?;
-
-        Ok((fn_name_ptr, fn_name_bytes.len().try_into()?))
+        let ptr =
+            Self::allocate_memory(instance, store.as_context_mut(), 1, data.len().try_into()?)?;
+        memory.write(store.as_context_mut(), ptr.try_into()?, data)?;
+        Ok(ptr)
     }
 
     fn compile(
         source: &[u8],
         mut store: impl AsContextMut,
         instance: &Instance,
-    ) -> Result<(u32, u32)> {
+    ) -> Result<Vec<u8>> {
         let memory = instance
             .get_memory(store.as_context_mut(), "memory")
             .unwrap();
@@ -742,7 +751,10 @@ impl Runner {
         let bytecode_ptr = u32::from_le_bytes(ret_buffer[0..4].try_into()?);
         let bytecode_len = u32::from_le_bytes(ret_buffer[4..8].try_into()?);
 
-        Ok((bytecode_ptr, bytecode_len))
+        let mut bytecode = vec![0; bytecode_len.try_into()?];
+        memory.read(store.as_context(), bytecode_ptr.try_into()?, &mut bytecode)?;
+
+        Ok(bytecode)
     }
 
     fn allocate_memory(
