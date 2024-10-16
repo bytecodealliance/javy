@@ -86,7 +86,6 @@ fn ignore(test_name: &str) -> bool {
 
 fn expand_262(config: &Config262) -> Result<TokenStream> {
     let harness = config.root.join("harness");
-    let harness_str = harness.into_os_string().into_string().unwrap();
     let json_parse = config
         .root
         .join("test")
@@ -101,8 +100,8 @@ fn expand_262(config: &Config262) -> Result<TokenStream> {
         .join("JSON")
         .join("stringify");
 
-    let parse_tests = gen_tests(&json_parse, &harness_str, "parse");
-    let stringify_tests = gen_tests(&json_stringify, &harness_str, "stringify");
+    let parse_tests = gen_tests(&json_parse, &harness, "parse");
+    let stringify_tests = gen_tests(&json_stringify, &harness, "stringify");
 
     Ok(quote! {
         #parse_tests
@@ -111,15 +110,15 @@ fn expand_262(config: &Config262) -> Result<TokenStream> {
     .into())
 }
 
-fn gen_tests(
-    dir: &PathBuf,
-    harness_str: &String,
-    prefix: &'static str,
-) -> proc_macro2::TokenStream {
+fn gen_tests(dir: &PathBuf, harness: &Path, prefix: &'static str) -> proc_macro2::TokenStream {
     let parse_dir = std::fs::read_dir(dir).expect("parse directory to be available");
+    let harness_str = adjust_path_for_crate(harness)
+        .into_os_string()
+        .into_string()
+        .unwrap();
     let spec = parse_dir.filter_map(|e| e.ok()).map(move |entry| {
             let path = entry.path();
-            let path_str = path.clone().into_os_string().into_string().unwrap();
+            let path_str = adjust_path_for_crate(&path).into_os_string().into_string().unwrap();
             let name = path.file_stem().unwrap().to_str().unwrap();
             let name = name.replace('.', "_");
             let name = name.replace('-', "_");
@@ -171,6 +170,13 @@ fn gen_tests(
     quote! {
         #(#spec)*
     }
+}
+
+fn adjust_path_for_crate(path: &Path) -> PathBuf {
+    // Proc macros run in the workspace root and tests run in the package root
+    // so we need to remove two components for any paths we emit in generated
+    // code.
+    path.components().skip(2).collect::<PathBuf>()
 }
 
 struct CliTestConfig {
@@ -299,7 +305,7 @@ fn expand_cli_tests(test_config: &CliTestConfig, func: syn::ItemFn) -> Result<To
                     root.pop();
                     root = root.join(
                         std::path::Path::new("target")
-                            .join("wasm32-wasi")
+                            .join("wasm32-wasip1")
                             .join("release")
                             .join("javy_quickjs_provider_wizened.wasm"),
                     );

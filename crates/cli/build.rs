@@ -48,7 +48,7 @@ fn copy_javy_core() -> Result<()> {
         .unwrap()
         .parent()
         .unwrap()
-        .join("target/wasm32-wasi/release");
+        .join("target/wasm32-wasip1/release");
     let engine_path = module_path.join("javy_core.wasm");
     let quickjs_provider_path = module_path.join("javy_quickjs_provider.wasm");
     let quickjs_provider_wizened_path = module_path.join("javy_quickjs_provider_wizened.wasm");

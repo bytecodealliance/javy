@@ -40,18 +40,18 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: engine
-          path: target/wasm32-wasi/release/javy_core.wasm
+          path: target/wasm32-wasip1/release/javy_core.wasm
 
       - name: Upload quickjs_provider to artifacts
         uses: actions/upload-artifact@v4
         with:
           name: provider
-          path: target/wasm32-wasi/release/javy_quickjs_provider.wasm
+          path: target/wasm32-wasip1/release/javy_quickjs_provider.wasm
 
       - name: Wizen and archive wizened quickjs_provider
         run: |
-          wizer target/wasm32-wasi/release/javy_quickjs_provider.wasm --allow-wasi --wasm-bulk-memory true -o target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm
-          gzip -k -f target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm && mv target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm.gz javy-quickjs_provider.wasm.gz
+          wizer target/wasm32-wasip1/release/javy_quickjs_provider.wasm --allow-wasi --wasm-bulk-memory true -o target/wasm32-wasip1/release/javy_quickjs_provider_wizened.wasm
+          gzip -k -f target/wasm32-wasip1/release/javy_quickjs_provider_wizened.wasm && mv target/wasm32-wasip1/release/javy_quickjs_provider_wizened.wasm.gz javy-quickjs_provider.wasm.gz
 
       - name: Upload archived quickjs_provider to artifacts
         uses: actions/upload-artifact@v4
@@ -133,12 +133,12 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: engine
-          path: target/wasm32-wasi/release/
+          path: target/wasm32-wasip1/release/
 
       - uses: actions/download-artifact@v4
         with:
           name: provider
-          path: target/wasm32-wasi/release/
+          path: target/wasm32-wasip1/release/
 
       - name: Build CLI ${{ matrix.os }}
         run: cargo build --release --target ${{ matrix.target }} --package javy-cli

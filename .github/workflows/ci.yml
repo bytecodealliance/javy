@@ -24,19 +24,16 @@ jobs:
         with:
           os: macos
 
-      - name: Install cargo-wasi
-        run: cargo install cargo-wasi
-
       - name: Install cargo-hack
         uses: taiki-e/install-action@cargo-hack
 
       - name: Compile core
-        run: cargo build -p javy-core --release --target=wasm32-wasi
+        run: cargo build -p javy-core --release --target=wasm32-wasip1
 
       - name: Test
-        env: 
-          CARGO_TARGET_WASM32_WASI_RUNNER: wasmtime --dir=.
-        run: cargo hack wasi test --workspace --exclude=javy-cli --exclude=javy-config --exclude=javy-runner --each-feature -- --nocapture
+        env:
+          CARGO_TARGET_WASM32_WASIP1_RUNNER: wasmtime --dir=.
+        run: cargo hack test --target=wasm32-wasip1 --workspace --exclude=javy-cli --exclude=javy-config --exclude=javy-runner --each-feature -- --nocapture
 
       - name: Test Config
         run: cargo test --package=javy-config
@@ -50,10 +47,10 @@ jobs:
           --exclude=javy-cli \
           --exclude=javy-runner \
           --exclude=javy-fuzz \
-          --target=wasm32-wasi --all-targets -- -D warnings
-        
-      # We need to specify a different job for linting `javy-runner` given that 
-      # it depends on Wasmtime and Cranelift cannot be compiled to `wasm32-wasi`
+          --target=wasm32-wasip1 --all-targets -- -D warnings
+
+      # We need to specify a different job for linting `javy-runner` given that
+      # it depends on Wasmtime and Cranelift cannot be compiled to `wasm32-wasip1`
       - name: Lint Runner
         run: cargo clippy --package=javy-runner -- -D warnings
 
@@ -61,13 +58,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: engine
-          path: target/wasm32-wasi/release/javy_core.wasm
+          path: target/wasm32-wasip1/release/javy_core.wasm
 
       - name: Upload quickjs_provider to artifacts
         uses: actions/upload-artifact@v4
         with:
           name: provider
-          path: target/wasm32-wasi/release/javy_quickjs_provider.wasm
+          path: target/wasm32-wasip1/release/javy_quickjs_provider.wasm
 
   cli:
     name: test_cli
@@ -83,12 +80,12 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: engine
-          path: target/wasm32-wasi/release/
+          path: target/wasm32-wasip1/release/
 
       - uses: actions/download-artifact@v4
         with:
           name: provider
-          path: target/wasm32-wasi/release/
+          path: target/wasm32-wasip1/release/
 
       - name: Test CLI
         run: CARGO_PROFILE_RELEASE_LTO=off cargo test --package=javy-cli --release -- --nocapture

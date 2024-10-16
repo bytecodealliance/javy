@@ -1,5 +1,5 @@
 [toolchain]
 channel = "stable"
 components = ["clippy", "rustfmt"]
-targets = ["wasm32-wasi"]
+targets = ["wasm32-wasip1"]
 profile = "default"

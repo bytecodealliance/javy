@@ -121,7 +121,7 @@ impl FunctionCase {
             let qjs_provider = Module::new(
                 &self.engine,
                 fs::read(Path::new(
-                    "../../target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm",
+                    "../../target/wasm32-wasip1/release/javy_quickjs_provider_wizened.wasm",
                 ))?,
             )?;
             let instance = linker.instantiate(store.as_context_mut(), &qjs_provider)?;

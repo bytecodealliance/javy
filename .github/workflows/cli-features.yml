@@ -19,5 +19,5 @@ jobs:
 
       - name: Test `experimental_event_loop`
         run: |
-          cargo build --package=javy-core --target=wasm32-wasi --release --features=experimental_event_loop
+          cargo build --package=javy-core --target=wasm32-wasip1 --release --features=experimental_event_loop
           cargo test --package=javy-cli --features=experimental_event_loop --release -- --nocapture
