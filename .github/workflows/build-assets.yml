@@ -50,7 +50,7 @@ jobs:
 
       - name: Wizen and archive wizened quickjs_provider
         run: |
-          wizer target/wasm32-wasi/release/javy_quickjs_provider.wasm --allow-wasi --wasm-bulk-memory true -o target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm
+          wizer target/wasm32-wasi/release/javy_quickjs_provider.wasm --allow-wasi --init-func initialize_runtime --wasm-bulk-memory true -o target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm
           gzip -k -f target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm && mv target/wasm32-wasi/release/javy_quickjs_provider_wizened.wasm.gz javy-quickjs_provider.wasm.gz
 
       - name: Upload archived quickjs_provider to artifacts
