@@ -15,8 +15,8 @@ static mut COMPILE_SRC_RET_AREA: [u32; 2] = [0; 2];
 static mut RUNTIME: OnceCell<Runtime> = OnceCell::new();
 
 /// Used by Wizer to preinitialize the module.
-#[export_name = "wizer.initialize"]
-pub extern "C" fn init() {
+#[export_name = "initialize_runtime"]
+pub extern "C" fn initialize_runtime() {
     let runtime = runtime::new(Config::default()).unwrap();
     unsafe {
         RUNTIME
