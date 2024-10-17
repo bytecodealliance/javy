@@ -43,6 +43,19 @@ pub extern "C" fn init() {
 /// * `js_src_ptr` must reference a valid array of unsigned bytes of `js_src_len` length
 #[export_name = "compile_src"]
 pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -> *const u32 {
+    // Use initialized runtime when compiling because certain runtime
+    // configurations can cause different bytecode to be emitted.
+    //
+    // For example, given the following JS:
+    // ```
+    // function foo() {
+    //   "use math"
+    //   1234 % 32
+    // }
+    // ```
+    //
+    // Setting `config.bignum_extension` to `true` will produce different
+    // bytecode than if it were set to `false`.
     let runtime = unsafe { RUNTIME.get().unwrap() };
     let js_src = str::from_utf8(slice::from_raw_parts(js_src_ptr, js_src_len)).unwrap();
 
