@@ -25,7 +25,7 @@ test-javy:
 	CARGO_TARGET_WASM32_WASIP1_RUNNER="wasmtime --dir=." cargo test --package=javy --target=wasm32-wasip1 --features json,messagepack -- --nocapture
 
 test-core:
-	CARGO_TARGET_WASM32_WASIP1_RUNNER="wasmtime" cargo wasi test --package=javy-core -- --nocapture
+	CARGO_TARGET_WASM32_WASIP1_RUNNER="wasmtime" cargo test --package=javy-core --target=wasm32-wasip1 -- --nocapture
 
 # Test in release mode to skip some debug assertions
 # Note: to make this faster, the engine should be optimized beforehand (wasm-strip + wasm-opt).
