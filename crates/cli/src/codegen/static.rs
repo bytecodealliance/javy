@@ -81,6 +81,7 @@ impl CodeGen for StaticGenerator {
         };
 
         let wasm = Wizer::new()
+            .init_func("initialize_runtime")
             .make_linker(Some(Rc::new(|engine| {
                 let mut linker = Linker::new(engine);
                 wasi_common::sync::add_to_linker(&mut linker, |_: &mut Option<WasiCtx>| unsafe {
