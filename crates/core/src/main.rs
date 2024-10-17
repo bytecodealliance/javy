@@ -15,8 +15,8 @@ const FUNCTION_MODULE_NAME: &str = "function.mjs";
 static mut RUNTIME: OnceCell<Runtime> = OnceCell::new();
 static mut BYTECODE: OnceCell<Vec<u8>> = OnceCell::new();
 
-#[export_name = "wizer.initialize"]
-pub extern "C" fn init() {
+#[export_name = "initialize_runtime"]
+pub extern "C" fn initialize_runtime() {
     let _wasm_ctx = WasmCtx::new();
 
     let js_runtime_config = Config::from_bits(

@@ -55,6 +55,7 @@ fn copy_javy_core() -> Result<()> {
 
     let mut wizer = wizer::Wizer::new();
     let wizened = wizer
+        .init_func("initialize_runtime")
         .allow_wasi(true)?
         .wasm_bulk_memory(true)
         .run(read_file(&quickjs_provider_path)?.as_slice())?;
