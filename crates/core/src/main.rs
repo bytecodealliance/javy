@@ -50,7 +50,7 @@ pub extern "C" fn initialize_runtime() {
 fn main() {
     let bytecode = unsafe { BYTECODE.take().unwrap() };
     let runtime = unsafe { RUNTIME.take().unwrap() };
-    execution::run_bytecode(&runtime, &bytecode);
+    execution::run_bytecode(&runtime, &bytecode, None);
 }
 
 // Removed in post-processing.
