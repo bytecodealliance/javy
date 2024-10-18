@@ -15,17 +15,17 @@ cli: core
 	CARGO_PROFILE_RELEASE_LTO=off cargo build --package=javy-cli --release
 
 core:
-	cargo build --package=javy-core --release --target=wasm32-wasi --features=$(CORE_FEATURES)
+	cargo build --package=javy-core --release --target=wasm32-wasip1 --features=$(CORE_FEATURES)
 
 docs:
 	cargo doc --package=javy-cli --open
-	cargo doc --package=javy-core --open --target=wasm32-wasi
+	cargo doc --package=javy-core --open --target=wasm32-wasip1
 
 test-javy:
-	CARGO_TARGET_WASM32_WASI_RUNNER="wasmtime --dir=."  cargo wasi test --package=javy --features json,messagepack -- --nocapture
+	CARGO_TARGET_WASM32_WASIP1_RUNNER="wasmtime --dir=." cargo test --package=javy --target=wasm32-wasip1 --features json,messagepack -- --nocapture
 
 test-core:
-	cargo wasi test --package=javy-core -- --nocapture
+	CARGO_TARGET_WASM32_WASIP1_RUNNER="wasmtime" cargo test --package=javy-core --target=wasm32-wasip1 -- --nocapture
 
 # Test in release mode to skip some debug assertions
 # Note: to make this faster, the engine should be optimized beforehand (wasm-strip + wasm-opt).
@@ -53,11 +53,11 @@ fmt: fmt-javy fmt-core fmt-cli
 
 fmt-javy:
 	cargo fmt --package=javy -- --check
-	cargo clippy --package=javy --target=wasm32-wasi --all-targets -- -D warnings
+	cargo clippy --package=javy --target=wasm32-wasip1 --all-targets -- -D warnings
 
 fmt-core:
 	cargo fmt --package=javy-core -- --check
-	cargo clippy --package=javy-core --target=wasm32-wasi --all-targets -- -D warnings
+	cargo clippy --package=javy-core --target=wasm32-wasip1 --all-targets -- -D warnings
 
 # Use `--release` on CLI clippy to align with `test-cli`.
 # This reduces the size of the target directory which improves CI stability.

@@ -65,7 +65,7 @@ fn provider_module() -> Result<Vec<u8>> {
     lib_path.pop();
     lib_path = lib_path.join(
         Path::new("target")
-            .join("wasm32-wasi")
+            .join("wasm32-wasip1")
             .join("release")
             .join("javy_quickjs_provider_wizened.wasm"),
     );
