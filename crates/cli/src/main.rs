@@ -9,7 +9,7 @@ use crate::codegen::WitOptions;
 use crate::commands::{Cli, Command, EmitProviderCommandOpts};
 use anyhow::Result;
 use clap::Parser;
-use codegen::{CodeGenBuilder, DynamicGenerator, StaticGenerator};
+use codegen::{CodeGenBuilder, DynamicGenerator, ImportNamespace, StaticGenerator};
 use commands::{CodegenOptionGroup, JsOptionGroup};
 use javy_config::Config;
 use js::JS;
@@ -43,7 +43,7 @@ fn main() -> Result<()> {
                     opts.wit_world.clone(),
                 ))?)
                 .source_compression(!opts.no_source_compression)
-                .provider_version("2");
+                .import_namespace(ImportNamespace::JavyQuickJsProviderV2);
 
             let config = Config::default();
             let mut gen = if opts.dynamic {
@@ -64,7 +64,7 @@ fn main() -> Result<()> {
             builder
                 .wit_opts(codegen.wit)
                 .source_compression(codegen.source_compression)
-                .provider_version("3");
+                .import_namespace(ImportNamespace::FromProvider);
 
             let js_opts: JsOptionGroup = opts.js.clone().into();
             let mut gen = if codegen.dynamic {
