@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+use std::str;
 use wasi_common::{sync::WasiCtxBuilder, WasiCtx};
 use wasmtime::{AsContextMut, Engine, Instance, Linker, Memory, Module, Store};
 
@@ -93,4 +94,21 @@ fn copy_bytecode_from_instance(
     memory.read(store.as_context(), bytecode_ptr.try_into()?, &mut bytecode)?;
 
     Ok(bytecode)
+}
+
+pub fn derive_import_namespace_from_provider() -> Result<String> {
+    let module = walrus::Module::from_buffer(QUICKJS_PROVIDER_MODULE)?;
+    let import_namespace = module
+        .customs
+        .iter()
+        .find_map(|(_, section)| {
+            if section.name() == "import_namespace" {
+                Some(section)
+            } else {
+                None
+            }
+        })
+        .ok_or_else(|| anyhow!("Provider is missing import_namespace custom section"))?
+        .data(&Default::default()); // Argument is required but not actually used for anything.
+    Ok(str::from_utf8(&import_namespace)?.to_string())
 }

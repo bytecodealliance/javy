@@ -1,4 +1,7 @@
-use crate::codegen::{CodeGen, CodeGenType, DynamicGenerator, StaticGenerator};
+use crate::{
+    bytecode,
+    codegen::{CodeGen, CodeGenType, DynamicGenerator, StaticGenerator},
+};
 use anyhow::{bail, Result};
 use javy_config::Config;
 use std::path::PathBuf;
@@ -44,11 +47,25 @@ impl WitOptions {
     }
 }
 
+/// Strategy for determining the import namespace to use.
+pub(crate) enum ImportNamespace {
+    /// Use javy_quickjs_provider_v2.
+    JavyQuickJsProviderV2,
+    /// Get the import namespace from the provider.
+    FromProvider,
+}
+
+impl Default for ImportNamespace {
+    fn default() -> Self {
+        Self::FromProvider
+    }
+}
+
 /// A code generation builder.
 #[derive(Default)]
 pub(crate) struct CodeGenBuilder {
-    /// The QuickJS provider module version.
-    provider_version: Option<&'static str>,
+    /// The import namespace for dynamically linked modules.
+    import_namespace: Option<ImportNamespace>,
     /// WIT options for code generation.
     wit_opts: WitOptions,
     /// Whether to compress the original JS source.
@@ -61,9 +78,9 @@ impl CodeGenBuilder {
         Self::default()
     }
 
-    /// Set the provider version.
-    pub fn provider_version(&mut self, v: &'static str) -> &mut Self {
-        self.provider_version = Some(v);
+    /// Set the import namespace.
+    pub fn import_namespace(&mut self, n: ImportNamespace) -> &mut Self {
+        self.import_namespace = Some(n);
         self
     }
 
@@ -108,12 +125,13 @@ impl CodeGenBuilder {
         let mut dynamic_gen = Box::new(DynamicGenerator::new());
         dynamic_gen.source_compression = self.source_compression;
 
-        if let Some(v) = self.provider_version {
-            dynamic_gen.import_namespace = String::from("javy_quickjs_provider_v");
-            dynamic_gen.import_namespace.push_str(v);
-        } else {
-            bail!("Provider version not specified")
-        }
+        dynamic_gen.import_namespace = match self.import_namespace {
+            Some(ImportNamespace::JavyQuickJsProviderV2) => "javy_quickjs_provider_v2".to_string(),
+            Some(ImportNamespace::FromProvider) => {
+                bytecode::derive_import_namespace_from_provider()?
+            }
+            None => bail!("Import namespace not specified"),
+        };
 
         dynamic_gen.wit_opts = self.wit_opts;
 

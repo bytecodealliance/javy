@@ -1,11 +1,13 @@
 use anyhow::anyhow;
 use javy::Runtime;
 use javy_config::Config;
+use namespace::import_namespace;
 use once_cell::sync::OnceCell;
 use std::slice;
 use std::str;
 
 mod execution;
+mod namespace;
 mod runtime;
 
 const FUNCTION_MODULE_NAME: &str = "function.mjs";
@@ -13,6 +15,8 @@ const FUNCTION_MODULE_NAME: &str = "function.mjs";
 static mut COMPILE_SRC_RET_AREA: [u32; 2] = [0; 2];
 
 static mut RUNTIME: OnceCell<Runtime> = OnceCell::new();
+
+import_namespace!("javy_quickjs_provider_v3");
 
 /// Used by Wizer to preinitialize the module.
 #[export_name = "initialize_runtime"]
