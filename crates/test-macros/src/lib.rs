@@ -14,7 +14,10 @@ use anyhow::bail;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
-use std::path::{Path, PathBuf};
+use std::{
+    env,
+    path::{Path, PathBuf},
+};
 use syn::{meta::ParseNestedMeta, parse_macro_input, Ident, LitBool, LitStr, Result, ReturnType};
 
 struct Config262 {
@@ -23,8 +26,10 @@ struct Config262 {
 
 impl Config262 {
     fn validate(&self) -> anyhow::Result<()> {
-        let path: Box<Path> = self.root.clone().into();
-        if path.is_dir() {
+        if PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap())
+            .join(&self.root)
+            .is_dir()
+        {
             Ok(())
         } else {
             bail!("Invalid path")
@@ -111,14 +116,14 @@ fn expand_262(config: &Config262) -> Result<TokenStream> {
 }
 
 fn gen_tests(dir: &PathBuf, harness: &Path, prefix: &'static str) -> proc_macro2::TokenStream {
-    let parse_dir = std::fs::read_dir(dir).expect("parse directory to be available");
-    let harness_str = adjust_path_for_crate(harness)
-        .into_os_string()
-        .into_string()
-        .unwrap();
+    let package_path = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
+    let parse_dir =
+        std::fs::read_dir(package_path.join(dir)).expect("parse directory to be available");
+    let harness_str = harness.to_str().unwrap();
     let spec = parse_dir.filter_map(|e| e.ok()).map(move |entry| {
             let path = entry.path();
-            let path_str = adjust_path_for_crate(&path).into_os_string().into_string().unwrap();
+            let path = path.strip_prefix(&package_path).unwrap();
+            let path_str = path.to_str().unwrap();
             let name = path.file_stem().unwrap().to_str().unwrap();
             let name = name.replace('.', "_");
             let name = name.replace('-', "_");
@@ -170,13 +175,6 @@ fn gen_tests(dir: &PathBuf, harness: &Path, prefix: &'static str) -> proc_macro2
     quote! {
         #(#spec)*
     }
-}
-
-fn adjust_path_for_crate(path: &Path) -> PathBuf {
-    // Proc macros run in the workspace root and tests run in the package root
-    // so we need to remove two components for any paths we emit in generated
-    // code.
-    path.components().skip(2).collect::<PathBuf>()
 }
 
 struct CliTestConfig {
