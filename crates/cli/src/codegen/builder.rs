@@ -1,4 +1,7 @@
-use crate::codegen::{CodeGen, CodeGenType, DynamicGenerator, StaticGenerator};
+use crate::{
+    codegen::{CodeGen, CodeGenType, DynamicGenerator, StaticGenerator},
+    providers::Provider,
+};
 use anyhow::{bail, Result};
 use javy_config::Config;
 use std::path::PathBuf;
@@ -47,8 +50,8 @@ impl WitOptions {
 /// A code generation builder.
 #[derive(Default)]
 pub(crate) struct CodeGenBuilder {
-    /// The QuickJS provider module version.
-    provider_version: Option<&'static str>,
+    /// The provider to use.
+    provider: Option<Provider>,
     /// WIT options for code generation.
     wit_opts: WitOptions,
     /// Whether to compress the original JS source.
@@ -61,9 +64,9 @@ impl CodeGenBuilder {
         Self::default()
     }
 
-    /// Set the provider version.
-    pub fn provider_version(&mut self, v: &'static str) -> &mut Self {
-        self.provider_version = Some(v);
+    /// Set the provider.
+    pub fn provider(&mut self, provider: Provider) -> &mut Self {
+        self.provider = Some(provider);
         self
     }
 
@@ -108,9 +111,8 @@ impl CodeGenBuilder {
         let mut dynamic_gen = Box::new(DynamicGenerator::new());
         dynamic_gen.source_compression = self.source_compression;
 
-        if let Some(v) = self.provider_version {
-            dynamic_gen.import_namespace = String::from("javy_quickjs_provider_v");
-            dynamic_gen.import_namespace.push_str(v);
+        if let Some(p) = self.provider {
+            dynamic_gen.provider = p
         } else {
             bail!("Provider version not specified")
         }

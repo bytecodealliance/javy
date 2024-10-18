@@ -3,6 +3,7 @@ mod codegen;
 mod commands;
 mod js;
 mod option;
+mod providers;
 mod wit;
 
 use crate::codegen::WitOptions;
@@ -13,6 +14,7 @@ use codegen::{CodeGenBuilder, DynamicGenerator, StaticGenerator};
 use commands::{CodegenOptionGroup, JsOptionGroup};
 use javy_config::Config;
 use js::JS;
+use providers::Provider;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
@@ -43,7 +45,7 @@ fn main() -> Result<()> {
                     opts.wit_world.clone(),
                 ))?)
                 .source_compression(!opts.no_source_compression)
-                .provider_version("2");
+                .provider(Provider::V2);
 
             let config = Config::default();
             let mut gen = if opts.dynamic {
@@ -64,7 +66,7 @@ fn main() -> Result<()> {
             builder
                 .wit_opts(codegen.wit)
                 .source_compression(codegen.source_compression)
-                .provider_version("3");
+                .provider(Provider::Default);
 
             let js_opts: JsOptionGroup = opts.js.clone().into();
             let mut gen = if codegen.dynamic {
@@ -86,6 +88,6 @@ fn emit_provider(opts: &EmitProviderCommandOpts) -> Result<()> {
         Some(path) => Box::new(File::create(path)?),
         _ => Box::new(std::io::stdout()),
     };
-    file.write_all(bytecode::QUICKJS_PROVIDER_MODULE)?;
+    file.write_all(Provider::Default.as_bytes())?;
     Ok(())
 }
