@@ -68,7 +68,7 @@ pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -
 pub unsafe extern "C" fn eval_bytecode(bytecode_ptr: *const u8, bytecode_len: usize) {
     let runtime = RUNTIME.get().unwrap();
     let bytecode = slice::from_raw_parts(bytecode_ptr, bytecode_len);
-    execution::run_bytecode(runtime, bytecode);
+    execution::run_bytecode(runtime, bytecode, None);
 }
 
 /// Evaluates QuickJS bytecode and optionally invokes exported JS function with
@@ -89,9 +89,13 @@ pub unsafe extern "C" fn invoke(
 ) {
     let runtime = RUNTIME.get().unwrap();
     let bytecode = slice::from_raw_parts(bytecode_ptr, bytecode_len);
-    execution::run_bytecode(runtime, bytecode);
-    if !fn_name_ptr.is_null() && fn_name_len != 0 {
-        let fn_name = str::from_utf8_unchecked(slice::from_raw_parts(fn_name_ptr, fn_name_len));
-        execution::invoke_function(runtime, FUNCTION_MODULE_NAME, fn_name);
-    }
+    let fn_name = if !fn_name_ptr.is_null() && fn_name_len != 0 {
+        Some(str::from_utf8_unchecked(slice::from_raw_parts(
+            fn_name_ptr,
+            fn_name_len,
+        )))
+    } else {
+        None
+    };
+    execution::run_bytecode(runtime, bytecode, fn_name);
 }

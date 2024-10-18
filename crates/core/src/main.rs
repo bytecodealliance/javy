@@ -50,7 +50,7 @@ pub extern "C" fn initialize_runtime() {
 fn main() {
     let bytecode = unsafe { BYTECODE.take().unwrap() };
     let runtime = unsafe { RUNTIME.take().unwrap() };
-    execution::run_bytecode(&runtime, &bytecode);
+    execution::run_bytecode(&runtime, &bytecode, None);
 }
 
 // Removed in post-processing.
@@ -65,8 +65,9 @@ pub unsafe extern "C" fn invoke(fn_name_ptr: *mut u8, fn_name_size: usize) {
     let _wasm_ctx = WasmCtx::new();
 
     let js_fn_name = str::from_utf8_unchecked(slice::from_raw_parts(fn_name_ptr, fn_name_size));
+    let bytecode = unsafe { BYTECODE.take().unwrap() };
     let runtime = unsafe { RUNTIME.take().unwrap() };
-    execution::invoke_function(&runtime, FUNCTION_MODULE_NAME, js_fn_name);
+    execution::run_bytecode(&runtime, &bytecode, Some(js_fn_name));
 }
 
 // RAII abstraction for calling Wasm ctors and dtors for exported non-main functions.
