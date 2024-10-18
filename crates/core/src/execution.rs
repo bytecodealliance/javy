@@ -3,7 +3,7 @@ use std::process;
 use anyhow::{anyhow, bail, Error, Result};
 use javy::{
     from_js_error,
-    quickjs::{context::EvalOptions, Ctx, Error as JSError, Function, Module, Value},
+    quickjs::{Ctx, Error as JSError, Function, Module, Value},
     to_js_error, Runtime,
 };
 
@@ -34,35 +34,6 @@ pub fn run_bytecode(runtime: &Runtime, bytecode: &[u8], fn_name: Option<&str>) {
                 handle_maybe_promise(this.clone(), value)?
             }
             Ok(())
-        })
-        .map_err(|e| runtime.context().with(|cx| from_js_error(cx.clone(), e)))
-        .and_then(|_: ()| ensure_pending_jobs(runtime))
-        .unwrap_or_else(handle_error)
-}
-
-/// Entry point to invoke an exported JavaScript function.
-///
-/// This function will evaluate a JavaScript snippet that imports and invokes
-/// the target function from a previously evaluated module. It's the caller's
-/// reponsibility to ensure that the module containing the target function has
-/// been previously evaluated.
-#[allow(dead_code)] // Used by `main.rs` but not by `lib.rs`.
-pub fn invoke_function(runtime: &Runtime, fn_module: &str, fn_name: &str) {
-    let js = if fn_name == "default" {
-        format!("import {{ default as defaultFn }} from '{fn_module}'; defaultFn();")
-    } else {
-        format!("import {{ {fn_name} }} from '{fn_module}'; {fn_name}();")
-    };
-
-    runtime
-        .context()
-        .with(|this| {
-            let mut opts = EvalOptions::default();
-            opts.strict = false;
-            opts.global = false;
-            let value = this.eval_with_options::<Value<'_>, _>(js, opts)?;
-
-            handle_maybe_promise(this.clone(), value)
         })
         .map_err(|e| runtime.context().with(|cx| from_js_error(cx.clone(), e)))
         .and_then(|_: ()| ensure_pending_jobs(runtime))
