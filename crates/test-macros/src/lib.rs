@@ -14,10 +14,7 @@ use anyhow::bail;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
-use std::{
-    env,
-    path::{Path, PathBuf},
-};
+use std::{env, path::PathBuf};
 use syn::{meta::ParseNestedMeta, parse_macro_input, Ident, LitBool, LitStr, Result, ReturnType};
 
 struct Config262 {
@@ -91,6 +88,7 @@ fn ignore(test_name: &str) -> bool {
 
 fn expand_262(config: &Config262) -> Result<TokenStream> {
     let harness = config.root.join("harness");
+    let harness_str = harness.into_os_string().into_string().unwrap();
     let json_parse = config
         .root
         .join("test")
@@ -105,8 +103,8 @@ fn expand_262(config: &Config262) -> Result<TokenStream> {
         .join("JSON")
         .join("stringify");
 
-    let parse_tests = gen_tests(&json_parse, &harness, "parse");
-    let stringify_tests = gen_tests(&json_stringify, &harness, "stringify");
+    let parse_tests = gen_tests(&json_parse, &harness_str, "parse");
+    let stringify_tests = gen_tests(&json_stringify, &harness_str, "stringify");
 
     Ok(quote! {
         #parse_tests
@@ -115,11 +113,14 @@ fn expand_262(config: &Config262) -> Result<TokenStream> {
     .into())
 }
 
-fn gen_tests(dir: &PathBuf, harness: &Path, prefix: &'static str) -> proc_macro2::TokenStream {
+fn gen_tests(
+    dir: &PathBuf,
+    harness_str: &String,
+    prefix: &'static str,
+) -> proc_macro2::TokenStream {
     let package_path = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
     let parse_dir =
         std::fs::read_dir(package_path.join(dir)).expect("parse directory to be available");
-    let harness_str = harness.to_str().unwrap();
     let spec = parse_dir.filter_map(|e| e.ok()).map(move |entry| {
             let path = entry.path();
             let path = path.strip_prefix(&package_path).unwrap();
