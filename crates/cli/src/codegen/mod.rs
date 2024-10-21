@@ -67,15 +67,15 @@ pub(crate) trait CodeGen {
         Self: Sized;
 }
 
-/// Imports used by the generated dynamically linkable module.
+/// Identifiers used by the generated dynamically linkable module.
 // This is an internal detail of this module.
-pub(crate) struct Imports {
+pub(crate) struct Identifiers {
     canonical_abi_realloc: FunctionId,
     eval_bytecode: FunctionId,
     memory: MemoryId,
 }
 
-impl Imports {
+impl Identifiers {
     fn new(canonical_abi_realloc: FunctionId, eval_bytecode: FunctionId, memory: MemoryId) -> Self {
         Self {
             canonical_abi_realloc,
@@ -126,8 +126,8 @@ impl DynamicGenerator {
         }
     }
 
-    /// Generate function imports.
-    pub fn generate_imports(&self, module: &mut Module) -> Result<Imports> {
+    /// Resolve identifiers for functions and memory.
+    pub fn resolve_identifiers(&self, module: &mut Module) -> Result<Identifiers> {
         let import_namespace = self.provider.import_namespace()?;
         let canonical_abi_realloc_type = module.types.add(
             &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
@@ -146,7 +146,7 @@ impl DynamicGenerator {
         let (memory_id, _) =
             module.add_import_memory(&import_namespace, "memory", false, false, 0, None, None);
 
-        Ok(Imports::new(
+        Ok(Identifiers::new(
             canonical_abi_realloc_fn_id,
             eval_bytecode_fn_id,
             memory_id,
@@ -158,7 +158,7 @@ impl DynamicGenerator {
         &self,
         module: &mut Module,
         js: &JS,
-        imports: &Imports,
+        identifiers: &Identifiers,
     ) -> Result<BytecodeMetadata> {
         let bytecode = js.compile(&self.provider)?;
         let bytecode_len: i32 = bytecode.len().try_into()?;
@@ -172,17 +172,17 @@ impl DynamicGenerator {
             .i32_const(0) // orig size
             .i32_const(1) // alignment
             .i32_const(bytecode_len) // new size
-            .call(imports.canonical_abi_realloc)
+            .call(identifiers.canonical_abi_realloc)
             // Copy bytecode array into allocated memory.
             .local_tee(bytecode_ptr_local) // save returned address to local and set as dest addr for mem.init
             .i32_const(0) // offset into data segment for mem.init
             .i32_const(bytecode_len) // size to copy from data segment
             // top-2: dest addr, top-1: offset into source, top-0: size of memory region in bytes.
-            .memory_init(imports.memory, bytecode_data)
+            .memory_init(identifiers.memory, bytecode_data)
             // Evaluate bytecode.
             .local_get(bytecode_ptr_local) // ptr to bytecode
             .i32_const(bytecode_len)
-            .call(imports.eval_bytecode);
+            .call(identifiers.eval_bytecode);
         let main = main.finish(vec![], &mut module.funcs);
 
         module.exports.add("_start", main);
@@ -197,7 +197,7 @@ impl DynamicGenerator {
     pub fn generate_exports(
         &self,
         module: &mut Module,
-        imports: &Imports,
+        identifiers: &Identifiers,
         bc_metadata: &BytecodeMetadata,
     ) -> Result<()> {
         if !self.function_exports.is_empty() {
@@ -223,22 +223,22 @@ impl DynamicGenerator {
                     .i32_const(0) // orig len
                     .i32_const(1) // alignment
                     .i32_const(bc_metadata.len) // size to copy
-                    .call(imports.canonical_abi_realloc)
+                    .call(identifiers.canonical_abi_realloc)
                     .local_tee(bc_metadata.ptr)
                     .i32_const(0) // offset into data segment
                     .i32_const(bc_metadata.len) // size to copy
-                    .memory_init(imports.memory, bc_metadata.data_section) // copy bytecode into allocated memory
+                    .memory_init(identifiers.memory, bc_metadata.data_section) // copy bytecode into allocated memory
                     .data_drop(bc_metadata.data_section)
                     // Copy function name.
                     .i32_const(0) // orig ptr
                     .i32_const(0) // orig len
                     .i32_const(1) // alignment
                     .i32_const(js_export_len) // new size
-                    .call(imports.canonical_abi_realloc)
+                    .call(identifiers.canonical_abi_realloc)
                     .local_tee(fn_name_ptr_local)
                     .i32_const(0) // offset into data segment
                     .i32_const(js_export_len) // size to copy
-                    .memory_init(imports.memory, fn_name_data) // copy fn name into allocated memory
+                    .memory_init(identifiers.memory, fn_name_data) // copy fn name into allocated memory
                     .data_drop(fn_name_data)
                     // Call invoke.
                     .local_get(bc_metadata.ptr)
@@ -325,9 +325,9 @@ impl CodeGen for DynamicGenerator {
         }
 
         let mut module = Module::with_config(transform::module_config());
-        let imports = self.generate_imports(&mut module)?;
-        let bc_metadata = self.generate_main(&mut module, js, &imports)?;
-        self.generate_exports(&mut module, &imports, &bc_metadata)?;
+        let identifiers = self.resolve_identifiers(&mut module)?;
+        let bc_metadata = self.generate_main(&mut module, js, &identifiers)?;
+        self.generate_exports(&mut module, &identifiers, &bc_metadata)?;
 
         transform::add_producers_section(&mut module.producers);
         if !self.source_compression {
