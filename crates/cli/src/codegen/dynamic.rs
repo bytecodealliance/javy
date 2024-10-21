@@ -68,7 +68,7 @@ impl DynamicGenerator {
 
     /// Generate function imports.
     pub fn generate_imports(&self, module: &mut Module) -> Result<Imports> {
-        let import_namespace = self.provider.import_namespace();
+        let import_namespace = self.provider.import_namespace()?;
         let canonical_abi_realloc_type = module.types.add(
             &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
             &[ValType::I32],
@@ -146,7 +146,7 @@ impl DynamicGenerator {
                 &[],
             );
             let (invoke_fn, _) =
-                module.add_import_func(&self.provider.import_namespace(), "invoke", invoke_type);
+                module.add_import_func(&self.provider.import_namespace()?, "invoke", invoke_type);
 
             let fn_name_ptr_local = module.locals.add(ValType::I32);
             for export in &self.function_exports {

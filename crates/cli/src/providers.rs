@@ -1,5 +1,6 @@
 use crate::bytecode;
-use anyhow::Result;
+use anyhow::{anyhow, Result};
+use std::str;
 
 const QUICKJS_PROVIDER_MODULE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/provider.wasm"));
 
@@ -30,12 +31,25 @@ impl Provider {
     }
 
     /// The import namespace to use for this provider.
-    pub fn import_namespace(&self) -> String {
-        let prefix = "javy_quickjs_provider_v";
-        let version = match self {
-            Self::Default => 3,
-            Self::V2 => 2,
-        };
-        format!("{prefix}{version}")
+    pub fn import_namespace(&self) -> Result<String> {
+        match self {
+            Self::V2 => Ok("javy_quickjs_provider_v2".to_string()),
+            Self::Default => {
+                let module = walrus::Module::from_buffer(self.as_bytes())?;
+                let import_namespace = module
+                    .customs
+                    .iter()
+                    .find_map(|(_, section)| {
+                        if section.name() == "import_namespace" {
+                            Some(section)
+                        } else {
+                            None
+                        }
+                    })
+                    .ok_or_else(|| anyhow!("Provider is missing import_namespace custom section"))?
+                    .data(&Default::default()); // Argument is required but not actually used for anything.
+                Ok(str::from_utf8(&import_namespace)?.to_string())
+            }
+        }
     }
 }
