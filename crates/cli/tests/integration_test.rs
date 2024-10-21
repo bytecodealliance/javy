@@ -188,7 +188,7 @@ fn test_exported_functions(builder: &mut Builder) -> Result<()> {
         .build()?;
     let (_, logs, fuel_consumed) = run_fn(&mut runner, "foo", &[]);
     assert_eq!("Hello from top-level\nHello from foo\n", logs);
-    assert_fuel_consumed_within_threshold(80023, fuel_consumed);
+    assert_fuel_consumed_within_threshold(63_310, fuel_consumed);
     let (_, logs, _) = run_fn(&mut runner, "foo-bar", &[]);
     assert_eq!("Hello from top-level\nHello from fooBar\n", logs);
     Ok(())
@@ -270,7 +270,7 @@ fn test_exported_default_arrow_fn(builder: &mut Builder) -> Result<()> {
 
     let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", &[]);
     assert_eq!(logs, "42\n");
-    assert_fuel_consumed_within_threshold(76706, fuel_consumed);
+    assert_fuel_consumed_within_threshold(39_004, fuel_consumed);
     Ok(())
 }
 
@@ -283,7 +283,7 @@ fn test_exported_default_fn(builder: &mut Builder) -> Result<()> {
         .build()?;
     let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", &[]);
     assert_eq!(logs, "42\n");
-    assert_fuel_consumed_within_threshold(77909, fuel_consumed);
+    assert_fuel_consumed_within_threshold(39_951, fuel_consumed);
     Ok(())
 }
 

@@ -3,7 +3,7 @@ use std::process;
 use anyhow::{anyhow, bail, Error, Result};
 use javy::{
     from_js_error,
-    quickjs::{context::EvalOptions, Ctx, Error as JSError, Module, Value},
+    quickjs::{Ctx, Error as JSError, Function, Module, Value},
     to_js_error, Runtime,
 };
 
@@ -17,42 +17,23 @@ static EVENT_LOOP_ERR: &str = r#"
 ///
 /// Evaluating also prepares (or "instantiates") the state of the JavaScript
 /// engine given all the information encoded in the bytecode.
-pub fn run_bytecode(runtime: &Runtime, bytecode: &[u8]) {
+pub fn run_bytecode(runtime: &Runtime, bytecode: &[u8], fn_name: Option<&str>) {
     runtime
         .context()
         .with(|this| {
             let module = unsafe { Module::load(this.clone(), bytecode)? };
-            let (_, promise) = module.eval()?;
+            let (module, promise) = module.eval()?;
 
-            handle_maybe_promise(this.clone(), promise.into())
-        })
-        .map_err(|e| runtime.context().with(|cx| from_js_error(cx.clone(), e)))
-        .and_then(|_: ()| ensure_pending_jobs(runtime))
-        .unwrap_or_else(handle_error)
-}
+            handle_maybe_promise(this.clone(), promise.into())?;
 
-/// Entry point to invoke an exported JavaScript function.
-///
-/// This function will evaluate a JavaScript snippet that imports and invokes
-/// the target function from a previously evaluated module. It's the caller's
-/// reponsibility to ensure that the module containing the target function has
-/// been previously evaluated.
-pub fn invoke_function(runtime: &Runtime, fn_module: &str, fn_name: &str) {
-    let js = if fn_name == "default" {
-        format!("import {{ default as defaultFn }} from '{fn_module}'; defaultFn();")
-    } else {
-        format!("import {{ {fn_name} }} from '{fn_module}'; {fn_name}();")
-    };
-
-    runtime
-        .context()
-        .with(|this| {
-            let mut opts = EvalOptions::default();
-            opts.strict = false;
-            opts.global = false;
-            let value = this.eval_with_options::<Value<'_>, _>(js, opts)?;
-
-            handle_maybe_promise(this.clone(), value)
+            if let Some(fn_name) = fn_name {
+                let fun: Function = module.get(fn_name)?;
+                // Exported functions are guaranteed not to have arguments so
+                // we can safely pass an empty tuple for arguments.
+                let value = fun.call(())?;
+                handle_maybe_promise(this.clone(), value)?
+            }
+            Ok(())
         })
         .map_err(|e| runtime.context().with(|cx| from_js_error(cx.clone(), e)))
         .and_then(|_: ()| ensure_pending_jobs(runtime))

@@ -3,7 +3,7 @@
 - On Ubuntu, `sudo apt-get install curl pkg-config libssl-dev clang`
 - [rustup](https://rustup.rs/)
 - Stable Rust, installed via `rustup install stable && rustup default stable`
-- wasm32-wasi, can be installed via `rustup target add wasm32-wasi`
+- wasm32-wasip1, can be installed via `rustup target add wasm32-wasip1`
 - cmake, depending on your operating system and architecture, it might not be
   installed by default. On MacOS it can be installed with `homebrew` via `brew
   install cmake`. On Ubuntu, `sudo apt-get install cmake`.
@@ -15,14 +15,14 @@
 In the repository root, run:
 
 ```
-$ cargo build -p javy-core --target=wasm32-wasi -r
+$ cargo build -p javy-core --target=wasm32-wasip1 -r
 $ cargo build -p javy-cli -r
 ```
 
 Alternatively if you want to install the `javy` binary globally, at the
 repository root, run:
 ```
-$ cargo build -p javy-core --target=wasm32-wasi -r
+$ cargo build -p javy-core --target=wasm32-wasip1 -r
 $ cargo install --path crates/cli
 ```
 

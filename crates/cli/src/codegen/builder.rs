@@ -1,6 +1,6 @@
 use crate::{
-    bytecode,
     codegen::{CodeGen, CodeGenType, DynamicGenerator, StaticGenerator},
+    providers::Provider,
 };
 use anyhow::{bail, Result};
 use javy_config::Config;
@@ -47,25 +47,11 @@ impl WitOptions {
     }
 }
 
-/// Strategy for determining the import namespace to use.
-pub(crate) enum ImportNamespace {
-    /// Use javy_quickjs_provider_v2.
-    JavyQuickJsProviderV2,
-    /// Get the import namespace from the provider.
-    FromProvider,
-}
-
-impl Default for ImportNamespace {
-    fn default() -> Self {
-        Self::FromProvider
-    }
-}
-
 /// A code generation builder.
 #[derive(Default)]
 pub(crate) struct CodeGenBuilder {
-    /// The import namespace for dynamically linked modules.
-    import_namespace: Option<ImportNamespace>,
+    /// The provider to use.
+    provider: Option<Provider>,
     /// WIT options for code generation.
     wit_opts: WitOptions,
     /// Whether to compress the original JS source.
@@ -78,9 +64,9 @@ impl CodeGenBuilder {
         Self::default()
     }
 
-    /// Set the import namespace.
-    pub fn import_namespace(&mut self, n: ImportNamespace) -> &mut Self {
-        self.import_namespace = Some(n);
+    /// Set the provider.
+    pub fn provider(&mut self, provider: Provider) -> &mut Self {
+        self.provider = Some(provider);
         self
     }
 
@@ -125,13 +111,11 @@ impl CodeGenBuilder {
         let mut dynamic_gen = Box::new(DynamicGenerator::new());
         dynamic_gen.source_compression = self.source_compression;
 
-        dynamic_gen.import_namespace = match self.import_namespace {
-            Some(ImportNamespace::JavyQuickJsProviderV2) => "javy_quickjs_provider_v2".to_string(),
-            Some(ImportNamespace::FromProvider) => {
-                bytecode::derive_import_namespace_from_provider()?
-            }
-            None => bail!("Import namespace not specified"),
-        };
+        if let Some(p) = self.provider {
+            dynamic_gen.provider = p
+        } else {
+            bail!("Provider version not specified")
+        }
 
         dynamic_gen.wit_opts = self.wit_opts;
 

@@ -2,6 +2,7 @@ use super::transform::{self, SourceCodeSection};
 use crate::{
     codegen::{exports, CodeGen, CodeGenType, Exports, WitOptions},
     js::JS,
+    providers::Provider,
 };
 use anyhow::Result;
 use walrus::{DataId, DataKind, FunctionBuilder, FunctionId, LocalId, MemoryId, Module, ValType};
@@ -44,8 +45,8 @@ impl BytecodeMetadata {
 
 /// Dynamic Code Generation.
 pub(crate) struct DynamicGenerator {
-    /// Wasm import namcespace.
-    pub import_namespace: String,
+    /// Provider to use.
+    pub provider: Provider,
     /// JavaScript function exports.
     function_exports: Exports,
     /// Whether to embed the compressed JS source in the generated module.
@@ -59,7 +60,7 @@ impl DynamicGenerator {
     pub fn new() -> Self {
         Self {
             source_compression: true,
-            import_namespace: "".into(),
+            provider: Provider::Default,
             function_exports: Default::default(),
             wit_opts: Default::default(),
         }
@@ -67,29 +68,23 @@ impl DynamicGenerator {
 
     /// Generate function imports.
     pub fn generate_imports(&self, module: &mut Module) -> Result<Imports> {
+        let import_namespace = self.provider.import_namespace()?;
         let canonical_abi_realloc_type = module.types.add(
             &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
             &[ValType::I32],
         );
         let (canonical_abi_realloc_fn_id, _) = module.add_import_func(
-            &self.import_namespace,
+            &import_namespace,
             "canonical_abi_realloc",
             canonical_abi_realloc_type,
         );
 
         let eval_bytecode_type = module.types.add(&[ValType::I32, ValType::I32], &[]);
         let (eval_bytecode_fn_id, _) =
-            module.add_import_func(&self.import_namespace, "eval_bytecode", eval_bytecode_type);
+            module.add_import_func(&import_namespace, "eval_bytecode", eval_bytecode_type);
 
-        let (memory_id, _) = module.add_import_memory(
-            &self.import_namespace,
-            "memory",
-            false,
-            false,
-            0,
-            None,
-            None,
-        );
+        let (memory_id, _) =
+            module.add_import_memory(&import_namespace, "memory", false, false, 0, None, None);
 
         Ok(Imports::new(
             canonical_abi_realloc_fn_id,
@@ -105,11 +100,7 @@ impl DynamicGenerator {
         js: &JS,
         imports: &Imports,
     ) -> Result<BytecodeMetadata> {
-        let bytecode = if self.import_namespace == "javy_quickjs_provider_v2" {
-            js.compile_legacy()?
-        } else {
-            js.compile()?
-        };
+        let bytecode = js.compile(&self.provider)?;
         let bytecode_len: i32 = bytecode.len().try_into()?;
         let bytecode_data = module.data.add(DataKind::Passive, bytecode);
 
@@ -155,7 +146,7 @@ impl DynamicGenerator {
                 &[],
             );
             let (invoke_fn, _) =
-                module.add_import_func(&self.import_namespace, "invoke", invoke_type);
+                module.add_import_func(&self.provider.import_namespace()?, "invoke", invoke_type);
 
             let fn_name_ptr_local = module.locals.add(ValType::I32);
             for export in &self.function_exports {
@@ -311,6 +302,8 @@ fn print_wat(_wasm_binary: &[u8]) -> Result<()> {
 
 #[cfg(test)]
 mod test {
+    use crate::providers::Provider;
+
     use super::DynamicGenerator;
     use super::WitOptions;
     use anyhow::Result;
@@ -319,7 +312,7 @@ mod test {
     fn default_values() -> Result<()> {
         let gen = DynamicGenerator::new();
         assert!(gen.source_compression);
-        assert_eq!(gen.import_namespace, "");
+        assert!(matches!(gen.provider, Provider::Default));
         assert_eq!(gen.wit_opts, WitOptions::default());
 
         Ok(())

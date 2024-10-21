@@ -47,8 +47,20 @@ pub extern "C" fn initialize_runtime() {
 /// * `js_src_ptr` must reference a valid array of unsigned bytes of `js_src_len` length
 #[export_name = "compile_src"]
 pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -> *const u32 {
-    // Use fresh runtime to avoid depending on Wizened runtime
-    let runtime = runtime::new(Config::default()).unwrap();
+    // Use initialized runtime when compiling because certain runtime
+    // configurations can cause different bytecode to be emitted.
+    //
+    // For example, given the following JS:
+    // ```
+    // function foo() {
+    //   "use math"
+    //   1234 % 32
+    // }
+    // ```
+    //
+    // Setting `config.bignum_extension` to `true` will produce different
+    // bytecode than if it were set to `false`.
+    let runtime = unsafe { RUNTIME.get().unwrap() };
     let js_src = str::from_utf8(slice::from_raw_parts(js_src_ptr, js_src_len)).unwrap();
 
     let bytecode = runtime
@@ -72,7 +84,7 @@ pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -
 pub unsafe extern "C" fn eval_bytecode(bytecode_ptr: *const u8, bytecode_len: usize) {
     let runtime = RUNTIME.get().unwrap();
     let bytecode = slice::from_raw_parts(bytecode_ptr, bytecode_len);
-    execution::run_bytecode(runtime, bytecode);
+    execution::run_bytecode(runtime, bytecode, None);
 }
 
 /// Evaluates QuickJS bytecode and optionally invokes exported JS function with
@@ -93,9 +105,13 @@ pub unsafe extern "C" fn invoke(
 ) {
     let runtime = RUNTIME.get().unwrap();
     let bytecode = slice::from_raw_parts(bytecode_ptr, bytecode_len);
-    execution::run_bytecode(runtime, bytecode);
-    if !fn_name_ptr.is_null() && fn_name_len != 0 {
-        let fn_name = str::from_utf8_unchecked(slice::from_raw_parts(fn_name_ptr, fn_name_len));
-        execution::invoke_function(runtime, FUNCTION_MODULE_NAME, fn_name);
-    }
+    let fn_name = if !fn_name_ptr.is_null() && fn_name_len != 0 {
+        Some(str::from_utf8_unchecked(slice::from_raw_parts(
+            fn_name_ptr,
+            fn_name_len,
+        )))
+    } else {
+        None
+    };
+    execution::run_bytecode(runtime, bytecode, fn_name);
 }
