@@ -63,13 +63,6 @@ pub(crate) enum CodeGenType {
     Dynamic,
 }
 
-/// Code generator trait to abstract the multiple JS to Wasm code generation
-/// paths.
-pub(crate) trait CodeGen {
-    /// Generate Wasm from a given JS source.
-    fn generate(&mut self, source: &JS) -> anyhow::Result<Vec<u8>>;
-}
-
 /// Identifiers used by the generated dynamically linkable module.
 // This is an internal detail of this module.
 pub(crate) struct Identifiers {
@@ -165,8 +158,7 @@ impl Generator {
                     })))?
                     .wasm_bulk_memory(true)
                     .run(self.provider.as_bytes())?;
-                let module = config.parse(&wasm)?;
-                module
+                config.parse(&wasm)?
             }
             CodeGenType::Dynamic => Module::with_config(config),
         };
@@ -174,7 +166,7 @@ impl Generator {
     }
 
     /// Resolve identifiers for functions and memory.
-    pub fn resolve_identifiers(&self, module: &mut Module) -> Result<Identifiers> {
+    fn resolve_identifiers(&self, module: &mut Module) -> Result<Identifiers> {
         match self.ty {
             CodeGenType::Static { .. } => {
                 let canonical_abi_realloc_fn = module.exports.get_func("canonical_abi_realloc")?;
@@ -240,7 +232,7 @@ impl Generator {
     }
 
     /// Generate the main function.
-    pub fn generate_main(
+    fn generate_main(
         &self,
         module: &mut Module,
         js: &JS,
@@ -280,7 +272,7 @@ impl Generator {
     }
 
     /// Generate function exports.
-    pub fn generate_exports(
+    fn generate_exports(
         &self,
         module: &mut Module,
         identifiers: &Identifiers,
@@ -342,9 +334,7 @@ impl Generator {
         }
         Ok(())
     }
-}
 
-impl CodeGen for Generator {
     // Run the calling code with the `dump_wat` feature enabled to print the WAT to stdout
     //
     // For the example generated WAT, the `bytecode_len` is 137
@@ -405,7 +395,7 @@ impl CodeGen for Generator {
     //    (data (;0;) "\02\05\18function.mjs\06foo\0econsole\06log\06bar\0f\bc\03\00\01\00\00\be\03\00\00\0e\00\06\01\a0\01\00\00\00\03\01\01\1a\00\be\03\00\01\08\ea\05\c0\00\e1)8\e0\00\00\00B\e1\00\00\00\04\e2\00\00\00$\01\00)\bc\03\01\04\01\00\07\0a\0eC\06\01\be\03\00\00\00\03\00\00\13\008\e0\00\00\00B\e1\00\00\00\04\df\00\00\00$\01\00)\bc\03\01\02\03]")
     //    (data (;1;) "foo")
     //  )
-    fn generate(&mut self, js: &JS) -> Result<Vec<u8>> {
+    pub fn generate(&mut self, js: &JS) -> Result<Vec<u8>> {
         if self.wit_opts.defined() {
             self.function_exports = exports::process_exports(
                 js,

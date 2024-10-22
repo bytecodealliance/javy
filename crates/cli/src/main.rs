@@ -6,11 +6,10 @@ mod option;
 mod providers;
 mod wit;
 
-use crate::codegen::WitOptions;
 use crate::commands::{Cli, Command, EmitProviderCommandOpts};
 use anyhow::{bail, Result};
 use clap::Parser;
-use codegen::{CodeGen, CodeGenBuilder};
+use codegen::{CodeGenBuilder, WitOptions};
 use commands::{CodegenOptionGroup, JsOptionGroup};
 use javy_config::Config;
 use js::JS;
@@ -44,19 +43,14 @@ fn main() -> Result<()> {
                     opts.wit.clone(),
                     opts.wit_world.clone(),
                 ))?)
-                .source_compression(!opts.no_source_compression)
-                .provider(Provider::V2);
+                .source_compression(!opts.no_source_compression);
 
-            let config = Config::default();
             let mut gen = if opts.dynamic {
+                builder.provider(Provider::V2);
                 builder.build(codegen::CodeGenType::Dynamic)?
             } else {
-                // `compile` used the same javy-core as `build` for static builds.
-                // It doesn't really matter since the module is statically
-                // linked to the JS engine.
-                builder.provider(Provider::Default);
                 builder.build(codegen::CodeGenType::Static {
-                    js_runtime_config: config,
+                    js_runtime_config: Config::default(),
                 })?
             };
 
@@ -71,8 +65,7 @@ fn main() -> Result<()> {
             let mut builder = CodeGenBuilder::new();
             builder
                 .wit_opts(codegen.wit)
-                .source_compression(codegen.source_compression)
-                .provider(Provider::Default);
+                .source_compression(codegen.source_compression);
 
             let js_opts: JsOptionGroup = opts.js.clone().into();
             let mut gen = if codegen.dynamic {
