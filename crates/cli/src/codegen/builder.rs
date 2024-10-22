@@ -83,11 +83,8 @@ impl CodeGenBuilder {
     }
 
     /// Build a [`CodeGenerator`].
-    pub fn build<T>(self, js_runtime_config: Config) -> Result<Box<dyn CodeGen>>
-    where
-        T: CodeGen,
-    {
-        match T::classify() {
+    pub fn build(self, ty: CodeGenType, js_runtime_config: Config) -> Result<Box<dyn CodeGen>> {
+        match ty {
             CodeGenType::Static => self.build_static(js_runtime_config),
             CodeGenType::Dynamic => {
                 if js_runtime_config != Config::default() {
