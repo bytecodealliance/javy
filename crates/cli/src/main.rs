@@ -65,8 +65,7 @@ fn main() -> Result<()> {
             let mut builder = CodeGenBuilder::new();
             builder
                 .wit_opts(codegen.wit)
-                .source_compression(codegen.source_compression)
-                .provider(Provider::Default);
+                .source_compression(codegen.source_compression);
 
             let js_opts: JsOptionGroup = opts.js.clone().into();
             let mut gen = if codegen.dynamic {

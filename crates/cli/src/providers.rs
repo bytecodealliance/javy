@@ -16,6 +16,12 @@ pub enum Provider {
     V2,
 }
 
+impl Default for Provider {
+    fn default() -> Self {
+        Self::Default
+    }
+}
+
 impl Provider {
     /// Returns the provider Wasm module as a byte slice.
     pub fn as_bytes(&self) -> &[u8] {
