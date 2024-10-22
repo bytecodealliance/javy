@@ -5,10 +5,6 @@ authors.workspace = true
 edition.workspace = true
 license.workspace = true
 
-[[bin]]
-name = "javy_core"
-path = "src/main.rs"
-
 [lib]
 name = "javy_quickjs_provider"
 crate-type = ["cdylib"]
