@@ -7,19 +7,26 @@ use crate::{
 use anyhow::Result;
 use walrus::{DataId, DataKind, FunctionBuilder, FunctionId, LocalId, MemoryId, Module, ValType};
 
-/// Imports used by the generated dynamically linkable module.
+/// Identifiers used by the generated dynamically linkable module.
 // This is an internal detail of this module.
-pub(crate) struct Imports {
+pub(crate) struct Identifiers {
     canonical_abi_realloc: FunctionId,
     eval_bytecode: FunctionId,
+    invoke: FunctionId,
     memory: MemoryId,
 }
 
-impl Imports {
-    fn new(canonical_abi_realloc: FunctionId, eval_bytecode: FunctionId, memory: MemoryId) -> Self {
+impl Identifiers {
+    fn new(
+        canonical_abi_realloc: FunctionId,
+        eval_bytecode: FunctionId,
+        invoke: FunctionId,
+        memory: MemoryId,
+    ) -> Self {
         Self {
             canonical_abi_realloc,
             eval_bytecode,
+            invoke,
             memory,
         }
     }
@@ -66,8 +73,8 @@ impl DynamicGenerator {
         }
     }
 
-    /// Generate function imports.
-    pub fn generate_imports(&self, module: &mut Module) -> Result<Imports> {
+    /// Resolve identifiers.
+    fn resolve_identifiers(&self, module: &mut Module) -> Result<Identifiers> {
         let import_namespace = self.provider.import_namespace()?;
         let canonical_abi_realloc_type = module.types.add(
             &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
@@ -83,22 +90,30 @@ impl DynamicGenerator {
         let (eval_bytecode_fn_id, _) =
             module.add_import_func(&import_namespace, "eval_bytecode", eval_bytecode_type);
 
+        let invoke_type = module.types.add(
+            &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
+            &[],
+        );
+        let (invoke_fn_id, _) =
+            module.add_import_func(&self.provider.import_namespace()?, "invoke", invoke_type);
+
         let (memory_id, _) =
             module.add_import_memory(&import_namespace, "memory", false, false, 0, None, None);
 
-        Ok(Imports::new(
+        Ok(Identifiers::new(
             canonical_abi_realloc_fn_id,
             eval_bytecode_fn_id,
+            invoke_fn_id,
             memory_id,
         ))
     }
 
     /// Generate the main function.
-    pub fn generate_main(
+    fn generate_main(
         &self,
         module: &mut Module,
         js: &JS,
-        imports: &Imports,
+        imports: &Identifiers,
     ) -> Result<BytecodeMetadata> {
         let bytecode = js.compile(&self.provider)?;
         let bytecode_len: i32 = bytecode.len().try_into()?;
@@ -134,20 +149,13 @@ impl DynamicGenerator {
     }
 
     /// Generate function exports.
-    pub fn generate_exports(
+    fn generate_exports(
         &self,
         module: &mut Module,
-        imports: &Imports,
+        identifiers: &Identifiers,
         bc_metadata: &BytecodeMetadata,
     ) -> Result<()> {
         if !self.function_exports.is_empty() {
-            let invoke_type = module.types.add(
-                &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
-                &[],
-            );
-            let (invoke_fn, _) =
-                module.add_import_func(&self.provider.import_namespace()?, "invoke", invoke_type);
-
             let fn_name_ptr_local = module.locals.add(ValType::I32);
             for export in &self.function_exports {
                 // For each JS function export, add an export that copies the name of the function into memory and invokes it.
@@ -163,29 +171,29 @@ impl DynamicGenerator {
                     .i32_const(0) // orig len
                     .i32_const(1) // alignment
                     .i32_const(bc_metadata.len) // size to copy
-                    .call(imports.canonical_abi_realloc)
+                    .call(identifiers.canonical_abi_realloc)
                     .local_tee(bc_metadata.ptr)
                     .i32_const(0) // offset into data segment
                     .i32_const(bc_metadata.len) // size to copy
-                    .memory_init(imports.memory, bc_metadata.data_section) // copy bytecode into allocated memory
+                    .memory_init(identifiers.memory, bc_metadata.data_section) // copy bytecode into allocated memory
                     .data_drop(bc_metadata.data_section)
                     // Copy function name.
                     .i32_const(0) // orig ptr
                     .i32_const(0) // orig len
                     .i32_const(1) // alignment
                     .i32_const(js_export_len) // new size
-                    .call(imports.canonical_abi_realloc)
+                    .call(identifiers.canonical_abi_realloc)
                     .local_tee(fn_name_ptr_local)
                     .i32_const(0) // offset into data segment
                     .i32_const(js_export_len) // size to copy
-                    .memory_init(imports.memory, fn_name_data) // copy fn name into allocated memory
+                    .memory_init(identifiers.memory, fn_name_data) // copy fn name into allocated memory
                     .data_drop(fn_name_data)
                     // Call invoke.
                     .local_get(bc_metadata.ptr)
                     .i32_const(bc_metadata.len)
                     .local_get(fn_name_ptr_local)
                     .i32_const(js_export_len)
-                    .call(invoke_fn);
+                    .call(identifiers.invoke);
                 let export_fn = export_fn.finish(vec![], &mut module.funcs);
                 module.exports.add(&export.wit, export_fn);
             }
@@ -265,9 +273,9 @@ impl CodeGen for DynamicGenerator {
         }
 
         let mut module = Module::with_config(transform::module_config());
-        let imports = self.generate_imports(&mut module)?;
-        let bc_metadata = self.generate_main(&mut module, js, &imports)?;
-        self.generate_exports(&mut module, &imports, &bc_metadata)?;
+        let identifiers = self.resolve_identifiers(&mut module)?;
+        let bc_metadata = self.generate_main(&mut module, js, &identifiers)?;
+        self.generate_exports(&mut module, &identifiers, &bc_metadata)?;
 
         transform::add_producers_section(&mut module.producers);
         if !self.source_compression {
