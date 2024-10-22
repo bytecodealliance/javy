@@ -66,6 +66,11 @@ impl DynamicGenerator {
         }
     }
 
+    /// Generate the starting module.
+    fn generate_initial_module(&self) -> Module {
+        Module::with_config(transform::module_config())
+    }
+
     /// Generate function imports.
     pub fn generate_imports(&self, module: &mut Module) -> Result<Imports> {
         let import_namespace = self.provider.import_namespace()?;
@@ -264,7 +269,7 @@ impl CodeGen for DynamicGenerator {
             )?;
         }
 
-        let mut module = Module::with_config(transform::module_config());
+        let mut module = self.generate_initial_module();
         let imports = self.generate_imports(&mut module)?;
         let bc_metadata = self.generate_main(&mut module, js, &imports)?;
         self.generate_exports(&mut module, &imports, &bc_metadata)?;
