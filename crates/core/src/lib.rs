@@ -3,6 +3,9 @@ use javy::Runtime;
 use javy_config::Config;
 use namespace::import_namespace;
 use once_cell::sync::OnceCell;
+use std::io;
+use std::io::stdin;
+use std::io::Read;
 use std::slice;
 use std::str;
 
@@ -21,8 +24,16 @@ import_namespace!("javy_quickjs_provider_v3");
 /// Used by Wizer to preinitialize the module.
 #[export_name = "initialize_runtime"]
 pub extern "C" fn initialize_runtime() {
-    let runtime = runtime::new(Config::default()).unwrap();
+    let mut config_bytes = [0; 4];
+    let js_runtime_config = match stdin().read_exact(&mut config_bytes) {
+        Ok(()) => Config::from_bits(u32::from_le_bytes(config_bytes))
+            .expect("stdin should only contain valid config flags"),
+        Err(e) if matches!(e.kind(), io::ErrorKind::UnexpectedEof) => Config::default(),
+        Err(e) => panic!("Error reading from stdin: {e}"),
+    };
+    let runtime = runtime::new(js_runtime_config).unwrap();
     unsafe {
+        RUNTIME.take(); // Allow re-initializing.
         RUNTIME
             .set(runtime)
             // `set` requires `T` to implement `Debug` but quickjs::{Runtime,

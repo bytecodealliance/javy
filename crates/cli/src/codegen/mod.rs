@@ -34,24 +34,31 @@
 //! features requsted by the JavaScript bytecode.
 
 mod builder;
+use std::{rc::Rc, sync::OnceLock};
+
 pub(crate) use builder::*;
 
-mod r#static;
-pub(crate) use r#static::*;
+use javy_config::Config;
 
 mod transform;
 
 mod exports;
 pub(crate) use exports::*;
 use transform::SourceCodeSection;
-use walrus::{DataId, DataKind, FunctionBuilder, FunctionId, LocalId, MemoryId, Module, ValType};
+use walrus::{
+    DataId, DataKind, ExportItem, FunctionBuilder, FunctionId, LocalId, MemoryId, Module, ValType,
+};
+use wasi_common::{pipe::ReadPipe, sync::WasiCtxBuilder, WasiCtx};
+use wizer::{Linker, Wizer};
 
 use crate::{providers::Provider, JS};
 use anyhow::Result;
 
+static mut WASI: OnceLock<WasiCtx> = OnceLock::new();
+
 pub(crate) enum CodeGenType {
     /// Static code generation.
-    Static,
+    Static { js_runtime_config: Config },
     /// Dynamic code generation.
     Dynamic,
 }
@@ -61,10 +68,6 @@ pub(crate) enum CodeGenType {
 pub(crate) trait CodeGen {
     /// Generate Wasm from a given JS source.
     fn generate(&mut self, source: &JS) -> anyhow::Result<Vec<u8>>;
-    /// Classify the [`CodeGen`] type.
-    fn classify() -> CodeGenType
-    where
-        Self: Sized;
 }
 
 /// Identifiers used by the generated dynamically linkable module.
@@ -72,14 +75,21 @@ pub(crate) trait CodeGen {
 pub(crate) struct Identifiers {
     canonical_abi_realloc: FunctionId,
     eval_bytecode: FunctionId,
+    invoke: FunctionId,
     memory: MemoryId,
 }
 
 impl Identifiers {
-    fn new(canonical_abi_realloc: FunctionId, eval_bytecode: FunctionId, memory: MemoryId) -> Self {
+    fn new(
+        canonical_abi_realloc: FunctionId,
+        eval_bytecode: FunctionId,
+        invoke: FunctionId,
+        memory: MemoryId,
+    ) -> Self {
         Self {
             canonical_abi_realloc,
             eval_bytecode,
+            invoke,
             memory,
         }
     }
@@ -104,7 +114,9 @@ impl BytecodeMetadata {
 }
 
 /// Dynamic Code Generation.
-pub(crate) struct DynamicGenerator {
+pub(crate) struct Generator {
+    /// Codegen type to use.
+    pub ty: CodeGenType,
     /// Provider to use.
     pub provider: Provider,
     /// JavaScript function exports.
@@ -115,42 +127,116 @@ pub(crate) struct DynamicGenerator {
     pub wit_opts: WitOptions,
 }
 
-impl DynamicGenerator {
-    /// Creates a new [`DynamicGenerator`].
-    pub fn new() -> Self {
+impl Generator {
+    /// Creates a new [`Generator`].
+    pub fn new(ty: CodeGenType, provider: Provider) -> Self {
         Self {
+            ty,
             source_compression: true,
-            provider: Provider::Default,
+            provider,
             function_exports: Default::default(),
             wit_opts: Default::default(),
         }
     }
 
+    fn create_module(&self) -> Result<Module> {
+        let config = transform::module_config();
+        let module = match &self.ty {
+            CodeGenType::Static { js_runtime_config } => {
+                unsafe {
+                    WASI.get_or_init(|| {
+                        WasiCtxBuilder::new()
+                            .inherit_stderr()
+                            .inherit_stdout()
+                            .stdin(Box::new(ReadPipe::from(
+                                js_runtime_config.bits().to_le_bytes().as_slice(),
+                            )))
+                            .build()
+                    });
+                };
+                let wasm = Wizer::new()
+                    .init_func("initialize_runtime")
+                    .make_linker(Some(Rc::new(move |engine| {
+                        let mut linker = Linker::new(engine);
+                        wasi_common::sync::add_to_linker(&mut linker, |_| unsafe {
+                            WASI.get_mut().unwrap()
+                        })?;
+                        Ok(linker)
+                    })))?
+                    .wasm_bulk_memory(true)
+                    .run(self.provider.as_bytes())?;
+                let module = config.parse(&wasm)?;
+                module
+            }
+            CodeGenType::Dynamic => Module::with_config(config),
+        };
+        Ok(module)
+    }
+
     /// Resolve identifiers for functions and memory.
     pub fn resolve_identifiers(&self, module: &mut Module) -> Result<Identifiers> {
-        let import_namespace = self.provider.import_namespace()?;
-        let canonical_abi_realloc_type = module.types.add(
-            &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
-            &[ValType::I32],
-        );
-        let (canonical_abi_realloc_fn_id, _) = module.add_import_func(
-            &import_namespace,
-            "canonical_abi_realloc",
-            canonical_abi_realloc_type,
-        );
+        match self.ty {
+            CodeGenType::Static { .. } => {
+                let canonical_abi_realloc_fn = module.exports.get_func("canonical_abi_realloc")?;
+                let eval_bytecode = module.exports.get_func("eval_bytecode")?;
+                let invoke = module.exports.get_func("invoke")?;
+                let ExportItem::Memory(memory) = module
+                    .exports
+                    .iter()
+                    .find(|e| e.name == "memory")
+                    .ok_or_else(|| anyhow::anyhow!("Missing memory export"))?
+                    .item
+                else {
+                    anyhow::bail!("Export with name memory must be of type memory")
+                };
+                Ok(Identifiers::new(
+                    canonical_abi_realloc_fn,
+                    eval_bytecode,
+                    invoke,
+                    memory,
+                ))
+            }
+            CodeGenType::Dynamic => {
+                let import_namespace = self.provider.import_namespace()?;
+                let canonical_abi_realloc_type = module.types.add(
+                    &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
+                    &[ValType::I32],
+                );
+                let (canonical_abi_realloc_fn_id, _) = module.add_import_func(
+                    &import_namespace,
+                    "canonical_abi_realloc",
+                    canonical_abi_realloc_type,
+                );
 
-        let eval_bytecode_type = module.types.add(&[ValType::I32, ValType::I32], &[]);
-        let (eval_bytecode_fn_id, _) =
-            module.add_import_func(&import_namespace, "eval_bytecode", eval_bytecode_type);
+                let eval_bytecode_type = module.types.add(&[ValType::I32, ValType::I32], &[]);
+                let (eval_bytecode_fn_id, _) =
+                    module.add_import_func(&import_namespace, "eval_bytecode", eval_bytecode_type);
 
-        let (memory_id, _) =
-            module.add_import_memory(&import_namespace, "memory", false, false, 0, None, None);
+                let invoke_type = module.types.add(
+                    &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
+                    &[],
+                );
+                let (invoke_fn_id, _) =
+                    module.add_import_func(&import_namespace, "invoke", invoke_type);
 
-        Ok(Identifiers::new(
-            canonical_abi_realloc_fn_id,
-            eval_bytecode_fn_id,
-            memory_id,
-        ))
+                let (memory_id, _) = module.add_import_memory(
+                    &import_namespace,
+                    "memory",
+                    false,
+                    false,
+                    0,
+                    None,
+                    None,
+                );
+
+                Ok(Identifiers::new(
+                    canonical_abi_realloc_fn_id,
+                    eval_bytecode_fn_id,
+                    invoke_fn_id,
+                    memory_id,
+                ))
+            }
+        }
     }
 
     /// Generate the main function.
@@ -201,13 +287,6 @@ impl DynamicGenerator {
         bc_metadata: &BytecodeMetadata,
     ) -> Result<()> {
         if !self.function_exports.is_empty() {
-            let invoke_type = module.types.add(
-                &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
-                &[],
-            );
-            let (invoke_fn, _) =
-                module.add_import_func(&self.provider.import_namespace()?, "invoke", invoke_type);
-
             let fn_name_ptr_local = module.locals.add(ValType::I32);
             for export in &self.function_exports {
                 // For each JS function export, add an export that copies the name of the function into memory and invokes it.
@@ -245,16 +324,27 @@ impl DynamicGenerator {
                     .i32_const(bc_metadata.len)
                     .local_get(fn_name_ptr_local)
                     .i32_const(js_export_len)
-                    .call(invoke_fn);
+                    .call(identifiers.invoke);
                 let export_fn = export_fn.finish(vec![], &mut module.funcs);
                 module.exports.add(&export.wit, export_fn);
             }
         }
         Ok(())
     }
+
+    fn cleanup(&self, module: &mut Module) -> Result<()> {
+        // Remove no longer necessary exports.
+        if let CodeGenType::Static { .. } = self.ty {
+            module.exports.remove("canonical_abi_realloc")?;
+            module.exports.remove("eval_bytecode")?;
+            module.exports.remove("invoke")?;
+            module.exports.remove("compile_src")?;
+        }
+        Ok(())
+    }
 }
 
-impl CodeGen for DynamicGenerator {
+impl CodeGen for Generator {
     // Run the calling code with the `dump_wat` feature enabled to print the WAT to stdout
     //
     // For the example generated WAT, the `bytecode_len` is 137
@@ -324,7 +414,7 @@ impl CodeGen for DynamicGenerator {
             )?;
         }
 
-        let mut module = Module::with_config(transform::module_config());
+        let mut module = self.create_module()?;
         let identifiers = self.resolve_identifiers(&mut module)?;
         let bc_metadata = self.generate_main(&mut module, js, &identifiers)?;
         self.generate_exports(&mut module, &identifiers, &bc_metadata)?;
@@ -336,13 +426,11 @@ impl CodeGen for DynamicGenerator {
             module.customs.add(SourceCodeSection::compressed(js)?);
         }
 
+        self.cleanup(&mut module)?;
+
         let wasm = module.emit_wasm();
         print_wat(&wasm)?;
         Ok(wasm)
-    }
-
-    fn classify() -> CodeGenType {
-        CodeGenType::Dynamic
     }
 }
 
@@ -364,13 +452,13 @@ fn print_wat(_wasm_binary: &[u8]) -> Result<()> {
 mod test {
     use crate::providers::Provider;
 
-    use super::DynamicGenerator;
+    use super::Generator;
     use super::WitOptions;
     use anyhow::Result;
 
     #[test]
     fn default_values() -> Result<()> {
-        let gen = DynamicGenerator::new();
+        let gen = Generator::new(crate::codegen::CodeGenType::Dynamic, Provider::Default);
         assert!(gen.source_compression);
         assert!(matches!(gen.provider, Provider::Default));
         assert_eq!(gen.wit_opts, WitOptions::default());

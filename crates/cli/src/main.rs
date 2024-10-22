@@ -8,9 +8,9 @@ mod wit;
 
 use crate::codegen::WitOptions;
 use crate::commands::{Cli, Command, EmitProviderCommandOpts};
-use anyhow::Result;
+use anyhow::{bail, Result};
 use clap::Parser;
-use codegen::{CodeGenBuilder, DynamicGenerator, StaticGenerator};
+use codegen::{CodeGen, CodeGenBuilder};
 use commands::{CodegenOptionGroup, JsOptionGroup};
 use javy_config::Config;
 use js::JS;
@@ -49,9 +49,15 @@ fn main() -> Result<()> {
 
             let config = Config::default();
             let mut gen = if opts.dynamic {
-                builder.build::<DynamicGenerator>(config)?
+                builder.build(codegen::CodeGenType::Dynamic)?
             } else {
-                builder.build::<StaticGenerator>(config)?
+                // `compile` used the same javy-core as `build` for static builds.
+                // It doesn't really matter since the module is statically
+                // linked to the JS engine.
+                builder.provider(Provider::Default);
+                builder.build(codegen::CodeGenType::Static {
+                    js_runtime_config: config,
+                })?
             };
 
             let wasm = gen.generate(&js)?;
@@ -70,9 +76,14 @@ fn main() -> Result<()> {
 
             let js_opts: JsOptionGroup = opts.js.clone().into();
             let mut gen = if codegen.dynamic {
-                builder.build::<DynamicGenerator>(js_opts.into())?
+                if js_opts != JsOptionGroup::default() {
+                    bail!("Cannot set JS runtime options when building a dynamic module")
+                }
+                builder.build(codegen::CodeGenType::Dynamic)?
             } else {
-                builder.build::<StaticGenerator>(js_opts.into())?
+                builder.build(codegen::CodeGenType::Static {
+                    js_runtime_config: js_opts.into(),
+                })?
             };
 
             let wasm = gen.generate(&js)?;
