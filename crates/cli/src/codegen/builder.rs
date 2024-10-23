@@ -51,7 +51,7 @@ impl WitOptions {
 #[derive(Default)]
 pub(crate) struct CodeGenBuilder {
     /// The provider to use.
-    provider: Option<Provider>,
+    provider: Provider,
     /// WIT options for code generation.
     wit_opts: WitOptions,
     /// Whether to compress the original JS source.
@@ -66,7 +66,7 @@ impl CodeGenBuilder {
 
     /// Set the provider.
     pub fn provider(&mut self, provider: Provider) -> &mut Self {
-        self.provider = Some(provider);
+        self.provider = provider;
         self
     }
 
@@ -83,11 +83,8 @@ impl CodeGenBuilder {
     }
 
     /// Build a [`CodeGenerator`].
-    pub fn build<T>(self, js_runtime_config: Config) -> Result<Box<dyn CodeGen>>
-    where
-        T: CodeGen,
-    {
-        match T::classify() {
+    pub fn build(self, ty: CodeGenType, js_runtime_config: Config) -> Result<Box<dyn CodeGen>> {
+        match ty {
             CodeGenType::Static => self.build_static(js_runtime_config),
             CodeGenType::Dynamic => {
                 if js_runtime_config != Config::default() {
@@ -110,15 +107,8 @@ impl CodeGenBuilder {
     fn build_dynamic(self) -> Result<Box<dyn CodeGen>> {
         let mut dynamic_gen = Box::new(DynamicGenerator::new());
         dynamic_gen.source_compression = self.source_compression;
-
-        if let Some(p) = self.provider {
-            dynamic_gen.provider = p
-        } else {
-            bail!("Provider version not specified")
-        }
-
+        dynamic_gen.provider = self.provider;
         dynamic_gen.wit_opts = self.wit_opts;
-
         Ok(dynamic_gen)
     }
 }

@@ -12,7 +12,7 @@ use crate::{
     codegen::{
         exports,
         transform::{self, SourceCodeSection},
-        CodeGen, CodeGenType, Exports, WitOptions,
+        CodeGen, Exports, WitOptions,
     },
     js::JS,
 };
@@ -147,10 +147,6 @@ impl CodeGen for StaticGenerator {
         }
         transform::add_producers_section(&mut module.producers);
         Ok(module.emit_wasm())
-    }
-
-    fn classify() -> CodeGenType {
-        CodeGenType::Static
     }
 }
 

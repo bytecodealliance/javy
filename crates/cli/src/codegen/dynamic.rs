@@ -1,6 +1,6 @@
 use super::transform::{self, SourceCodeSection};
 use crate::{
-    codegen::{exports, CodeGen, CodeGenType, Exports, WitOptions},
+    codegen::{exports, CodeGen, Exports, WitOptions},
     js::JS,
     providers::Provider,
 };
@@ -73,8 +73,13 @@ impl DynamicGenerator {
         }
     }
 
-    /// Resolve identifiers.
-    fn resolve_identifiers(&self, module: &mut Module) -> Result<Identifiers> {
+    /// Generate the starting module.
+    fn generate_initial_module(&self) -> Module {
+        Module::with_config(transform::module_config())
+    }
+
+    /// Resolve identifiers for functions and memory.
+    pub fn resolve_identifiers(&self, module: &mut Module) -> Result<Identifiers> {
         let import_namespace = self.provider.import_namespace()?;
         let canonical_abi_realloc_type = module.types.add(
             &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
@@ -272,7 +277,7 @@ impl CodeGen for DynamicGenerator {
             )?;
         }
 
-        let mut module = Module::with_config(transform::module_config());
+        let mut module = self.generate_initial_module();
         let identifiers = self.resolve_identifiers(&mut module)?;
         let bc_metadata = self.generate_main(&mut module, js, &identifiers)?;
         self.generate_exports(&mut module, &identifiers, &bc_metadata)?;
@@ -287,10 +292,6 @@ impl CodeGen for DynamicGenerator {
         let wasm = module.emit_wasm();
         print_wat(&wasm)?;
         Ok(wasm)
-    }
-
-    fn classify() -> CodeGenType {
-        CodeGenType::Dynamic
     }
 }
 
