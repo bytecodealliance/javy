@@ -61,8 +61,4 @@ pub(crate) enum CodeGenType {
 pub(crate) trait CodeGen {
     /// Generate Wasm from a given JS source.
     fn generate(&mut self, source: &JS) -> anyhow::Result<Vec<u8>>;
-    /// Classify the [`CodeGen`] type.
-    fn classify() -> CodeGenType
-    where
-        Self: Sized;
 }

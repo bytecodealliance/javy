@@ -1,6 +1,6 @@
 use super::transform::{self, SourceCodeSection};
 use crate::{
-    codegen::{exports, CodeGen, CodeGenType, Exports, WitOptions},
+    codegen::{exports, CodeGen, Exports, WitOptions},
     js::JS,
     providers::Provider,
 };
@@ -284,10 +284,6 @@ impl CodeGen for DynamicGenerator {
         let wasm = module.emit_wasm();
         print_wat(&wasm)?;
         Ok(wasm)
-    }
-
-    fn classify() -> CodeGenType {
-        CodeGenType::Dynamic
     }
 }
 
