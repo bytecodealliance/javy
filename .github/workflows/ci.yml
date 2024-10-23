@@ -54,12 +54,6 @@ jobs:
       - name: Lint Runner
         run: cargo clippy --package=javy-runner -- -D warnings
 
-      - name: Upload core binary to artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: engine
-          path: target/wasm32-wasip1/release/javy_core.wasm
-
       - name: Upload quickjs_provider to artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -76,11 +70,6 @@ jobs:
       - uses: ./.github/actions/ci-shared-setup
         with:
           os: linux
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: engine
-          path: target/wasm32-wasip1/release/
 
       - uses: actions/download-artifact@v4
         with:
