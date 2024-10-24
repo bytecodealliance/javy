@@ -1,12 +1,11 @@
 use anyhow::anyhow;
-use javy::Runtime;
+use javy::{Runtime, SharedConfig};
 use once_cell::sync::OnceCell;
 use std::io::{self, Read};
 use std::str;
 use std::string::String;
 use std::{env, slice};
 
-use javy_config::Config;
 mod execution;
 mod runtime;
 
@@ -19,7 +18,7 @@ static mut BYTECODE: OnceCell<Vec<u8>> = OnceCell::new();
 pub extern "C" fn initialize_runtime() {
     let _wasm_ctx = WasmCtx::new();
 
-    let js_runtime_config = Config::from_bits(
+    let js_runtime_config = SharedConfig::from_bits(
         env::var("JS_RUNTIME_CONFIG")
             .expect("JS_RUNTIME_CONFIG should be set")
             .parse()

@@ -1,9 +1,9 @@
 use crate::{
     codegen::{CodeGen, CodeGenType, DynamicGenerator, StaticGenerator},
     providers::Provider,
+    runtime_config::Config,
 };
 use anyhow::{bail, Result};
-use javy_config::Config;
 use std::path::PathBuf;
 
 /// Options for using WIT in the code generation process.

@@ -1,7 +1,6 @@
 use std::{collections::HashMap, fs, rc::Rc, sync::OnceLock};
 
 use anyhow::Result;
-use javy_config::Config;
 use walrus::{DataKind, ExportItem, FunctionBuilder, FunctionId, MemoryId, ValType};
 use wasi_common::{pipe::ReadPipe, sync::WasiCtxBuilder, WasiCtx};
 use wasm_opt::{OptimizationOptions, ShrinkLevel};
@@ -15,6 +14,7 @@ use crate::{
         CodeGen, Exports, WitOptions,
     },
     js::JS,
+    runtime_config::{self, Config},
 };
 
 pub(crate) struct StaticGenerator {
@@ -61,6 +61,10 @@ impl CodeGen for StaticGenerator {
                 self.wit_opts.unwrap_world(),
             )?;
         }
+        let js_runtime_config = runtime_config::generate_config_string(
+            crate::providers::Provider::Default,
+            self.js_runtime_config.clone(),
+        )?;
 
         unsafe {
             WASI.get_or_init(|| {
@@ -76,7 +80,8 @@ impl CodeGen for StaticGenerator {
 
             WASI.get_mut().unwrap().push_env(
                 "JS_RUNTIME_CONFIG",
-                &self.js_runtime_config.bits().to_string(),
+                //&self.js_runtime_config.bits().to_string(),
+                &js_runtime_config,
             )?;
         };
 
@@ -201,10 +206,11 @@ fn optimize_wasm(wasm: &[u8]) -> Result<Vec<u8>> {
 
 #[cfg(test)]
 mod test {
+    use crate::runtime_config::Config;
+
     use super::StaticGenerator;
     use super::WitOptions;
     use anyhow::Result;
-    use javy_config::Config;
 
     #[test]
     fn default_values() -> Result<()> {

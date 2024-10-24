@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 use javy::Runtime;
-use javy_config::Config;
+use javy::SharedConfig;
 use namespace::import_namespace;
 use once_cell::sync::OnceCell;
 use std::slice;
@@ -21,7 +21,7 @@ import_namespace!("javy_quickjs_provider_v3");
 /// Used by Wizer to preinitialize the module.
 #[export_name = "initialize_runtime"]
 pub extern "C" fn initialize_runtime() {
-    let runtime = runtime::new(Config::default()).unwrap();
+    let runtime = runtime::new(SharedConfig::default()).unwrap();
     unsafe {
         RUNTIME
             .set(runtime)

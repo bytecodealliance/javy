@@ -49,6 +49,8 @@ pub mod alloc;
 mod config;
 mod runtime;
 mod serde;
+mod shared_config;
+pub use shared_config::SharedConfig;
 
 use anyhow::{anyhow, Error, Result};
 use rquickjs::{

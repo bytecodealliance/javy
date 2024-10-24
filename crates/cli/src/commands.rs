@@ -1,10 +1,9 @@
-use crate::option_group;
+use crate::{option_group, runtime_config::Config};
 use anyhow::{anyhow, Result};
 use clap::{
     builder::{StringValueParser, TypedValueParser, ValueParserFactory},
     Parser, Subcommand,
 };
-use javy_config::Config;
 use std::path::PathBuf;
 
 use crate::codegen::WitOptions;
@@ -271,38 +270,64 @@ impl From<Vec<GroupOption<JsOption>>> for JsOptionGroup {
     }
 }
 
+// impl From<JsOptionGroup> for Config {
+//     fn from(value: JsOptionGroup) -> Self {
+//         let mut config = Self::default();
+//         config.set(
+//             Config::REDIRECT_STDOUT_TO_STDERR,
+//             value.redirect_stdout_to_stderr,
+//         );
+//         config.set(Config::JAVY_JSON, value.javy_json);
+//         config.set(Config::SIMD_JSON_BUILTINS, value.simd_json_builtins);
+//         config.set(Config::JAVY_STREAM_IO, value.javy_stream_io);
+//         config.set(Config::TEXT_ENCODING, value.text_encoding);
+//         config
+//     }
+// }
+
+// impl From<Config> for JsOptionGroup {
+//     fn from(value: Config) -> Self {
+//         Self {
+//             redirect_stdout_to_stderr: value.contains(Config::REDIRECT_STDOUT_TO_STDERR),
+//             javy_json: value.contains(Config::JAVY_JSON),
+//             simd_json_builtins: value.contains(Config::SIMD_JSON_BUILTINS),
+//             javy_stream_io: value.contains(Config::JAVY_STREAM_IO),
+//             text_encoding: value.contains(Config::TEXT_ENCODING),
+//         }
+//     }
+// }
+
 impl From<JsOptionGroup> for Config {
     fn from(value: JsOptionGroup) -> Self {
-        let mut config = Self::default();
-        config.set(
-            Config::REDIRECT_STDOUT_TO_STDERR,
-            value.redirect_stdout_to_stderr,
-        );
-        config.set(Config::JAVY_JSON, value.javy_json);
-        config.set(Config::SIMD_JSON_BUILTINS, value.simd_json_builtins);
-        config.set(Config::JAVY_STREAM_IO, value.javy_stream_io);
-        config.set(Config::TEXT_ENCODING, value.text_encoding);
-        config
+        Self {
+            simd_json_builtins: value.simd_json_builtins,
+            javy_json: value.javy_json,
+            javy_stream_io: value.javy_stream_io,
+            redirect_stdout_to_stderr: value.redirect_stdout_to_stderr,
+            text_encoding: value.text_encoding,
+            extra_field: true,
+        }
     }
 }
 
 impl From<Config> for JsOptionGroup {
     fn from(value: Config) -> Self {
         Self {
-            redirect_stdout_to_stderr: value.contains(Config::REDIRECT_STDOUT_TO_STDERR),
-            javy_json: value.contains(Config::JAVY_JSON),
-            simd_json_builtins: value.contains(Config::SIMD_JSON_BUILTINS),
-            javy_stream_io: value.contains(Config::JAVY_STREAM_IO),
-            text_encoding: value.contains(Config::TEXT_ENCODING),
+            simd_json_builtins: value.simd_json_builtins,
+            javy_json: value.javy_json,
+            javy_stream_io: value.javy_stream_io,
+            redirect_stdout_to_stderr: value.redirect_stdout_to_stderr,
+            text_encoding: value.text_encoding,
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::runtime_config::Config;
+
     use super::{CodegenOption, CodegenOptionGroup, GroupOption, JsOption, JsOptionGroup};
     use anyhow::Result;
-    use javy_config::Config;
 
     #[test]
     fn js_group_conversion_between_vector_of_options_and_group() -> Result<()> {

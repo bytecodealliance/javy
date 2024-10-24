@@ -4,6 +4,7 @@ mod commands;
 mod js;
 mod option;
 mod providers;
+mod runtime_config;
 mod wit;
 
 use crate::codegen::WitOptions;
@@ -12,9 +13,9 @@ use anyhow::Result;
 use clap::Parser;
 use codegen::{CodeGenBuilder, CodeGenType};
 use commands::{CodegenOptionGroup, JsOptionGroup};
-use javy_config::Config;
 use js::JS;
 use providers::Provider;
+use runtime_config::Config;
 use std::fs;
 use std::fs::File;
 use std::io::Write;

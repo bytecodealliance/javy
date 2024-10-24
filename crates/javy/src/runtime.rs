@@ -2,8 +2,8 @@
 use super::from_js_error;
 use crate::{
     apis::{Console, NonStandardConsole, Random, StreamIO, TextEncoding},
-    config::{JSIntrinsics, JavyIntrinsics},
-    Config,
+    config::JavyIntrinsics,
+    Config, JSIntrinsics,
 };
 
 #[cfg(feature = "json")]
