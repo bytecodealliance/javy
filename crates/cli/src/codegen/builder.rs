@@ -1,5 +1,5 @@
 use crate::{
-    codegen::{CodeGen, CodeGenType, DynamicGenerator, StaticGenerator},
+    codegen::{CodeGenType, Generator},
     providers::Provider,
 };
 use anyhow::{bail, Result};
@@ -83,32 +83,15 @@ impl CodeGenBuilder {
     }
 
     /// Build a [`CodeGenerator`].
-    pub fn build(self, ty: CodeGenType, js_runtime_config: Config) -> Result<Box<dyn CodeGen>> {
-        match ty {
-            CodeGenType::Static => self.build_static(js_runtime_config),
-            CodeGenType::Dynamic => {
-                if js_runtime_config != Config::default() {
-                    bail!("Cannot set JS runtime options when building a dynamic module")
-                }
-                self.build_dynamic()
+    pub fn build(self, ty: CodeGenType, js_runtime_config: Config) -> Result<Generator> {
+        if let CodeGenType::Dynamic = ty {
+            if js_runtime_config != Config::default() {
+                bail!("Cannot set JS runtime options when building a dynamic module")
             }
         }
-    }
-
-    fn build_static(self, js_runtime_config: Config) -> Result<Box<dyn CodeGen>> {
-        let mut static_gen = Box::new(StaticGenerator::new(js_runtime_config));
-
-        static_gen.source_compression = self.source_compression;
-        static_gen.wit_opts = self.wit_opts;
-
-        Ok(static_gen)
-    }
-
-    fn build_dynamic(self) -> Result<Box<dyn CodeGen>> {
-        let mut dynamic_gen = Box::new(DynamicGenerator::new());
-        dynamic_gen.source_compression = self.source_compression;
-        dynamic_gen.provider = self.provider;
-        dynamic_gen.wit_opts = self.wit_opts;
-        Ok(dynamic_gen)
+        let mut generator = Generator::new(ty, js_runtime_config, self.provider);
+        generator.source_compression = self.source_compression;
+        generator.wit_opts = self.wit_opts;
+        Ok(generator)
     }
 }

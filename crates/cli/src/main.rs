@@ -44,11 +44,11 @@ fn main() -> Result<()> {
                     opts.wit.clone(),
                     opts.wit_world.clone(),
                 ))?)
-                .source_compression(!opts.no_source_compression)
-                .provider(Provider::V2);
+                .source_compression(!opts.no_source_compression);
 
             let config = Config::default();
             let mut gen = if opts.dynamic {
+                builder.provider(Provider::V2);
                 builder.build(CodeGenType::Dynamic, config)?
             } else {
                 builder.build(CodeGenType::Static, config)?
