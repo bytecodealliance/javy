@@ -1,9 +1,7 @@
 use anyhow::anyhow;
 use javy::Runtime;
-use javy_config::Config;
 use namespace::import_namespace;
 use once_cell::sync::OnceCell;
-use std::io;
 use std::io::stdin;
 use std::io::Read;
 use std::slice;
@@ -11,7 +9,6 @@ use std::str;
 
 mod execution;
 mod namespace;
-mod runtime;
 
 const FUNCTION_MODULE_NAME: &str = "function.mjs";
 
@@ -29,16 +26,13 @@ pub extern "C" fn initialize_runtime() {
     // an environment variable will persist as the value set for that environment
     // variable in subsequent invocations so a different value can't be used to
     // initialize a runtime with a different configuration.
-    let mut config_bytes = [0; 4];
-    let js_runtime_config = match stdin().read_exact(&mut config_bytes) {
-        Ok(()) => Config::from_bits(u32::from_le_bytes(config_bytes))
-            .expect("stdin should only contain valid config flags"),
-        // Not having 4 bytes of configuration means the configuration hasn't
-        // been set so the default configuration should be used.
-        Err(e) if matches!(e.kind(), io::ErrorKind::UnexpectedEof) => Config::default(),
+    let mut config_bytes = vec![];
+    let js_runtime_config = match stdin().read_to_end(&mut config_bytes) {
+        Ok(0) => javy::Config::default(),
+        Ok(_) => javy::interpret_config::parse_config(&config_bytes).unwrap(),
         Err(e) => panic!("Error reading from stdin: {e}"),
     };
-    let runtime = runtime::new(js_runtime_config).unwrap();
+    let runtime = Runtime::new(js_runtime_config).unwrap();
     unsafe {
         RUNTIME.take(); // Allow re-initializing.
         RUNTIME

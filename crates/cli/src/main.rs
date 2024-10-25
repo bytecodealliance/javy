@@ -11,10 +11,10 @@ use crate::commands::{Cli, Command, EmitProviderCommandOpts};
 use anyhow::Result;
 use clap::Parser;
 use codegen::{CodeGenBuilder, CodeGenType};
-use commands::{CodegenOptionGroup, JsOptionGroup};
-use javy_config::Config;
+use commands::CodegenOptionGroup;
 use js::JS;
 use providers::Provider;
+use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
@@ -46,7 +46,7 @@ fn main() -> Result<()> {
                 ))?)
                 .source_compression(!opts.no_source_compression);
 
-            let config = Config::default();
+            let config = HashMap::new();
             let mut gen = if opts.dynamic {
                 builder.provider(Provider::V2);
                 builder.build(CodeGenType::Dynamic, config)?
@@ -67,7 +67,9 @@ fn main() -> Result<()> {
                 .wit_opts(codegen.wit)
                 .source_compression(codegen.source_compression);
 
-            let js_opts: JsOptionGroup = opts.js.clone().into();
+            // let js_opts: JsOptionGroup = opts.js.clone().into();
+            let js_opts =
+                commands::from_runtime_settings_to_config(&Provider::Default, opts.js.clone())?;
             let mut gen = if codegen.dynamic {
                 builder.build(CodeGenType::Dynamic, js_opts.into())?
             } else {
@@ -87,6 +89,6 @@ fn emit_provider(opts: &EmitProviderCommandOpts) -> Result<()> {
         Some(path) => Box::new(File::create(path)?),
         _ => Box::new(std::io::stdout()),
     };
-    file.write_all(Provider::Default.as_bytes())?;
+    file.write_all(&Provider::Default.as_bytes())?;
     Ok(())
 }
