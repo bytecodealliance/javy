@@ -4,7 +4,6 @@ members = [
   "crates/core",
   "crates/cli",
   "crates/test-macros",
-  "crates/config",
   "crates/runner",
   "fuzz",
 ]

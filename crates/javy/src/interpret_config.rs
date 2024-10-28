@@ -1,40 +1,55 @@
 use std::io::{stdout, Write};
 
-use anyhow::{bail, Result};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 use crate::Config;
 
-// use crate::Config;
+macro_rules! runtime_config {
+    (
+        $(#[$attr:meta])*
+        pub struct $opts:ident {
+            $(
+                $(#[doc = $doc:tt])*
+                $opt:ident: Option<bool>,
+            )+
+        }
 
-// option_group! {
-//     #[derive(Clone, Debug)]
-//     pub enum JsOption {
-//         /// Whether to redirect the output of console.log to standard error.
-//         RedirectStdoutToStderr(bool),
-//         /// Whether to enable the `Javy.JSON` builtins.
-//         JavyJson(bool),
-//         /// Whether to enable the `Javy.readSync` and `Javy.writeSync` builtins.
-//         JavyStreamIo(bool),
-//         /// Whether to override the `JSON.parse` and `JSON.stringify`
-//         /// implementations with an alternative, more performant, SIMD based
-//         /// implemetation.
-//         SimdJsonBuiltins(bool),
-//         /// Whether to enable support for the `TextEncoder` and `TextDecoder`
-//         /// APIs.
-//         TextEncoding(bool),
-//     }
-// }
+    ) => {
+        $(#[$attr])*
+        pub struct $opts {
+            $(
+                $opt: Option<bool>,
+            )+
+        }
 
-// pub fn interpret_config(config: &[&str]) -> Config {
-//     todo!()
-// }
+        impl $opts {
+            fn supported_config() -> SupportedConfigProperties {
+                SupportedConfigProperties {
+                    supported_properties: vec![
+                        $(
+                            {
+                                ConfigProperty {
+                                    name: stringify!($opt).replace('_', "-").to_string(),
+                                    help: "[=y|n]".to_string(),
+                                    doc: concat!($($doc, "\n",)*).into(),
+                                }
+                            },
+                        )+
+                    ]
+                }
+            }
+        }
+    }
+}
 
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields, rename_all = "kebab-case")]
-struct SharedConfig {
-    /// Whether to redirect the output of console.log to standard error.
-    redirect_stdout_to_stderr: Option<String>,
+runtime_config! {
+    #[derive(Debug, Deserialize)]
+    #[serde(deny_unknown_fields, rename_all = "kebab-case")]
+    pub struct SharedConfig {
+        /// Whether to redirect the output of console.log to standard error.
+        redirect_stdout_to_stderr: Option<bool>,
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -53,16 +68,9 @@ struct ConfigProperty {
 pub fn supported_config() {
     stdout()
         .write_all(
-            serde_json::to_string(&SupportedConfigProperties {
-                supported_properties: vec![ConfigProperty {
-                    name: "redirect-stdout-to-stderr".to_string(),
-                    help: "[=y|n]".to_string(),
-                    doc: "Whether to redirect the output of console.log to standard error."
-                        .to_string(),
-                }],
-            })
-            .unwrap()
-            .as_bytes(),
+            serde_json::to_string(&SharedConfig::supported_config())
+                .unwrap()
+                .as_bytes(),
         )
         .unwrap();
     stdout().flush().unwrap();
@@ -72,10 +80,7 @@ pub fn parse_config(config: &[u8]) -> Result<Config> {
     let shared_config = serde_json::from_slice::<SharedConfig>(config)?;
     let mut config = Config::default();
     if let Some(value) = shared_config.redirect_stdout_to_stderr {
-        if value != "" && value != "y" && value != "n" {
-            bail!("Value for `redirect-stdout-to-stderr` must be `y` or `n`");
-        }
-        config.redirect_stdout_to_stderr(value == "" || value == "y");
+        config.redirect_stdout_to_stderr(value);
     }
     Ok(config)
 }

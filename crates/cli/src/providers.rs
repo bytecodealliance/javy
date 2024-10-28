@@ -3,9 +3,7 @@ use anyhow::{anyhow, Result};
 use serde::Deserialize;
 use std::{
     borrow::Cow,
-    fs,
     io::{Read, Seek},
-    path::PathBuf,
     str,
 };
 use wasi_common::{pipe::WritePipe, sync::WasiCtxBuilder};
@@ -23,9 +21,6 @@ pub enum Provider {
     Default,
     /// A provider for use with the `compile` to maintain backward compatibility.
     V2,
-    UserPlugin {
-        path: PathBuf,
-    },
 }
 
 impl Default for Provider {
@@ -40,7 +35,6 @@ impl Provider {
         match self {
             Self::Default => Cow::Borrowed(QUICKJS_PROVIDER_MODULE),
             Self::V2 => Cow::Borrowed(QUICKJS_PROVIDER_V2_MODULE),
-            Self::UserPlugin { path } => Cow::Owned(fs::read(path).unwrap()),
         }
     }
 
@@ -69,7 +63,6 @@ impl Provider {
                     .data(&Default::default()); // Argument is required but not actually used for anything.
                 Ok(str::from_utf8(&import_namespace)?.to_string())
             }
-            Self::UserPlugin { path: _ } => todo!(),
         }
     }
 

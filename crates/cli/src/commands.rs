@@ -220,7 +220,7 @@ impl TryFrom<Vec<GroupOption<CodegenOption>>> for CodegenOptionGroup {
 pub struct RawGroupOptionParser;
 
 #[derive(Debug, Clone)]
-pub struct RawGroupOption((String, String));
+pub struct RawGroupOption((String, bool));
 
 impl ValueParserFactory for RawGroupOption {
     type Parser = RawGroupOptionParser;
@@ -242,16 +242,18 @@ impl TypedValueParser for RawGroupOptionParser {
         let val = StringValueParser::new().parse_ref(cmd, arg, value)?;
 
         if val == "help" {
-            return Ok(RawGroupOption((val, "".to_string())));
+            return Ok(RawGroupOption((val, false)));
         }
 
         let mut splits = val.splitn(2, '=');
         let key = splits.next().unwrap();
-        let value = splits.next();
-        Ok(RawGroupOption((
-            key.to_string(),
-            value.unwrap_or("").to_string(),
-        )))
+        let value = match splits.next() {
+            Some("y") => true,
+            Some("n") => false,
+            None => true,
+            _ => return Err(clap::Error::new(clap::error::ErrorKind::InvalidValue)),
+        };
+        Ok(RawGroupOption((key.to_string(), value)))
     }
 }
 
@@ -276,7 +278,11 @@ pub fn from_runtime_settings_to_config(
                 &supported_properties
                     .clone()
                     .into_iter()
-                    .map(|(name, help, doc)| OptionMeta { name, help, doc })
+                    .map(|(name, _, doc)| OptionMeta {
+                        name,
+                        help: "[=y|n]".to_string(),
+                        doc,
+                    })
                     .collect::<Vec<_>>(),
             );
             std::process::exit(0);
@@ -284,7 +290,6 @@ pub fn from_runtime_settings_to_config(
         if supported_props.contains(&key) {
             config.insert(key.to_string(), value);
         } else {
-            // FIXME this help text kind of sucks
             Cli::command()
                 .error(
                     ErrorKind::InvalidValue,
@@ -296,7 +301,7 @@ pub fn from_runtime_settings_to_config(
     Ok(config)
 }
 
-pub type RuntimeConfig = HashMap<String, String>;
+pub type RuntimeConfig = HashMap<String, bool>;
 
 // #[cfg(test)]
 // mod tests {
