@@ -139,17 +139,13 @@ impl Generator {
         let config = transform::module_config();
         let module = match &self.ty {
             CodeGenType::Static => {
-                // Copy config bits into stdin for `initialize_runtime` function.
-                let runtime_config = serde_json::to_string(&self.js_runtime_config)?;
+                let runtime_config = self.js_runtime_config.to_json()?;
                 unsafe {
                     WASI.get_or_init(|| {
                         WasiCtxBuilder::new()
                             .inherit_stderr()
                             .inherit_stdout()
-                            .stdin(Box::new(ReadPipe::from(
-                                // self.js_runtime_config.bits().to_le_bytes().as_slice(),
-                                runtime_config,
-                            )))
+                            .stdin(Box::new(ReadPipe::from(runtime_config)))
                             .build()
                     });
                 };

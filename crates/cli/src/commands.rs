@@ -298,10 +298,26 @@ pub fn from_runtime_settings_to_config(
                 .exit();
         }
     }
-    Ok(config)
+    Ok(RuntimeConfig(config))
 }
 
-pub type RuntimeConfig = HashMap<String, bool>;
+pub struct RuntimeConfig(HashMap<String, bool>);
+
+impl RuntimeConfig {
+    pub fn has_config(&self) -> bool {
+        self.0.len() != 0
+    }
+
+    pub fn to_json(&self) -> Result<String> {
+        Ok(serde_json::to_string(&self.0)?)
+    }
+}
+
+impl Default for RuntimeConfig {
+    fn default() -> Self {
+        Self(Default::default())
+    }
+}
 
 // #[cfg(test)]
 // mod tests {

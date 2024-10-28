@@ -85,7 +85,7 @@ impl CodeGenBuilder {
     /// Build a [`CodeGenerator`].
     pub fn build(self, ty: CodeGenType, js_runtime_config: RuntimeConfig) -> Result<Generator> {
         if let CodeGenType::Dynamic = ty {
-            if js_runtime_config.len() != 0 {
+            if js_runtime_config.has_config() {
                 bail!("Cannot set JS runtime options when building a dynamic module");
             }
         }
