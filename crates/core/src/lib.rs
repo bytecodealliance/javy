@@ -1,4 +1,5 @@
 use anyhow::anyhow;
+use javy::Config;
 use javy::Runtime;
 use namespace::import_namespace;
 use once_cell::sync::OnceCell;
@@ -21,18 +22,26 @@ import_namespace!("javy_quickjs_provider_v3");
 /// Used by Wizer to preinitialize the module.
 #[export_name = "initialize_runtime"]
 pub extern "C" fn initialize_runtime() {
-    // Read config bits from stdin.
+    // Read config JSON from stdin.
     // Using stdin instead of an environment variable because the value set for
     // an environment variable will persist as the value set for that environment
     // variable in subsequent invocations so a different value can't be used to
     // initialize a runtime with a different configuration.
     let mut config_bytes = vec![];
     let js_runtime_config = match stdin().read_to_end(&mut config_bytes) {
-        Ok(0) => javy::Config::default(),
-        Ok(_) => javy::interpret_config::parse_config(&config_bytes).unwrap(),
+        Ok(0) => javy::interpret_config::SharedConfig::default(),
+        Ok(_) => javy::interpret_config::SharedConfig::parse_from_json(&config_bytes).unwrap(),
         Err(e) => panic!("Error reading from stdin: {e}"),
     };
-    let runtime = Runtime::new(js_runtime_config).unwrap();
+    let mut config = Config::default();
+    config.text_encoding(true);
+    config.redirect_stdout_to_stderr(true);
+    config.javy_stream_io(true);
+    config.simd_json_builtins(true);
+    config.javy_json(true);
+    js_runtime_config.apply_to_config(&mut config);
+    let runtime = Runtime::new(config).unwrap();
+
     unsafe {
         RUNTIME.take(); // Allow re-initializing.
         RUNTIME

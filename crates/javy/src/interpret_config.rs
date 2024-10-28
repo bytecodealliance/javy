@@ -44,11 +44,29 @@ macro_rules! runtime_config {
 }
 
 runtime_config! {
-    #[derive(Debug, Deserialize)]
+    #[derive(Debug, Default, Deserialize)]
     #[serde(deny_unknown_fields, rename_all = "kebab-case")]
     pub struct SharedConfig {
         /// Whether to redirect the output of console.log to standard error.
         redirect_stdout_to_stderr: Option<bool>,
+        /// Whether to enable support for the `TextEncoder` and `TextDecoder`
+        /// APIs.
+        text_encoding: Option<bool>,
+    }
+}
+
+impl SharedConfig {
+    pub fn parse_from_json(config: &[u8]) -> Result<Self> {
+        Ok(serde_json::from_slice::<SharedConfig>(config)?)
+    }
+
+    pub fn apply_to_config(&self, config: &mut Config) {
+        if let Some(value) = self.redirect_stdout_to_stderr {
+            config.redirect_stdout_to_stderr(value);
+        }
+        if let Some(value) = self.text_encoding {
+            config.text_encoding(value);
+        }
     }
 }
 
@@ -74,13 +92,4 @@ pub fn supported_config() {
         )
         .unwrap();
     stdout().flush().unwrap();
-}
-
-pub fn parse_config(config: &[u8]) -> Result<Config> {
-    let shared_config = serde_json::from_slice::<SharedConfig>(config)?;
-    let mut config = Config::default();
-    if let Some(value) = shared_config.redirect_stdout_to_stderr {
-        config.redirect_stdout_to_stderr(value);
-    }
-    Ok(config)
 }
