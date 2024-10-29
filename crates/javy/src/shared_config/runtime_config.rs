@@ -19,15 +19,25 @@ macro_rules! runtime_config {
         $(#[$attr:meta])*
         pub struct $opts:ident {
             $(
-                $(#[doc = $doc:tt])*
+                $(
+                    #[cfg($cfg:meta)]
+                )?
+                $(
+                    #[doc = $doc:tt]
+                )*
                 $opt:ident: Option<bool>,
             )+
         }
-
     ) => {
         $(#[$attr])*
         pub struct $opts {
             $(
+                $(
+                    #[cfg($cfg)]
+                )?
+                $(
+                    #[doc = $doc]
+                )*
                 $opt: Option<bool>,
             )+
         }

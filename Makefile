@@ -22,7 +22,7 @@ docs:
 	cargo doc --package=javy-core --open --target=wasm32-wasip1
 
 test-javy:
-	CARGO_TARGET_WASM32_WASIP1_RUNNER="wasmtime --dir=." cargo test --package=javy --target=wasm32-wasip1 --features json,messagepack -- --nocapture
+	CARGO_TARGET_WASM32_WASIP1_RUNNER="wasmtime --dir=." cargo hack test --package=javy --target=wasm32-wasip1 --each-feature -- --nocapture
 
 test-core:
 	CARGO_TARGET_WASM32_WASIP1_RUNNER="wasmtime" cargo test --package=javy-core --target=wasm32-wasip1 -- --nocapture
