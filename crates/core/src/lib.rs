@@ -1,17 +1,15 @@
 use anyhow::anyhow;
-use javy::Runtime;
-use javy_config::Config;
+use javy::Config;
+use javy::{Runtime, SharedConfig};
 use namespace::import_namespace;
 use once_cell::sync::OnceCell;
 use std::io;
-use std::io::stdin;
 use std::io::Read;
 use std::slice;
 use std::str;
 
 mod execution;
 mod namespace;
-mod runtime;
 
 const FUNCTION_MODULE_NAME: &str = "function.mjs";
 
@@ -24,27 +22,38 @@ import_namespace!("javy_quickjs_provider_v3");
 /// Used by Wizer to preinitialize the module.
 #[export_name = "initialize_runtime"]
 pub extern "C" fn initialize_runtime() {
-    // Read config bits from stdin.
+    // Read shared config JSON in from stdin.
     // Using stdin instead of an environment variable because the value set for
     // an environment variable will persist as the value set for that environment
     // variable in subsequent invocations so a different value can't be used to
     // initialize a runtime with a different configuration.
-    let mut config_bytes = [0; 4];
-    let js_runtime_config = match stdin().read_exact(&mut config_bytes) {
-        Ok(()) => Config::from_bits(u32::from_le_bytes(config_bytes))
-            .expect("stdin should only contain valid config flags"),
-        // Not having 4 bytes of configuration means the configuration hasn't
-        // been set so the default configuration should be used.
-        Err(e) if matches!(e.kind(), io::ErrorKind::UnexpectedEof) => Config::default(),
+    let mut config = Config::default();
+    // Preserve defaults that used to be passed from the Javy CLI.
+    config
+        .text_encoding(true)
+        .redirect_stdout_to_stderr(true)
+        .javy_stream_io(true)
+        .simd_json_builtins(true)
+        .javy_json(true);
+
+    let mut config_bytes = vec![];
+    let shared_config = match io::stdin().read_to_end(&mut config_bytes) {
+        Ok(0) => None,
+        Ok(_) => Some(SharedConfig::parse_from_json(&config_bytes).unwrap()),
         Err(e) => panic!("Error reading from stdin: {e}"),
     };
-    let runtime = runtime::new(js_runtime_config).unwrap();
+    if let Some(shared_config) = shared_config {
+        shared_config.apply_to_config(&mut config);
+    }
+
+    let runtime = Runtime::new(config).unwrap();
     unsafe {
         RUNTIME.take(); // Allow re-initializing.
         RUNTIME
             .set(runtime)
-            // `set` requires `T` to implement `Debug` but quickjs::{Runtime,
-            // Context} don't.
+            // `unwrap` requires error `T` to implement `Debug` but `set`
+            // returns the `javy::Runtime` on error and `javy::Runtime` does not
+            // implement `Debug`.
             .map_err(|_| anyhow!("Could not pre-initialize javy::Runtime"))
             .unwrap();
     };

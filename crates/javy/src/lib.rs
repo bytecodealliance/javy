@@ -35,6 +35,9 @@
 //! * `export_alloc_fns` - exports [`alloc::canonical_abi_realloc`] and
 //!   [`alloc::canonical_abi_free`] from generated WebAssembly for allocating
 //!   and freeing memory
+//! * `shared_config` - exports a Wasm function describing supported runtime
+//!   configuration options and exports a data structure and methods for a
+//!   provider to interpret a configuration byte array.
 //! * `json` - functions for converting between [`quickjs::JSValueRef`] and JSON
 //!   byte slices
 //! * `messagepack` - functions for converting between [`quickjs::JSValueRef`]
@@ -61,6 +64,11 @@ pub mod messagepack;
 
 #[cfg(feature = "json")]
 pub mod json;
+
+#[cfg(feature = "shared_config")]
+mod shared_config;
+#[cfg(feature = "shared_config")]
+pub use crate::shared_config::SharedConfig;
 
 mod apis;
 

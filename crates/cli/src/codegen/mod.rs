@@ -38,8 +38,6 @@ use std::{fs, rc::Rc, sync::OnceLock};
 
 pub(crate) use builder::*;
 
-use javy_config::Config;
-
 mod transform;
 
 mod exports;
@@ -52,7 +50,7 @@ use wasi_common::{pipe::ReadPipe, sync::WasiCtxBuilder, WasiCtx};
 use wasm_opt::{OptimizationOptions, ShrinkLevel};
 use wizer::{Linker, Wizer};
 
-use crate::{providers::Provider, JS};
+use crate::{js_config::JsConfig, providers::Provider, JS};
 use anyhow::Result;
 
 static mut WASI: OnceLock<WasiCtx> = OnceLock::new();
@@ -112,7 +110,7 @@ pub(crate) struct Generator {
     /// Codegen type to use.
     pub ty: CodeGenType,
     /// JS runtime config.
-    pub js_runtime_config: Config,
+    pub js_runtime_config: JsConfig,
     /// Provider to use.
     pub provider: Provider,
     /// JavaScript function exports.
@@ -125,7 +123,7 @@ pub(crate) struct Generator {
 
 impl Generator {
     /// Creates a new [`Generator`].
-    pub fn new(ty: CodeGenType, js_runtime_config: Config, provider: Provider) -> Self {
+    pub fn new(ty: CodeGenType, js_runtime_config: JsConfig, provider: Provider) -> Self {
         Self {
             ty,
             js_runtime_config,
@@ -141,15 +139,14 @@ impl Generator {
         let config = transform::module_config();
         let module = match &self.ty {
             CodeGenType::Static => {
-                // Copy config bits into stdin for `initialize_runtime` function.
+                // Copy config JSON into stdin for `initialize_runtime` function.
+                let runtime_config = self.js_runtime_config.to_json()?;
                 unsafe {
                     WASI.get_or_init(|| {
                         WasiCtxBuilder::new()
                             .inherit_stderr()
                             .inherit_stdout()
-                            .stdin(Box::new(ReadPipe::from(
-                                self.js_runtime_config.bits().to_le_bytes().as_slice(),
-                            )))
+                            .stdin(Box::new(ReadPipe::from(runtime_config)))
                             .build()
                     });
                 };
@@ -463,21 +460,21 @@ fn print_wat(_wasm_binary: &[u8]) -> Result<()> {
 
 #[cfg(test)]
 mod test {
+    use crate::js_config::JsConfig;
     use crate::providers::Provider;
 
     use super::Generator;
     use super::WitOptions;
     use anyhow::Result;
-    use javy_config::Config;
 
     #[test]
     fn default_values() -> Result<()> {
         let gen = Generator::new(
             crate::codegen::CodeGenType::Dynamic,
-            Config::default(),
+            JsConfig::default(),
             Provider::Default,
         );
-        assert_eq!(gen.js_runtime_config, Config::default());
+        assert!(!gen.js_runtime_config.has_configs());
         assert!(gen.source_compression);
         assert!(matches!(gen.provider, Provider::Default));
         assert_eq!(gen.wit_opts, WitOptions::default());

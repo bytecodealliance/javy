@@ -44,10 +44,7 @@ test-wpt:
 	npm install --prefix wpt
 	npm test --prefix wpt 
 
-test-config:
-	CARGO_PROFILE_RELEASE_LTO=off cargo test --package=javy-config -- --nocapture
-
-tests: test-javy test-core test-runner test-cli test-wpt test-config
+tests: test-javy test-core test-runner test-cli test-wpt
 
 fmt: fmt-javy fmt-core fmt-cli
 

@@ -1511,7 +1511,7 @@ dependencies = [
 
 [[package]]
 name = "javy"
-version = "3.0.2-alpha.1"
+version = "3.1.0-alpha.1"
 dependencies = [
  "anyhow",
  "bitflags",
@@ -1537,7 +1537,6 @@ dependencies = [
  "clap",
  "convert_case",
  "criterion",
- "javy-config",
  "javy-runner",
  "javy-test-macros",
  "lazy_static",
@@ -1559,19 +1558,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "javy-config"
-version = "3.1.2"
-dependencies = [
- "bitflags",
-]
-
-[[package]]
 name = "javy-core"
 version = "0.2.0"
 dependencies = [
  "anyhow",
  "javy",
- "javy-config",
  "once_cell",
 ]
 

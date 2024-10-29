@@ -2,6 +2,7 @@ mod bytecode;
 mod codegen;
 mod commands;
 mod js;
+mod js_config;
 mod option;
 mod providers;
 mod wit;
@@ -11,9 +12,9 @@ use crate::commands::{Cli, Command, EmitProviderCommandOpts};
 use anyhow::Result;
 use clap::Parser;
 use codegen::{CodeGenBuilder, CodeGenType};
-use commands::{CodegenOptionGroup, JsOptionGroup};
-use javy_config::Config;
+use commands::CodegenOptionGroup;
 use js::JS;
+use js_config::JsConfig;
 use providers::Provider;
 use std::fs;
 use std::fs::File;
@@ -46,7 +47,7 @@ fn main() -> Result<()> {
                 ))?)
                 .source_compression(!opts.no_source_compression);
 
-            let config = Config::default();
+            let config = JsConfig::default();
             let mut gen = if opts.dynamic {
                 builder.provider(Provider::V2);
                 builder.build(CodeGenType::Dynamic, config)?
@@ -67,11 +68,11 @@ fn main() -> Result<()> {
                 .wit_opts(codegen.wit)
                 .source_compression(codegen.source_compression);
 
-            let js_opts: JsOptionGroup = opts.js.clone().into();
+            let js_opts = JsConfig::from_group_values(&Provider::Default, opts.js.clone())?;
             let mut gen = if codegen.dynamic {
-                builder.build(CodeGenType::Dynamic, js_opts.into())?
+                builder.build(CodeGenType::Dynamic, js_opts)?
             } else {
-                builder.build(CodeGenType::Static, js_opts.into())?
+                builder.build(CodeGenType::Static, js_opts)?
             };
 
             let wasm = gen.generate(&js)?;

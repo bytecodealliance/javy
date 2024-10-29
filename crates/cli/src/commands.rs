@@ -1,11 +1,14 @@
-use crate::option_group;
+use crate::{js_config::JsConfig, option::OptionMeta, option_group, providers::Provider};
 use anyhow::{anyhow, Result};
 use clap::{
     builder::{StringValueParser, TypedValueParser, ValueParserFactory},
-    Parser, Subcommand,
+    error::ErrorKind,
+    CommandFactory, Parser, Subcommand,
 };
-use javy_config::Config;
-use std::path::PathBuf;
+use std::{
+    collections::{HashMap, HashSet},
+    path::PathBuf,
+};
 
 use crate::codegen::WitOptions;
 use crate::option::{
@@ -77,6 +80,9 @@ pub struct CompileCommandOpts {
     pub no_source_compression: bool,
 }
 
+const RUNTIME_CONFIG_ARG_SHORT: char = 'J';
+const RUNTIME_CONFIG_ARG_LONG: &str = "javascript";
+
 #[derive(Debug, Parser)]
 pub struct BuildCommandOpts {
     #[arg(value_name = "INPUT", required = true)]
@@ -92,10 +98,10 @@ pub struct BuildCommandOpts {
     /// Use `-C help` for more details.
     pub codegen: Vec<GroupOption<CodegenOption>>,
 
-    #[arg(short = 'J', long = "javascript")]
+    #[arg(short = RUNTIME_CONFIG_ARG_SHORT, long = RUNTIME_CONFIG_ARG_LONG)]
     /// JavaScript runtime options.
     /// Use `-J help` for more details.
-    pub js: Vec<GroupOption<JsOption>>,
+    pub js: Vec<JsGroupValue>,
 }
 
 #[derive(Debug, Parser)]
@@ -212,163 +218,255 @@ impl TryFrom<Vec<GroupOption<CodegenOption>>> for CodegenOptionGroup {
     }
 }
 
-/// JavaScript option group.
-/// This group gets configured from the [`JsOption`] enum.
-//
-// NB: The documentation for each field is ommitted given that it's similar to
-// the enum used to configured the group.
-#[derive(Clone, Debug, PartialEq)]
-pub struct JsOptionGroup {
-    pub redirect_stdout_to_stderr: bool,
-    pub javy_json: bool,
-    pub simd_json_builtins: bool,
-    pub javy_stream_io: bool,
-    pub text_encoding: bool,
+/// A runtime config group value.
+#[derive(Debug, Clone)]
+pub(super) enum JsGroupValue {
+    Option(JsGroupOption),
+    Help,
 }
 
-impl Default for JsOptionGroup {
-    fn default() -> Self {
-        Config::default().into()
+/// A runtime config group option.
+#[derive(Debug, Clone)]
+pub(super) struct JsGroupOption {
+    /// The property name used for the option.
+    name: String,
+    /// Whether the config is enabled or not.
+    enabled: bool,
+}
+
+#[derive(Debug, Clone)]
+pub(super) struct JsGroupOptionParser;
+
+impl ValueParserFactory for JsGroupValue {
+    type Parser = JsGroupOptionParser;
+
+    fn value_parser() -> Self::Parser {
+        JsGroupOptionParser
     }
 }
 
-option_group! {
-    #[derive(Clone, Debug)]
-    pub enum JsOption {
-        /// Whether to redirect the output of console.log to standard error.
-        RedirectStdoutToStderr(bool),
-        /// Whether to enable the `Javy.JSON` builtins.
-        JavyJson(bool),
-        /// Whether to enable the `Javy.readSync` and `Javy.writeSync` builtins.
-        JavyStreamIo(bool),
-        /// Whether to override the `JSON.parse` and `JSON.stringify`
-        /// implementations with an alternative, more performant, SIMD based
-        /// implemetation.
-        SimdJsonBuiltins(bool),
-        /// Whether to enable support for the `TextEncoder` and `TextDecoder`
-        /// APIs.
-        TextEncoding(bool),
+impl TypedValueParser for JsGroupOptionParser {
+    type Value = JsGroupValue;
+
+    fn parse_ref(
+        &self,
+        cmd: &clap::Command,
+        arg: Option<&clap::Arg>,
+        value: &std::ffi::OsStr,
+    ) -> std::result::Result<Self::Value, clap::Error> {
+        let val = StringValueParser::new().parse_ref(cmd, arg, value)?;
+
+        if val == "help" {
+            return Ok(JsGroupValue::Help);
+        }
+
+        let mut splits = val.splitn(2, '=');
+        let key = splits.next().unwrap();
+        let value = match splits.next() {
+            Some("y") => true,
+            Some("n") => false,
+            None => true,
+            _ => return Err(clap::Error::new(clap::error::ErrorKind::InvalidValue)),
+        };
+        Ok(JsGroupValue::Option(JsGroupOption {
+            name: key.to_string(),
+            enabled: value,
+        }))
     }
 }
 
-impl From<Vec<GroupOption<JsOption>>> for JsOptionGroup {
-    fn from(value: Vec<GroupOption<JsOption>>) -> Self {
-        let mut group = Self::default();
+impl JsConfig {
+    /// Build a JS runtime config from valid runtime config values.
+    pub(super) fn from_group_values(
+        provider: &Provider,
+        group_values: Vec<JsGroupValue>,
+    ) -> Result<JsConfig> {
+        let supported_properties = provider.config_schema()?;
 
-        for option in value.iter().flat_map(|e| e.0.iter()) {
-            match option {
-                JsOption::RedirectStdoutToStderr(enabled) => {
-                    group.redirect_stdout_to_stderr = *enabled;
+        let mut supported_names = HashSet::new();
+        for property in &supported_properties {
+            supported_names.insert(property.name.as_str());
+        }
+
+        let mut config = HashMap::new();
+        for value in group_values {
+            match value {
+                JsGroupValue::Help => {
+                    fmt_help(
+                        RUNTIME_CONFIG_ARG_LONG,
+                        &RUNTIME_CONFIG_ARG_SHORT.to_string(),
+                        &supported_properties
+                            .into_iter()
+                            .map(|prop| OptionMeta {
+                                name: prop.name,
+                                help: "[=y|n]".to_string(),
+                                doc: prop.doc,
+                            })
+                            .collect::<Vec<_>>(),
+                    );
+                    std::process::exit(0);
                 }
-                JsOption::JavyJson(enable) => group.javy_json = *enable,
-                JsOption::SimdJsonBuiltins(enable) => group.simd_json_builtins = *enable,
-                JsOption::TextEncoding(enable) => group.text_encoding = *enable,
-                JsOption::JavyStreamIo(enable) => group.javy_stream_io = *enable,
+                JsGroupValue::Option(JsGroupOption { name, enabled }) => {
+                    if supported_names.contains(name.as_str()) {
+                        config.insert(name, enabled);
+                    } else {
+                        Cli::command()
+                            .error(
+                                ErrorKind::InvalidValue,
+                                format!(
+                                    "Property {name} is not supported for runtime configuration",
+                                ),
+                            )
+                            .exit();
+                    }
+                }
             }
         }
-
-        group
-    }
-}
-
-impl From<JsOptionGroup> for Config {
-    fn from(value: JsOptionGroup) -> Self {
-        let mut config = Self::default();
-        config.set(
-            Config::REDIRECT_STDOUT_TO_STDERR,
-            value.redirect_stdout_to_stderr,
-        );
-        config.set(Config::JAVY_JSON, value.javy_json);
-        config.set(Config::SIMD_JSON_BUILTINS, value.simd_json_builtins);
-        config.set(Config::JAVY_STREAM_IO, value.javy_stream_io);
-        config.set(Config::TEXT_ENCODING, value.text_encoding);
-        config
-    }
-}
-
-impl From<Config> for JsOptionGroup {
-    fn from(value: Config) -> Self {
-        Self {
-            redirect_stdout_to_stderr: value.contains(Config::REDIRECT_STDOUT_TO_STDERR),
-            javy_json: value.contains(Config::JAVY_JSON),
-            simd_json_builtins: value.contains(Config::SIMD_JSON_BUILTINS),
-            javy_stream_io: value.contains(Config::JAVY_STREAM_IO),
-            text_encoding: value.contains(Config::TEXT_ENCODING),
-        }
+        Ok(JsConfig::from_hash(config))
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{CodegenOption, CodegenOptionGroup, GroupOption, JsOption, JsOptionGroup};
+    use crate::{
+        commands::{JsGroupOption, JsGroupValue},
+        js_config::JsConfig,
+        providers::Provider,
+    };
+
+    use super::{CodegenOption, CodegenOptionGroup, GroupOption};
     use anyhow::Result;
-    use javy_config::Config;
 
     #[test]
-    fn js_group_conversion_between_vector_of_options_and_group() -> Result<()> {
-        let group: JsOptionGroup = vec![].into();
+    fn js_config_from_config_values() -> Result<()> {
+        let group = JsConfig::from_group_values(&Provider::Default, vec![])?;
+        assert!(!group.has_configs());
+        assert_eq!(group.get("redirect-stdout-to-stderr"), None);
+        assert_eq!(group.get("javy-json"), None);
+        assert_eq!(group.get("javy-stream-io"), None);
+        assert_eq!(group.get("simd-json-builtins"), None);
+        assert_eq!(group.get("text-encoding"), None);
 
-        assert_eq!(group, JsOptionGroup::default());
+        let group = JsConfig::from_group_values(
+            &Provider::Default,
+            vec![JsGroupValue::Option(JsGroupOption {
+                name: "redirect-stdout-to-stderr".to_string(),
+                enabled: false,
+            })],
+        )?;
+        assert_eq!(group.get("redirect-stdout-to-stderr"), Some(false));
 
-        let raw = vec![GroupOption(vec![JsOption::RedirectStdoutToStderr(false)])];
-        let group: JsOptionGroup = raw.into();
-        let expected = JsOptionGroup {
-            redirect_stdout_to_stderr: false,
-            ..Default::default()
-        };
+        let group = JsConfig::from_group_values(
+            &Provider::Default,
+            vec![JsGroupValue::Option(JsGroupOption {
+                name: "redirect-stdout-to-stderr".to_string(),
+                enabled: true,
+            })],
+        )?;
+        assert_eq!(group.get("redirect-stdout-to-stderr"), Some(true));
 
-        assert_eq!(group, expected);
+        let group = JsConfig::from_group_values(
+            &Provider::Default,
+            vec![JsGroupValue::Option(JsGroupOption {
+                name: "javy-json".to_string(),
+                enabled: false,
+            })],
+        )?;
+        assert_eq!(group.get("javy-json"), Some(false));
 
-        let raw = vec![GroupOption(vec![JsOption::JavyJson(false)])];
-        let group: JsOptionGroup = raw.into();
-        let expected = JsOptionGroup {
-            javy_json: false,
-            ..Default::default()
-        };
-        assert_eq!(group, expected);
+        let group = JsConfig::from_group_values(
+            &Provider::Default,
+            vec![JsGroupValue::Option(JsGroupOption {
+                name: "javy-json".to_string(),
+                enabled: true,
+            })],
+        )?;
+        assert_eq!(group.get("javy-json"), Some(true));
 
-        let raw = vec![GroupOption(vec![JsOption::JavyStreamIo(false)])];
-        let group: JsOptionGroup = raw.into();
-        let expected = JsOptionGroup {
-            javy_stream_io: false,
-            ..Default::default()
-        };
-        assert_eq!(group, expected);
+        let group = JsConfig::from_group_values(
+            &Provider::Default,
+            vec![JsGroupValue::Option(JsGroupOption {
+                name: "javy-stream-io".to_string(),
+                enabled: false,
+            })],
+        )?;
+        assert_eq!(group.get("javy-stream-io"), Some(false));
 
-        let raw = vec![GroupOption(vec![JsOption::SimdJsonBuiltins(false)])];
-        let group: JsOptionGroup = raw.into();
+        let group = JsConfig::from_group_values(
+            &Provider::Default,
+            vec![JsGroupValue::Option(JsGroupOption {
+                name: "javy-stream-io".to_string(),
+                enabled: true,
+            })],
+        )?;
+        assert_eq!(group.get("javy-stream-io"), Some(true));
 
-        let expected = JsOptionGroup {
-            simd_json_builtins: false,
-            ..Default::default()
-        };
-        assert_eq!(group, expected);
+        let group = JsConfig::from_group_values(
+            &Provider::Default,
+            vec![JsGroupValue::Option(JsGroupOption {
+                name: "simd-json-builtins".to_string(),
+                enabled: false,
+            })],
+        )?;
+        assert_eq!(group.get("simd-json-builtins"), Some(false));
 
-        let raw = vec![GroupOption(vec![JsOption::TextEncoding(false)])];
-        let group: JsOptionGroup = raw.into();
+        let group = JsConfig::from_group_values(
+            &Provider::Default,
+            vec![JsGroupValue::Option(JsGroupOption {
+                name: "simd-json-builtins".to_string(),
+                enabled: true,
+            })],
+        )?;
+        assert_eq!(group.get("simd-json-builtins"), Some(true));
 
-        let expected = JsOptionGroup {
-            text_encoding: false,
-            ..Default::default()
-        };
-        assert_eq!(group, expected);
+        let group = JsConfig::from_group_values(
+            &Provider::Default,
+            vec![JsGroupValue::Option(JsGroupOption {
+                name: "text-encoding".to_string(),
+                enabled: false,
+            })],
+        )?;
+        assert_eq!(group.get("text-encoding"), Some(false));
 
-        let raw = vec![GroupOption(vec![
-            JsOption::JavyStreamIo(false),
-            JsOption::JavyJson(false),
-            JsOption::RedirectStdoutToStderr(false),
-            JsOption::TextEncoding(false),
-            JsOption::SimdJsonBuiltins(false),
-        ])];
-        let group: JsOptionGroup = raw.into();
-        let expected = JsOptionGroup {
-            javy_stream_io: false,
-            javy_json: false,
-            redirect_stdout_to_stderr: false,
-            text_encoding: false,
-            simd_json_builtins: false,
-        };
-        assert_eq!(group, expected);
+        let group = JsConfig::from_group_values(
+            &Provider::Default,
+            vec![JsGroupValue::Option(JsGroupOption {
+                name: "text-encoding".to_string(),
+                enabled: true,
+            })],
+        )?;
+        assert_eq!(group.get("text-encoding"), Some(true));
+
+        let group = JsConfig::from_group_values(
+            &Provider::Default,
+            vec![
+                JsGroupValue::Option(JsGroupOption {
+                    name: "redirect-stdout-to-stderr".to_string(),
+                    enabled: false,
+                }),
+                JsGroupValue::Option(JsGroupOption {
+                    name: "javy-json".to_string(),
+                    enabled: false,
+                }),
+                JsGroupValue::Option(JsGroupOption {
+                    name: "javy-stream-io".to_string(),
+                    enabled: false,
+                }),
+                JsGroupValue::Option(JsGroupOption {
+                    name: "simd-json-builtins".to_string(),
+                    enabled: false,
+                }),
+                JsGroupValue::Option(JsGroupOption {
+                    name: "text-encoding".to_string(),
+                    enabled: false,
+                }),
+            ],
+        )?;
+        assert_eq!(group.get("redirect-stdout-to-stderr"), Some(false));
+        assert_eq!(group.get("javy-json"), Some(false));
+        assert_eq!(group.get("javy-stream-io"), Some(false));
+        assert_eq!(group.get("simd-json-builtins"), Some(false));
+        assert_eq!(group.get("text-encoding"), Some(false));
 
         Ok(())
     }
@@ -396,15 +494,6 @@ mod tests {
 
         assert_eq!(group, expected);
 
-        Ok(())
-    }
-
-    #[test]
-    fn js_conversion_between_group_and_config() -> Result<()> {
-        assert_eq!(JsOptionGroup::default(), Config::default().into());
-
-        let cfg: Config = JsOptionGroup::default().into();
-        assert_eq!(cfg, Config::default());
         Ok(())
     }
 }

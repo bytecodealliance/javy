@@ -1,11 +1,27 @@
 use crate::bytecode;
 use anyhow::{anyhow, Result};
-use std::str;
+use serde::Deserialize;
+use std::{
+    io::{Read, Seek},
+    str,
+};
+use wasi_common::{pipe::WritePipe, sync::WasiCtxBuilder};
+use wasmtime::{AsContextMut, Engine, Linker};
 
 const QUICKJS_PROVIDER_MODULE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/provider.wasm"));
 
 /// Use the legacy provider when using the `compile -d` command.
 const QUICKJS_PROVIDER_V2_MODULE: &[u8] = include_bytes!("./javy_quickjs_provider_v2.wasm");
+
+/// A property that is in the config schema returned by the provider.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct JsConfigProperty {
+    /// The name of the property (e.g., `simd-json-builtins`).
+    pub(crate) name: String,
+    /// The documentation to display for the property.
+    pub(crate) doc: String,
+}
 
 /// Different providers that are available.
 #[derive(Debug)]
@@ -58,4 +74,50 @@ impl Provider {
             }
         }
     }
+
+    /// The JS configuration properties supported by this provider.
+    pub fn config_schema(&self) -> Result<Vec<JsConfigProperty>> {
+        match self {
+            Self::V2 => Ok(vec![]),
+            Self::Default => {
+                let engine = Engine::default();
+                let module = wasmtime::Module::new(&engine, self.as_bytes())?;
+                let mut linker = Linker::new(&engine);
+                wasi_common::sync::snapshots::preview_1::add_wasi_snapshot_preview1_to_linker(
+                    &mut linker,
+                    |s| s,
+                )?;
+                let stdout = WritePipe::new_in_memory();
+                let wasi = WasiCtxBuilder::new()
+                    .inherit_stderr()
+                    .stdout(Box::new(stdout.clone()))
+                    .build();
+                let mut store = wasmtime::Store::new(&engine, wasi);
+                let instance = linker.instantiate(store.as_context_mut(), &module)?;
+                instance
+                    .get_typed_func::<(), ()>(store.as_context_mut(), "config_schema")?
+                    .call(store.as_context_mut(), ())?;
+                drop(store);
+                let mut config_json = vec![];
+                let mut cursor = stdout.try_into_inner().unwrap();
+                cursor.rewind()?;
+                cursor.read_to_end(&mut config_json)?;
+                let config_schema = serde_json::from_slice::<ConfigSchema>(&config_json)?;
+                let mut configs = Vec::with_capacity(config_schema.supported_properties.len());
+                for config in config_schema.supported_properties {
+                    configs.push(JsConfigProperty {
+                        name: config.name,
+                        doc: config.doc,
+                    });
+                }
+                Ok(configs)
+            }
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ConfigSchema {
+    supported_properties: Vec<JsConfigProperty>,
 }
