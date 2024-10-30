@@ -8,12 +8,6 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-### Added
-
-- `shared_config` feature so Javy providers can export what runtime
-  configuration options they support and have a way of interpreting a byte
-  array containing a configuration.
-
 ## [3.0.1] - 2024-09-18
 
 ### Changed

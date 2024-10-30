@@ -11,12 +11,10 @@ crate-type = ["cdylib"]
 
 [dependencies]
 anyhow = { workspace = true }
-javy = { workspace = true, features = [
-    "export_alloc_fns",
-    "json",
-    "shared_config",
-] }
+javy = { workspace = true, features = ["export_alloc_fns", "json"] }
 once_cell = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 
 [features]
 experimental_event_loop = []

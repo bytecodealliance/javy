@@ -20,9 +20,6 @@ macro_rules! runtime_config {
         pub struct $opts:ident {
             $(
                 $(
-                    #[cfg($cfg:meta)]
-                )?
-                $(
                     #[doc = $doc:tt]
                 )*
                 $opt:ident: Option<bool>,
@@ -32,9 +29,6 @@ macro_rules! runtime_config {
         $(#[$attr])*
         pub struct $opts {
             $(
-                $(
-                    #[cfg($cfg)]
-                )?
                 $(
                     #[doc = $doc]
                 )*

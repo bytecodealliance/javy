@@ -1,8 +1,9 @@
 use anyhow::anyhow;
 use javy::Config;
-use javy::{Runtime, SharedConfig};
+use javy::Runtime;
 use namespace::import_namespace;
 use once_cell::sync::OnceCell;
+use shared_config::SharedConfig;
 use std::io;
 use std::io::Read;
 use std::slice;
@@ -10,6 +11,7 @@ use std::str;
 
 mod execution;
 mod namespace;
+mod shared_config;
 
 const FUNCTION_MODULE_NAME: &str = "function.mjs";
 
