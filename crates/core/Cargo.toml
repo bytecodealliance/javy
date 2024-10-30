@@ -6,7 +6,7 @@ edition.workspace = true
 license.workspace = true
 
 [lib]
-name = "javy_quickjs_provider"
+name = "plugin"
 crate-type = ["cdylib"]
 
 [dependencies]

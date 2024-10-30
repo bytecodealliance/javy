@@ -24,7 +24,7 @@ use swc_core::{
     },
 };
 
-use crate::providers::Provider;
+use crate::plugins::Plugin;
 
 #[derive(Clone, Debug)]
 pub struct JS {
@@ -50,9 +50,9 @@ impl JS {
         self.source_code.as_bytes()
     }
 
-    /// Compiles a JavaScript source to bytecode using a QuickJS provider.
-    pub fn compile(&self, provider: &Provider) -> Result<Vec<u8>> {
-        provider.compile_source(self.source_code.as_bytes())
+    /// Compiles a JavaScript source to bytecode using a QuickJS plugin.
+    pub fn compile(&self, plugin: &Plugin) -> Result<Vec<u8>> {
+        plugin.compile_source(self.source_code.as_bytes())
     }
 
     pub fn compress(&self) -> Result<Vec<u8>> {

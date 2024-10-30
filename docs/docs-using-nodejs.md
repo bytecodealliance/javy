@@ -6,7 +6,7 @@ This example does NOT show how to run a Node.js application in Javy. This is use
 
 
 ## Summary
-This example shows how to use a dynamically linked Javy compiled WASM module. We use std in/out/error to communicate with the embedded javascript see [this blog post](https://k33g.hashnode.dev/wasi-communication-between-nodejs-and-wasm-modules-another-way-with-stdin-and-stdout) for details.
+This example shows how to use a dynamically linked Javy compiled Wasm module. We use std in/out/error to communicate with the embedded javascript see [this blog post](https://k33g.hashnode.dev/wasi-communication-between-nodejs-and-wasm-modules-another-way-with-stdin-and-stdout) for details.
 
 
 ### Steps
@@ -15,9 +15,9 @@ This example shows how to use a dynamically linked Javy compiled WASM module. We
 ```shell
 javy build -C dynamic -o embedded.wasm embedded.js
 ```
-2. Next emit the Javy provider
+2. Next emit the Javy plugin
 ```shell
-javy emit-provider -o provider.wasm
+javy emit-provider -o plugin.wasm
 ```
 3. Then we can run `host.mjs`
 ```shell
@@ -99,11 +99,11 @@ import { tmpdir } from "node:os";
 import { WASI } from "wasi";
 
 try {
-  const [embeddedModule, providerModule] = await Promise.all([
+  const [embeddedModule, pluginModule] = await Promise.all([
     compileModule("./embedded.wasm"),
-    compileModule("./provider.wasm"),
+    compileModule("./plugin.wasm"),
   ]);
-  const result = await runJavy(providerModule, embeddedModule, { n: 100 });
+  const result = await runJavy(pluginModule, embeddedModule, { n: 100 });
   console.log("Success!", JSON.stringify(result, null, 2));
 } catch (e) {
   console.log(e);
@@ -114,17 +114,17 @@ async function compileModule(wasmPath) {
   return WebAssembly.compile(bytes);
 }
 
-async function runJavy(providerModule, embeddedModule, input) {
+async function runJavy(pluginModule, embeddedModule, input) {
   const uniqueId = crypto.randomUUID();
 
-  // Use stdin/stdout/stderr to communicate with WASM process
+  // Use stdin/stdout/stderr to communicate with Wasm instance
   // See https://k33g.hashnode.dev/wasi-communication-between-nodejs-and-wasm-modules-another-way-with-stdin-and-stdout
   const workDir = tmpdir();
   const stdinFilePath = join(workDir, `stdin.wasm.${uniqueId}.txt`);
   const stdoutFilePath = join(workDir, `stdout.wasm.${uniqueId}.txt`);
   const stderrFilePath = join(workDir, `stderr.wasm.${uniqueId}.txt`);
 
-  // 👋 send data to the WASM program
+  // 👋 send data to the Wasm instance
   await writeFile(stdinFilePath, JSON.stringify(input), { encoding: "utf8" });
 
   const [stdinFile, stdoutFile, stderrFile] = await Promise.all([
@@ -144,16 +144,16 @@ async function runJavy(providerModule, embeddedModule, input) {
       returnOnExit: true,
     });
 
-    const providerInstance = await WebAssembly.instantiate(
-      providerModule,
+    const pluginInstance = await WebAssembly.instantiate(
+      pluginModule,
       wasi.getImportObject(),
     );
     const instance = await WebAssembly.instantiate(embeddedModule, {
-      javy_quickjs_provider_v3: providerInstance.exports,
+      javy_quickjs_provider_v3: pluginInstance.exports,
     });
 
-    // Javy provider is a WASI reactor see https://github.com/WebAssembly/WASI/blob/main/legacy/application-abi.md?plain=1
-    wasi.initialize(providerInstance);
+    // Javy plugin is a WASI reactor see https://github.com/WebAssembly/WASI/blob/main/legacy/application-abi.md?plain=1
+    wasi.initialize(pluginInstance);
     instance.exports._start();
 
     const [out, err] = await Promise.all([

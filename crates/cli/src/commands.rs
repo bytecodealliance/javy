@@ -1,4 +1,4 @@
-use crate::{js_config::JsConfig, option::OptionMeta, option_group, providers::Provider};
+use crate::{js_config::JsConfig, option::OptionMeta, option_group, plugins::Plugin};
 use anyhow::{anyhow, Result};
 use clap::{
     builder::{StringValueParser, TypedValueParser, ValueParserFactory},
@@ -45,7 +45,7 @@ pub enum Command {
     /// Generates WebAssembly from a JavaScript source.
     #[command(arg_required_else_help = true)]
     Build(BuildCommandOpts),
-    /// Emits the provider binary that is required to run dynamically
+    /// Emits the plugin binary that is required to run dynamically
     /// linked WebAssembly modules.
     EmitProvider(EmitProviderCommandOpts),
 }
@@ -61,8 +61,8 @@ pub struct CompileCommandOpts {
     pub output: PathBuf,
 
     #[arg(short)]
-    /// Creates a smaller module that requires a dynamically linked QuickJS provider Wasm
-    /// module to execute (see `emit-provider` command).
+    /// Creates a smaller module that requires a dynamically linked QuickJS
+    /// plugin Wasm module to execute (see `emit-provider` command).
     pub dynamic: bool,
 
     #[structopt(long)]
@@ -107,7 +107,7 @@ pub struct BuildCommandOpts {
 #[derive(Debug, Parser)]
 pub struct EmitProviderCommandOpts {
     #[structopt(short, long)]
-    /// Output path for the provider binary (default is stdout).
+    /// Output path for the plugin binary (default is stdout).
     pub out: Option<PathBuf>,
 }
 
@@ -182,7 +182,7 @@ option_group! {
     #[derive(Clone, Debug)]
     pub enum CodegenOption {
         /// Creates a smaller module that requires a dynamically linked QuickJS
-        /// provider Wasm module to execute (see `emit-provider` command).
+        /// plugin Wasm module to execute (see `emit-provider` command).
         Dynamic(bool),
         /// Optional path to WIT file describing exported functions. Only
         /// supports function exports with no arguments and no return values.
@@ -278,10 +278,10 @@ impl TypedValueParser for JsGroupOptionParser {
 impl JsConfig {
     /// Build a JS runtime config from valid runtime config values.
     pub(super) fn from_group_values(
-        provider: &Provider,
+        plugin: &Plugin,
         group_values: Vec<JsGroupValue>,
     ) -> Result<JsConfig> {
-        let supported_properties = provider.config_schema()?;
+        let supported_properties = plugin.config_schema()?;
 
         let mut supported_names = HashSet::new();
         for property in &supported_properties {
@@ -331,7 +331,7 @@ mod tests {
     use crate::{
         commands::{JsGroupOption, JsGroupValue},
         js_config::JsConfig,
-        providers::Provider,
+        plugins::Plugin,
     };
 
     use super::{CodegenOption, CodegenOptionGroup, GroupOption};
@@ -339,7 +339,7 @@ mod tests {
 
     #[test]
     fn js_config_from_config_values() -> Result<()> {
-        let group = JsConfig::from_group_values(&Provider::Default, vec![])?;
+        let group = JsConfig::from_group_values(&Plugin::Default, vec![])?;
         assert!(!group.has_configs());
         assert_eq!(group.get("redirect-stdout-to-stderr"), None);
         assert_eq!(group.get("javy-json"), None);
@@ -348,7 +348,7 @@ mod tests {
         assert_eq!(group.get("text-encoding"), None);
 
         let group = JsConfig::from_group_values(
-            &Provider::Default,
+            &Plugin::Default,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "redirect-stdout-to-stderr".to_string(),
                 enabled: false,
@@ -357,7 +357,7 @@ mod tests {
         assert_eq!(group.get("redirect-stdout-to-stderr"), Some(false));
 
         let group = JsConfig::from_group_values(
-            &Provider::Default,
+            &Plugin::Default,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "redirect-stdout-to-stderr".to_string(),
                 enabled: true,
@@ -366,7 +366,7 @@ mod tests {
         assert_eq!(group.get("redirect-stdout-to-stderr"), Some(true));
 
         let group = JsConfig::from_group_values(
-            &Provider::Default,
+            &Plugin::Default,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "javy-json".to_string(),
                 enabled: false,
@@ -375,7 +375,7 @@ mod tests {
         assert_eq!(group.get("javy-json"), Some(false));
 
         let group = JsConfig::from_group_values(
-            &Provider::Default,
+            &Plugin::Default,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "javy-json".to_string(),
                 enabled: true,
@@ -384,7 +384,7 @@ mod tests {
         assert_eq!(group.get("javy-json"), Some(true));
 
         let group = JsConfig::from_group_values(
-            &Provider::Default,
+            &Plugin::Default,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "javy-stream-io".to_string(),
                 enabled: false,
@@ -393,7 +393,7 @@ mod tests {
         assert_eq!(group.get("javy-stream-io"), Some(false));
 
         let group = JsConfig::from_group_values(
-            &Provider::Default,
+            &Plugin::Default,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "javy-stream-io".to_string(),
                 enabled: true,
@@ -402,7 +402,7 @@ mod tests {
         assert_eq!(group.get("javy-stream-io"), Some(true));
 
         let group = JsConfig::from_group_values(
-            &Provider::Default,
+            &Plugin::Default,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "simd-json-builtins".to_string(),
                 enabled: false,
@@ -411,7 +411,7 @@ mod tests {
         assert_eq!(group.get("simd-json-builtins"), Some(false));
 
         let group = JsConfig::from_group_values(
-            &Provider::Default,
+            &Plugin::Default,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "simd-json-builtins".to_string(),
                 enabled: true,
@@ -420,7 +420,7 @@ mod tests {
         assert_eq!(group.get("simd-json-builtins"), Some(true));
 
         let group = JsConfig::from_group_values(
-            &Provider::Default,
+            &Plugin::Default,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "text-encoding".to_string(),
                 enabled: false,
@@ -429,7 +429,7 @@ mod tests {
         assert_eq!(group.get("text-encoding"), Some(false));
 
         let group = JsConfig::from_group_values(
-            &Provider::Default,
+            &Plugin::Default,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "text-encoding".to_string(),
                 enabled: true,
@@ -438,7 +438,7 @@ mod tests {
         assert_eq!(group.get("text-encoding"), Some(true));
 
         let group = JsConfig::from_group_values(
-            &Provider::Default,
+            &Plugin::Default,
             vec![
                 JsGroupValue::Option(JsGroupOption {
                     name: "redirect-stdout-to-stderr".to_string(),

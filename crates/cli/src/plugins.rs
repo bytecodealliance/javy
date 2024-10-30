@@ -8,12 +8,12 @@ use std::{
 use wasi_common::{pipe::WritePipe, sync::WasiCtxBuilder};
 use wasmtime::{AsContextMut, Engine, Linker};
 
-const QUICKJS_PROVIDER_MODULE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/provider.wasm"));
+const PLUGIN_MODULE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/plugin.wasm"));
 
-/// Use the legacy provider when using the `compile -d` command.
+/// Use the legacy plugin when using the `compile -d` command.
 const QUICKJS_PROVIDER_V2_MODULE: &[u8] = include_bytes!("./javy_quickjs_provider_v2.wasm");
 
-/// A property that is in the config schema returned by the provider.
+/// A property that is in the config schema returned by the plugin.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct JsConfigProperty {
@@ -23,36 +23,36 @@ pub(crate) struct JsConfigProperty {
     pub(crate) doc: String,
 }
 
-/// Different providers that are available.
+/// Different plugins that are available.
 #[derive(Debug)]
-pub enum Provider {
-    /// The default provider.
+pub enum Plugin {
+    /// The default plugin.
     Default,
-    /// A provider for use with the `compile` to maintain backward compatibility.
+    /// A plugin for use with the `compile` to maintain backward compatibility.
     V2,
 }
 
-impl Default for Provider {
+impl Default for Plugin {
     fn default() -> Self {
         Self::Default
     }
 }
 
-impl Provider {
-    /// Returns the provider Wasm module as a byte slice.
+impl Plugin {
+    /// Returns the plugin Wasm module as a byte slice.
     pub fn as_bytes(&self) -> &[u8] {
         match self {
-            Self::Default => QUICKJS_PROVIDER_MODULE,
+            Self::Default => PLUGIN_MODULE,
             Self::V2 => QUICKJS_PROVIDER_V2_MODULE,
         }
     }
 
-    /// Uses the provider to generate QuickJS bytecode.
+    /// Uses the plugin to generate QuickJS bytecode.
     pub fn compile_source(&self, js_source_code: &[u8]) -> Result<Vec<u8>> {
         bytecode::compile_source(self, js_source_code)
     }
 
-    /// The import namespace to use for this provider.
+    /// The import namespace to use for this plugin.
     pub fn import_namespace(&self) -> Result<String> {
         match self {
             Self::V2 => Ok("javy_quickjs_provider_v2".to_string()),
@@ -68,14 +68,14 @@ impl Provider {
                             None
                         }
                     })
-                    .ok_or_else(|| anyhow!("Provider is missing import_namespace custom section"))?
+                    .ok_or_else(|| anyhow!("Plugin is missing import_namespace custom section"))?
                     .data(&Default::default()); // Argument is required but not actually used for anything.
                 Ok(str::from_utf8(&import_namespace)?.to_string())
             }
         }
     }
 
-    /// The JS configuration properties supported by this provider.
+    /// The JS configuration properties supported by this plugin.
     pub fn config_schema(&self) -> Result<Vec<JsConfigProperty>> {
         match self {
             Self::V2 => Ok(vec![]),

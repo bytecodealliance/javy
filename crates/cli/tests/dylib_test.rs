@@ -8,7 +8,7 @@ static ROOT: &str = env!("CARGO_MANIFEST_DIR");
 #[test]
 fn test_dylib() -> Result<()> {
     let js_src = "console.log(42);";
-    let mut runner = Runner::with_dylib(provider_module()?)?;
+    let mut runner = Runner::with_dylib(plugin_module()?)?;
 
     let (_, logs, _) = runner.exec_through_dylib(js_src, UseExportedFn::EvalBytecode)?;
     assert_eq!("42\n", str::from_utf8(&logs)?);
@@ -19,7 +19,7 @@ fn test_dylib() -> Result<()> {
 #[test]
 fn test_dylib_with_invoke_with_no_fn_name() -> Result<()> {
     let js_src = "console.log(42);";
-    let mut runner = Runner::with_dylib(provider_module()?)?;
+    let mut runner = Runner::with_dylib(plugin_module()?)?;
 
     let (_, logs, _) = runner.exec_through_dylib(js_src, UseExportedFn::Invoke(None))?;
     assert_eq!("42\n", str::from_utf8(&logs)?);
@@ -31,7 +31,7 @@ fn test_dylib_with_invoke_with_no_fn_name() -> Result<()> {
 fn test_dylib_with_error() -> Result<()> {
     let js_src = "function foo() { throw new Error('foo error'); } foo();";
 
-    let mut runner = Runner::with_dylib(provider_module()?)?;
+    let mut runner = Runner::with_dylib(plugin_module()?)?;
 
     let res = runner.exec_through_dylib(js_src, UseExportedFn::EvalBytecode);
 
@@ -51,7 +51,7 @@ fn test_dylib_with_error() -> Result<()> {
 fn test_dylib_with_exported_func() -> Result<()> {
     let js_src = "export function foo() { console.log('In foo'); }; console.log('Toplevel');";
 
-    let mut runner = Runner::with_dylib(provider_module()?)?;
+    let mut runner = Runner::with_dylib(plugin_module()?)?;
 
     let (_, logs, _) = runner.exec_through_dylib(js_src, UseExportedFn::Invoke(Some("foo")))?;
     assert_eq!("Toplevel\nIn foo\n", str::from_utf8(&logs)?);
@@ -59,7 +59,7 @@ fn test_dylib_with_exported_func() -> Result<()> {
     Ok(())
 }
 
-fn provider_module() -> Result<Vec<u8>> {
+fn plugin_module() -> Result<Vec<u8>> {
     let mut lib_path = PathBuf::from(ROOT);
     lib_path.pop();
     lib_path.pop();
@@ -67,7 +67,7 @@ fn provider_module() -> Result<Vec<u8>> {
         Path::new("target")
             .join("wasm32-wasip1")
             .join("release")
-            .join("javy_quickjs_provider_wizened.wasm"),
+            .join("plugin_wizened.wasm"),
     );
 
     std::fs::read(lib_path).map_err(Into::into)

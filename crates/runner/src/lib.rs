@@ -4,6 +4,7 @@ use std::fmt::{self, Display, Formatter};
 use std::io::{self, Cursor, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::str;
 use std::{cmp, fs};
 use tempfile::TempDir;
 use wasi_common::pipe::{ReadPipe, WritePipe};
@@ -45,9 +46,9 @@ pub struct Builder {
     preload: Option<(String, PathBuf)>,
     /// Whether to use the `compile` or `build` command.
     command: JavyCommand,
-    /// The javy provider version.
+    /// The javy plugin version.
     /// Used for import validation purposes only.
-    provider_version: u8,
+    plugin_version: u8,
 }
 
 impl Default for Builder {
@@ -66,7 +67,7 @@ impl Default for Builder {
             javy_json: None,
             simd_json_builtins: None,
             text_encoding: None,
-            provider_version: 3,
+            plugin_version: 3,
         }
     }
 }
@@ -132,8 +133,8 @@ impl Builder {
         self
     }
 
-    pub fn provider_version(&mut self, vsn: u8) -> &mut Self {
-        self.provider_version = vsn;
+    pub fn plugin_version(&mut self, vsn: u8) -> &mut Self {
+        self.plugin_version = vsn;
         self
     }
 
@@ -162,7 +163,7 @@ impl Builder {
             built: _,
             preload,
             command,
-            provider_version,
+            plugin_version,
         } = std::mem::take(self);
 
         self.built = true;
@@ -177,10 +178,10 @@ impl Builder {
                         wit,
                         world,
                         preload,
-                        provider_version,
+                        plugin_version,
                     )
                 } else {
-                    Runner::compile_static(bin_path, root, input, wit, world, provider_version)
+                    Runner::compile_static(bin_path, root, input, wit, world, plugin_version)
                 }
             }
             JavyCommand::Build => Runner::build(
@@ -205,7 +206,7 @@ pub struct Runner {
     linker: Linker<StoreContext>,
     initial_fuel: u64,
     preload: Option<(String, Vec<u8>)>,
-    provider_version: u8,
+    plugin_version: u8,
 }
 
 #[derive(Debug)]
@@ -310,7 +311,7 @@ impl Runner {
             linker,
             initial_fuel: u64::MAX,
             preload,
-            provider_version: 3,
+            plugin_version: 3,
         })
     }
 
@@ -343,7 +344,7 @@ impl Runner {
             linker,
             initial_fuel: u64::MAX,
             preload: None,
-            provider_version: vsn,
+            plugin_version: vsn,
         })
     }
 
@@ -377,7 +378,7 @@ impl Runner {
             linker,
             initial_fuel: u64::MAX,
             preload: Some((preload.0, preload_module)),
-            provider_version: vsn,
+            plugin_version: vsn,
         })
     }
 
@@ -388,13 +389,13 @@ impl Runner {
             linker: Self::setup_linker(&engine)?,
             initial_fuel: u64::MAX,
             preload: None,
-            provider_version: 3,
+            plugin_version: 3,
         })
     }
 
     pub fn assert_known_base_imports(&self) -> Result<()> {
         let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
-        let instance_name = format!("javy_quickjs_provider_v{}", self.provider_version);
+        let instance_name = format!("javy_quickjs_provider_v{}", self.plugin_version);
 
         let result = module.imports().filter(|i| {
             if i.module() == instance_name && i.name() == "canonical_abi_realloc" {
@@ -434,7 +435,7 @@ impl Runner {
         self.assert_known_base_imports()?;
 
         let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
-        let instance_name = format!("javy_quickjs_provider_v{}", self.provider_version);
+        let instance_name = format!("javy_quickjs_provider_v{}", self.plugin_version);
         let result = module.imports().filter(|i| {
             if i.module() == instance_name && i.name() == "invoke" {
                 let ty = i.ty();

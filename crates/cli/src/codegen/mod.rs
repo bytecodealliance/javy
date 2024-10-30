@@ -26,11 +26,11 @@
 //! contains instructions to execute that bytecode through dynamic linking
 //! at runtime.
 //!
-//! Dynamic code generation requires a provider module to be used and linked
+//! Dynamic code generation requires a plugin module to be used and linked
 //! against at runtime in order to execute the JavaScript bytecode. This
-//! operation involves carefully ensuring that a given provider version matches
-//! the provider version of the imports requested by the generated Wasm module
-//! as well as ensuring that any features available in the provider match the
+//! operation involves carefully ensuring that a given plugin version matches
+//! the plugin version of the imports requested by the generated Wasm module
+//! as well as ensuring that any features available in the plugin match the
 //! features requsted by the JavaScript bytecode.
 
 mod builder;
@@ -50,7 +50,7 @@ use wasi_common::{pipe::ReadPipe, sync::WasiCtxBuilder, WasiCtx};
 use wasm_opt::{OptimizationOptions, ShrinkLevel};
 use wizer::{Linker, Wizer};
 
-use crate::{js_config::JsConfig, providers::Provider, JS};
+use crate::{js_config::JsConfig, plugins::Plugin, JS};
 use anyhow::Result;
 
 static mut WASI: OnceLock<WasiCtx> = OnceLock::new();
@@ -111,8 +111,8 @@ pub(crate) struct Generator {
     pub ty: CodeGenType,
     /// JS runtime config.
     pub js_runtime_config: JsConfig,
-    /// Provider to use.
-    pub provider: Provider,
+    /// Plugin to use.
+    pub plugin: Plugin,
     /// JavaScript function exports.
     function_exports: Exports,
     /// Whether to embed the compressed JS source in the generated module.
@@ -123,12 +123,12 @@ pub(crate) struct Generator {
 
 impl Generator {
     /// Creates a new [`Generator`].
-    pub fn new(ty: CodeGenType, js_runtime_config: JsConfig, provider: Provider) -> Self {
+    pub fn new(ty: CodeGenType, js_runtime_config: JsConfig, plugin: Plugin) -> Self {
         Self {
             ty,
             js_runtime_config,
             source_compression: true,
-            provider,
+            plugin,
             function_exports: Default::default(),
             wit_opts: Default::default(),
         }
@@ -160,7 +160,7 @@ impl Generator {
                         Ok(linker)
                     })))?
                     .wasm_bulk_memory(true)
-                    .run(self.provider.as_bytes())?;
+                    .run(self.plugin.as_bytes())?;
                 config.parse(&wasm)?
             }
             CodeGenType::Dynamic => Module::with_config(config),
@@ -192,7 +192,7 @@ impl Generator {
                 ))
             }
             CodeGenType::Dynamic => {
-                let import_namespace = self.provider.import_namespace()?;
+                let import_namespace = self.plugin.import_namespace()?;
                 let canonical_abi_realloc_type = module.types.add(
                     &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
                     &[ValType::I32],
@@ -211,11 +211,8 @@ impl Generator {
                     &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
                     &[],
                 );
-                let (invoke_fn_id, _) = module.add_import_func(
-                    &self.provider.import_namespace()?,
-                    "invoke",
-                    invoke_type,
-                );
+                let (invoke_fn_id, _) =
+                    module.add_import_func(&self.plugin.import_namespace()?, "invoke", invoke_type);
 
                 let (memory_id, _) = module.add_import_memory(
                     &import_namespace,
@@ -244,14 +241,14 @@ impl Generator {
         js: &JS,
         imports: &Identifiers,
     ) -> Result<BytecodeMetadata> {
-        let bytecode = js.compile(&self.provider)?;
+        let bytecode = js.compile(&self.plugin)?;
         let bytecode_len: i32 = bytecode.len().try_into()?;
         let bytecode_data = module.data.add(DataKind::Passive, bytecode);
 
         let mut main = FunctionBuilder::new(&mut module.types, &[], &[]);
         let bytecode_ptr_local = module.locals.add(ValType::I32);
         main.func_body()
-            // Allocate memory in javy_quickjs_provider for bytecode array.
+            // Allocate memory in plugin instance for bytecode array.
             .i32_const(0) // orig ptr
             .i32_const(0) // orig size
             .i32_const(1) // alignment
@@ -461,7 +458,7 @@ fn print_wat(_wasm_binary: &[u8]) -> Result<()> {
 #[cfg(test)]
 mod test {
     use crate::js_config::JsConfig;
-    use crate::providers::Provider;
+    use crate::plugins::Plugin;
 
     use super::Generator;
     use super::WitOptions;
@@ -472,11 +469,11 @@ mod test {
         let gen = Generator::new(
             crate::codegen::CodeGenType::Dynamic,
             JsConfig::default(),
-            Provider::Default,
+            Plugin::Default,
         );
         assert!(!gen.js_runtime_config.has_configs());
         assert!(gen.source_compression);
-        assert!(matches!(gen.provider, Provider::Default));
+        assert!(matches!(gen.plugin, Plugin::Default));
         assert_eq!(gen.wit_opts, WitOptions::default());
 
         Ok(())

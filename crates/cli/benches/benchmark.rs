@@ -118,14 +118,14 @@ impl FunctionCase {
         let mut store = Store::new(&self.engine, wasi);
 
         if let Linking::Dynamic = self.linking {
-            let qjs_provider = Module::new(
+            let plugin = Module::new(
                 &self.engine,
                 fs::read(Path::new(
-                    "../../target/wasm32-wasip1/release/javy_quickjs_provider_wizened.wasm",
+                    "../../target/wasm32-wasip1/release/plugin_wizened.wasm",
                 ))?,
             )?;
-            let instance = linker.instantiate(store.as_context_mut(), &qjs_provider)?;
-            linker.instance(store.as_context_mut(), "javy_quickjs_provider_v2", instance)?;
+            let instance = linker.instantiate(store.as_context_mut(), &plugin)?;
+            linker.instance(store.as_context_mut(), "javy_quickjs_provider_v3", instance)?;
         }
 
         Ok((linker, store))
