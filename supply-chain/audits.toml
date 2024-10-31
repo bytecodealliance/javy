@@ -162,6 +162,12 @@ user-id = 6743 # Ed Page (epage)
 start = "2023-04-13"
 end = "2025-07-02"
 
+[[trusted.cranelift-bitset]]
+criteria = "safe-to-deploy"
+user-id = 73222 # wasmtime-publish
+start = "2024-07-22"
+end = "2025-10-31"
+
 [[trusted.csv]]
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
@@ -576,6 +582,12 @@ user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2019-06-09"
 end = "2024-10-03"
 
+[[trusted.wasi-common]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2020-07-16"
+end = "2025-10-31"
+
 [[trusted.wasm-bindgen]]
 criteria = "safe-to-deploy"
 user-id = 1 # Alex Crichton (alexcrichton)
@@ -624,6 +636,30 @@ user-id = 73222 # wasmtime-publish
 start = "2024-02-15"
 end = "2025-03-01"
 
+[[trusted.wasmtime-component-macro]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2024-10-09"
+end = "2025-10-31"
+
+[[trusted.wasmtime-environ]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2020-07-16"
+end = "2025-10-31"
+
+[[trusted.wasmtime-fiber]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2021-06-09"
+end = "2025-10-31"
+
+[[trusted.wasmtime-jit-debug]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2024-10-09"
+end = "2025-10-31"
+
 [[trusted.wasmtime-slab]]
 criteria = "safe-to-deploy"
 user-id = 73222 # wasmtime-publish
@@ -641,6 +677,12 @@ criteria = "safe-to-deploy"
 user-id = 1 # Alex Crichton (alexcrichton)
 start = "2019-03-04"
 end = "2025-04-16"
+
+[[trusted.wiggle]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2020-07-16"
+end = "2025-10-31"
 
 [[trusted.winapi-util]]
 criteria = "safe-to-deploy"

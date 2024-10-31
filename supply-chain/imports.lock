@@ -170,62 +170,68 @@ user-login = "jrmuizel"
 user-name = "Jeff Muizelaar"
 
 [[publisher.cranelift-bforest]]
-version = "0.106.2"
-when = "2024-04-11"
+version = "0.110.3"
+when = "2024-10-09"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.cranelift-bitset]]
+version = "0.110.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.cranelift-codegen]]
-version = "0.106.2"
-when = "2024-04-11"
+version = "0.110.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.cranelift-codegen-meta]]
-version = "0.106.2"
-when = "2024-04-11"
+version = "0.110.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.cranelift-codegen-shared]]
-version = "0.106.2"
-when = "2024-04-11"
+version = "0.110.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.cranelift-control]]
-version = "0.106.2"
-when = "2024-04-11"
+version = "0.110.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.cranelift-entity]]
-version = "0.106.2"
-when = "2024-04-11"
+version = "0.110.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.cranelift-frontend]]
-version = "0.106.2"
-when = "2024-04-11"
+version = "0.110.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.cranelift-isle]]
-version = "0.106.2"
-when = "2024-04-11"
+version = "0.110.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.cranelift-native]]
-version = "0.106.2"
-when = "2024-04-11"
+version = "0.110.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.cranelift-wasm]]
-version = "0.106.2"
-when = "2024-04-11"
+version = "0.110.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -643,10 +649,11 @@ user-login = "BurntSushi"
 user-name = "Andrew Gallant"
 
 [[publisher.wasi-common]]
-version = "19.0.2"
-when = "2024-04-11"
-user-id = 73222
-user-login = "wasmtime-publish"
+version = "23.0.3"
+when = "2024-10-09"
+user-id = 1
+user-login = "alexcrichton"
+user-name = "Alex Crichton"
 
 [[publisher.wasm-bindgen-backend]]
 version = "0.2.92"
@@ -677,12 +684,6 @@ user-login = "alexcrichton"
 user-name = "Alex Crichton"
 
 [[publisher.wasm-encoder]]
-version = "0.201.0"
-when = "2024-02-27"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wasm-encoder]]
 version = "0.202.0"
 when = "2024-03-26"
 user-id = 73222
@@ -691,12 +692,6 @@ user-login = "wasmtime-publish"
 [[publisher.wasm-encoder]]
 version = "0.212.0"
 when = "2024-06-27"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wasmparser]]
-version = "0.201.0"
-when = "2024-02-27"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -719,8 +714,8 @@ user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmprinter]]
-version = "0.201.0"
-when = "2024-02-27"
+version = "0.212.0"
+when = "2024-06-27"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -731,116 +726,102 @@ user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmtime]]
-version = "19.0.2"
-when = "2024-04-11"
+version = "23.0.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmtime-asm-macros]]
-version = "19.0.2"
-when = "2024-04-11"
+version = "23.0.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmtime-cache]]
-version = "19.0.2"
-when = "2024-04-11"
+version = "23.0.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmtime-component-macro]]
-version = "19.0.2"
-when = "2024-04-11"
-user-id = 73222
-user-login = "wasmtime-publish"
+version = "23.0.3"
+when = "2024-10-09"
+user-id = 1
+user-login = "alexcrichton"
+user-name = "Alex Crichton"
 
 [[publisher.wasmtime-component-util]]
-version = "19.0.2"
-when = "2024-04-11"
+version = "23.0.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmtime-cranelift]]
-version = "19.0.2"
-when = "2024-04-11"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wasmtime-cranelift-shared]]
-version = "19.0.2"
-when = "2024-04-11"
+version = "23.0.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmtime-environ]]
-version = "19.0.2"
-when = "2024-04-11"
-user-id = 73222
-user-login = "wasmtime-publish"
+version = "23.0.3"
+when = "2024-10-09"
+user-id = 1
+user-login = "alexcrichton"
+user-name = "Alex Crichton"
 
 [[publisher.wasmtime-fiber]]
-version = "19.0.2"
-when = "2024-04-11"
-user-id = 73222
-user-login = "wasmtime-publish"
+version = "23.0.3"
+when = "2024-10-09"
+user-id = 1
+user-login = "alexcrichton"
+user-name = "Alex Crichton"
 
 [[publisher.wasmtime-jit-debug]]
-version = "19.0.2"
-when = "2024-04-11"
-user-id = 73222
-user-login = "wasmtime-publish"
+version = "23.0.3"
+when = "2024-10-09"
+user-id = 1
+user-login = "alexcrichton"
+user-name = "Alex Crichton"
 
 [[publisher.wasmtime-jit-icache-coherence]]
-version = "19.0.2"
-when = "2024-04-11"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wasmtime-runtime]]
-version = "19.0.2"
-when = "2024-04-11"
+version = "23.0.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmtime-slab]]
-version = "19.0.2"
-when = "2024-04-11"
+version = "23.0.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmtime-types]]
-version = "19.0.2"
-when = "2024-04-11"
+version = "23.0.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmtime-versioned-export-macros]]
-version = "19.0.2"
-when = "2024-04-11"
+version = "23.0.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmtime-wasi]]
-version = "19.0.2"
-when = "2024-04-11"
+version = "23.0.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmtime-winch]]
-version = "19.0.2"
-when = "2024-04-11"
+version = "23.0.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmtime-wit-bindgen]]
-version = "19.0.2"
-when = "2024-04-11"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wasmtime-wmemcheck]]
-version = "19.0.2"
-when = "2024-04-11"
+version = "23.0.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -864,20 +845,21 @@ user-login = "alexcrichton"
 user-name = "Alex Crichton"
 
 [[publisher.wiggle]]
-version = "19.0.2"
-when = "2024-04-11"
-user-id = 73222
-user-login = "wasmtime-publish"
+version = "23.0.3"
+when = "2024-10-09"
+user-id = 1
+user-login = "alexcrichton"
+user-name = "Alex Crichton"
 
 [[publisher.wiggle-generate]]
-version = "19.0.2"
-when = "2024-04-11"
+version = "23.0.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wiggle-macro]]
-version = "19.0.2"
-when = "2024-04-11"
+version = "23.0.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -889,8 +871,8 @@ user-login = "BurntSushi"
 user-name = "Andrew Gallant"
 
 [[publisher.winch-codegen]]
-version = "0.17.2"
-when = "2024-04-11"
+version = "0.21.3"
+when = "2024-10-09"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -1056,20 +1038,14 @@ user-login = "sunfishcode"
 user-name = "Dan Gohman"
 
 [[publisher.wit-parser]]
-version = "0.201.0"
-when = "2024-02-27"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wit-parser]]
 version = "0.212.0"
 when = "2024-06-27"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wizer]]
-version = "6.0.0"
-when = "2024-04-15"
+version = "7.0.0"
+when = "2024-08-20"
 user-id = 696
 user-login = "fitzgen"
 user-name = "Nick Fitzgerald"
@@ -1177,14 +1153,6 @@ start = "2021-12-03"
 end = "2025-07-30"
 notes = "We (Bytecode Alliance) are the primary authors of regalloc2 and co-develop it with Cranelift/Wasmtime, with the same code-review, testing/fuzzing, and security standards."
 
-[[audits.bytecode-alliance.wildcard-audits.wasi-common]]
-who = "Bobby Holley <bobbyholley@gmail.com>"
-criteria = "safe-to-deploy"
-user-id = 73222 # wasmtime-publish
-start = "2021-10-29"
-end = "2025-07-30"
-notes = "The Bytecode Alliance is the author of this crate."
-
 [[audits.bytecode-alliance.wildcard-audits.wasm-encoder]]
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
@@ -1245,14 +1213,6 @@ start = "2021-10-29"
 end = "2025-07-30"
 notes = "The Bytecode Alliance is the author of this crate."
 
-[[audits.bytecode-alliance.wildcard-audits.wasmtime-component-macro]]
-who = "Bobby Holley <bobbyholley@gmail.com>"
-criteria = "safe-to-deploy"
-user-id = 73222 # wasmtime-publish
-start = "2022-07-20"
-end = "2025-07-30"
-notes = "The Bytecode Alliance is the author of this crate."
-
 [[audits.bytecode-alliance.wildcard-audits.wasmtime-component-util]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
@@ -1269,38 +1229,6 @@ start = "2021-10-29"
 end = "2025-07-30"
 notes = "The Bytecode Alliance is the author of this crate."
 
-[[audits.bytecode-alliance.wildcard-audits.wasmtime-cranelift-shared]]
-who = "Bobby Holley <bobbyholley@gmail.com>"
-criteria = "safe-to-deploy"
-user-id = 73222 # wasmtime-publish
-start = "2023-04-20"
-end = "2025-07-30"
-notes = "The Bytecode Alliance is the author of this crate."
-
-[[audits.bytecode-alliance.wildcard-audits.wasmtime-environ]]
-who = "Bobby Holley <bobbyholley@gmail.com>"
-criteria = "safe-to-deploy"
-user-id = 73222 # wasmtime-publish
-start = "2021-10-29"
-end = "2025-07-30"
-notes = "The Bytecode Alliance is the author of this crate."
-
-[[audits.bytecode-alliance.wildcard-audits.wasmtime-fiber]]
-who = "Bobby Holley <bobbyholley@gmail.com>"
-criteria = "safe-to-deploy"
-user-id = 73222 # wasmtime-publish
-start = "2021-10-29"
-end = "2025-07-30"
-notes = "The Bytecode Alliance is the author of this crate."
-
-[[audits.bytecode-alliance.wildcard-audits.wasmtime-jit-debug]]
-who = "Bobby Holley <bobbyholley@gmail.com>"
-criteria = "safe-to-deploy"
-user-id = 73222 # wasmtime-publish
-start = "2022-03-07"
-end = "2025-07-30"
-notes = "The Bytecode Alliance is the author of this crate."
-
 [[audits.bytecode-alliance.wildcard-audits.wasmtime-jit-icache-coherence]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
@@ -1309,13 +1237,17 @@ start = "2022-11-21"
 end = "2025-07-30"
 notes = "The Bytecode Alliance is the author of this crate."
 
-[[audits.bytecode-alliance.wildcard-audits.wasmtime-runtime]]
-who = "Bobby Holley <bobbyholley@gmail.com>"
+[[audits.bytecode-alliance.wildcard-audits.wasmtime-slab]]
+who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
 user-id = 73222 # wasmtime-publish
-start = "2021-10-29"
-end = "2025-07-30"
-notes = "The Bytecode Alliance is the author of this crate."
+start = "2023-01-01"
+end = "2025-05-08"
+notes = """
+The Bytecode Alliance uses the `wasmtime-publish` crates.io account to automate
+publication of this crate from CI. This repository requires all PRs are reviewed
+by a Bytecode Alliance maintainer and it owned by the Bytecode Alliance itself.
+"""
 
 [[audits.bytecode-alliance.wildcard-audits.wasmtime-types]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
@@ -1349,14 +1281,6 @@ start = "2023-01-20"
 end = "2025-07-30"
 notes = "The Bytecode Alliance is the author of this crate."
 
-[[audits.bytecode-alliance.wildcard-audits.wasmtime-wmemcheck]]
-who = "Pat Hickey <pat@moreproductive.org>"
-criteria = "safe-to-deploy"
-user-id = 73222 # wasmtime-publish
-start = "2022-11-27"
-end = "2025-07-30"
-notes = "The Bytecode Alliance is the author of this crate."
-
 [[audits.bytecode-alliance.wildcard-audits.wast]]
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
@@ -1380,14 +1304,6 @@ The Bytecode Alliance uses the `wasmtime-publish` crates.io account to automate
 publication of this crate from CI. This repository requires all PRs are reviewed
 by a Bytecode Alliance maintainer and it owned by the Bytecode Alliance itself.
 """
-
-[[audits.bytecode-alliance.wildcard-audits.wiggle]]
-who = "Bobby Holley <bobbyholley@gmail.com>"
-criteria = "safe-to-deploy"
-user-id = 73222 # wasmtime-publish
-start = "2021-10-29"
-end = "2025-07-30"
-notes = "The Bytecode Alliance is the author of this crate."
 
 [[audits.bytecode-alliance.wildcard-audits.wiggle-generate]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
@@ -1478,6 +1394,12 @@ criteria = "safe-to-deploy"
 version = "1.0.0"
 notes = "I am the author of this crate."
 
+[[audits.bytecode-alliance.audits.cobs]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+version = "0.2.3"
+notes = "No `unsafe` code in the crate and no usage of `std`"
+
 [[audits.bytecode-alliance.audits.codespan-reporting]]
 who = "Jamey Sharp <jsharp@fastly.com>"
 criteria = "safe-to-deploy"
@@ -1524,6 +1446,12 @@ who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
 delta = "1.8.1 -> 1.13.0"
 notes = "More utilities and such for the `Either` type, no `unsafe` code."
+
+[[audits.bytecode-alliance.audits.embedded-io]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+version = "0.4.0"
+notes = "No `unsafe` code and only uses `std` in ways one would expect the crate to do so."
 
 [[audits.bytecode-alliance.audits.fallible-iterator]]
 who = "Alex Crichton <alex@alexcrichton.com>"
@@ -1620,6 +1548,12 @@ who = "Nick Fitzgerald <fitzgen@gmail.com>"
 criteria = "safe-to-deploy"
 version = "0.2.5"
 notes = "I am the author of this crate."
+
+[[audits.bytecode-alliance.audits.mach2]]
+who = "Nick Fitzgerald <fitzgen@gmail.com>"
+criteria = "safe-to-deploy"
+delta = "0.4.1 -> 0.4.2"
+notes = "It does unsafe FFI bindings, as expected. I didn't check the FFI bindings against the C headers."
 
 [[audits.bytecode-alliance.audits.memfd]]
 who = "Dan Gohman <dev@sunfishcode.online>"
@@ -2154,7 +2088,7 @@ who = "Henri Sivonen <hsivonen@hsivonen.fi>"
 criteria = "safe-to-deploy"
 user-id = 4484 # Henri Sivonen (hsivonen)
 start = "2019-02-26"
-end = "2024-08-28"
+end = "2025-10-23"
 notes = "I, Henri Sivonen, wrote encoding_rs for Gecko and have reviewed contributions by others. There are two caveats to the certification: 1) The crate does things that are documented to be UB but that do not appear to actually be UB due to integer types differing from the general rule; https://github.com/hsivonen/encoding_rs/issues/79 . 2) It would be prudent to re-review the code that reinterprets buffers of integers as SIMD vectors; see https://github.com/hsivonen/encoding_rs/issues/87 ."
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
@@ -2405,6 +2339,12 @@ aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-ch
 who = "Mike Hommey <mh+mozilla@glandium.org>"
 criteria = "safe-to-deploy"
 delta = "0.10.3 -> 0.10.5"
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.mach2]]
+who = "Gabriele Svelto <gsvelto@mozilla.com>"
+criteria = "safe-to-deploy"
+version = "0.4.1"
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
 [[audits.mozilla.audits.num-integer]]
