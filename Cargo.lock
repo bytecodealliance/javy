@@ -1558,16 +1558,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "javy-core"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "javy-plugin-api",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "javy-fuzz"
 version = "0.0.0"
 dependencies = [
@@ -1575,6 +1565,16 @@ dependencies = [
  "arbitrary-json",
  "javy",
  "libfuzzer-sys",
+ "serde_json",
+]
+
+[[package]]
+name = "javy-plugin"
+version = "0.2.0"
+dependencies = [
+ "anyhow",
+ "javy-plugin-api",
+ "serde",
  "serde_json",
 ]
 

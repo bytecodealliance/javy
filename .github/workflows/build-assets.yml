@@ -18,8 +18,8 @@ on:
       - main
 
 jobs:
-  compile_core:
-    name: compile_core
+  compile_plugin:
+    name: compile_plugin
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,8 +33,8 @@ jobs:
           tar xvf /tmp/wizer.tar.xz --strip-components=1 -C /tmp/wizer
           echo "/tmp/wizer" >> $GITHUB_PATH
 
-      - name: Make core
-        run: make core
+      - name: Make plugin
+        run: make plugin
 
       - name: Upload plugin to artifacts
         uses: actions/upload-artifact@v4
@@ -76,7 +76,7 @@ jobs:
 
   compile_cli:
     name: compile_cli-${{ matrix.name }}
-    needs: compile_core
+    needs: compile_plugin
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
