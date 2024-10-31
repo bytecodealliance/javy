@@ -15,7 +15,7 @@ use codegen::{CodeGenBuilder, CodeGenType};
 use commands::CodegenOptionGroup;
 use js::JS;
 use js_config::JsConfig;
-use plugins::Plugin;
+use plugins::{Plugin, UninitializedPlugin};
 use std::fs;
 use std::fs::File;
 use std::io::Write;
@@ -78,6 +78,19 @@ fn main() -> Result<()> {
             let wasm = gen.generate(&js)?;
 
             fs::write(&opts.output, wasm)?;
+            Ok(())
+        }
+        Command::InitPlugin(opts) => {
+            let plugin_bytes = fs::read(&opts.plugin)?;
+
+            let uninitialized_plugin = UninitializedPlugin::new(&plugin_bytes)?;
+            let initialized_plugin_bytes = uninitialized_plugin.initialize()?;
+
+            let mut out: Box<dyn Write> = match opts.out.as_ref() {
+                Some(path) => Box::new(File::create(path)?),
+                None => Box::new(std::io::stdout()),
+            };
+            out.write_all(&initialized_plugin_bytes)?;
             Ok(())
         }
     }
