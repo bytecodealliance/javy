@@ -1,0 +1,18 @@
+[package]
+name = "javy-plugin-api"
+version = "1.0.0-alpha.1"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "APIs for Javy plugins"
+homepage = "https://github.com/bytecodealliance/javy/tree/main/crates/javy-plugin-api"
+repository = "https://github.com/bytecodealliance/javy/tree/main/crates/javy-plugin-api"
+categories = ["wasm"]
+
+[dependencies]
+anyhow = { workspace = true }
+javy = { workspace = true, features = ["export_alloc_fns"] }
+
+[features]
+experimental_event_loop = []
+json = ["javy/json"]

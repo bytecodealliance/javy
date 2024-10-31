@@ -24,6 +24,9 @@ docs:
 test-javy:
 	CARGO_TARGET_WASM32_WASIP1_RUNNER="wasmtime --dir=." cargo hack test --package=javy --target=wasm32-wasip1 --each-feature -- --nocapture
 
+test-plugin-api:
+	CARGO_TARGET_WASM32_WASIP1_RUNNER="wasmtime --dir=." cargo hack test --package=javy-plugin-api --target=wasm32-wasip1 --each-feature -- --nocapture
+
 test-core:
 	CARGO_TARGET_WASM32_WASIP1_RUNNER="wasmtime" cargo test --package=javy-core --target=wasm32-wasip1 -- --nocapture
 
@@ -44,13 +47,17 @@ test-wpt:
 	npm install --prefix wpt
 	npm test --prefix wpt 
 
-tests: test-javy test-core test-runner test-cli test-wpt
+tests: test-javy test-plugin-api test-core test-runner test-cli test-wpt
 
-fmt: fmt-javy fmt-core fmt-cli
+fmt: fmt-javy fmt-plugin-api fmt-core fmt-cli
 
 fmt-javy:
 	cargo fmt --package=javy -- --check
 	cargo clippy --package=javy --target=wasm32-wasip1 --all-targets -- -D warnings
+
+fmt-plugin-api:
+	cargo fmt --package=javy-plugin-api -- --check
+	cargo clippy --package=javy-plugin-api --target=wasm32-wasip1 --all-targets -- -D warnings
 
 fmt-core:
 	cargo fmt --package=javy-core -- --check

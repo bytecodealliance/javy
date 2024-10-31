@@ -1562,8 +1562,7 @@ name = "javy-core"
 version = "0.2.0"
 dependencies = [
  "anyhow",
- "javy",
- "once_cell",
+ "javy-plugin-api",
  "serde",
  "serde_json",
 ]
@@ -1577,6 +1576,14 @@ dependencies = [
  "javy",
  "libfuzzer-sys",
  "serde_json",
+]
+
+[[package]]
+name = "javy-plugin-api"
+version = "1.0.0-alpha.1"
+dependencies = [
+ "anyhow",
+ "javy",
 ]
 
 [[package]]

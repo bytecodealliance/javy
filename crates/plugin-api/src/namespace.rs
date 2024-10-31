@@ -1,5 +1,6 @@
-// Create a custom section named `import_namespace` with the contents of the
-// string argument.
+/// Create a custom section named `import_namespace` with the contents of the
+/// string argument.
+#[macro_export]
 macro_rules! import_namespace {
     ($str:literal) => {
         const IMPORT_NAMESPACE_BYTES: &[u8] = $str.as_bytes();
@@ -16,5 +17,3 @@ macro_rules! import_namespace {
         };
     };
 }
-
-pub(crate) use import_namespace;
