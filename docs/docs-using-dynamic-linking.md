@@ -11,7 +11,7 @@ meet these requirements.
 
 To successfully instantiate and run a dynamically linked Javy module, the
 execution environment must provide a `javy_quickjs_provider_v<version>` namespace for
-importing that links to the exports provided by the `javy_quickjs_provider.wasm`
+importing that links to the exports provided by the `plugin.wasm`
 module. Dynamically linked modules **cannot** be instantiated in environments
 that do not provide this import.
 
@@ -19,9 +19,9 @@ Dynamically linked Javy modules are tied to QuickJS since they use QuickJS's
 bytecode representation.
 
 
-#### Obtaining the provider module
+#### Obtaining the plugin module
 
-The `javy_quickjs_provider.wasm` module is available as an asset on the Javy
+The `plugin.wasm` module is available as an asset on the Javy
 release you are using. 
 
 It can also be obtained by running `javy emit-provider -o
@@ -34,7 +34,7 @@ Run:
 ```
 $ echo 'console.log("hello world!");' > my_code.js
 $ javy build -C dynamic -o my_code.wasm my_code.js
-$ javy emit-provider -o provider.wasm
-$ wasmtime run --preload javy_quickjs_provider_v3=provider.wasm my_code.wasm
+$ javy emit-provider -o plugin.wasm
+$ wasmtime run --preload javy_quickjs_provider_v3=plugin.wasm my_code.wasm
 hello world!
 ```

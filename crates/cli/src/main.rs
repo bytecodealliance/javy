@@ -4,7 +4,7 @@ mod commands;
 mod js;
 mod js_config;
 mod option;
-mod providers;
+mod plugins;
 mod wit;
 
 use crate::codegen::WitOptions;
@@ -15,7 +15,7 @@ use codegen::{CodeGenBuilder, CodeGenType};
 use commands::CodegenOptionGroup;
 use js::JS;
 use js_config::JsConfig;
-use providers::Provider;
+use plugins::Plugin;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
@@ -24,7 +24,7 @@ fn main() -> Result<()> {
     let args = Cli::parse();
 
     match &args.command {
-        Command::EmitProvider(opts) => emit_provider(opts),
+        Command::EmitProvider(opts) => emit_plugin(opts),
         Command::Compile(opts) => {
             eprintln!(
                 r#"
@@ -49,7 +49,7 @@ fn main() -> Result<()> {
 
             let config = JsConfig::default();
             let mut gen = if opts.dynamic {
-                builder.provider(Provider::V2);
+                builder.plugin(Plugin::V2);
                 builder.build(CodeGenType::Dynamic, config)?
             } else {
                 builder.build(CodeGenType::Static, config)?
@@ -68,7 +68,7 @@ fn main() -> Result<()> {
                 .wit_opts(codegen.wit)
                 .source_compression(codegen.source_compression);
 
-            let js_opts = JsConfig::from_group_values(&Provider::Default, opts.js.clone())?;
+            let js_opts = JsConfig::from_group_values(&Plugin::Default, opts.js.clone())?;
             let mut gen = if codegen.dynamic {
                 builder.build(CodeGenType::Dynamic, js_opts)?
             } else {
@@ -83,11 +83,11 @@ fn main() -> Result<()> {
     }
 }
 
-fn emit_provider(opts: &EmitProviderCommandOpts) -> Result<()> {
+fn emit_plugin(opts: &EmitProviderCommandOpts) -> Result<()> {
     let mut file: Box<dyn Write> = match opts.out.as_ref() {
         Some(path) => Box::new(File::create(path)?),
         _ => Box::new(std::io::stdout()),
     };
-    file.write_all(Provider::Default.as_bytes())?;
+    file.write_all(Plugin::Default.as_bytes())?;
     Ok(())
 }

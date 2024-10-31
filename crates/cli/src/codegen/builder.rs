@@ -1,7 +1,7 @@
 use crate::{
     codegen::{CodeGenType, Generator},
     js_config::JsConfig,
-    providers::Provider,
+    plugins::Plugin,
 };
 use anyhow::{bail, Result};
 use std::path::PathBuf;
@@ -50,8 +50,8 @@ impl WitOptions {
 /// A code generation builder.
 #[derive(Default)]
 pub(crate) struct CodeGenBuilder {
-    /// The provider to use.
-    provider: Provider,
+    /// The plugin to use.
+    plugin: Plugin,
     /// WIT options for code generation.
     wit_opts: WitOptions,
     /// Whether to compress the original JS source.
@@ -64,9 +64,9 @@ impl CodeGenBuilder {
         Self::default()
     }
 
-    /// Set the provider.
-    pub fn provider(&mut self, provider: Provider) -> &mut Self {
-        self.provider = provider;
+    /// Set the plugin.
+    pub fn plugin(&mut self, plugin: Plugin) -> &mut Self {
+        self.plugin = plugin;
         self
     }
 
@@ -89,7 +89,7 @@ impl CodeGenBuilder {
                 bail!("Cannot set JS runtime options when building a dynamic module")
             }
         }
-        let mut generator = Generator::new(ty, js_runtime_config, self.provider);
+        let mut generator = Generator::new(ty, js_runtime_config, self.plugin);
         generator.source_compression = self.source_compression;
         generator.wit_opts = self.wit_opts;
         Ok(generator)

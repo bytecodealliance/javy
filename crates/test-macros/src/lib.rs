@@ -295,7 +295,7 @@ fn expand_cli_tests(test_config: &CliTestConfig, func: syn::ItemFn) -> Result<To
                         "javy_quickjs_provider_v2".into(),
                         root.join("src").join("javy_quickjs_provider_v2.wasm")
                     );
-                    builder.provider_version(2);
+                    builder.plugin_version(2);
                 }
             } else {
                 quote! {
@@ -306,13 +306,13 @@ fn expand_cli_tests(test_config: &CliTestConfig, func: syn::ItemFn) -> Result<To
                         std::path::Path::new("target")
                             .join("wasm32-wasip1")
                             .join("release")
-                            .join("javy_quickjs_provider_wizened.wasm"),
+                            .join("plugin_wizened.wasm"),
                     );
-                    // TODO: Deriving the current provider version could be done
+                    // TODO: Deriving the current plugin version could be done
                     // automatically somehow. It's fine for now, given that if the
                     // version changes and this is not updated, tests will fail.
                     builder.preload("javy_quickjs_provider_v3".into(), root);
-                    builder.provider_version(3);
+                    builder.plugin_version(3);
                 }
             }
         } else {

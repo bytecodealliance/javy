@@ -51,11 +51,11 @@ jobs:
       - name: Lint Runner
         run: cargo clippy --package=javy-runner -- -D warnings
 
-      - name: Upload quickjs_provider to artifacts
+      - name: Upload plugin to artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: provider
-          path: target/wasm32-wasip1/release/javy_quickjs_provider.wasm
+          name: plugin
+          path: target/wasm32-wasip1/release/plugin.wasm
 
   cli:
     name: test_cli
@@ -70,7 +70,7 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: provider
+          name: plugin
           path: target/wasm32-wasip1/release/
 
       - name: Test CLI
