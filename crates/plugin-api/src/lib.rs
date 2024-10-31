@@ -1,7 +1,7 @@
 //! A crate for creating Javy plugins
 //!
 //! Example usage:
-//! ```
+//! ```rust
 //! use javy_plugin_api::import_namespace;
 //! use javy_plugin_api::javy::Config;
 //!
