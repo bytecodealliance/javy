@@ -24,11 +24,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install wizer
-        env:
-          WIZER_VERSION: 3.0.1
+      - name: Read wizer version
+        id: wizer_version
+        shell: bash
         run: |
-          wget -nv https://github.com/bytecodealliance/wizer/releases/download/v${{ env.WIZER_VERSION }}/wizer-v${{ env.WIZER_VERSION }}-x86_64-macos.tar.xz -O /tmp/wizer.tar.xz
+          VERSION=$(cargo metadata --format-version=1 --locked | jq '.packages[] | select(.name == "wizer") | .version' -r)
+          echo "WIZER_VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Install wizer
+        shell: bash
+        run: |
+          wget -nv https://github.com/bytecodealliance/wizer/releases/download/v${{ steps.wizer_version.outputs.WIZER_VERSION }}/wizer-v${{ steps.wizer_version.outputs.WIZER_VERSION }}-x86_64-macos.tar.xz -O /tmp/wizer.tar.xz
           mkdir /tmp/wizer
           tar xvf /tmp/wizer.tar.xz --strip-components=1 -C /tmp/wizer
           echo "/tmp/wizer" >> $GITHUB_PATH
