@@ -34,7 +34,7 @@ fn read_file(path: impl AsRef<Path>) -> Result<Vec<u8>> {
     Ok(buf)
 }
 
-// Copy the plugin binary build from the `core` crate
+// Copy the plugin binary build from the `plugin` crate
 fn copy_plugin() -> Result<()> {
     let cargo_manifest_dir = env::var("CARGO_MANIFEST_DIR")?;
     let module_path = PathBuf::from(&cargo_manifest_dir)

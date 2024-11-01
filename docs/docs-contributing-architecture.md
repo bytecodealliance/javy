@@ -8,7 +8,7 @@ This document is intended to provide an overview of the architecture of `javy`.
 flowchart TD
   javy-cli --> wasm
   subgraph wasm[plugin.wasm]
-  javy-core --> javy
+  javy-plugin --> javy
   javy --> rquickjs
   end
 ```
@@ -100,14 +100,14 @@ You should gate your feature with a cargo feature if your feature/change:
   the CLI would make the `--help` output harder for most users to understand.
 
 - You want to have integration tests in the `javy-cli` crate that should only
-  run when the `javy-core` crate is built with a non-default configuration (that
+  run when the `javy-plugin` crate is built with a non-default configuration (that
   is, with different cargo features enabled). For example, we introduced the
   `experimental_event_loop` cargo feature in the `javy-cli` crate since we test
   for different expected outputs when using a promise when the
-  `experimental_event_loop` cargo feature is enabled on the `javy_core` crate
+  `experimental_event_loop` cargo feature is enabled on the `javy-plugin` crate
   compared to when that cargo feature is disabled.
 
-### `javy-core`
+### `javy-plugin`
 
 Gets compiled to `plugin.wasm` for use by the CLI and in environments for
 running dynamically linked modules. This isn't intended to be used as a code
