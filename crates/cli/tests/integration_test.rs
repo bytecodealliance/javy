@@ -1,6 +1,8 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use javy_runner::{Builder, Runner, RunnerError};
-use std::str;
+use std::{path::PathBuf, process::Command, str};
+use wasi_common::sync::WasiCtxBuilder;
+use wasmtime::{AsContextMut, Engine, Linker, Module, Store};
 
 use javy_test_macros::javy_cli_test;
 
@@ -284,6 +286,61 @@ fn test_exported_default_fn(builder: &mut Builder) -> Result<()> {
     let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", &[]);
     assert_eq!(logs, "42\n");
     assert_fuel_consumed_within_threshold(39_951, fuel_consumed);
+    Ok(())
+}
+
+#[test]
+fn test_init_plugin() -> Result<()> {
+    // This test works by trying to call the `compile_src` function on the
+    // default plugin. The unwizened version should fail because the
+    // underlying Javy runtime has not been initialized yet. Using `init-plugin` on
+    // the unwizened plugin should initialize the runtime so calling
+    // `compile-src` on this module should succeed.
+    let engine = Engine::default();
+    let mut linker = Linker::new(&engine);
+    wasi_common::sync::add_to_linker(&mut linker, |s| s)?;
+    let wasi = WasiCtxBuilder::new().build();
+    let mut store = Store::new(&engine, wasi);
+
+    let uninitialized_plugin = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("..")
+        .join(
+            std::path::Path::new("target")
+                .join("wasm32-wasip1")
+                .join("release")
+                .join("plugin.wasm"),
+        );
+
+    // Check that plugin is in fact uninitialized at this point.
+    let module = Module::from_file(&engine, &uninitialized_plugin)?;
+    let instance = linker.instantiate(store.as_context_mut(), &module)?;
+    let result = instance
+        .get_typed_func::<(i32, i32), i32>(store.as_context_mut(), "compile_src")?
+        .call(store.as_context_mut(), (0, 0));
+    // This should fail because the runtime is uninitialized.
+    assert!(result.is_err());
+
+    // Initialize the plugin.
+    let output = Command::new(env!("CARGO_BIN_EXE_javy"))
+        .arg("init-plugin")
+        .arg(uninitialized_plugin.to_str().unwrap())
+        .output()?;
+    if !output.status.success() {
+        bail!(
+            "Running init-command failed with output {}",
+            str::from_utf8(&output.stderr)?,
+        );
+    }
+    let initialized_plugin = output.stdout;
+
+    // Check the plugin is initialized and runs.
+    let module = Module::new(&engine, &initialized_plugin)?;
+    let instance = linker.instantiate(store.as_context_mut(), &module)?;
+    // This should succeed because the runtime is initialized.
+    instance
+        .get_typed_func::<(i32, i32), i32>(store.as_context_mut(), "compile_src")?
+        .call(store.as_context_mut(), (0, 0))?;
     Ok(())
 }
 

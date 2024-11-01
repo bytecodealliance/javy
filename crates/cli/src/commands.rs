@@ -48,6 +48,9 @@ pub enum Command {
     /// Emits the plugin binary that is required to run dynamically
     /// linked WebAssembly modules.
     EmitProvider(EmitProviderCommandOpts),
+    /// Initializes a plugin binary.
+    #[command(arg_required_else_help = true)]
+    InitPlugin(InitPluginCommandOpts),
 }
 
 #[derive(Debug, Parser)]
@@ -108,6 +111,16 @@ pub struct BuildCommandOpts {
 pub struct EmitProviderCommandOpts {
     #[structopt(short, long)]
     /// Output path for the plugin binary (default is stdout).
+    pub out: Option<PathBuf>,
+}
+
+#[derive(Debug, Parser)]
+pub struct InitPluginCommandOpts {
+    #[arg(value_name = "PLUGIN", required = true)]
+    /// Path to the plugin to initialize.
+    pub plugin: PathBuf,
+    #[arg(short, long = "out")]
+    /// Output path for the initialized plugin binary (default is stdout).
     pub out: Option<PathBuf>,
 }
 
