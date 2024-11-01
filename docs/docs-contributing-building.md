@@ -15,14 +15,14 @@
 In the repository root, run:
 
 ```
-$ cargo build -p javy-core --target=wasm32-wasip1 -r
+$ cargo build -p javy-plugin --target=wasm32-wasip1 -r
 $ cargo build -p javy-cli -r
 ```
 
 Alternatively if you want to install the `javy` binary globally, at the
 repository root, run:
 ```
-$ cargo build -p javy-core --target=wasm32-wasip1 -r
+$ cargo build -p javy-plugin --target=wasm32-wasip1 -r
 $ cargo install --path crates/cli
 ```
 

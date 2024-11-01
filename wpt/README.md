@@ -31,7 +31,7 @@ Test suites can be added in `test_spec.js`. Individual tests can be ignored by i
 ## Tips for getting tests to pass
 
 - Adding tests to the ignored list is acceptable if there is no intent to support the feature the test is testing.
-- We highly recommend running the WPT suite with the `experimental_event_loop` Cargo feature enabled on the `javy-core` crate so tests relying on the event loop are able to pass.
+- We highly recommend running the WPT suite with the `experimental_event_loop` Cargo feature enabled on the `javy-plugin` crate so tests relying on the event loop are able to pass.
 - Strongly consider adding tests in Rust for APIs you're adding to get faster feedback on failures the WPT suite catches while working on a fix.
 
 ### If you need to change upstream tests

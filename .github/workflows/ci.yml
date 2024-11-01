@@ -7,10 +7,10 @@ on:
   pull_request:
 
 jobs:
-  core:
-    name: test_core
+  plugin:
+    name: test_plugin
     # We test on `macos-latest` to accurately reflect
-    # the core Wasm binary that we attach to the releases,
+    # the plugin Wasm binary that we attach to the releases,
     # which is built on the latest macOS too.
     # This is also helpful for testing fuel
     # consumption in tests.
@@ -27,8 +27,8 @@ jobs:
       - name: Install cargo-hack
         uses: taiki-e/install-action@cargo-hack
 
-      - name: Compile core
-        run: cargo build -p javy-core --release --target=wasm32-wasip1
+      - name: Compile plugin
+        run: cargo build -p javy-plugin --release --target=wasm32-wasip1
 
       - name: Test
         env:
@@ -60,7 +60,7 @@ jobs:
   cli:
     name: test_cli
     runs-on: ubuntu-latest
-    needs: core
+    needs: plugin
     steps:
       - uses: actions/checkout@v4
 
