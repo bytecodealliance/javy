@@ -4,6 +4,7 @@ use serde::Deserialize;
 use std::{
     fs,
     io::{Read, Seek},
+    path::Path,
     str,
 };
 use walrus::{ExportItem, ValType};
@@ -33,6 +34,8 @@ pub enum Plugin {
     Default,
     /// A plugin for use with the `compile` to maintain backward compatibility.
     V2,
+    /// A plugin provided by the user.
+    User { bytes: Vec<u8> },
 }
 
 impl Default for Plugin {
@@ -42,11 +45,18 @@ impl Default for Plugin {
 }
 
 impl Plugin {
+    pub fn new_user_plugin(path: &Path) -> Result<Self> {
+        Ok(Self::User {
+            bytes: fs::read(path)?,
+        })
+    }
+
     /// Returns the plugin Wasm module as a byte slice.
     pub fn as_bytes(&self) -> &[u8] {
         match self {
             Self::Default => PLUGIN_MODULE,
             Self::V2 => QUICKJS_PROVIDER_V2_MODULE,
+            Self::User { bytes } => bytes,
         }
     }
 
@@ -59,7 +69,7 @@ impl Plugin {
     pub fn import_namespace(&self) -> Result<String> {
         match self {
             Self::V2 => Ok("javy_quickjs_provider_v2".to_string()),
-            Self::Default => {
+            Self::Default | Self::User { .. } => {
                 let module = walrus::Module::from_buffer(self.as_bytes())?;
                 let import_namespace = module
                     .customs
@@ -81,7 +91,7 @@ impl Plugin {
     /// The JS configuration properties supported by this plugin.
     pub fn config_schema(&self) -> Result<Vec<JsConfigProperty>> {
         match self {
-            Self::V2 => Ok(vec![]),
+            Self::V2 | Self::User { .. } => Ok(vec![]),
             Self::Default => {
                 let engine = Engine::default();
                 let module = wasmtime::Module::new(&engine, self.as_bytes())?;

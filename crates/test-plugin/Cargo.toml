@@ -1,0 +1,14 @@
+[package]
+name = "javy-test-plugin"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "test_plugin"
+crate-type = ["cdylib"]
+
+[dependencies]
+anyhow = { workspace = true }
+javy-plugin-api = { path = "../plugin-api", features = ["json"] }

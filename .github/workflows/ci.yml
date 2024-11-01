@@ -73,6 +73,12 @@ jobs:
           name: plugin
           path: target/wasm32-wasip1/release/
 
+      - name: Build test-plugin
+        run: |
+          cargo build --package=javy-test-plugin --release --target=wasm32-wasip1
+          CARGO_PROFILE_RELEASE_LTO=off cargo build --package=javy-cli --release
+          target/release/javy init-plugin target/wasm32-wasip1/release/test_plugin.wasm -o crates/runner/test_plugin.wasm
+
       - name: Test CLI
         run: CARGO_PROFILE_RELEASE_LTO=off cargo test --package=javy-cli --release -- --nocapture
 

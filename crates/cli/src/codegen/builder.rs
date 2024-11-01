@@ -88,6 +88,11 @@ impl CodeGenBuilder {
             if js_runtime_config.has_configs() {
                 bail!("Cannot set JS runtime options when building a dynamic module")
             }
+            // This is temporary. So I can make the change for dynamic modules
+            // separately because it will be a breaking change.
+            if let Plugin::User { .. } = self.plugin {
+                bail!("Cannot use plugins for building dynamic modules")
+            }
         }
         let mut generator = Generator::new(ty, js_runtime_config, self.plugin);
         generator.source_compression = self.source_compression;

@@ -1,5 +1,5 @@
 use anyhow::{bail, Result};
-use javy_runner::{Builder, Runner, RunnerError};
+use javy_runner::{Builder, Plugin, Runner, RunnerError};
 use std::{path::PathBuf, process::Command, str};
 use wasi_common::sync::WasiCtxBuilder;
 use wasmtime::{AsContextMut, Engine, Linker, Module, Store};
@@ -132,6 +132,32 @@ fn test_javy_json_disabled(builder: &mut Builder) -> Result<()> {
 
     let result = runner.exec(&[]);
     assert!(result.is_err());
+
+    Ok(())
+}
+
+#[javy_cli_test(commands(not(Compile)))]
+fn test_using_plugin_with_static_build(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder.plugin(Plugin::User).input("plugin.js").build()?;
+
+    let result = runner.exec(&[]);
+    assert!(result.is_ok());
+
+    Ok(())
+}
+
+#[javy_cli_test(commands(not(Compile)))]
+fn test_using_plugin_with_static_build_fails_with_runtime_config(
+    builder: &mut Builder,
+) -> Result<()> {
+    let result = builder
+        .plugin(Plugin::User)
+        .simd_json_builtins(true)
+        .build();
+    let err = result.err().unwrap();
+    assert!(err
+        .to_string()
+        .contains("Property simd-json-builtins is not supported for runtime configuration"));
 
     Ok(())
 }

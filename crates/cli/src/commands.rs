@@ -105,6 +105,10 @@ pub struct BuildCommandOpts {
     /// JavaScript runtime options.
     /// Use `-J help` for more details.
     pub js: Vec<JsGroupValue>,
+
+    #[arg(short, long)]
+    /// Path of the plugin.
+    pub plugin: Option<PathBuf>,
 }
 
 #[derive(Debug, Parser)]

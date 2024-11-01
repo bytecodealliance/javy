@@ -17,6 +17,12 @@ jobs:
         with:
           os: linux
 
+      - name: Build test-plugin
+        run: |
+          cargo build --package=javy-test-plugin --release --target=wasm32-wasip1
+          CARGO_PROFILE_RELEASE_LTO=off cargo build --package=javy-cli --release
+          target/release/javy init-plugin target/wasm32-wasip1/release/test_plugin.wasm -o crates/runner/test_plugin.wasm
+
       - name: Test `experimental_event_loop`
         run: |
           cargo build --package=javy-plugin --target=wasm32-wasip1 --release --features=experimental_event_loop
