@@ -26,7 +26,7 @@ jobs:
 
       - name: Install wizer
         env:
-          WIZER_VERSION: 3.0.1
+          WIZER_VERSION: 7.0.0
         run: |
           wget -nv https://github.com/bytecodealliance/wizer/releases/download/v${{ env.WIZER_VERSION }}/wizer-v${{ env.WIZER_VERSION }}-x86_64-macos.tar.xz -O /tmp/wizer.tar.xz
           mkdir /tmp/wizer
