@@ -12,6 +12,6 @@ doctest = false
 
 [dependencies]
 anyhow = { workspace = true }
-proc-macro2 = "1.0.86"
+proc-macro2 = "1.0.89"
 quote = "1.0.37"
-syn = { version = "2.0.79", features = ["full"] }
+syn = { version = "2.0.87", features = ["full"] }

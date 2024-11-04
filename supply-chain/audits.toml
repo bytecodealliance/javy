@@ -58,7 +58,7 @@ end = "2025-07-02"
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-10-05"
-end = "2024-10-26"
+end = "2025-11-04"
 
 [[trusted.async-trait]]
 criteria = "safe-to-deploy"
