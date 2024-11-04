@@ -19,6 +19,23 @@ pub enum JavyCommand {
 }
 
 #[derive(Clone)]
+pub enum Plugin {
+    V2,
+    Default,
+}
+
+impl Plugin {
+    pub fn namespace(&self) -> &'static str {
+        match self {
+            Self::V2 => "javy_quickjs_provider_v2",
+            // Could try and derive this but not going to for now since tests
+            // will break if it changes.
+            Self::Default => "javy_quickjs_provider_v3",
+        }
+    }
+}
+
+#[derive(Clone)]
 pub struct Builder {
     /// The JS source.
     input: PathBuf,
@@ -46,9 +63,9 @@ pub struct Builder {
     preload: Option<(String, PathBuf)>,
     /// Whether to use the `compile` or `build` command.
     command: JavyCommand,
-    /// The javy plugin version.
+    /// The javy plugin.
     /// Used for import validation purposes only.
-    plugin_version: u8,
+    plugin: Plugin,
 }
 
 impl Default for Builder {
@@ -67,7 +84,7 @@ impl Default for Builder {
             javy_json: None,
             simd_json_builtins: None,
             text_encoding: None,
-            plugin_version: 3,
+            plugin: Plugin::Default,
         }
     }
 }
@@ -133,8 +150,8 @@ impl Builder {
         self
     }
 
-    pub fn plugin_version(&mut self, vsn: u8) -> &mut Self {
-        self.plugin_version = vsn;
+    pub fn plugin(&mut self, plugin: Plugin) -> &mut Self {
+        self.plugin = plugin;
         self
     }
 
@@ -163,7 +180,7 @@ impl Builder {
             built: _,
             preload,
             command,
-            plugin_version,
+            plugin,
         } = std::mem::take(self);
 
         self.built = true;
@@ -171,17 +188,9 @@ impl Builder {
         match command {
             JavyCommand::Compile => {
                 if let Some(preload) = preload {
-                    Runner::compile_dynamic(
-                        bin_path,
-                        root,
-                        input,
-                        wit,
-                        world,
-                        preload,
-                        plugin_version,
-                    )
+                    Runner::compile_dynamic(bin_path, root, input, wit, world, preload, plugin)
                 } else {
-                    Runner::compile_static(bin_path, root, input, wit, world, plugin_version)
+                    Runner::compile_static(bin_path, root, input, wit, world, plugin)
                 }
             }
             JavyCommand::Build => Runner::build(
@@ -206,7 +215,7 @@ pub struct Runner {
     linker: Linker<StoreContext>,
     initial_fuel: u64,
     preload: Option<(String, Vec<u8>)>,
-    plugin_version: u8,
+    plugin: Plugin,
 }
 
 #[derive(Debug)]
@@ -311,7 +320,7 @@ impl Runner {
             linker,
             initial_fuel: u64::MAX,
             preload,
-            plugin_version: 3,
+            plugin: Plugin::Default,
         })
     }
 
@@ -321,7 +330,7 @@ impl Runner {
         source: impl AsRef<Path>,
         wit: Option<PathBuf>,
         world: Option<String>,
-        vsn: u8,
+        plugin: Plugin,
     ) -> Result<Self> {
         // This directory is unique and will automatically get deleted
         // when `tempdir` goes out of scope.
@@ -344,7 +353,7 @@ impl Runner {
             linker,
             initial_fuel: u64::MAX,
             preload: None,
-            plugin_version: vsn,
+            plugin,
         })
     }
 
@@ -355,7 +364,7 @@ impl Runner {
         wit: Option<PathBuf>,
         world: Option<String>,
         preload: (String, PathBuf),
-        vsn: u8,
+        plugin: Plugin,
     ) -> Result<Self> {
         let tempdir = tempfile::tempdir()?;
         let wasm_file = Self::out_wasm(&tempdir);
@@ -378,7 +387,7 @@ impl Runner {
             linker,
             initial_fuel: u64::MAX,
             preload: Some((preload.0, preload_module)),
-            plugin_version: vsn,
+            plugin,
         })
     }
 
@@ -389,13 +398,13 @@ impl Runner {
             linker: Self::setup_linker(&engine)?,
             initial_fuel: u64::MAX,
             preload: None,
-            plugin_version: 3,
+            plugin: Plugin::Default,
         })
     }
 
     pub fn assert_known_base_imports(&self) -> Result<()> {
         let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
-        let instance_name = format!("javy_quickjs_provider_v{}", self.plugin_version);
+        let instance_name = self.plugin.namespace();
 
         let result = module.imports().filter(|i| {
             if i.module() == instance_name && i.name() == "canonical_abi_realloc" {
@@ -435,7 +444,7 @@ impl Runner {
         self.assert_known_base_imports()?;
 
         let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
-        let instance_name = format!("javy_quickjs_provider_v{}", self.plugin_version);
+        let instance_name = self.plugin.namespace();
         let result = module.imports().filter(|i| {
             if i.module() == instance_name && i.name() == "invoke" {
                 let ty = i.ty();

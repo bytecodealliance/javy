@@ -291,11 +291,13 @@ fn expand_cli_tests(test_config: &CliTestConfig, func: syn::ItemFn) -> Result<To
             if command_name == "Compile" {
                 quote! {
                     let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+                    let plugin = javy_runner::Plugin::V2;
+                    let namespace = plugin.namespace();
+                    builder.plugin(plugin);
                     builder.preload(
-                        "javy_quickjs_provider_v2".into(),
+                        namespace.into(),
                         root.join("src").join("javy_quickjs_provider_v2.wasm")
                     );
-                    builder.plugin_version(2);
                 }
             } else {
                 quote! {
@@ -308,11 +310,10 @@ fn expand_cli_tests(test_config: &CliTestConfig, func: syn::ItemFn) -> Result<To
                             .join("release")
                             .join("plugin_wizened.wasm"),
                     );
-                    // TODO: Deriving the current plugin version could be done
-                    // automatically somehow. It's fine for now, given that if the
-                    // version changes and this is not updated, tests will fail.
-                    builder.preload("javy_quickjs_provider_v3".into(), root);
-                    builder.plugin_version(3);
+                    let plugin = javy_runner::Plugin::Default;
+                    let namespace = plugin.namespace();
+                    builder.plugin(plugin);
+                    builder.preload(namespace.into(), root);
                 }
             }
         } else {
