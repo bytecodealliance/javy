@@ -44,8 +44,8 @@ user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.anyhow]]
-version = "1.0.89"
-when = "2024-09-15"
+version = "1.0.92"
+when = "2024-11-01"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -128,15 +128,15 @@ user-login = "emilio"
 user-name = "Emilio Cobos Álvarez"
 
 [[publisher.clap]]
-version = "4.5.19"
-when = "2024-10-01"
+version = "4.5.20"
+when = "2024-10-08"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.clap_builder]]
-version = "4.5.19"
-when = "2024-10-01"
+version = "4.5.20"
+when = "2024-10-08"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
@@ -390,8 +390,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.proc-macro2]]
-version = "1.0.86"
-when = "2024-06-21"
+version = "1.0.89"
+when = "2024-10-22"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -509,8 +509,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.serde_json]]
-version = "1.0.128"
-when = "2024-09-04"
+version = "1.0.132"
+when = "2024-10-19"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -537,8 +537,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.syn]]
-version = "2.0.79"
-when = "2024-09-27"
+version = "2.0.87"
+when = "2024-11-02"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -708,8 +708,8 @@ user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmparser]]
-version = "0.218.0"
-when = "2024-09-30"
+version = "0.219.1"
+when = "2024-10-10"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -720,8 +720,8 @@ user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmprinter]]
-version = "0.218.0"
-when = "2024-09-30"
+version = "0.219.1"
+when = "2024-10-10"
 user-id = 73222
 user-login = "wasmtime-publish"
 
