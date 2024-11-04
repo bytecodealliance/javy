@@ -30,7 +30,7 @@ runs:
       shell: bash
       run: |
         VERSION=$(cargo metadata --format-version=1 --locked | jq '.packages[] | select(.name == "wasmtime") | .version' -r)
-        echo "::set-output name=wasmtime_version::$VERSION"
+        echo "wasmtime_version=$VERSION" >> "$GITHUB_OUTPUT"
 
     - name: Install wasmtime-cli
       shell: bash
