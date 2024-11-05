@@ -279,7 +279,7 @@ impl Generator {
             // tests are executed with Javy built with the release profile so
             // `debug_assert!`s are stripped out.
             assert!(
-                matches!(self.plugin, Plugin::User { .. }),
+                self.plugin.is_user_plugin(),
                 "Using invoke with null function only supported for user plugins"
             );
             instructions
@@ -358,9 +358,9 @@ impl Generator {
             CodeGenType::Static => {
                 // Remove no longer necessary exports.
                 module.exports.remove("canonical_abi_realloc")?;
-                // `eval_bytecode` is not present in user plugins and `remove`
-                // returns an error if the export is not present.
-                if module.exports.get_func("eval_bytecode").is_ok() {
+                // User plugins won't have an `eval_bytecode` function that
+                // Javy "owns".
+                if !self.plugin.is_user_plugin() {
                     module.exports.remove("eval_bytecode")?;
                 }
                 module.exports.remove("invoke")?;

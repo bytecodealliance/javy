@@ -45,10 +45,16 @@ impl Default for Plugin {
 }
 
 impl Plugin {
+    /// Creates a new user plugin.
     pub fn new_user_plugin(path: &Path) -> Result<Self> {
         Ok(Self::User {
             bytes: fs::read(path)?,
         })
+    }
+
+    /// Returns true if the plugin is a user plugin.
+    pub fn is_user_plugin(&self) -> bool {
+        matches!(&self, Plugin::User { .. })
     }
 
     /// Returns the plugin Wasm module as a byte slice.
