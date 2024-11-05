@@ -10,31 +10,37 @@ linked modules do not and will not execute in WebAssembly runtimes that do not
 meet these requirements.
 
 To successfully instantiate and run a dynamically linked Javy module, the
-execution environment must provide a `javy_quickjs_provider_v<version>` namespace for
-importing that links to the exports provided by the `plugin.wasm`
-module. Dynamically linked modules **cannot** be instantiated in environments
-that do not provide this import.
+execution environment must provide a collection of imports that match the
+exports from a Javy plugin Wasm module (for example,
+`canonical_abi_realloc` and `invoke`). The namespace for these imports must
+match the import namespace specified by the Javy plugin Wasm module used to
+generate the dynamically linked Wasm module (this is, if the plugin's import
+namespace was `my_plugin_v1`, then the imports must be made available under the
+module name `my_plugin_v1`). This value is available from the `import_namespace`
+custom section in the Javy plugin module. You can also statically inspect the
+imports of the dynamically linked Wasm module to determine the import
+namespace. Dynamically linked modules **cannot** be instantiated in
+environments that do not provide the required imports.
 
 Dynamically linked Javy modules are tied to QuickJS since they use QuickJS's
 bytecode representation.
 
+#### Obtaining the default plugin module
 
-#### Obtaining the plugin module
+The `plugin.wasm` module is available as an asset on the Javy release you are
+using. 
 
-The `plugin.wasm` module is available as an asset on the Javy
-release you are using. 
+It can also be obtained by running `javy emit-plugin -o <path>` to write the
+module into `<path>`.
 
-It can also be obtained by running `javy emit-provider -o
-<path>` to write the module into `<path>`.
-
-#### Creating and running a dynamically linked module througy the CLI
+#### Creating and running a dynamically linked module through the CLI
 
 Run:
 
 ```
 $ echo 'console.log("hello world!");' > my_code.js
-$ javy build -C dynamic -o my_code.wasm my_code.js
 $ javy emit-provider -o plugin.wasm
+$ javy build -C dynamic -C plugin=plugin.wasm -o my_code.wasm my_code.js
 $ wasmtime run --preload javy_quickjs_provider_v3=plugin.wasm my_code.wasm
 hello world!
 ```
