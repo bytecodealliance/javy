@@ -41,7 +41,7 @@ fn test_dylib_with_error() -> Result<()> {
     let expected_log_output = "Error:1:24 foo error\n    at foo (function.mjs:1:24)\n    at <anonymous> (function.mjs:1:50)\n\n";
     assert_eq!(
         expected_log_output,
-        String::from_utf8(e.downcast_ref::<RunnerError>().unwrap().stderr.clone())?
+        e.downcast_ref::<RunnerError>().unwrap().stderr
     );
 
     Ok(())
