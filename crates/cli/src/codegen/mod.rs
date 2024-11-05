@@ -203,9 +203,21 @@ impl Generator {
                     canonical_abi_realloc_type,
                 );
 
-                let eval_bytecode_type = module.types.add(&[ValType::I32, ValType::I32], &[]);
-                let (eval_bytecode_fn_id, _) =
-                    module.add_import_func(&import_namespace, "eval_bytecode", eval_bytecode_type);
+                // User plugins can use `invoke` with a null function name.
+                // User plugins also won't have an `eval_bytecode` function to
+                // import. We want to remove `eval_bytecode` from the default
+                // plugin so we don't want to emit more uses of it.
+                let eval_bytecode_fn_id = if self.plugin.is_v2_plugin() {
+                    let eval_bytecode_type = module.types.add(&[ValType::I32, ValType::I32], &[]);
+                    let (eval_bytecode_fn_id, _) = module.add_import_func(
+                        &import_namespace,
+                        "eval_bytecode",
+                        eval_bytecode_type,
+                    );
+                    Some(eval_bytecode_fn_id)
+                } else {
+                    None
+                };
 
                 let invoke_type = module.types.add(
                     &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
@@ -226,7 +238,7 @@ impl Generator {
 
                 Ok(Identifiers::new(
                     canonical_abi_realloc_fn_id,
-                    Some(eval_bytecode_fn_id),
+                    eval_bytecode_fn_id,
                     invoke_fn_id,
                     memory_id,
                 ))
@@ -269,18 +281,12 @@ impl Generator {
                 .call(eval_bytecode);
         } else {
             // Assert we're not emitting a call with a null function to
-            // invoke for `javy_quickjs_provider_v*`.
-            // `javy_quickjs_provider_v2` will never support calling `invoke`
-            // with a null function. Older `javy_quickjs_provider_v3`'s do not
-            // support being called with a null function. User plugins and
-            // newer `javy_quickjs_provider_v3`s do support being called with a
-            // null function.
-            // Using `assert!` instead of `debug_assert!` because integration
-            // tests are executed with Javy built with the release profile so
-            // `debug_assert!`s are stripped out.
+            // invoke for the v2 plugin. `javy_quickjs_provider_v2` will never
+            // support calling `invoke` with a null function. The default
+            // plugin and user plugins do accept null functions.
             assert!(
-                self.plugin.is_user_plugin(),
-                "Using invoke with null function only supported for user plugins"
+                !self.plugin.is_v2_plugin(),
+                "Using invoke with null function not supported for v2 plugin"
             );
             instructions
                 .local_get(bytecode_ptr_local) // ptr to bytecode
@@ -500,7 +506,6 @@ mod test {
             JsConfig::default(),
             Plugin::Default,
         );
-        assert!(!gen.js_runtime_config.has_configs());
         assert!(gen.source_compression);
         assert!(matches!(gen.plugin, Plugin::Default));
         assert_eq!(gen.wit_opts, WitOptions::default());

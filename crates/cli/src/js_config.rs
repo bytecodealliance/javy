@@ -11,11 +11,6 @@ impl JsConfig {
         JsConfig(configs)
     }
 
-    /// Returns true if any configs are set.
-    pub(crate) fn has_configs(&self) -> bool {
-        !self.0.is_empty()
-    }
-
     /// Encode as JSON.
     pub(crate) fn to_json(&self) -> Result<Vec<u8>> {
         Ok(serde_json::to_vec(&self.0)?)

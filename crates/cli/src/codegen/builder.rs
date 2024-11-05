@@ -84,11 +84,6 @@ impl CodeGenBuilder {
 
     /// Build a [`CodeGenerator`].
     pub fn build(self, ty: CodeGenType, js_runtime_config: JsConfig) -> Result<Generator> {
-        if let CodeGenType::Dynamic = ty {
-            if js_runtime_config.has_configs() {
-                bail!("Cannot set JS runtime options when building a dynamic module")
-            }
-        }
         let mut generator = Generator::new(ty, js_runtime_config, self.plugin);
         generator.source_compression = self.source_compression;
         generator.wit_opts = self.wit_opts;

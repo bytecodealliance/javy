@@ -57,6 +57,11 @@ impl Plugin {
         matches!(&self, Plugin::User { .. })
     }
 
+    /// Returns true if the plugin is the legacy v2 plugin.
+    pub fn is_v2_plugin(&self) -> bool {
+        matches!(&self, Plugin::V2)
+    }
+
     /// Returns the plugin Wasm module as a byte slice.
     pub fn as_bytes(&self) -> &[u8] {
         match self {
