@@ -33,8 +33,7 @@ pub enum Command {
     ///
     /// NOTICE:
     ///
-    /// This command will be deprecated in
-    /// the next major release of the CLI (v4.0.0)
+    /// This command is deprecated and will be removed.
     ///
     /// Refer to https://github.com/bytecodealliance/javy/issues/702 for
     /// details.

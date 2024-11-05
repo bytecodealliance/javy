@@ -28,8 +28,7 @@ fn main() -> Result<()> {
         Command::Compile(opts) => {
             eprintln!(
                 r#"
-                The `compile` command will be deprecated in the next major
-                release of the CLI (v4.0.0)
+                The `compile` command is deprecated and will be removed.
 
                 Refer to https://github.com/bytecodealliance/javy/issues/702 for
                 details.
