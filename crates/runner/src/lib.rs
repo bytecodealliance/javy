@@ -589,10 +589,7 @@ impl Runner {
 
         if let Plugin::User = plugin {
             args.push("-C".to_string());
-            args.push(format!(
-                "plugin={}",
-                Self::plugin_path().to_str().unwrap().to_string()
-            ));
+            args.push(format!("plugin={}", Self::plugin_path().to_str().unwrap()));
         }
 
         args
