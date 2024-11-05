@@ -201,8 +201,8 @@ option_group! {
         /// Optional path to WIT file describing exported functions. Only
         /// supports function exports with no arguments and no return values.
         Wit(PathBuf),
-        /// Optional path to WIT file describing exported functions. Only
-        /// supports function exports with no arguments and no return values.
+        /// Optional WIT world name for WIT file. Must be specified if WIT is
+        /// file path is specified.
         WitWorld(String),
         /// Enable source code compression, which generates smaller WebAssembly
         /// files at the cost of increased compile time.
