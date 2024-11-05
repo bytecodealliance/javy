@@ -1,5 +1,5 @@
 use crate::{js_config::JsConfig, option::OptionMeta, option_group, plugins::Plugin};
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, bail, Result};
 use clap::{
     builder::{StringValueParser, TypedValueParser, ValueParserFactory},
     error::ErrorKind,
@@ -105,10 +105,6 @@ pub struct BuildCommandOpts {
     /// JavaScript runtime options.
     /// Use `-J help` for more details.
     pub js: Vec<JsGroupValue>,
-
-    #[arg(short, long)]
-    /// Path of the plugin.
-    pub plugin: Option<PathBuf>,
 }
 
 #[derive(Debug, Parser)]
@@ -183,6 +179,7 @@ pub struct CodegenOptionGroup {
     pub dynamic: bool,
     pub wit: WitOptions,
     pub source_compression: bool,
+    pub plugin: Option<PathBuf>,
 }
 
 impl Default for CodegenOptionGroup {
@@ -191,6 +188,7 @@ impl Default for CodegenOptionGroup {
             dynamic: false,
             wit: WitOptions::default(),
             source_compression: true,
+            plugin: None,
         }
     }
 }
@@ -210,6 +208,10 @@ option_group! {
         /// Enable source code compression, which generates smaller WebAssembly
         /// files at the cost of increased compile time.
         SourceCompression(bool),
+        /// Optional path to Javy plugin Wasm module. Not supported for
+        /// dynamically linked modules. JavaScript config options are also not
+        /// supported when using this parameter.
+        Plugin(PathBuf),
     }
 }
 
@@ -227,10 +229,17 @@ impl TryFrom<Vec<GroupOption<CodegenOption>>> for CodegenOptionGroup {
                 CodegenOption::Wit(path) => wit = Some(path),
                 CodegenOption::WitWorld(world) => wit_world = Some(world),
                 CodegenOption::SourceCompression(enabled) => options.source_compression = *enabled,
+                CodegenOption::Plugin(path) => options.plugin = Some(path.clone()),
             }
         }
 
         options.wit = WitOptions::from_tuple((wit.cloned(), wit_world.cloned()))?;
+
+        // This is temporary. So I can make the change for dynamic modules
+        // separately because it will be a breaking change.
+        if options.dynamic && options.plugin.is_some() {
+            bail!("Cannot use plugins for building dynamic modules");
+        }
         Ok(options)
     }
 }

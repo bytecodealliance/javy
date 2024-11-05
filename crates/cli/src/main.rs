@@ -63,8 +63,8 @@ fn main() -> Result<()> {
         Command::Build(opts) => {
             let js = JS::from_file(&opts.input)?;
             let codegen: CodegenOptionGroup = opts.codegen.clone().try_into()?;
-            let plugin = match &opts.plugin {
-                Some(path) => Plugin::new_user_plugin(path)?,
+            let plugin = match codegen.plugin {
+                Some(path) => Plugin::new_user_plugin(&path)?,
                 None => Plugin::Default,
             };
             let js_opts = JsConfig::from_group_values(&plugin, opts.js.clone())?;
