@@ -285,9 +285,9 @@ fn expand_cli_tests(test_config: &CliTestConfig, func: syn::ItemFn) -> Result<To
         );
 
         let preload_setup = if test_config.dynamic {
-            // The compile commmand will remain frozen until it becomes
-            // deprecated in Javy v4.0.0. Until then we test with a frozen
-            // artifact downloaded from the releases.
+            // The compile commmand will remain frozen until it is deleted.
+            // Until then we test with a frozen artifact downloaded from the
+            // releases.
             if command_name == "Compile" {
                 quote! {
                     let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
