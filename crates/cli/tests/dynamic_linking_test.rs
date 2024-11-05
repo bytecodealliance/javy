@@ -1,5 +1,5 @@
 use anyhow::Result;
-use javy_runner::Builder;
+use javy_runner::{Builder, Plugin};
 use javy_test_macros::javy_cli_test;
 
 #[javy_cli_test(dyn = true, root = "tests/dynamic-linking-scripts")]
@@ -126,6 +126,17 @@ fn javy_json_identity(builder: &mut Builder) -> Result<()> {
 
     assert_eq!(String::from_utf8(out)?, input);
     assert_eq!(String::from_utf8(logs)?, "undefined\n");
+
+    Ok(())
+}
+
+#[javy_cli_test(dyn = true, commands(not(Compile)))]
+fn test_using_plugin_with_dynamic_build_fails(builder: &mut Builder) -> Result<()> {
+    let result = builder.plugin(Plugin::User).input("plugin.js").build();
+    let err = result.err().unwrap();
+    assert!(err
+        .to_string()
+        .contains("Cannot use plugins for building dynamic modules"));
 
     Ok(())
 }

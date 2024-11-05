@@ -1632,6 +1632,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "javy-test-plugin"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "javy-plugin-api",
+]
+
+[[package]]
 name = "jobserver"
 version = "0.1.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"

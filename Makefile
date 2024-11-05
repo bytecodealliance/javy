@@ -17,6 +17,10 @@ cli: plugin
 plugin:
 	cargo build --package=javy-plugin --release --target=wasm32-wasip1 --features=$(PLUGIN_FEATURES)
 
+build-test-plugin: cli
+	cargo build --package=javy-test-plugin --release --target=wasm32-wasip1
+	target/release/javy init-plugin target/wasm32-wasip1/release/test_plugin.wasm -o crates/runner/test_plugin.wasm
+
 docs:
 	cargo doc --package=javy-cli --open
 	cargo doc --package=javy-plugin --open --target=wasm32-wasip1
@@ -33,7 +37,7 @@ test-plugin:
 # Test in release mode to skip some debug assertions
 # Note: to make this faster, the engine should be optimized beforehand (wasm-strip + wasm-opt).
 # Disabling LTO substantially improves compile time
-test-cli: plugin
+test-cli: plugin build-test-plugin
 	CARGO_PROFILE_RELEASE_LTO=off cargo test --package=javy-cli --release --features=$(CLI_FEATURES) -- --nocapture
 
 test-runner:

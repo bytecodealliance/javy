@@ -22,6 +22,7 @@ pub enum JavyCommand {
 pub enum Plugin {
     V2,
     Default,
+    User,
 }
 
 impl Plugin {
@@ -31,6 +32,7 @@ impl Plugin {
             // Could try and derive this but not going to for now since tests
             // will break if it changes.
             Self::Default => "javy_quickjs_provider_v3",
+            Self::User { .. } => "test_plugin",
         }
     }
 }
@@ -205,6 +207,7 @@ impl Builder {
                 simd_json_builtins,
                 text_encoding,
                 preload,
+                plugin,
             ),
         }
     }
@@ -280,6 +283,7 @@ impl Runner {
         override_json_parse_and_stringify: Option<bool>,
         text_encoding: Option<bool>,
         preload: Option<(String, PathBuf)>,
+        plugin: Plugin,
     ) -> Result<Self> {
         // This directory is unique and will automatically get deleted
         // when `tempdir` goes out of scope.
@@ -299,6 +303,7 @@ impl Runner {
             &javy_stream_io,
             &override_json_parse_and_stringify,
             &text_encoding,
+            &plugin,
         );
 
         Self::exec_command(bin, root, args)?;
@@ -527,6 +532,7 @@ impl Runner {
         javy_stream_io: &Option<bool>,
         simd_json_builtins: &Option<bool>,
         text_encoding: &Option<bool>,
+        plugin: &Plugin,
     ) -> Vec<String> {
         let mut args = vec![
             "build".to_string(),
@@ -579,6 +585,11 @@ impl Runner {
         if let Some(enabled) = *text_encoding {
             args.push("-J".to_string());
             args.push(format!("text-encoding={}", if enabled { "y" } else { "n" }));
+        }
+
+        if let Plugin::User = plugin {
+            args.push("-C".to_string());
+            args.push(format!("plugin={}", Self::plugin_path().to_str().unwrap()));
         }
 
         args
@@ -803,6 +814,10 @@ impl Runner {
             }
             .into()),
         }
+    }
+
+    fn plugin_path() -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("test_plugin.wasm")
     }
 }
 

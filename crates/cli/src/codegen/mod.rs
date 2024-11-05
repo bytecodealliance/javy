@@ -66,7 +66,7 @@ pub(crate) enum CodeGenType {
 // This is an internal detail of this module.
 pub(crate) struct Identifiers {
     canonical_abi_realloc: FunctionId,
-    eval_bytecode: FunctionId,
+    eval_bytecode: Option<FunctionId>,
     invoke: FunctionId,
     memory: MemoryId,
 }
@@ -74,7 +74,7 @@ pub(crate) struct Identifiers {
 impl Identifiers {
     fn new(
         canonical_abi_realloc: FunctionId,
-        eval_bytecode: FunctionId,
+        eval_bytecode: Option<FunctionId>,
         invoke: FunctionId,
         memory: MemoryId,
     ) -> Self {
@@ -173,7 +173,7 @@ impl Generator {
         match self.ty {
             CodeGenType::Static => {
                 let canonical_abi_realloc_fn = module.exports.get_func("canonical_abi_realloc")?;
-                let eval_bytecode = module.exports.get_func("eval_bytecode")?;
+                let eval_bytecode = module.exports.get_func("eval_bytecode").ok();
                 let invoke = module.exports.get_func("invoke")?;
                 let ExportItem::Memory(memory) = module
                     .exports
@@ -226,7 +226,7 @@ impl Generator {
 
                 Ok(Identifiers::new(
                     canonical_abi_realloc_fn_id,
-                    eval_bytecode_fn_id,
+                    Some(eval_bytecode_fn_id),
                     invoke_fn_id,
                     memory_id,
                 ))
@@ -247,7 +247,8 @@ impl Generator {
 
         let mut main = FunctionBuilder::new(&mut module.types, &[], &[]);
         let bytecode_ptr_local = module.locals.add(ValType::I32);
-        main.func_body()
+        let mut instructions = main.func_body();
+        instructions
             // Allocate memory in plugin instance for bytecode array.
             .i32_const(0) // orig ptr
             .i32_const(0) // orig size
@@ -259,11 +260,35 @@ impl Generator {
             .i32_const(0) // offset into data segment for mem.init
             .i32_const(bytecode_len) // size to copy from data segment
             // top-2: dest addr, top-1: offset into source, top-0: size of memory region in bytes.
-            .memory_init(imports.memory, bytecode_data)
-            // Evaluate bytecode.
-            .local_get(bytecode_ptr_local) // ptr to bytecode
-            .i32_const(bytecode_len)
-            .call(imports.eval_bytecode);
+            .memory_init(imports.memory, bytecode_data);
+        // Evaluate top level scope.
+        if let Some(eval_bytecode) = imports.eval_bytecode {
+            instructions
+                .local_get(bytecode_ptr_local) // ptr to bytecode
+                .i32_const(bytecode_len)
+                .call(eval_bytecode);
+        } else {
+            // Assert we're not emitting a call with a null function to
+            // invoke for `javy_quickjs_provider_v*`.
+            // `javy_quickjs_provider_v2` will never support calling `invoke`
+            // with a null function. Older `javy_quickjs_provider_v3`'s do not
+            // support being called with a null function. User plugins and
+            // newer `javy_quickjs_provider_v3`s do support being called with a
+            // null function.
+            // Using `assert!` instead of `debug_assert!` because integration
+            // tests are executed with Javy built with the release profile so
+            // `debug_assert!`s are stripped out.
+            assert!(
+                self.plugin.is_user_plugin(),
+                "Using invoke with null function only supported for user plugins"
+            );
+            instructions
+                .local_get(bytecode_ptr_local) // ptr to bytecode
+                .i32_const(bytecode_len)
+                .i32_const(0) // set function name ptr to null
+                .i32_const(0) // set function name len to 0
+                .call(imports.invoke);
+        }
         let main = main.finish(vec![], &mut module.funcs);
 
         module.exports.add("_start", main);
@@ -333,7 +358,11 @@ impl Generator {
             CodeGenType::Static => {
                 // Remove no longer necessary exports.
                 module.exports.remove("canonical_abi_realloc")?;
-                module.exports.remove("eval_bytecode")?;
+                // User plugins won't have an `eval_bytecode` function that
+                // Javy "owns".
+                if !self.plugin.is_user_plugin() {
+                    module.exports.remove("eval_bytecode")?;
+                }
                 module.exports.remove("invoke")?;
                 module.exports.remove("compile_src")?;
 

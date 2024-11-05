@@ -63,12 +63,16 @@ fn main() -> Result<()> {
         Command::Build(opts) => {
             let js = JS::from_file(&opts.input)?;
             let codegen: CodegenOptionGroup = opts.codegen.clone().try_into()?;
+            let plugin = match codegen.plugin {
+                Some(path) => Plugin::new_user_plugin(&path)?,
+                None => Plugin::Default,
+            };
+            let js_opts = JsConfig::from_group_values(&plugin, opts.js.clone())?;
             let mut builder = CodeGenBuilder::new();
             builder
                 .wit_opts(codegen.wit)
-                .source_compression(codegen.source_compression);
-
-            let js_opts = JsConfig::from_group_values(&Plugin::Default, opts.js.clone())?;
+                .source_compression(codegen.source_compression)
+                .plugin(plugin);
             let mut gen = if codegen.dynamic {
                 builder.build(CodeGenType::Dynamic, js_opts)?
             } else {
