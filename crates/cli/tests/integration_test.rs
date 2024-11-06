@@ -190,9 +190,7 @@ fn test_promises(builder: &mut Builder) -> Result<()> {
     let mut runner = builder.input("promise.js").build()?;
     let res = runner.exec(&[]);
     let err = res.err().unwrap().downcast::<RunnerError>().unwrap();
-    assert!(str::from_utf8(&err.stderr)
-        .unwrap()
-        .contains("Pending jobs in the event queue."));
+    assert!(err.stderr.contains("Pending jobs in the event queue."));
 
     Ok(())
 }
@@ -272,7 +270,7 @@ fn test_error_handling(builder: &mut Builder) -> Result<()> {
 
     let expected_log_output = "Error:2:9 error\n    at error (function.mjs:2:9)\n    at <anonymous> (function.mjs:5:1)\n\n";
 
-    assert_eq!(expected_log_output, str::from_utf8(&err.stderr).unwrap());
+    assert_eq!(expected_log_output, err.stderr);
     Ok(())
 }
 

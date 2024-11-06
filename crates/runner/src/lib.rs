@@ -224,7 +224,7 @@ pub struct Runner {
 #[derive(Debug)]
 pub struct RunnerError {
     pub stdout: Vec<u8>,
-    pub stderr: Vec<u8>,
+    pub stderr: String,
     pub err: anyhow::Error,
 }
 
@@ -234,7 +234,7 @@ impl Display for RunnerError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "error: {:?}, stdout: {:?}, stderr: {:?}",
+            "error: {:?}, stdout: {:?}, stderr: {}",
             self.err, self.stdout, self.stderr
         )
     }
@@ -809,7 +809,7 @@ impl Runner {
             Ok(_) => Ok((output, logs, fuel_consumed)),
             Err(err) => Err(RunnerError {
                 stdout: output,
-                stderr: logs,
+                stderr: String::from_utf8(logs).unwrap(),
                 err,
             }
             .into()),
