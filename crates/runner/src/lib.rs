@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{anyhow, bail, Result};
 use std::error::Error;
 use std::fmt::{self, Display, Formatter};
 use std::io::{self, Cursor, Write};
@@ -428,7 +428,7 @@ impl Runner {
         })
     }
 
-    pub fn assert_known_base_imports(&self) -> Result<()> {
+    pub fn ensure_expected_imports(&self) -> Result<()> {
         let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
         let instance_name = self.plugin.namespace();
 
@@ -436,43 +436,53 @@ impl Runner {
             .imports()
             .filter(|i| i.module() == instance_name)
             .collect::<Vec<_>>();
-        assert_eq!(4, imports.len());
+        if imports.len() != 4 {
+            bail!("Dynamically linked modules should have exactly 4 imports for {instance_name}");
+        }
 
         let realloc = imports
             .iter()
             .find(|i| i.name() == "canonical_abi_realloc")
-            .expect("Should have canonical_abi_realloc import");
+            .ok_or_else(|| anyhow!("Should have canonical_abi_realloc import"))?;
         let ty = realloc.ty();
         let f = ty.unwrap_func();
-        assert!(f.params().all(|p| p.is_i32()));
-        assert_eq!(4, f.params().len());
-        assert!(f.results().all(|p| p.is_i32()));
-        assert_eq!(1, f.results().len());
+        if !f.params().all(|p| p.is_i32()) || f.params().len() != 4 {
+            bail!("canonical_abi_realloc should accept 4 i32s as parameters");
+        }
+        if !f.results().all(|p| p.is_i32()) || f.results().len() != 1 {
+            bail!("canonical_abi_realloc should return 1 i32 as a result");
+        }
 
-        let memory = imports
+        imports
             .iter()
-            .find(|i| i.name() == "memory" && i.ty().memory().is_some());
-        assert!(memory.is_some(), "Should have memory import");
+            .find(|i| i.name() == "memory" && i.ty().memory().is_some())
+            .ok_or_else(|| anyhow!("Should have memory import named memory"))?;
 
         let eval_bytecode = imports
             .iter()
             .find(|i| i.name() == "eval_bytecode")
-            .expect("Should have eval_bytecode import");
+            .ok_or_else(|| anyhow!("Should have eval_bytecode import"))?;
         let ty = eval_bytecode.ty();
         let f = ty.unwrap_func();
-        assert!(f.params().all(|p| p.is_i32()));
-        assert_eq!(2, f.params().len());
-        assert_eq!(0, f.results().len());
+        if !f.params().all(|p| p.is_i32()) || f.params().len() != 2 {
+            bail!("eval_bytecode should accept 2 i32s as parameters");
+        }
+        if f.results().len() != 0 {
+            bail!("eval_bytecode should return no results");
+        }
 
         let invoke = imports
             .iter()
             .find(|i| i.name() == "invoke")
-            .expect("Should have eval_bytecode import");
+            .ok_or_else(|| anyhow!("Should have invoke import"))?;
         let ty = invoke.ty();
         let f = ty.unwrap_func();
-        assert!(f.params().all(|p| p.is_i32()));
-        assert_eq!(4, f.params().len());
-        assert_eq!(0, f.results().len());
+        if !f.params().all(|p| p.is_i32()) || f.params().len() != 4 {
+            bail!("invoke should accept 4 i32s as parameters");
+        }
+        if f.results().len() != 0 {
+            bail!("invoke should return no results");
+        }
 
         Ok(())
     }
