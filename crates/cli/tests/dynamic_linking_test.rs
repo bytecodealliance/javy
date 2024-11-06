@@ -64,18 +64,6 @@ pub fn check_for_new_imports(builder: &mut Builder) -> Result<()> {
 }
 
 #[javy_cli_test(dyn = true, root = "tests/dynamic-linking-scripts")]
-// If you need to change this test, then you've likely made a breaking change.
-pub fn check_for_new_imports_for_exports(builder: &mut Builder) -> Result<()> {
-    let runner = builder
-        .input("linking-with-func.js")
-        .wit("linking-with-func.wit")
-        .world("foo-test")
-        .build()?;
-
-    runner.assert_known_named_function_imports()
-}
-
-#[javy_cli_test(dyn = true, root = "tests/dynamic-linking-scripts")]
 pub fn test_dynamic_linking_with_arrow_fn(builder: &mut Builder) -> Result<()> {
     let mut runner = builder
         .input("linking-arrow-func.js")

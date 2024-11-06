@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Result};
+use anyhow::{bail, Result};
 use std::error::Error;
 use std::fmt::{self, Display, Formatter};
 use std::io::{self, Cursor, Write};
@@ -432,63 +432,49 @@ impl Runner {
         let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
         let instance_name = self.plugin.namespace();
 
-        let result = module.imports().filter(|i| {
-            if i.module() == instance_name && i.name() == "canonical_abi_realloc" {
-                let ty = i.ty();
-                let f = ty.unwrap_func();
-                return f.params().all(|p| p.is_i32())
-                    && f.params().len() == 4
-                    && f.results().len() == 1
-                    && f.results().all(|r| r.is_i32());
-            }
+        let imports = module
+            .imports()
+            .filter(|i| i.module() == instance_name)
+            .collect::<Vec<_>>();
+        assert_eq!(4, imports.len());
 
-            if i.module() == instance_name && i.name() == "eval_bytecode" {
-                let ty = i.ty();
-                let f = ty.unwrap_func();
-                return f.params().all(|p| p.is_i32())
-                    && f.params().len() == 2
-                    && f.results().len() == 0;
-            }
+        let realloc = imports
+            .iter()
+            .find(|i| i.name() == "canonical_abi_realloc")
+            .expect("Should have canonical_abi_realloc import");
+        let ty = realloc.ty();
+        let f = ty.unwrap_func();
+        assert!(f.params().all(|p| p.is_i32()));
+        assert_eq!(4, f.params().len());
+        assert!(f.results().all(|p| p.is_i32()));
+        assert_eq!(1, f.results().len());
 
-            if i.module() == instance_name && i.name() == "memory" {
-                let ty = i.ty();
-                return ty.memory().is_some();
-            }
+        let memory = imports
+            .iter()
+            .find(|i| i.name() == "memory" && i.ty().memory().is_some());
+        assert!(memory.is_some(), "Should have memory import");
 
-            false
-        });
+        let eval_bytecode = imports
+            .iter()
+            .find(|i| i.name() == "eval_bytecode")
+            .expect("Should have eval_bytecode import");
+        let ty = eval_bytecode.ty();
+        let f = ty.unwrap_func();
+        assert!(f.params().all(|p| p.is_i32()));
+        assert_eq!(2, f.params().len());
+        assert_eq!(0, f.results().len());
 
-        let count = result.count();
-        if count == 3 {
-            Ok(())
-        } else {
-            Err(anyhow!("Unexpected number of imports: {}", count))
-        }
-    }
+        let invoke = imports
+            .iter()
+            .find(|i| i.name() == "invoke")
+            .expect("Should have eval_bytecode import");
+        let ty = invoke.ty();
+        let f = ty.unwrap_func();
+        assert!(f.params().all(|p| p.is_i32()));
+        assert_eq!(4, f.params().len());
+        assert_eq!(0, f.results().len());
 
-    pub fn assert_known_named_function_imports(&self) -> Result<()> {
-        self.assert_known_base_imports()?;
-
-        let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
-        let instance_name = self.plugin.namespace();
-        let result = module.imports().filter(|i| {
-            if i.module() == instance_name && i.name() == "invoke" {
-                let ty = i.ty();
-                let f = ty.unwrap_func();
-
-                return f.params().len() == 4
-                    && f.params().all(|p| p.is_i32())
-                    && f.results().len() == 0;
-            }
-
-            false
-        });
-        let count = result.count();
-        if count == 1 {
-            Ok(())
-        } else {
-            Err(anyhow!("Unexpected number of imports: {}", count))
-        }
+        Ok(())
     }
 
     pub fn assert_producers(&self) -> Result<()> {
