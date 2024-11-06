@@ -60,19 +60,7 @@ fn test_errors_in_exported_functions_are_correctly_reported(builder: &mut Builde
 // If you need to change this test, then you've likely made a breaking change.
 pub fn check_for_new_imports(builder: &mut Builder) -> Result<()> {
     let runner = builder.input("console.js").build()?;
-    runner.assert_known_base_imports()
-}
-
-#[javy_cli_test(dyn = true, root = "tests/dynamic-linking-scripts")]
-// If you need to change this test, then you've likely made a breaking change.
-pub fn check_for_new_imports_for_exports(builder: &mut Builder) -> Result<()> {
-    let runner = builder
-        .input("linking-with-func.js")
-        .wit("linking-with-func.wit")
-        .world("foo-test")
-        .build()?;
-
-    runner.assert_known_named_function_imports()
+    runner.ensure_expected_imports()
 }
 
 #[javy_cli_test(dyn = true, root = "tests/dynamic-linking-scripts")]
