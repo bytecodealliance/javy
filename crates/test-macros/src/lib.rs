@@ -290,30 +290,18 @@ fn expand_cli_tests(test_config: &CliTestConfig, func: syn::ItemFn) -> Result<To
             // releases.
             if command_name == "Compile" {
                 quote! {
-                    let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
                     let plugin = javy_runner::Plugin::V2;
-                    let namespace = plugin.namespace();
-                    builder.plugin(plugin);
                     builder.preload(
-                        namespace.into(),
-                        root.join("src").join("javy_quickjs_provider_v2.wasm")
+                        plugin.namespace().into(),
+                        plugin.path(),
                     );
+                    builder.plugin(plugin);
                 }
             } else {
                 quote! {
-                    let mut root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-                    root.pop();
-                    root.pop();
-                    root = root.join(
-                        std::path::Path::new("target")
-                            .join("wasm32-wasip1")
-                            .join("release")
-                            .join("plugin_wizened.wasm"),
-                    );
                     let plugin = javy_runner::Plugin::Default;
-                    let namespace = plugin.namespace();
+                    builder.preload(plugin.namespace().into(), plugin.path());
                     builder.plugin(plugin);
-                    builder.preload(namespace.into(), root);
                 }
             }
         } else {

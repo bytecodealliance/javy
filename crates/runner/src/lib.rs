@@ -35,6 +35,27 @@ impl Plugin {
             Self::User { .. } => "test_plugin",
         }
     }
+
+    pub fn path(&self) -> PathBuf {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        match self {
+            Self::V2 => root
+                .join("..")
+                .join("..")
+                .join("crates")
+                .join("cli")
+                .join("src")
+                .join("javy_quickjs_provider_v2.wasm"),
+            Self::User => root.join("test_plugin.wasm"),
+            Self::Default => root
+                .join("..")
+                .join("..")
+                .join("target")
+                .join("wasm32-wasip1")
+                .join("release")
+                .join("plugin_wizened.wasm"),
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -589,7 +610,7 @@ impl Runner {
 
         if let Plugin::User = plugin {
             args.push("-C".to_string());
-            args.push(format!("plugin={}", Self::plugin_path().to_str().unwrap()));
+            args.push(format!("plugin={}", plugin.path().to_str().unwrap()));
         }
 
         args
@@ -814,10 +835,6 @@ impl Runner {
             }
             .into()),
         }
-    }
-
-    fn plugin_path() -> PathBuf {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("test_plugin.wasm")
     }
 }
 
