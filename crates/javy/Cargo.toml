@@ -1,6 +1,6 @@
 [package]
 name = "javy"
-version = "3.0.2-alpha.1"
+version = "3.0.2"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
