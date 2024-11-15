@@ -7,6 +7,15 @@ use wasmtime::{AsContextMut, Engine, Linker, Module, Store};
 use javy_test_macros::javy_cli_test;
 
 #[javy_cli_test]
+fn test_empty(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder.input("empty.js").build()?;
+
+    let (_, _, fuel_consumed) = run(&mut runner, &[]);
+    assert_fuel_consumed_within_threshold(22_590, fuel_consumed);
+    Ok(())
+}
+
+#[javy_cli_test]
 fn test_identity(builder: &mut Builder) -> Result<()> {
     let mut runner = builder.build()?;
 
