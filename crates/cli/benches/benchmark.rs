@@ -138,6 +138,15 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         for compilation in [Compilation::JustInTime, Compilation::AheadOfTime] {
             function_cases.push(
                 FunctionCase::new(
+                    Path::new("benches/functions/empty"),
+                    Path::new("index.js"),
+                    &compilation,
+                    linking,
+                )
+                .unwrap(),
+            );
+            function_cases.push(
+                FunctionCase::new(
                     Path::new("benches/functions/simple_discount"),
                     Path::new("index.js"),
                     &compilation,
@@ -182,13 +191,14 @@ pub fn criterion_benchmark(c: &mut Criterion) {
 
 fn execute_javy(index_js: &Path, wasm: &Path, linking: &Linking) -> Result<()> {
     let mut args = vec![
-        "compile",
+        "build",
         index_js.to_str().unwrap(),
         "-o",
         wasm.to_str().unwrap(),
     ];
     if let Linking::Dynamic = linking {
-        args.push("-d");
+        args.push("-C");
+        args.push("dynamic");
     }
     let status_code = Command::new(Path::new("../../target/release/javy").to_str().unwrap())
         .args(args)
