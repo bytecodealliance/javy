@@ -16,8 +16,6 @@ jobs:
           submodules: true
 
       - uses: ./.github/actions/ci-shared-setup
-        with:
-          os: linux
 
       - name: WPT
         run: |
