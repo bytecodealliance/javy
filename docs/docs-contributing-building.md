@@ -4,9 +4,6 @@
 - [rustup](https://rustup.rs/)
 - Stable Rust, installed via `rustup install stable && rustup default stable`
 - wasm32-wasip1, can be installed via `rustup target add wasm32-wasip1`
-- cmake, depending on your operating system and architecture, it might not be
-  installed by default. On MacOS it can be installed with `homebrew` via `brew
-  install cmake`. On Ubuntu, `sudo apt-get install cmake`.
 - Rosetta 2 if running MacOS on Apple Silicon, can be installed via
   `softwareupdate --install-rosetta`
 
