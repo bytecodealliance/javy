@@ -70,25 +70,37 @@ functions that need to use byte arrays, strings, or structured data.
 
 ## The full plugin API
 
-The Wasm API the Javy CLI expects Javy plugins to expose is the following:
-- Exported `initialize_runtime() -> ()` function. This will initialize a mutable
-  global containing the Javy runtime for use by `compile_src` and `invoke`.
-- Exported
-  `canonical_abi_realloc(orig_ptr: i32, orig_len: i32, new_ptr: i32, new_len: i32) -> ptr: i32`
-  function. This is used to allocate memory in the plugin module.
-- Exported `compile_src(src_ptr: i32, src_len: i32) -> bytecode_wide_ptr: i32`
-  function. This is used to compile JavaScript source code to QuickJS bytecode.
-  The return pointer points to a tuple of
-  `(bytecode_ptr: i32, bytecode_len: i32)` in the plugin instance's linear
-  memory.
-- Exported
-  `invoke(bytecode_ptr: i32, bytecode_len: i32, fn_name_ptr: i32, fn_name_len: i32) -> ()`
-  function. This is used to evaluate the JavaScript code and optionally to
-  call an exported JS function if `fn_name_ptr` is not `0`.
-- Custom section named `import_namespace` containing a UTF-8 encoded string.
-  This is used to determine the namespace that will be used for the Wasm
-  imports in dynamically linked modules built with this plugin.
-
-The `javy-plugin-api` crate will export implementations of all required exported
+This is the Wasm API the Javy CLI expects Javy plugins to expose. The
+`javy-plugin-api` crate will export implementations of all required exported
 functions except `initialize_runtime`. `import_namespace!` will define the
 `import_namespace` custom section.
+
+### Exported Wasm functions
+
+#### `initialize_runtime() -> ()`
+
+This will initialize a mutable global containing the Javy runtime for use by
+`compile_src` and `invoke`.
+
+#### `canonical_abi_realloc(orig_ptr: i32, orig_len: i32, new_ptr: i32, new_len: i32) -> ptr: i32`
+
+This is used to allocate memory in the plugin module.
+
+#### `compile_src(src_ptr: i32, src_len: i32) -> bytecode_wide_ptr: i32`
+
+This is used to compile JavaScript source code to QuickJS bytecode. The return
+pointer points to a tuple of `(bytecode_ptr: i32, bytecode_len: i32)` in the
+plugin instance's linear memory.
+
+#### `invoke(bytecode_ptr: i32, bytecode_len: i32, fn_name_ptr: i32, fn_name_len: i32) -> ()`
+
+This is used to evaluate the JavaScript code and optionally to call an exported
+JS function if `fn_name_ptr` is not `0`.
+
+### Custom sections
+
+#### `import_namespace`
+
+Contains a UTF-8 encoded string. This is used to determine the namespace that
+will be used for the Wasm imports in dynamically linked modules built with this
+plugin.
