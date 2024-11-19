@@ -18,8 +18,8 @@ jobs:
       - name: Build test-plugin
         # Need to build Javy default plugin and Javy CLI to run `javy init-plugin` on the test plugin.
         run: |
-          cargo build --package=javy-plugin --release --target=wasm32-wasip1
-          CARGO_PROFILE_RELEASE_LTO=off cargo build --package=javy-cli --release
+          cargo build --package=javy-plugin --target=wasm32-wasip1 --release --features=experimental_event_loop
+          CARGO_PROFILE_RELEASE_LTO=off cargo build --package=javy-cli --release --features=experimental_event_loop
           cargo build --package=javy-test-plugin --release --target=wasm32-wasip1
           target/release/javy init-plugin target/wasm32-wasip1/release/test_plugin.wasm -o crates/runner/test_plugin.wasm
 
