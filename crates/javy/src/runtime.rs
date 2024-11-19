@@ -44,8 +44,6 @@ impl Runtime {
     pub fn new(config: Config) -> Result<Self> {
         let rt = ManuallyDrop::new(QRuntime::new()?);
 
-        // See comment above about configuring GC behaviour.
-        rt.set_gc_threshold(usize::MAX);
         let context = Self::build_from_config(&rt, config)?;
         Ok(Self { inner: rt, context })
     }
