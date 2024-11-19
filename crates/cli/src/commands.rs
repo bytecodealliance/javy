@@ -46,7 +46,7 @@ pub enum Command {
     Build(BuildCommandOpts),
     /// Emits the plugin binary that is required to run dynamically
     /// linked WebAssembly modules.
-    EmitProvider(EmitProviderCommandOpts),
+    EmitPlugin(EmitPluginCommandOpts),
     /// Initializes a plugin binary.
     #[command(arg_required_else_help = true)]
     InitPlugin(InitPluginCommandOpts),
@@ -64,7 +64,7 @@ pub struct CompileCommandOpts {
 
     #[arg(short)]
     /// Creates a smaller module that requires a dynamically linked QuickJS
-    /// plugin Wasm module to execute (see `emit-provider` command).
+    /// plugin Wasm module to execute (see `emit-plugin` command).
     pub dynamic: bool,
 
     #[structopt(long)]
@@ -107,7 +107,7 @@ pub struct BuildCommandOpts {
 }
 
 #[derive(Debug, Parser)]
-pub struct EmitProviderCommandOpts {
+pub struct EmitPluginCommandOpts {
     #[structopt(short, long)]
     /// Output path for the plugin binary (default is stdout).
     pub out: Option<PathBuf>,
@@ -196,7 +196,7 @@ option_group! {
     #[derive(Clone, Debug)]
     pub enum CodegenOption {
         /// Creates a smaller module that requires a dynamically linked QuickJS
-        /// plugin Wasm module to execute (see `emit-provider` command).
+        /// plugin Wasm module to execute (see `emit-plugin` command).
         Dynamic(bool),
         /// Optional path to WIT file describing exported functions. Only
         /// supports function exports with no arguments and no return values.
