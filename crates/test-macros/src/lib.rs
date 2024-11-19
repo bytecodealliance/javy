@@ -299,7 +299,7 @@ fn expand_cli_tests(test_config: &CliTestConfig, func: syn::ItemFn) -> Result<To
                 }
             } else {
                 quote! {
-                    let plugin = javy_runner::Plugin::Default;
+                    let plugin = javy_runner::Plugin::DefaultAsUser;
                     builder.preload(plugin.namespace().into(), plugin.path());
                     builder.plugin(plugin);
                 }

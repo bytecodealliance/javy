@@ -234,11 +234,18 @@ impl TryFrom<Vec<GroupOption<CodegenOption>>> for CodegenOptionGroup {
 
         options.wit = WitOptions::from_tuple((wit.cloned(), wit_world.cloned()))?;
 
-        // This is temporary. So I can make the change for dynamic modules
-        // separately because it will be a breaking change.
-        if options.dynamic && options.plugin.is_some() {
-            bail!("Cannot use plugins for building dynamic modules");
+        // We never want to assume the import namespace to use for a
+        // dynamically linked module. If we do assume the import namespace, any
+        // change to that assumed import namespace can result in new
+        // dynamically linked modules not working on existing execution
+        // environments because there will be unmet import errors when trying
+        // to instantiate those modules. Since we can't assume the import
+        // namespace, we must require a plugin so we can derive the import
+        // namespace from the plugin.
+        if options.dynamic && options.plugin.is_none() {
+            bail!("Must specify plugin when using dynamic linking");
         }
+
         Ok(options)
     }
 }
@@ -353,6 +360,8 @@ impl JsConfig {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use crate::{
         commands::{JsGroupOption, JsGroupValue},
         js_config::JsConfig,
@@ -360,12 +369,11 @@ mod tests {
     };
 
     use super::{CodegenOption, CodegenOptionGroup, GroupOption};
-    use anyhow::Result;
+    use anyhow::{Error, Result};
 
     #[test]
     fn js_config_from_config_values() -> Result<()> {
         let group = JsConfig::from_group_values(&Plugin::Default, vec![])?;
-        assert!(!group.has_configs());
         assert_eq!(group.get("redirect-stdout-to-stderr"), None);
         assert_eq!(group.get("javy-json"), None);
         assert_eq!(group.get("javy-stream-io"), None);
@@ -501,10 +509,14 @@ mod tests {
         let group: CodegenOptionGroup = vec![].try_into()?;
         assert_eq!(group, CodegenOptionGroup::default());
 
-        let raw = vec![GroupOption(vec![CodegenOption::Dynamic(true)])];
+        let raw = vec![GroupOption(vec![
+            CodegenOption::Dynamic(true),
+            CodegenOption::Plugin(PathBuf::from("file.wasm")),
+        ])];
         let group: CodegenOptionGroup = raw.try_into()?;
         let expected = CodegenOptionGroup {
             dynamic: true,
+            plugin: Some(PathBuf::from("file.wasm")),
             ..Default::default()
         };
 
@@ -518,6 +530,13 @@ mod tests {
         };
 
         assert_eq!(group, expected);
+
+        let raw = vec![GroupOption(vec![CodegenOption::Dynamic(true)])];
+        let result: Result<CodegenOptionGroup, Error> = raw.try_into();
+        assert_eq!(
+            result.err().unwrap().to_string(),
+            "Must specify plugin when using dynamic linking"
+        );
 
         Ok(())
     }
