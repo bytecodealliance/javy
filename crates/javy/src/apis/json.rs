@@ -58,15 +58,21 @@ impl Intrinsic for Json {
 
 fn register<'js>(this: Ctx<'js>) -> Result<()> {
     let global = this.globals();
+
+    const DEFAULT_PARSE_KEY: &str = "__javy_json_parse";
+    const DEFAULT_STRINGIFY_KEY: &str = "__javy_json_stringify";
+
     let json: Object = global.get("JSON")?;
     let default_parse: Function = json.get("parse")?;
+    global.set(DEFAULT_PARSE_KEY, default_parse)?;
     let default_stringify: Function = json.get("stringify")?;
+    global.set(DEFAULT_STRINGIFY_KEY, default_stringify)?;
 
     let parse = Function::new(
         this.clone(),
-        MutFn::new(move |cx: Ctx<'js>, args: Rest<Value<'js>>| {
-            call_json_parse(hold!(cx.clone(), args), default_parse.clone())
-                .map_err(|e| to_js_error(cx, e))
+        MutFn::new(|cx: Ctx<'js>, args: Rest<Value<'js>>| {
+            let default_parse: Function = cx.globals().get(DEFAULT_PARSE_KEY)?;
+            call_json_parse(hold!(cx.clone(), args), default_parse).map_err(|e| to_js_error(cx, e))
         }),
     )?;
 
@@ -78,8 +84,9 @@ fn register<'js>(this: Ctx<'js>) -> Result<()> {
 
     let stringify = Function::new(
         this.clone(),
-        MutFn::new(move |cx: Ctx<'js>, args: Rest<Value<'js>>| {
-            call_json_stringify(hold!(cx.clone(), args), default_stringify.clone())
+        MutFn::new(|cx: Ctx<'js>, args: Rest<Value<'js>>| {
+            let default_stringify: Function = cx.globals().get(DEFAULT_STRINGIFY_KEY)?;
+            call_json_stringify(hold!(cx.clone(), args), default_stringify)
                 .map_err(|e| to_js_error(cx, e))
         }),
     )?;

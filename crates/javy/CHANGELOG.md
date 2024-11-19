@@ -8,6 +8,11 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Addressed memory leak when registering `JSON.parse` and `JSON.stringify`
+  functions.
+
 ## [3.0.2] - 2024-11-12
 
 ### Changed
