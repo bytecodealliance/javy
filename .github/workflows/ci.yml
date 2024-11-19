@@ -9,20 +9,13 @@ on:
 jobs:
   plugin:
     name: test_plugin
-    # We test on `macos-latest` to accurately reflect
-    # the plugin Wasm binary that we attach to the releases,
-    # which is built on the latest macOS too.
-    # This is also helpful for testing fuel
-    # consumption in tests.
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
 
       - uses: ./.github/actions/ci-shared-setup
-        with:
-          os: macos
 
       - name: Install cargo-hack
         uses: taiki-e/install-action@cargo-hack
@@ -65,8 +58,6 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: ./.github/actions/ci-shared-setup
-        with:
-          os: linux
 
       - uses: actions/download-artifact@v4
         with:
