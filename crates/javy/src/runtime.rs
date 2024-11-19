@@ -44,8 +44,6 @@ impl Runtime {
     pub fn new(config: Config) -> Result<Self> {
         let rt = ManuallyDrop::new(QRuntime::new()?);
 
-        // See comment above about configuring GC behaviour.
-        rt.set_gc_threshold(usize::MAX);
         let context = Self::build_from_config(&rt, config)?;
         Ok(Self { inner: rt, context })
     }
@@ -54,6 +52,11 @@ impl Runtime {
         let cfg = cfg.validate()?;
         let intrinsics = &cfg.intrinsics;
         let javy_intrinsics = &cfg.javy_intrinsics;
+
+        rt.set_gc_threshold(cfg.gc_threshold);
+        rt.set_memory_limit(cfg.memory_limit);
+        rt.set_max_stack_size(cfg.max_stack_size);
+
         // We always set Random given that the principles around snapshotting and
         // random are applicable when using Javy from the CLI (the usage of
         // Wizer from the CLI is not optional).

@@ -1533,7 +1533,7 @@ dependencies = [
 
 [[package]]
 name = "javy"
-version = "3.0.3-alpha.1"
+version = "3.1.0-alpha.1"
 dependencies = [
  "anyhow",
  "bitflags",
