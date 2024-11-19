@@ -8,7 +8,7 @@ mod plugins;
 mod wit;
 
 use crate::codegen::WitOptions;
-use crate::commands::{Cli, Command, EmitProviderCommandOpts};
+use crate::commands::{Cli, Command, EmitPluginCommandOpts};
 use anyhow::Result;
 use clap::Parser;
 use codegen::{CodeGenBuilder, CodeGenType};
@@ -24,7 +24,7 @@ fn main() -> Result<()> {
     let args = Cli::parse();
 
     match &args.command {
-        Command::EmitProvider(opts) => emit_plugin(opts),
+        Command::EmitPlugin(opts) => emit_plugin(opts),
         Command::Compile(opts) => {
             eprintln!(
                 r#"
@@ -99,7 +99,7 @@ fn main() -> Result<()> {
     }
 }
 
-fn emit_plugin(opts: &EmitProviderCommandOpts) -> Result<()> {
+fn emit_plugin(opts: &EmitPluginCommandOpts) -> Result<()> {
     let mut file: Box<dyn Write> = match opts.out.as_ref() {
         Some(path) => Box::new(File::create(path)?),
         _ => Box::new(std::io::stdout()),

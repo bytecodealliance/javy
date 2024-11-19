@@ -17,7 +17,7 @@ javy build -C dynamic -o embedded.wasm embedded.js
 ```
 2. Next emit the Javy plugin
 ```shell
-javy emit-provider -o plugin.wasm
+javy emit-plugin -o plugin.wasm
 ```
 3. Then we can run `host.mjs`
 ```shell

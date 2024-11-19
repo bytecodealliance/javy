@@ -24,7 +24,7 @@ bytecode representation.
 The `plugin.wasm` module is available as an asset on the Javy
 release you are using. 
 
-It can also be obtained by running `javy emit-provider -o
+It can also be obtained by running `javy emit-plugin -o
 <path>` to write the module into `<path>`.
 
 #### Creating and running a dynamically linked module througy the CLI
@@ -34,7 +34,7 @@ Run:
 ```
 $ echo 'console.log("hello world!");' > my_code.js
 $ javy build -C dynamic -o my_code.wasm my_code.js
-$ javy emit-provider -o plugin.wasm
+$ javy emit-plugin -o plugin.wasm
 $ wasmtime run --preload javy_quickjs_provider_v3=plugin.wasm my_code.wasm
 hello world!
 ```
