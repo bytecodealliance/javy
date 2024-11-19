@@ -59,6 +59,14 @@ pub struct Config {
     /// This setting requires the `JSON` intrinsic to be enabled, and the `json`
     /// crate feature to be enabled as well.
     pub(crate) simd_json_builtins: bool,
+    /// The threshold to trigger garbage collection. Default is usize::MAX.
+    pub(crate) gc_threshold: usize,
+    /// The limit on the max amount of memory the runtime will use. Default is
+    /// unlimited.
+    pub(crate) memory_limit: usize,
+    /// The limit on the max size of stack the runtime will use. Default is
+    /// 256 * 1024.
+    pub(crate) max_stack_size: usize,
 }
 
 impl Default for Config {
@@ -71,6 +79,9 @@ impl Default for Config {
             javy_intrinsics: JavyIntrinsics::empty(),
             redirect_stdout_to_stderr: false,
             simd_json_builtins: false,
+            gc_threshold: usize::MAX,
+            memory_limit: usize::MAX,
+            max_stack_size: 256 * 1024, // from rquickjs
         }
     }
 }
@@ -195,6 +206,27 @@ impl Config {
     #[cfg(feature = "json")]
     pub fn simd_json_builtins(&mut self, enable: bool) -> &mut Self {
         self.simd_json_builtins = enable;
+        self
+    }
+
+    /// The number of bytes to use to trigger garbage collection.
+    /// The default is usize::MAX.
+    pub fn gc_threshold(&mut self, bytes: usize) -> &mut Self {
+        self.gc_threshold = bytes;
+        self
+    }
+
+    /// The limit on the max amount of memory the runtime will use. Default is
+    /// unlimited.
+    pub fn memory_limit(&mut self, bytes: usize) -> &mut Self {
+        self.memory_limit = bytes;
+        self
+    }
+
+    /// The limit on the max size of stack the runtime will use. Default is
+    /// 256 * 1024.
+    pub fn max_stack_size(&mut self, bytes: usize) -> &mut Self {
+        self.max_stack_size = bytes;
         self
     }
 
