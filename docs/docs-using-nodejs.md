@@ -11,15 +11,15 @@ This example shows how to use a dynamically linked Javy compiled Wasm module. We
 
 ### Steps
 
-1. The first step is to compile the `embedded.js` with Javy using dynamic linking:
+1. Emit the Javy plugin
 ```shell
-javy build -C dynamic -o embedded.wasm embedded.js
+javy emit-plugin -o plugin.wasm
 ```
-2. Next emit the Javy plugin
+2. Compile the `embedded.js` with Javy using dynamic linking:
 ```shell
-javy emit-provider -o plugin.wasm
+javy build -C dynamic -C plugin=plugin.wasm -o embedded.wasm embedded.js
 ```
-3. Then we can run `host.mjs`
+3. Run `host.mjs`
 ```shell
 node --no-warnings=ExperimentalWarning host.mjs
 ```

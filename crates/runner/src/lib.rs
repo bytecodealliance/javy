@@ -23,6 +23,8 @@ pub enum Plugin {
     V2,
     Default,
     User,
+    /// Pass the default plugin on the CLI as a user plugin.
+    DefaultAsUser,
 }
 
 impl Plugin {
@@ -31,7 +33,7 @@ impl Plugin {
             Self::V2 => "javy_quickjs_provider_v2",
             // Could try and derive this but not going to for now since tests
             // will break if it changes.
-            Self::Default => "javy_quickjs_provider_v3",
+            Self::Default | Self::DefaultAsUser => "javy_quickjs_provider_v3",
             Self::User { .. } => "test_plugin",
         }
     }
@@ -47,7 +49,7 @@ impl Plugin {
                 .join("src")
                 .join("javy_quickjs_provider_v2.wasm"),
             Self::User => root.join("test_plugin.wasm"),
-            Self::Default => root
+            Self::Default | Self::DefaultAsUser => root
                 .join("..")
                 .join("..")
                 .join("target")
@@ -428,7 +430,7 @@ impl Runner {
         })
     }
 
-    pub fn ensure_expected_imports(&self) -> Result<()> {
+    pub fn ensure_expected_imports(&self, expect_eval_bytecode: bool) -> Result<()> {
         let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
         let instance_name = self.plugin.namespace();
 
@@ -436,8 +438,9 @@ impl Runner {
             .imports()
             .filter(|i| i.module() == instance_name)
             .collect::<Vec<_>>();
-        if imports.len() != 4 {
-            bail!("Dynamically linked modules should have exactly 4 imports for {instance_name}");
+        let expected_import_count = if expect_eval_bytecode { 4 } else { 3 };
+        if imports.len() != expected_import_count {
+            bail!("Dynamically linked modules should have exactly {expected_import_count} imports for {instance_name}");
         }
 
         let realloc = imports
@@ -458,17 +461,19 @@ impl Runner {
             .find(|i| i.name() == "memory" && i.ty().memory().is_some())
             .ok_or_else(|| anyhow!("Should have memory import named memory"))?;
 
-        let eval_bytecode = imports
-            .iter()
-            .find(|i| i.name() == "eval_bytecode")
-            .ok_or_else(|| anyhow!("Should have eval_bytecode import"))?;
-        let ty = eval_bytecode.ty();
-        let f = ty.unwrap_func();
-        if !f.params().all(|p| p.is_i32()) || f.params().len() != 2 {
-            bail!("eval_bytecode should accept 2 i32s as parameters");
-        }
-        if f.results().len() != 0 {
-            bail!("eval_bytecode should return no results");
+        if expect_eval_bytecode {
+            let eval_bytecode = imports
+                .iter()
+                .find(|i| i.name() == "eval_bytecode")
+                .ok_or_else(|| anyhow!("Should have eval_bytecode import"))?;
+            let ty = eval_bytecode.ty();
+            let f = ty.unwrap_func();
+            if !f.params().all(|p| p.is_i32()) || f.params().len() != 2 {
+                bail!("eval_bytecode should accept 2 i32s as parameters");
+            }
+            if f.results().len() != 0 {
+                bail!("eval_bytecode should return no results");
+            }
         }
 
         let invoke = imports
@@ -604,7 +609,7 @@ impl Runner {
             args.push(format!("text-encoding={}", if enabled { "y" } else { "n" }));
         }
 
-        if let Plugin::User = plugin {
+        if matches!(plugin, Plugin::User | Plugin::DefaultAsUser) {
             args.push("-C".to_string());
             args.push(format!("plugin={}", plugin.path().to_str().unwrap()));
         }

@@ -20,7 +20,7 @@ on:
 jobs:
   compile_plugin:
     name: compile_plugin
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -34,7 +34,7 @@ jobs:
       - name: Install wizer
         shell: bash
         run: |
-          wget -nv https://github.com/bytecodealliance/wizer/releases/download/v${{ steps.wizer_version.outputs.WIZER_VERSION }}/wizer-v${{ steps.wizer_version.outputs.WIZER_VERSION }}-x86_64-macos.tar.xz -O /tmp/wizer.tar.xz
+          wget -nv https://github.com/bytecodealliance/wizer/releases/download/v${{ steps.wizer_version.outputs.WIZER_VERSION }}/wizer-v${{ steps.wizer_version.outputs.WIZER_VERSION }}-x86_64-linux.tar.xz -O /tmp/wizer.tar.xz
           mkdir /tmp/wizer
           tar xvf /tmp/wizer.tar.xz --strip-components=1 -C /tmp/wizer
           echo "/tmp/wizer" >> $GITHUB_PATH

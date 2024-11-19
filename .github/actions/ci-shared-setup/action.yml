@@ -1,9 +1,5 @@
 name: "Shared CI setup"
 description: "Common setup for CI pipeline workflow jobs"
-inputs:
-  os:
-    description: "The operating system for downloading binaries"
-    required: true
 runs:
   using: "composite"
   steps:
@@ -11,19 +7,19 @@ runs:
       uses: actions/cache@v3
       with:
         path: ~/.cargo
-        key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
+        key: cargo-${{ hashFiles('Cargo.toml') }}
         restore-keys: |
-          ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
-          ${{ runner.os }}-cargo
+          cargo-${{ hashFiles('Cargo.toml') }}
+          cargo
 
     - name: Cargo Target Cache
       uses: actions/cache@v3
       with:
         path: target
-        key: ${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
+        key: cargo-target-${{ hashFiles('Cargo.toml') }}
         restore-keys: |
-          ${{ runner.os }}-cargo-target-${{ hashFiles('Cargo.toml') }}
-          ${{ runner.os }}-cargo-target
+          cargo-target-${{ hashFiles('Cargo.toml') }}
+          cargo-target
 
     - name: Read wasmtime version
       id: wasmtime_version
@@ -35,7 +31,7 @@ runs:
     - name: Install wasmtime-cli
       shell: bash
       run: |
-        wget -nv 'https://github.com/bytecodealliance/wasmtime/releases/download/v${{ steps.wasmtime_version.outputs.wasmtime_version }}/wasmtime-v${{ steps.wasmtime_version.outputs.wasmtime_version }}-x86_64-${{ inputs.os }}.tar.xz' -O /tmp/wasmtime.tar.xz
+        wget -nv 'https://github.com/bytecodealliance/wasmtime/releases/download/v${{ steps.wasmtime_version.outputs.wasmtime_version }}/wasmtime-v${{ steps.wasmtime_version.outputs.wasmtime_version }}-x86_64-linux.tar.xz' -O /tmp/wasmtime.tar.xz
         mkdir /tmp/wasmtime
         tar xvf /tmp/wasmtime.tar.xz --strip-components=1 -C /tmp/wasmtime
         echo "/tmp/wasmtime" >> $GITHUB_PATH
