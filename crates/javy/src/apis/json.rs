@@ -39,7 +39,6 @@ use std::{
 };
 
 const DEFAULT_PARSE_KEY: &str = "__javy_json_parse";
-const DEFAULT_STRINGIFY_KEY: &str = "__javy_json_stringify";
 
 /// Intrinsic to attach faster JSON.{parse/stringify} functions.
 pub struct Json;
@@ -65,8 +64,6 @@ fn register<'js>(this: Ctx<'js>) -> Result<()> {
     let json: Object = global.get("JSON")?;
     let default_parse: Function = json.get("parse")?;
     global.set(DEFAULT_PARSE_KEY, default_parse)?;
-    let default_stringify: Function = json.get("stringify")?;
-    global.set(DEFAULT_STRINGIFY_KEY, default_stringify)?;
 
     let parse = Function::new(
         this.clone(),
@@ -174,22 +171,18 @@ fn call_json_stringify(args: Args<'_>) -> Result<Value<'_>> {
             let str = JSString::from_str(this, &str)?;
             Ok(str.into_value())
         }
-        _ => {
-            // Similar to the parse case, if there's more than one argument,
-            // defer to the built-in JSON.stringify, which will take care of
-            // validating invoking the replacer function and/or applying the
-            // space argument.
-            let default: Function = this.globals().get(DEFAULT_STRINGIFY_KEY)?;
-            if args.len() == 2 {
-                default
-                    .call((args[0].clone(), args[1].clone()))
-                    .map_err(anyhow::Error::new)
-            } else {
-                default
-                    .call((args[0].clone(), args[1].clone(), args[2].clone()))
-                    .map_err(anyhow::Error::new)
-            }
-        }
+        2 => Ok(this
+            .json_stringify_replacer(args[0].clone(), args[1].clone())?
+            .map_or_else(
+                || Value::new_undefined(this.clone()),
+                |str| str.into_value(),
+            )),
+        _ => Ok(this
+            .json_stringify_replacer_space(args[0].clone(), args[1].clone(), args[2].clone())?
+            .map_or_else(
+                || Value::new_undefined(this.clone()),
+                |str| str.into_value(),
+            )),
     }
 }
 
