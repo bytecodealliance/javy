@@ -38,6 +38,9 @@ use std::{
     ptr::NonNull,
 };
 
+const DEFAULT_PARSE_KEY: &str = "__javy_json_parse";
+const DEFAULT_STRINGIFY_KEY: &str = "__javy_json_stringify";
+
 /// Intrinsic to attach faster JSON.{parse/stringify} functions.
 pub struct Json;
 
@@ -59,9 +62,6 @@ impl Intrinsic for Json {
 fn register<'js>(this: Ctx<'js>) -> Result<()> {
     let global = this.globals();
 
-    const DEFAULT_PARSE_KEY: &str = "__javy_json_parse";
-    const DEFAULT_STRINGIFY_KEY: &str = "__javy_json_stringify";
-
     let json: Object = global.get("JSON")?;
     let default_parse: Function = json.get("parse")?;
     global.set(DEFAULT_PARSE_KEY, default_parse)?;
@@ -71,8 +71,7 @@ fn register<'js>(this: Ctx<'js>) -> Result<()> {
     let parse = Function::new(
         this.clone(),
         MutFn::new(|cx: Ctx<'js>, args: Rest<Value<'js>>| {
-            let default_parse: Function = cx.globals().get(DEFAULT_PARSE_KEY)?;
-            call_json_parse(hold!(cx.clone(), args), default_parse).map_err(|e| to_js_error(cx, e))
+            call_json_parse(hold!(cx.clone(), args)).map_err(|e| to_js_error(cx, e))
         }),
     )?;
 
@@ -85,9 +84,7 @@ fn register<'js>(this: Ctx<'js>) -> Result<()> {
     let stringify = Function::new(
         this.clone(),
         MutFn::new(|cx: Ctx<'js>, args: Rest<Value<'js>>| {
-            let default_stringify: Function = cx.globals().get(DEFAULT_STRINGIFY_KEY)?;
-            call_json_stringify(hold!(cx.clone(), args), default_stringify)
-                .map_err(|e| to_js_error(cx, e))
+            call_json_stringify(hold!(cx.clone(), args)).map_err(|e| to_js_error(cx, e))
         }),
     )?;
 
@@ -102,7 +99,7 @@ fn register<'js>(this: Ctx<'js>) -> Result<()> {
     Ok(())
 }
 
-fn call_json_parse<'a>(args: Args<'a>, default: Function<'a>) -> Result<Value<'a>> {
+fn call_json_parse(args: Args<'_>) -> Result<Value<'_>> {
     let (this, args) = args.release();
 
     match args.len() {
@@ -141,6 +138,7 @@ fn call_json_parse<'a>(args: Args<'a>, default: Function<'a>) -> Result<Value<'a
             // reviver argument.
             //
             // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse#reviver.
+            let default: Function = this.globals().get(DEFAULT_PARSE_KEY)?;
             default
                 .call((args[0].clone(), args[1].clone()))
                 .map_err(|e| anyhow!(e))
@@ -148,7 +146,7 @@ fn call_json_parse<'a>(args: Args<'a>, default: Function<'a>) -> Result<Value<'a
     }
 }
 
-fn call_json_stringify<'a>(args: Args<'a>, default: Function<'a>) -> Result<Value<'a>> {
+fn call_json_stringify(args: Args<'_>) -> Result<Value<'_>> {
     let (this, args) = args.release();
 
     match args.len() {
@@ -181,6 +179,7 @@ fn call_json_stringify<'a>(args: Args<'a>, default: Function<'a>) -> Result<Valu
             // defer to the built-in JSON.stringify, which will take care of
             // validating invoking the replacer function and/or applying the
             // space argument.
+            let default: Function = this.globals().get(DEFAULT_STRINGIFY_KEY)?;
             if args.len() == 2 {
                 default
                     .call((args[0].clone(), args[1].clone()))
