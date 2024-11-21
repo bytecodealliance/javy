@@ -12,6 +12,11 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 - `gc_threshold`, `memory_limit`, and `max_stack_size` properties for `Config`.
 
+### Fixed
+
+- Addressed memory leak when registering `JSON.parse` and `JSON.stringify`
+  functions.
+
 ## [3.0.2] - 2024-11-12
 
 ### Changed

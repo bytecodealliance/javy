@@ -36,7 +36,11 @@ use anyhow::{anyhow, bail, Result};
 use std::{
     io::{Read, Write},
     ptr::NonNull,
+    sync::OnceLock,
+    time::SystemTime,
 };
+
+static DEFAULT_PARSE_KEY: OnceLock<String> = OnceLock::new();
 
 /// Intrinsic to attach faster JSON.{parse/stringify} functions.
 pub struct Json;
@@ -58,15 +62,20 @@ impl Intrinsic for Json {
 
 fn register<'js>(this: Ctx<'js>) -> Result<()> {
     let global = this.globals();
+
     let json: Object = global.get("JSON")?;
     let default_parse: Function = json.get("parse")?;
-    let default_stringify: Function = json.get("stringify")?;
+    let millis = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)?
+        .subsec_millis();
+    // Make the global key unstable so users can't rely on it being stable.
+    let default_parse_key = DEFAULT_PARSE_KEY.get_or_init(|| format!("__javy_{millis}_json_parse"));
+    global.set(default_parse_key, default_parse)?;
 
     let parse = Function::new(
         this.clone(),
         MutFn::new(move |cx: Ctx<'js>, args: Rest<Value<'js>>| {
-            call_json_parse(hold!(cx.clone(), args), default_parse.clone())
-                .map_err(|e| to_js_error(cx, e))
+            call_json_parse(hold!(cx.clone(), args)).map_err(|e| to_js_error(cx, e))
         }),
     )?;
 
@@ -78,9 +87,8 @@ fn register<'js>(this: Ctx<'js>) -> Result<()> {
 
     let stringify = Function::new(
         this.clone(),
-        MutFn::new(move |cx: Ctx<'js>, args: Rest<Value<'js>>| {
-            call_json_stringify(hold!(cx.clone(), args), default_stringify.clone())
-                .map_err(|e| to_js_error(cx, e))
+        MutFn::new(|cx: Ctx<'js>, args: Rest<Value<'js>>| {
+            call_json_stringify(hold!(cx.clone(), args)).map_err(|e| to_js_error(cx, e))
         }),
     )?;
 
@@ -95,7 +103,7 @@ fn register<'js>(this: Ctx<'js>) -> Result<()> {
     Ok(())
 }
 
-fn call_json_parse<'a>(args: Args<'a>, default: Function<'a>) -> Result<Value<'a>> {
+fn call_json_parse(args: Args<'_>) -> Result<Value<'_>> {
     let (this, args) = args.release();
 
     match args.len() {
@@ -134,6 +142,7 @@ fn call_json_parse<'a>(args: Args<'a>, default: Function<'a>) -> Result<Value<'a
             // reviver argument.
             //
             // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse#reviver.
+            let default: Function = this.globals().get(DEFAULT_PARSE_KEY.get().unwrap())?;
             default
                 .call((args[0].clone(), args[1].clone()))
                 .map_err(|e| anyhow!(e))
@@ -141,7 +150,7 @@ fn call_json_parse<'a>(args: Args<'a>, default: Function<'a>) -> Result<Value<'a
     }
 }
 
-fn call_json_stringify<'a>(args: Args<'a>, default: Function<'a>) -> Result<Value<'a>> {
+fn call_json_stringify(args: Args<'_>) -> Result<Value<'_>> {
     let (this, args) = args.release();
 
     match args.len() {
@@ -169,21 +178,18 @@ fn call_json_stringify<'a>(args: Args<'a>, default: Function<'a>) -> Result<Valu
             let str = JSString::from_str(this, &str)?;
             Ok(str.into_value())
         }
-        _ => {
-            // Similar to the parse case, if there's more than one argument,
-            // defer to the built-in JSON.stringify, which will take care of
-            // validating invoking the replacer function and/or applying the
-            // space argument.
-            if args.len() == 2 {
-                default
-                    .call((args[0].clone(), args[1].clone()))
-                    .map_err(anyhow::Error::new)
-            } else {
-                default
-                    .call((args[0].clone(), args[1].clone(), args[2].clone()))
-                    .map_err(anyhow::Error::new)
-            }
-        }
+        2 => Ok(this
+            .json_stringify_replacer(args[0].clone(), args[1].clone())?
+            .map_or_else(
+                || Value::new_undefined(this.clone()),
+                |str| str.into_value(),
+            )),
+        _ => Ok(this
+            .json_stringify_replacer_space(args[0].clone(), args[1].clone(), args[2].clone())?
+            .map_or_else(
+                || Value::new_undefined(this.clone()),
+                |str| str.into_value(),
+            )),
     }
 }
 
