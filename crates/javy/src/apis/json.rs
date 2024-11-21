@@ -103,7 +103,7 @@ fn register<'js>(this: Ctx<'js>) -> Result<()> {
     Ok(())
 }
 
-fn call_json_parse<'a>(args: Args<'a>) -> Result<Value<'a>> {
+fn call_json_parse(args: Args<'_>) -> Result<Value<'_>> {
     let (this, args) = args.release();
 
     match args.len() {
