@@ -36,9 +36,11 @@ use anyhow::{anyhow, bail, Result};
 use std::{
     io::{Read, Write},
     ptr::NonNull,
+    sync::OnceLock,
+    time::SystemTime,
 };
 
-const DEFAULT_PARSE_KEY: &str = "__javy_json_parse";
+static DEFAULT_PARSE_KEY: OnceLock<String> = OnceLock::new();
 
 /// Intrinsic to attach faster JSON.{parse/stringify} functions.
 pub struct Json;
@@ -63,11 +65,16 @@ fn register<'js>(this: Ctx<'js>) -> Result<()> {
 
     let json: Object = global.get("JSON")?;
     let default_parse: Function = json.get("parse")?;
-    global.set(DEFAULT_PARSE_KEY, default_parse)?;
+    let millis = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)?
+        .subsec_millis();
+    // Make the global key unstable so users can't rely on it being stable.
+    let default_parse_key = DEFAULT_PARSE_KEY.get_or_init(|| format!("__javy_{millis}_json_parse"));
+    global.set(default_parse_key, default_parse)?;
 
     let parse = Function::new(
         this.clone(),
-        MutFn::new(|cx: Ctx<'js>, args: Rest<Value<'js>>| {
+        MutFn::new(move |cx: Ctx<'js>, args: Rest<Value<'js>>| {
             call_json_parse(hold!(cx.clone(), args)).map_err(|e| to_js_error(cx, e))
         }),
     )?;
@@ -96,7 +103,7 @@ fn register<'js>(this: Ctx<'js>) -> Result<()> {
     Ok(())
 }
 
-fn call_json_parse(args: Args<'_>) -> Result<Value<'_>> {
+fn call_json_parse<'a>(args: Args<'a>) -> Result<Value<'a>> {
     let (this, args) = args.release();
 
     match args.len() {
@@ -135,7 +142,7 @@ fn call_json_parse(args: Args<'_>) -> Result<Value<'_>> {
             // reviver argument.
             //
             // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse#reviver.
-            let default: Function = this.globals().get(DEFAULT_PARSE_KEY)?;
+            let default: Function = this.globals().get(DEFAULT_PARSE_KEY.get().unwrap())?;
             default
                 .call((args[0].clone(), args[1].clone()))
                 .map_err(|e| anyhow!(e))
