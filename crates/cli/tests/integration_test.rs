@@ -181,19 +181,20 @@ fn test_readme_script(builder: &mut Builder) -> Result<()> {
     Ok(())
 }
 
-#[cfg(feature = "experimental_event_loop")]
-#[javy_cli_test]
-fn test_promises(builder: &mut Builder) -> Result<()> {
-    let mut runner = builder.input("promise.js").build()?;
+#[javy_cli_test(commands(not(Compile)))]
+fn test_promises_with_event_loop(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder
+        .input("promise.js")
+        .experimental_event_loop(true)
+        .build()?;
 
     let (output, _, _) = run(&mut runner, &[]);
     assert_eq!("\"foo\"\"bar\"".as_bytes(), output);
     Ok(())
 }
 
-#[cfg(not(feature = "experimental_event_loop"))]
 #[javy_cli_test]
-fn test_promises(builder: &mut Builder) -> Result<()> {
+fn test_promises_without_event_loop(builder: &mut Builder) -> Result<()> {
     use javy_runner::RunnerError;
 
     let mut runner = builder.input("promise.js").build()?;
@@ -204,10 +205,12 @@ fn test_promises(builder: &mut Builder) -> Result<()> {
     Ok(())
 }
 
-#[cfg(feature = "experimental_event_loop")]
-#[javy_cli_test]
+#[javy_cli_test(commands(not(Compile)))]
 fn test_promise_top_level_await(builder: &mut Builder) -> Result<()> {
-    let mut runner = builder.input("top-level-await.js").build()?;
+    let mut runner = builder
+        .input("top-level-await.js")
+        .experimental_event_loop(true)
+        .build()?;
     let (out, _, _) = run(&mut runner, &[]);
 
     assert_eq!("bar", String::from_utf8(out)?);
@@ -229,13 +232,13 @@ fn test_exported_functions(builder: &mut Builder) -> Result<()> {
     Ok(())
 }
 
-#[cfg(feature = "experimental_event_loop")]
-#[javy_cli_test]
+#[javy_cli_test(commands(not(Compile)))]
 fn test_exported_promises(builder: &mut Builder) -> Result<()> {
     let mut runner = builder
         .input("exported-promise-fn.js")
         .wit("exported-promise-fn.wit")
         .world("exported-promise-fn")
+        .experimental_event_loop(true)
         .build()?;
     let (_, logs, _) = run_fn(&mut runner, "foo", &[]);
     assert_eq!("Top-level\ninside foo\n", logs);

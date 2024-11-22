@@ -3,7 +3,7 @@
 //! Example usage:
 //! ```rust
 //! use javy_plugin_api::import_namespace;
-//! use javy_plugin_api::javy::Config;
+//! use javy_plugin_api::Config;
 //!
 //! // Dynamically linked modules will use `my_javy_plugin_v1` as the import
 //! // namespace.
@@ -28,21 +28,21 @@
 //! * [`import_namespace`] - required to provide an import namespace when the
 //!   plugin is used to generate dynamically linked modules.
 //! * [`initialize_runtime`] - used to configure the QuickJS runtime with a
-//!   [`javy::Config`] and to add behavior to the created [`javy::Runtime`].
+//!   [`Config`] to add behavior to the created [`javy::Runtime`].
 //!
 //! # Features
-//! * `experimental_event_loop` - enables the JS event loop. A number of
-//!   important things are not yet supported so be careful when enabling.
 //! * `json` - enables the `json` feature in the `javy` crate.
 
 use anyhow::{anyhow, bail, Error, Result};
+pub use config::Config;
 use javy::quickjs::{self, Ctx, Error as JSError, Function, Module, Value};
-use javy::{from_js_error, Config, Runtime};
+use javy::{from_js_error, Runtime};
 use std::cell::OnceCell;
 use std::{process, slice, str};
 
 pub use javy;
 
+mod config;
 mod namespace;
 
 const FUNCTION_MODULE_NAME: &str = "function.mjs";
@@ -50,6 +50,7 @@ const FUNCTION_MODULE_NAME: &str = "function.mjs";
 static mut COMPILE_SRC_RET_AREA: [u32; 2] = [0; 2];
 
 static mut RUNTIME: OnceCell<Runtime> = OnceCell::new();
+static mut EVENT_LOOP_ENABLED: bool = false;
 
 static EVENT_LOOP_ERR: &str = r#"
                 Pending jobs in the event queue.
@@ -62,7 +63,7 @@ pub fn initialize_runtime<F>(config: Config, modify_runtime: F) -> Result<()>
 where
     F: FnOnce(Runtime) -> Runtime,
 {
-    let runtime = Runtime::new(config).unwrap();
+    let runtime = Runtime::new(config.runtime_config).unwrap();
     let runtime = modify_runtime(runtime);
     unsafe {
         RUNTIME.take(); // Allow re-initializing.
@@ -73,6 +74,7 @@ where
             // implement `Debug`.
             .map_err(|_| anyhow!("Could not pre-initialize javy::Runtime"))
             .unwrap();
+        EVENT_LOOP_ENABLED = config.experimental_event_loop;
     };
     Ok(())
 }
@@ -182,7 +184,7 @@ pub fn run_bytecode(bytecode: &[u8], fn_name: Option<&str>) {
 fn handle_maybe_promise(this: Ctx, value: Value) -> quickjs::Result<()> {
     match value.as_promise() {
         Some(promise) => {
-            if cfg!(feature = "experimental_event_loop") {
+            if unsafe { EVENT_LOOP_ENABLED } {
                 // If the experimental event loop is enabled, trigger it.
                 let resolved = promise.finish::<Value>();
                 // `Promise::finish` returns Err(Wouldblock) when the all
@@ -205,7 +207,7 @@ fn handle_maybe_promise(this: Ctx, value: Value) -> quickjs::Result<()> {
 }
 
 fn ensure_pending_jobs(rt: &Runtime) -> Result<()> {
-    if cfg!(feature = "experimental_event_loop") {
+    if unsafe { EVENT_LOOP_ENABLED } {
         rt.resolve_pending_jobs()
     } else if rt.has_pending_jobs() {
         bail!(EVENT_LOOP_ERR);
