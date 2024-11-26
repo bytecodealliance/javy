@@ -8,6 +8,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.0.0] - 2024-11-26
+
 ### Changed 
 
 - `initialize_runtime` accepts a `javy_plugin_api::Config` instead of a
