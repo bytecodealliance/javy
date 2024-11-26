@@ -43,11 +43,7 @@ test-cli: plugin build-test-plugin
 test-runner:
 	cargo test --package=javy-runner -- --nocapture
 
-# WPT requires a Javy build with the experimental_event_loop feature to pass
-test-wpt: export PLUGIN_FEATURES ?= experimental_event_loop
-test-wpt:
-# Can't use a prerequisite here b/c a prequisite will not cause a rebuild of the CLI
-	$(MAKE) cli
+test-wpt: cli
 	npm install --prefix wpt
 	npm test --prefix wpt 
 

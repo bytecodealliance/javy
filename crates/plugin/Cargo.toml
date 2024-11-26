@@ -14,6 +14,3 @@ anyhow = { workspace = true }
 javy-plugin-api = { path = "../plugin-api", features = ["json"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
-
-[features]
-experimental_event_loop = ["javy-plugin-api/experimental_event_loop"]

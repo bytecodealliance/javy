@@ -21,15 +21,14 @@ name = "my_plugin_name"
 crate-type = ["cdylib"]
 
 [dependencies]
-javy-plugin-api = "1.0.0"
+javy-plugin-api = "2.0.0"
 ```
 
 And `src/lib.rs` should look like:
 
 ```rust
-use javy_plugin_api::import_namespace;
+use javy_plugin_api::{Config, import_namespace};
 use javy_plugin_api::javy::quickjs::prelude::Func;
-use javy_plugin_api::javy::Config;
 
 import_namespace!("my_plugin_name");
 

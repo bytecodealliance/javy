@@ -1,6 +1,6 @@
 [package]
 name = "javy-plugin-api"
-version = "1.0.1-alpha.1"
+version = "2.0.0-alpha.1"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -14,5 +14,4 @@ anyhow = { workspace = true }
 javy = { workspace = true, features = ["export_alloc_fns"] }
 
 [features]
-experimental_event_loop = []
 json = ["javy/json"]

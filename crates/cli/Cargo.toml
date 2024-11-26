@@ -12,7 +12,6 @@ path = "src/main.rs"
 
 [features]
 dump_wat = ["dep:wasmprinter"]
-experimental_event_loop = []
 
 [dependencies]
 wizer = { workspace = true }

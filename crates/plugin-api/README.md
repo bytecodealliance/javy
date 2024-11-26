@@ -15,7 +15,7 @@ Example usage:
 
 ```rust
 use javy_plugin_api::import_namespace;
-use javy_plugin_api::javy::Config;
+use javy_plugin_api::Config;
 
 // Dynamically linked modules will use `my_javy_plugin_v1` as the import
 // namespace.

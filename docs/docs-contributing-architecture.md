@@ -117,11 +117,7 @@ You should gate your feature with a cargo feature if your feature/change:
 
 - You want to have integration tests in the `javy-cli` crate that should only
   run when the `javy-plugin` crate is built with a non-default configuration (that
-  is, with different cargo features enabled). For example, we introduced the
-  `experimental_event_loop` cargo feature in the `javy-cli` crate since we test
-  for different expected outputs when using a promise when the
-  `experimental_event_loop` cargo feature is enabled on the `javy-plugin` crate
-  compared to when that cargo feature is disabled.
+  is, with different cargo features enabled).
 
 ### `javy-plugin`
 
@@ -134,10 +130,7 @@ allow the CLI to set various JS runtime configuration options.
 #### When to add a `cargo` feature
 
 You should gate your feature with a cargo feature if you want to support
-building a Wasm module with an experimental configuration of the runtime. We do
-this for the event loop because the current implementation has not been
-thoroughly vetted. We also need a build of Javy with event loop support to run
-a number of web platform tests for text encoding.
+building a Wasm module with a very unusual configuration of the runtime.
 
 ### `javy-plugin-api`
 

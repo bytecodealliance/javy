@@ -1,12 +1,13 @@
 //! APIs and data structures for receiving runtime configuration from the Javy CLI.
 
 use anyhow::Result;
+use javy_plugin_api::Config;
 use serde::Deserialize;
 use std::io::{stdout, Write};
 
 mod runtime_config;
 
-use crate::{runtime_config, Config};
+use crate::runtime_config;
 
 runtime_config! {
     #[derive(Debug, Default, Deserialize)]
@@ -25,6 +26,8 @@ runtime_config! {
         /// Whether to enable support for the `TextEncoder` and `TextDecoder`
         /// APIs.
         text_encoding: Option<bool>,
+        /// Whether to enable the event loop.
+        event_loop: Option<bool>,
     }
 }
 
@@ -48,6 +51,9 @@ impl SharedConfig {
         }
         if let Some(enable) = self.text_encoding {
             config.text_encoding(enable);
+        }
+        if let Some(enable) = self.event_loop {
+            config.event_loop(enable);
         }
     }
 }

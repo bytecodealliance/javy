@@ -83,6 +83,8 @@ pub struct Builder {
     simd_json_builtins: Option<bool>,
     /// Whether to enable the `TextEncoder` and `TextDecoder` APIs.
     text_encoding: Option<bool>,
+    /// Whether to enable the event loop.
+    event_loop: Option<bool>,
     built: bool,
     /// Preload the module at path, using the given instance name.
     preload: Option<(String, PathBuf)>,
@@ -109,6 +111,7 @@ impl Default for Builder {
             javy_json: None,
             simd_json_builtins: None,
             text_encoding: None,
+            event_loop: None,
             plugin: Plugin::Default,
         }
     }
@@ -170,6 +173,11 @@ impl Builder {
         self
     }
 
+    pub fn event_loop(&mut self, enabled: bool) -> &mut Self {
+        self.event_loop = Some(enabled);
+        self
+    }
+
     pub fn command(&mut self, command: JavyCommand) -> &mut Self {
         self.command = command;
         self
@@ -202,6 +210,7 @@ impl Builder {
             javy_stream_io,
             simd_json_builtins,
             text_encoding,
+            event_loop,
             built: _,
             preload,
             command,
@@ -229,6 +238,7 @@ impl Builder {
                 javy_stream_io,
                 simd_json_builtins,
                 text_encoding,
+                event_loop,
                 preload,
                 plugin,
             ),
@@ -305,6 +315,7 @@ impl Runner {
         javy_stream_io: Option<bool>,
         override_json_parse_and_stringify: Option<bool>,
         text_encoding: Option<bool>,
+        event_loop: Option<bool>,
         preload: Option<(String, PathBuf)>,
         plugin: Plugin,
     ) -> Result<Self> {
@@ -326,6 +337,7 @@ impl Runner {
             &javy_stream_io,
             &override_json_parse_and_stringify,
             &text_encoding,
+            &event_loop,
             &plugin,
         );
 
@@ -554,6 +566,7 @@ impl Runner {
         javy_stream_io: &Option<bool>,
         simd_json_builtins: &Option<bool>,
         text_encoding: &Option<bool>,
+        event_loop: &Option<bool>,
         plugin: &Plugin,
     ) -> Vec<String> {
         let mut args = vec![
@@ -607,6 +620,11 @@ impl Runner {
         if let Some(enabled) = *text_encoding {
             args.push("-J".to_string());
             args.push(format!("text-encoding={}", if enabled { "y" } else { "n" }));
+        }
+
+        if let Some(enabled) = *event_loop {
+            args.push("-J".to_string());
+            args.push(format!("event-loop={}", if enabled { "y" } else { "n" }));
         }
 
         if matches!(plugin, Plugin::User | Plugin::DefaultAsUser) {

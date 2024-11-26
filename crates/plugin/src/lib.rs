@@ -1,5 +1,4 @@
-use javy_plugin_api::import_namespace;
-use javy_plugin_api::javy::Config;
+use javy_plugin_api::{import_namespace, Config};
 use shared_config::SharedConfig;
 use std::io;
 use std::io::Read;
