@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "bundle": "rollup -c rollup.config.js runner.js",
-    "javy": "../target/release/javy build -J experimental-event-loop -o bundle.wasm bundle.js",
+    "javy": "../target/release/javy build -J event-loop -o bundle.wasm bundle.js",
     "wasmtime": "wasmtime bundle.wasm",
     "test": "npm run bundle && npm run javy && npm run wasmtime"
   },

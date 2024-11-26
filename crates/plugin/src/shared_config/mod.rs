@@ -26,8 +26,8 @@ runtime_config! {
         /// Whether to enable support for the `TextEncoder` and `TextDecoder`
         /// APIs.
         text_encoding: Option<bool>,
-        /// Whether to enable the experimental event loop.
-        experimental_event_loop: Option<bool>,
+        /// Whether to enable the event loop.
+        event_loop: Option<bool>,
     }
 }
 
@@ -52,8 +52,8 @@ impl SharedConfig {
         if let Some(enable) = self.text_encoding {
             config.text_encoding(enable);
         }
-        if let Some(enable) = self.experimental_event_loop {
-            config.experimental_event_loop(enable);
+        if let Some(enable) = self.event_loop {
+            config.event_loop(enable);
         }
     }
 }

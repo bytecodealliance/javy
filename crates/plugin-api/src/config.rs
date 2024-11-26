@@ -5,14 +5,14 @@ use std::ops::{Deref, DerefMut};
 pub struct Config {
     /// The runtime config.
     pub(crate) runtime_config: javy::Config,
-    /// Whether to enable the experimental event loop.
-    pub(crate) experimental_event_loop: bool,
+    /// Whether to enable the event loop.
+    pub(crate) event_loop: bool,
 }
 
 impl Config {
-    /// Whether to enable the experimental event loop.
-    pub fn experimental_event_loop(&mut self, enabled: bool) -> &mut Self {
-        self.experimental_event_loop = enabled;
+    /// Whether to enable the event loop.
+    pub fn event_loop(&mut self, enabled: bool) -> &mut Self {
+        self.event_loop = enabled;
         self
     }
 }

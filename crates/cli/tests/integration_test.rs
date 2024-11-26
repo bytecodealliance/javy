@@ -183,10 +183,7 @@ fn test_readme_script(builder: &mut Builder) -> Result<()> {
 
 #[javy_cli_test(commands(not(Compile)))]
 fn test_promises_with_event_loop(builder: &mut Builder) -> Result<()> {
-    let mut runner = builder
-        .input("promise.js")
-        .experimental_event_loop(true)
-        .build()?;
+    let mut runner = builder.input("promise.js").event_loop(true).build()?;
 
     let (output, _, _) = run(&mut runner, &[]);
     assert_eq!("\"foo\"\"bar\"".as_bytes(), output);
@@ -209,7 +206,7 @@ fn test_promises_without_event_loop(builder: &mut Builder) -> Result<()> {
 fn test_promise_top_level_await(builder: &mut Builder) -> Result<()> {
     let mut runner = builder
         .input("top-level-await.js")
-        .experimental_event_loop(true)
+        .event_loop(true)
         .build()?;
     let (out, _, _) = run(&mut runner, &[]);
 
@@ -238,7 +235,7 @@ fn test_exported_promises(builder: &mut Builder) -> Result<()> {
         .input("exported-promise-fn.js")
         .wit("exported-promise-fn.wit")
         .world("exported-promise-fn")
-        .experimental_event_loop(true)
+        .event_loop(true)
         .build()?;
     let (_, logs, _) = run_fn(&mut runner, "foo", &[]);
     assert_eq!("Top-level\ninside foo\n", logs);

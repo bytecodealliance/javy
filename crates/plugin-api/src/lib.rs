@@ -55,7 +55,7 @@ static mut EVENT_LOOP_ENABLED: bool = false;
 static EVENT_LOOP_ERR: &str = r#"
                 Pending jobs in the event queue.
                 Scheduling events is not supported when the 
-                experimental_event_loop cargo feature is disabled.
+                event-loop runtime config is not enabled.
             "#;
 
 /// Initializes the Javy runtime.
@@ -74,7 +74,7 @@ where
             // implement `Debug`.
             .map_err(|_| anyhow!("Could not pre-initialize javy::Runtime"))
             .unwrap();
-        EVENT_LOOP_ENABLED = config.experimental_event_loop;
+        EVENT_LOOP_ENABLED = config.event_loop;
     };
     Ok(())
 }
@@ -185,7 +185,7 @@ fn handle_maybe_promise(this: Ctx, value: Value) -> quickjs::Result<()> {
     match value.as_promise() {
         Some(promise) => {
             if unsafe { EVENT_LOOP_ENABLED } {
-                // If the experimental event loop is enabled, trigger it.
+                // If the event loop is enabled, trigger it.
                 let resolved = promise.finish::<Value>();
                 // `Promise::finish` returns Err(Wouldblock) when the all
                 // pending jobs have been handled.
