@@ -8,6 +8,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [3.1.0] - 2024-11-27
+
 ### Added
 
 - `gc_threshold`, `memory_limit`, and `max_stack_size` properties for `Config`.
