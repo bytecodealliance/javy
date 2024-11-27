@@ -7,15 +7,46 @@ on:
   pull_request:
 
 jobs:
-  plugin:
-    name: test_plugin
+  ci:
+    name: CI
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
 
-      - uses: ./.github/actions/ci-shared-setup
+      - name: Cargo Cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo
+          key: cargo-${{ hashFiles('Cargo.toml') }}
+          restore-keys: |
+            cargo-${{ hashFiles('Cargo.toml') }}
+            cargo
+
+      - name: Cargo Target Cache
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: cargo-target-${{ hashFiles('Cargo.toml') }}
+          restore-keys: |
+            cargo-target-${{ hashFiles('Cargo.toml') }}
+            cargo-target
+
+      - name: Read wasmtime version
+        id: wasmtime_version
+        shell: bash
+        run: |
+          VERSION=$(cargo metadata --format-version=1 --locked | jq '.packages[] | select(.name == "wasmtime") | .version' -r)
+          echo "wasmtime_version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Install wasmtime-cli
+        shell: bash
+        run: |
+          wget -nv 'https://github.com/bytecodealliance/wasmtime/releases/download/v${{ steps.wasmtime_version.outputs.wasmtime_version }}/wasmtime-v${{ steps.wasmtime_version.outputs.wasmtime_version }}-x86_64-linux.tar.xz' -O /tmp/wasmtime.tar.xz
+          mkdir /tmp/wasmtime
+          tar xvf /tmp/wasmtime.tar.xz --strip-components=1 -C /tmp/wasmtime
+          echo "/tmp/wasmtime" >> $GITHUB_PATH
 
       - name: Install cargo-hack
         uses: taiki-e/install-action@cargo-hack
@@ -44,26 +75,6 @@ jobs:
       - name: Lint Runner
         run: cargo clippy --package=javy-runner -- -D warnings
 
-      - name: Upload plugin to artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: plugin
-          path: target/wasm32-wasip1/release/plugin.wasm
-
-  cli:
-    name: test_cli
-    runs-on: ubuntu-latest
-    needs: plugin
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: ./.github/actions/ci-shared-setup
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: plugin
-          path: target/wasm32-wasip1/release/
-
       - name: Build test-plugin
         run: |
           cargo build --package=javy-test-plugin --release --target=wasm32-wasip1
@@ -80,3 +91,8 @@ jobs:
         run: |
           cargo fmt -- --check
           CARGO_PROFILE_RELEASE_LTO=off cargo clippy --package=javy-cli --release --all-targets -- -D warnings
+
+      - name: WPT
+        run: |
+          npm install --prefix wpt
+          npm test --prefix wpt
