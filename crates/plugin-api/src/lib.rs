@@ -66,8 +66,11 @@ where
     let runtime = Runtime::new(config.runtime_config).unwrap();
     let runtime = modify_runtime(runtime);
     unsafe {
-        RUNTIME.take(); // Allow re-initializing.
-        RUNTIME
+        let global_runtime = &raw mut RUNTIME;
+        global_runtime.as_mut().take(); // Allow re-initializing.
+        global_runtime
+            .as_mut()
+            .unwrap()
             .set(runtime)
             // `unwrap` requires error `T` to implement `Debug` but `set`
             // returns the `javy::Runtime` on error and `javy::Runtime` does not
@@ -107,7 +110,7 @@ pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -
     //
     // Setting `config.bignum_extension` to `true` will produce different
     // bytecode than if it were set to `false`.
-    let runtime = unsafe { RUNTIME.get().unwrap() };
+    let runtime = unsafe { (&raw const RUNTIME).as_ref().unwrap().get() }.unwrap();
     let js_src = str::from_utf8(slice::from_raw_parts(js_src_ptr, js_src_len)).unwrap();
 
     let bytecode = runtime
@@ -119,7 +122,7 @@ pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -
     let bytecode_ptr = Box::leak(bytecode.into_boxed_slice()).as_ptr();
     COMPILE_SRC_RET_AREA[0] = bytecode_ptr as u32;
     COMPILE_SRC_RET_AREA[1] = len.try_into().unwrap();
-    COMPILE_SRC_RET_AREA.as_ptr()
+    (&raw const COMPILE_SRC_RET_AREA).as_ref().unwrap().as_ptr()
 }
 
 /// Evaluates QuickJS bytecode and optionally invokes exported JS function with
@@ -157,7 +160,7 @@ pub unsafe extern "C" fn invoke(
 /// Evaluating also prepares (or "instantiates") the state of the JavaScript
 /// engine given all the information encoded in the bytecode.
 pub fn run_bytecode(bytecode: &[u8], fn_name: Option<&str>) {
-    let runtime = unsafe { RUNTIME.get() }.unwrap();
+    let runtime = unsafe { (&raw const RUNTIME).as_ref().unwrap().get() }.unwrap();
     runtime
         .context()
         .with(|this| {

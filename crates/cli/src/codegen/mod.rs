@@ -34,7 +34,7 @@
 //! features requsted by the JavaScript bytecode.
 
 mod builder;
-use std::{fs, rc::Rc, sync::OnceLock};
+use std::{fs, rc::Rc, sync::Mutex};
 
 pub(crate) use builder::*;
 
@@ -46,14 +46,14 @@ use transform::SourceCodeSection;
 use walrus::{
     DataId, DataKind, ExportItem, FunctionBuilder, FunctionId, LocalId, MemoryId, Module, ValType,
 };
-use wasi_common::{pipe::ReadPipe, sync::WasiCtxBuilder, WasiCtx};
 use wasm_opt::{OptimizationOptions, ShrinkLevel};
+use wasmtime_wasi::{pipe::MemoryInputPipe, WasiCtxBuilder, WasiView};
 use wizer::{Linker, Wizer};
 
 use crate::{js_config::JsConfig, plugins::Plugin, JS};
 use anyhow::Result;
 
-static mut WASI: OnceLock<WasiCtx> = OnceLock::new();
+// static RUNTIME_CONFIG: Mutex<Vec<u8>> = Mutex::new(vec![]);
 
 pub(crate) enum CodeGenType {
     /// Static code generation.
@@ -139,23 +139,31 @@ impl Generator {
         let config = transform::module_config();
         let module = match &self.ty {
             CodeGenType::Static => {
-                // Copy config JSON into stdin for `initialize_runtime` function.
-                let runtime_config = self.js_runtime_config.to_json()?;
-                unsafe {
-                    WASI.get_or_init(|| {
-                        WasiCtxBuilder::new()
-                            .inherit_stderr()
-                            .inherit_stdout()
-                            .stdin(Box::new(ReadPipe::from(runtime_config)))
-                            .build()
-                    });
-                };
+                // The stdin content needs to have a 'static lifetime so put it
+                // in a static variable.
+                // let mut runtime_config = RUNTIME_CONFIG.lock().unwrap();
+                // *runtime_config = self.js_runtime_config.to_json()?;
+                // drop(runtime_config);
+                // let mut runtime_config = RUNTIME_CONFIG.lock().unwrap();
+                // runtime_config.clear();
+                // runtime_config.append(&mut self.js_runtime_config.to_json()?);
+                // drop(runtime_config);
+
                 let wasm = Wizer::new()
                     .init_func("initialize_runtime")
-                    .make_linker(Some(Rc::new(move |engine| {
+                    .make_linker(Some(Rc::new(|engine| {
                         let mut linker = Linker::new(engine);
-                        wasi_common::sync::add_to_linker(&mut linker, |_| unsafe {
-                            WASI.get_mut().unwrap()
+                        wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |cx| {
+                            let runtime_config = "{}"; // RUNTIME_CONFIG.lock().unwrap().clone();
+                            cx.wasi_ctx = Some(
+                                WasiCtxBuilder::new()
+                                    .inherit_stderr()
+                                    .inherit_stdio()
+                                    // Copy config JSON into stdin for `initialize_runtime` function.
+                                    .stdin(MemoryInputPipe::new(runtime_config))
+                                    .build_p1(),
+                            );
+                            cx.wasi_ctx.as_mut().unwrap()
                         })?;
                         Ok(linker)
                     })))?
