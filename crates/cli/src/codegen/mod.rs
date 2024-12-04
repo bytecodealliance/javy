@@ -33,6 +33,12 @@
 //! as well as ensuring that any features available in the plugin match the
 //! features requsted by the JavaScript bytecode.
 
+// Wizer doesn't provide a good API to set a custom WASI context so we put our
+// WASI context in a static global variable and instruct the closure for
+// getting the WASI context to use a mutable reference to it. There are never
+// concurrent mutable references to the static WASI context so this is safe.
+#![allow(static_mut_refs)]
+
 mod builder;
 use std::{fs, rc::Rc, sync::OnceLock};
 

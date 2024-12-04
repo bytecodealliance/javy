@@ -36,7 +36,7 @@ impl<'js> Serializer<'js> {
     }
 }
 
-impl<'a> ser::Serializer for &'a mut Serializer<'_> {
+impl ser::Serializer for &mut Serializer<'_> {
     type Ok = ();
     type Error = Error;
 
@@ -219,7 +219,7 @@ impl<'a> ser::Serializer for &'a mut Serializer<'_> {
     }
 }
 
-impl<'a> ser::SerializeSeq for &'a mut Serializer<'_> {
+impl ser::SerializeSeq for &mut Serializer<'_> {
     type Ok = ();
     type Error = Error;
 
@@ -243,7 +243,7 @@ impl<'a> ser::SerializeSeq for &'a mut Serializer<'_> {
     }
 }
 
-impl<'a> ser::SerializeTuple for &'a mut Serializer<'_> {
+impl ser::SerializeTuple for &mut Serializer<'_> {
     type Ok = ();
     type Error = Error;
 
@@ -268,7 +268,7 @@ impl<'a> ser::SerializeTuple for &'a mut Serializer<'_> {
     }
 }
 
-impl<'a> ser::SerializeTupleStruct for &'a mut Serializer<'_> {
+impl ser::SerializeTupleStruct for &mut Serializer<'_> {
     type Ok = ();
     type Error = Error;
 
@@ -292,7 +292,7 @@ impl<'a> ser::SerializeTupleStruct for &'a mut Serializer<'_> {
     }
 }
 
-impl<'a> ser::SerializeTupleVariant for &'a mut Serializer<'_> {
+impl ser::SerializeTupleVariant for &mut Serializer<'_> {
     type Ok = ();
     type Error = Error;
 
@@ -317,7 +317,7 @@ impl<'a> ser::SerializeTupleVariant for &'a mut Serializer<'_> {
     }
 }
 
-impl<'a> ser::SerializeMap for &'a mut Serializer<'_> {
+impl ser::SerializeMap for &mut Serializer<'_> {
     type Ok = ();
     type Error = Error;
 
@@ -354,7 +354,7 @@ impl<'a> ser::SerializeMap for &'a mut Serializer<'_> {
     }
 }
 
-impl<'a> ser::SerializeStruct for &'a mut Serializer<'_> {
+impl ser::SerializeStruct for &mut Serializer<'_> {
     type Ok = ();
     type Error = Error;
 
@@ -379,7 +379,7 @@ impl<'a> ser::SerializeStruct for &'a mut Serializer<'_> {
     }
 }
 
-impl<'a> ser::SerializeStructVariant for &'a mut Serializer<'_> {
+impl ser::SerializeStructVariant for &mut Serializer<'_> {
     type Ok = ();
     type Error = Error;
 

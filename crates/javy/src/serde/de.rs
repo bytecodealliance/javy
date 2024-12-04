@@ -123,7 +123,7 @@ impl<'js> Deserializer<'js> {
     }
 }
 
-impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
+impl<'de> de::Deserializer<'de> for &mut Deserializer<'de> {
     type Error = Error;
 
     fn deserialize_any<V>(self, visitor: V) -> Result<V::Value>
@@ -307,7 +307,7 @@ impl<'a, 'de> MapAccess<'a, 'de> {
     }
 }
 
-impl<'a, 'de> de::MapAccess<'de> for MapAccess<'a, 'de> {
+impl<'de> de::MapAccess<'de> for MapAccess<'_, 'de> {
     type Error = Error;
 
     fn next_key_seed<K>(&mut self, seed: K) -> Result<Option<K::Value>>
@@ -422,7 +422,7 @@ impl<'a, 'de: 'a> SeqAccess<'a, 'de> {
     }
 }
 
-impl<'a, 'de> de::SeqAccess<'de> for SeqAccess<'a, 'de> {
+impl<'de> de::SeqAccess<'de> for SeqAccess<'_, 'de> {
     type Error = Error;
 
     fn next_element_seed<T>(&mut self, seed: T) -> Result<Option<T::Value>>
