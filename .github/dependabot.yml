@@ -7,9 +7,13 @@ updates:
     open-pull-requests-limit: 100
     groups:
       nonbreaking:
+        exclude-patterns:
+          - "rquickjs*"
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      - dependency-name: "wasmtime*"
 
   - package-ecosystem: npm
     directory: "/npm/javy"
