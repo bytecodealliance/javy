@@ -115,7 +115,7 @@ fn test_logging_with_redirect(builder: &mut Builder) -> Result<()> {
         "hello world from console.log\nhello world from console.error\n",
         logs.as_str(),
     );
-    assert_fuel_consumed_within_threshold(36_042, fuel_consumed);
+    assert_fuel_consumed_within_threshold(35_007, fuel_consumed);
     Ok(())
 }
 
