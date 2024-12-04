@@ -16,7 +16,7 @@ jobs:
           submodules: true
 
       - name: Cargo Cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cargo
           key: cargo-${{ hashFiles('Cargo.toml') }}
@@ -25,7 +25,7 @@ jobs:
             cargo
 
       - name: Cargo Target Cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: target
           key: cargo-target-${{ hashFiles('Cargo.toml') }}
