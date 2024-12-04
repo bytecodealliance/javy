@@ -324,6 +324,12 @@ user-id = 51017
 start = "2020-03-17"
 end = "2024-10-30"
 
+[[trusted.libfuzzer-sys]]
+criteria = "safe-to-deploy"
+user-id = 696 # Nick Fitzgerald (fitzgen)
+start = "2020-01-14"
+end = "2025-12-04"
+
 [[trusted.linux-raw-sys]]
 criteria = "safe-to-deploy"
 user-id = 6825 # Dan Gohman (sunfishcode)
@@ -430,7 +436,7 @@ end = "2024-10-03"
 criteria = "safe-to-deploy"
 user-id = 6825 # Dan Gohman (sunfishcode)
 start = "2021-10-29"
-end = "2024-07-25"
+end = "2025-12-04"
 
 [[trusted.rustversion]]
 criteria = "safe-to-deploy"
