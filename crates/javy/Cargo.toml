@@ -22,8 +22,8 @@ rmp-serde = { version = "^1.3", optional = true }
 # tests.
 quickcheck = "1"
 bitflags = "2.6.0"
-fastrand = "2.1.1"
-simd-json = { version = "0.14.2", optional = true, default-features = false, features = [
+fastrand = "2.2.0"
+simd-json = { version = "0.14.3", optional = true, default-features = false, features = [
     "big-int-as-float",
     "serde_impl",
 ] }

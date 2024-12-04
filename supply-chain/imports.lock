@@ -44,8 +44,8 @@ user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.anyhow]]
-version = "1.0.92"
-when = "2024-11-01"
+version = "1.0.94"
+when = "2024-12-03"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -128,15 +128,15 @@ user-login = "emilio"
 user-name = "Emilio Cobos Álvarez"
 
 [[publisher.clap]]
-version = "4.5.20"
-when = "2024-10-08"
+version = "4.5.22"
+when = "2024-12-03"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.clap_builder]]
-version = "4.5.20"
-when = "2024-10-08"
+version = "4.5.22"
+when = "2024-12-03"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
@@ -347,6 +347,13 @@ user-id = 1
 user-login = "alexcrichton"
 user-name = "Alex Crichton"
 
+[[publisher.libfuzzer-sys]]
+version = "0.4.8"
+when = "2024-11-07"
+user-id = 696
+user-login = "fitzgen"
+user-name = "Nick Fitzgerald"
+
 [[publisher.linux-raw-sys]]
 version = "0.4.14"
 when = "2024-05-17"
@@ -390,8 +397,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.proc-macro2]]
-version = "1.0.89"
-when = "2024-10-22"
+version = "1.0.92"
+when = "2024-11-21"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -460,8 +467,8 @@ user-login = "BurntSushi"
 user-name = "Andrew Gallant"
 
 [[publisher.rustix]]
-version = "0.38.34"
-when = "2024-04-22"
+version = "0.38.41"
+when = "2024-11-18"
 user-id = 6825
 user-login = "sunfishcode"
 user-name = "Dan Gohman"
@@ -509,8 +516,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.serde_json]]
-version = "1.0.132"
-when = "2024-10-19"
+version = "1.0.133"
+when = "2024-11-17"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -537,8 +544,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.syn]]
-version = "2.0.87"
-when = "2024-11-02"
+version = "2.0.90"
+when = "2024-11-29"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -695,6 +702,12 @@ when = "2024-06-27"
 user-id = 73222
 user-login = "wasmtime-publish"
 
+[[publisher.wasm-encoder]]
+version = "0.214.0"
+when = "2024-07-16"
+user-id = 73222
+user-login = "wasmtime-publish"
+
 [[publisher.wasmparser]]
 version = "0.202.0"
 when = "2024-03-26"
@@ -708,8 +721,14 @@ user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmparser]]
-version = "0.219.1"
-when = "2024-10-10"
+version = "0.214.0"
+when = "2024-07-16"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wasmparser]]
+version = "0.221.2"
+when = "2024-12-02"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -720,8 +739,8 @@ user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmprinter]]
-version = "0.219.1"
-when = "2024-10-10"
+version = "0.221.2"
+when = "2024-12-02"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -1463,6 +1482,15 @@ this crate has to do with iterators and `Result` and such. No `unsafe` or
 anything like that, all looks good.
 """
 
+[[audits.bytecode-alliance.audits.foldhash]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+version = "0.1.3"
+notes = """
+Only a minor amount of `unsafe` code in this crate related to global per-process
+initialization which looks correct to me.
+"""
+
 [[audits.bytecode-alliance.audits.fxprof-processed-profile]]
 who = "Jamey Sharp <jsharp@fastly.com>"
 criteria = "safe-to-deploy"
@@ -1485,6 +1513,11 @@ who = "Trevor Elliott <telliott@fastly.com>"
 criteria = "safe-to-deploy"
 delta = "0.13.1 -> 0.13.2"
 notes = "I read through the diff between v0.13.1 and v0.13.2, and verified that the changes made matched up with the changelog entries. There were very few changes between these two releases, and it was easy to verify what they did."
+
+[[audits.bytecode-alliance.audits.hashbrown]]
+who = "Chris Fallin <chris@cfallin.org>"
+criteria = "safe-to-deploy"
+delta = "0.14.5 -> 0.15.2"
 
 [[audits.bytecode-alliance.audits.heck]]
 who = "Alex Crichton <alex@alexcrichton.com>"
@@ -1607,11 +1640,6 @@ notes = "I am the author of this crate."
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
 delta = "0.1.21 -> 0.1.24"
-
-[[audits.bytecode-alliance.audits.rustix]]
-who = "Dan Gohman <dev@sunfishcode.online>"
-criteria = "safe-to-deploy"
-delta = "0.38.34 -> 0.38.37"
 
 [[audits.bytecode-alliance.audits.slice-group-by]]
 who = "Alex Crichton <alex@alexcrichton.com>"
@@ -1920,6 +1948,25 @@ delta = "1.0.209 -> 1.0.210"
 notes = "Almost no new code - just feature rearrangement"
 aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
 
+[[audits.google.audits.serde]]
+who = "Liza Burakova <liza@chromium.org>"
+criteria = "safe-to-deploy"
+delta = "1.0.210 -> 1.0.213"
+aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
+
+[[audits.google.audits.serde]]
+who = "Dustin J. Mitchell <djmitche@chromium.org>"
+criteria = "safe-to-deploy"
+delta = "1.0.213 -> 1.0.214"
+notes = "No unsafe, no crypto"
+aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
+
+[[audits.google.audits.serde]]
+who = "Adrian Taylor <adetaylor@chromium.org>"
+criteria = "safe-to-deploy"
+delta = "1.0.214 -> 1.0.215"
+aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
+
 [[audits.google.audits.serde_derive]]
 who = "Lukasz Anforowicz <lukasza@chromium.org>"
 criteria = "safe-to-deploy"
@@ -1944,6 +1991,27 @@ who = "Adrian Taylor <adetaylor@chromium.org>"
 criteria = "safe-to-deploy"
 delta = "1.0.209 -> 1.0.210"
 notes = "Almost no new code - just feature rearrangement"
+aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
+
+[[audits.google.audits.serde_derive]]
+who = "Liza Burakova <liza@chromium.org>"
+criteria = "safe-to-deploy"
+delta = "1.0.210 -> 1.0.213"
+notes = "Grepped for 'unsafe', 'crypt', 'cipher', 'fs', 'net' - there were no hits"
+aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
+
+[[audits.google.audits.serde_derive]]
+who = "Dustin J. Mitchell <djmitche@chromium.org>"
+criteria = "safe-to-deploy"
+delta = "1.0.213 -> 1.0.214"
+notes = "No changes to unsafe, no crypto"
+aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
+
+[[audits.google.audits.serde_derive]]
+who = "Adrian Taylor <adetaylor@chromium.org>"
+criteria = "safe-to-deploy"
+delta = "1.0.214 -> 1.0.215"
+notes = "Minor changes should not impact UB risk"
 aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
 
 [[audits.google.audits.socket2]]
