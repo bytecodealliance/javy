@@ -50,7 +50,7 @@ version = "0.1.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.ast_node]]
-version = "2.0.0"
+version = "3.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.autocfg]]
@@ -462,11 +462,11 @@ version = "0.1.21"
 criteria = "safe-to-deploy"
 
 [[exemptions.ptr_meta]]
-version = "0.1.4"
+version = "0.3.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.ptr_meta_derive]]
-version = "0.1.4"
+version = "0.3.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.radium]]
@@ -525,10 +525,6 @@ criteria = "safe-to-deploy"
 version = "1.1.1"
 criteria = "safe-to-deploy"
 
-[[exemptions.sha2]]
-version = "0.10.8"
-criteria = "safe-to-deploy"
-
 [[exemptions.shellexpand]]
 version = "2.1.2"
 criteria = "safe-to-deploy"
@@ -582,39 +578,39 @@ version = "1.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_allocator]]
-version = "1.0.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.swc_atoms]]
 version = "2.0.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.swc_common]]
+[[exemptions.swc_atoms]]
 version = "3.0.0"
+criteria = "safe-to-deploy"
+
+[[exemptions.swc_common]]
+version = "5.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_core]]
-version = "4.0.3"
+version = "8.0.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_ast]]
-version = "3.0.0"
+version = "5.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_parser]]
-version = "4.0.0"
+version = "6.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_transforms_base]]
-version = "4.0.1"
+version = "6.0.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_utils]]
-version = "4.0.0"
+version = "6.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_visit]]
-version = "3.0.0"
+version = "5.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_eq_ignore_macros]]
