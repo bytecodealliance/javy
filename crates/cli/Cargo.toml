@@ -17,11 +17,11 @@ dump_wat = ["dep:wasmprinter"]
 wizer = { workspace = true }
 anyhow = { workspace = true }
 brotli = "7.0.0"
-wasmprinter = { version = "0.219.1", optional = true }
+wasmprinter = { version = "0.221.2", optional = true }
 wasmtime = { workspace = true }
 wasmtime-wasi = { workspace = true }
 wasi-common = { workspace = true }
-walrus = "0.22.0"
+walrus = "0.23.2"
 swc_core = { version = "8.0.1", features = [
     "common_sourcemap",
     "ecma_ast",
@@ -31,7 +31,7 @@ wit-parser = "0.212.0"
 convert_case = "0.6.0"
 wasm-opt = "0.116.1"
 tempfile = { workspace = true }
-clap = { version = "4.5.20", features = ["derive"] }
+clap = { version = "4.5.22", features = ["derive"] }
 serde = { workspace = true, default-features = false }
 serde_json = { workspace = true }
 
@@ -39,13 +39,13 @@ serde_json = { workspace = true }
 lazy_static = "1.5"
 criterion = "0.5"
 num-format = "0.4.4"
-wasmparser = "0.219.1"
+wasmparser = "0.221.2"
 javy-runner = { path = "../runner/" }
 uuid = { workspace = true }
 javy-test-macros = { path = "../test-macros/" }
 
 [build-dependencies]
-anyhow = "1.0.92"
+anyhow = "1.0.94"
 wizer = { workspace = true }
 
 [[bench]]
