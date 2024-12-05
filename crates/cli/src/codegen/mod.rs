@@ -149,16 +149,18 @@ impl Generator {
                     .make_linker(Some(Rc::new(move |engine| {
                         let mut linker = Linker::new(engine);
                         wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, move |cx| {
-                            // The underlying buffer backing the pipe is an Arc
-                            // so the cloning should be fast.
-                            let config = STDIN_PIPE.get().unwrap().clone();
-                            cx.wasi_ctx = Some(
-                                WasiCtxBuilder::new()
-                                    .stdin(config)
-                                    .inherit_stdout()
-                                    .inherit_stderr()
-                                    .build_p1(),
-                            );
+                            if cx.wasi_ctx.is_none() {
+                                // The underlying buffer backing the pipe is an Arc
+                                // so the cloning should be fast.
+                                let config = STDIN_PIPE.get().unwrap().clone();
+                                cx.wasi_ctx = Some(
+                                    WasiCtxBuilder::new()
+                                        .stdin(config)
+                                        .inherit_stdout()
+                                        .inherit_stderr()
+                                        .build_p1(),
+                                );
+                            }
                             cx.wasi_ctx.as_mut().unwrap()
                         })?;
                         Ok(linker)
