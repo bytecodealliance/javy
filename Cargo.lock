@@ -1558,8 +1558,8 @@ dependencies = [
  "quickcheck",
  "rmp-serde",
  "rquickjs",
- "rquickjs-core",
- "rquickjs-sys",
+ "rquickjs-core 0.6.1",
+ "rquickjs-sys 0.6.1",
  "serde",
  "serde-transcode",
  "serde_json",
@@ -2053,30 +2053,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "proc-macro-error"
-version = "1.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da25490ff9892aab3fcf7c36f08cfb902dd3e71ca0f9f9517bea02a73a5ce38c"
-dependencies = [
- "proc-macro-error-attr",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
- "version_check",
-]
-
-[[package]]
-name = "proc-macro-error-attr"
-version = "1.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1be40180e52ecc98ad80b184934baf3d0d29f979574e439af5a55274b35f869"
-dependencies = [
- "proc-macro2",
- "quote",
- "version_check",
-]
-
-[[package]]
 name = "proc-macro-error-attr2"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2315,11 +2291,11 @@ dependencies = [
 
 [[package]]
 name = "rquickjs"
-version = "0.6.1"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "313802853d6b1a91a7ecaef37b88b2e3be94dbfd8e46e8c585ec7d03977c4585"
+checksum = "d16661bff09e9ed8e01094a188b463de45ec0693ade55b92ed54027d7ba7c40c"
 dependencies = [
- "rquickjs-core",
+ "rquickjs-core 0.8.1",
  "rquickjs-macro",
 ]
 
@@ -2329,25 +2305,33 @@ version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b61d5ef0cf929f69b30c106b70cafbf8c9b00435da7b13c004e61db639ae7cc"
 dependencies = [
+ "rquickjs-sys 0.6.1",
+]
+
+[[package]]
+name = "rquickjs-core"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c8db6379e204ef84c0811e90e7cc3e3e4d7688701db68a00d14a6db6849087b"
+dependencies = [
  "relative-path",
- "rquickjs-sys",
+ "rquickjs-sys 0.8.1",
 ]
 
 [[package]]
 name = "rquickjs-macro"
-version = "0.6.1"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52decfafae40368b74e1513235245612680224924925736f386b9456b78efce9"
+checksum = "6041104330c019fcd936026ae05e2446f5e8a2abef329d924f25424b7052a2f3"
 dependencies = [
  "convert_case",
  "fnv",
  "ident_case",
  "indexmap 2.2.6",
  "proc-macro-crate",
- "proc-macro-error",
  "proc-macro2",
  "quote",
- "rquickjs-core",
+ "rquickjs-core 0.8.1",
  "syn 2.0.90",
 ]
 
@@ -2356,6 +2340,15 @@ name = "rquickjs-sys"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "22a6df95dbd61eacfa2fb7571c9d0a6d2acb168135f6261ddd53d0347fd65441"
+dependencies = [
+ "cc",
+]
+
+[[package]]
+name = "rquickjs-sys"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4bc352c6b663604c3c186c000cfcc6c271f4b50bc135a285dd6d4f2a42f9790a"
 dependencies = [
  "bindgen",
  "cc",
