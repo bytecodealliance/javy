@@ -11,7 +11,7 @@ categories = ["wasm"]
 
 [dependencies]
 anyhow = { workspace = true }
-rquickjs = { version = "=0.6.1", features = ["array-buffer", "bindgen"] }
+rquickjs = { version = "=0.8.1", features = ["array-buffer", "bindgen"] }
 rquickjs-core = "=0.6.1"
 rquickjs-sys = "=0.6.1"
 serde = { workspace = true, default-features = true, features = ["derive"] }
