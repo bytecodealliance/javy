@@ -31,7 +31,7 @@ wit-parser = "0.212.0"
 convert_case = "0.6.0"
 wasm-opt = "0.116.1"
 tempfile = { workspace = true }
-clap = { version = "4.5.22", features = ["derive"] }
+clap = { version = "4.5.23", features = ["derive"] }
 serde = { workspace = true, default-features = false }
 serde_json = { workspace = true }
 
