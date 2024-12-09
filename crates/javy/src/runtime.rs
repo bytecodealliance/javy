@@ -1,20 +1,22 @@
 // use crate::quickjs::JSContextRef;
 use super::from_js_error;
+#[cfg(feature = "json")]
+use crate::apis::json;
 use crate::{
-    apis::{Console, NonStandardConsole, Random, StreamIO, TextEncoding},
+    apis::{console, random, stream_io, text_encoding},
     config::{JSIntrinsics, JavyIntrinsics},
     Config,
 };
-
-#[cfg(feature = "json")]
-use crate::apis::{JavyJson, Json};
 
 use anyhow::{bail, Result};
 use rquickjs::{
     context::{intrinsic, Intrinsic},
     Context, Module, Runtime as QRuntime,
 };
-use std::mem::ManuallyDrop;
+use std::{
+    io::{stderr, stdout},
+    mem::ManuallyDrop,
+};
 
 /// A JavaScript Runtime.
 ///
@@ -57,17 +59,21 @@ impl Runtime {
         rt.set_memory_limit(cfg.memory_limit);
         rt.set_max_stack_size(cfg.max_stack_size);
 
-        // We always set Random given that the principles around snapshotting and
-        // random are applicable when using Javy from the CLI (the usage of
-        // Wizer from the CLI is not optional).
-        // NB: Users of Javy as a crate are welcome to switch this config,
-        // however note that the usage of a custom `Random` implementation
-        // should not affect the output of `Math.random()`.
-        let context = Context::custom::<Random>(rt)?;
+        // Using `Context::base` seems to have a bug where it tries to register
+        // the same intrinsic twice.
+        let context = Context::custom::<()>(rt)?;
 
         // We use `Context::with` to ensure that there's a proper lock on the
         // context, making it totally safe to add the intrinsics below.
         context.with(|ctx| {
+            // We always set Random given that the principles around snapshotting and
+            // random are applicable when using Javy from the CLI (the usage of
+            // Wizer from the CLI is not optional).
+            // NB: Users of Javy as a crate are welcome to switch this config,
+            // however note that the usage of a custom `Random` implementation
+            // should not affect the output of `Math.random()`.
+            random::register(ctx.clone()).expect("registering `random` APIs to succeed");
+
             if intrinsics.contains(JSIntrinsics::DATE) {
                 unsafe { intrinsic::Date::add_intrinsic(ctx.as_raw()) }
             }
@@ -88,11 +94,9 @@ impl Runtime {
                 unsafe { intrinsic::Json::add_intrinsic(ctx.as_raw()) }
             }
 
+            #[cfg(feature = "json")]
             if cfg.simd_json_builtins {
-                #[cfg(feature = "json")]
-                unsafe {
-                    Json::add_intrinsic(ctx.as_raw())
-                }
+                json::register(ctx.clone()).expect("registering JSON builtins to succeed");
             }
 
             if intrinsics.contains(JSIntrinsics::PROXY) {
@@ -128,24 +132,27 @@ impl Runtime {
             }
 
             if intrinsics.contains(JSIntrinsics::TEXT_ENCODING) {
-                unsafe { TextEncoding::add_intrinsic(ctx.as_raw()) }
+                text_encoding::register(ctx.clone())
+                    .expect("registering TextEncoding APIs to succeed");
             }
 
             if cfg.redirect_stdout_to_stderr {
-                unsafe { NonStandardConsole::add_intrinsic(ctx.as_raw()) }
+                console::register(ctx.clone(), stderr(), stderr())
+                    .expect("registering console to succeed");
             } else {
-                unsafe { Console::add_intrinsic(ctx.as_raw()) }
+                console::register(ctx.clone(), stdout(), stderr())
+                    .expect("registering console to succeed");
             }
 
             if javy_intrinsics.contains(JavyIntrinsics::STREAM_IO) {
-                unsafe { StreamIO::add_intrinsic(ctx.as_raw()) }
+                stream_io::register(ctx.clone())
+                    .expect("registering StreamIO functions to succeed");
             }
 
+            #[cfg(feature = "json")]
             if javy_intrinsics.contains(JavyIntrinsics::JSON) {
-                #[cfg(feature = "json")]
-                unsafe {
-                    JavyJson::add_intrinsic(ctx.as_raw())
-                }
+                json::register_javy_json(ctx.clone())
+                    .expect("registering Javy.JSON builtins to succeed");
             }
         });
 
