@@ -51,7 +51,7 @@ mod namespace;
 
 const FUNCTION_MODULE_NAME: &str = "function.mjs";
 
-static mut COMPILE_SRC_RET_AREA: [u32; 2] = [0; 2];
+static COMPILE_SRC_RET_AREA: [u32; 2] = [0; 2];
 
 static mut RUNTIME: OnceCell<Runtime> = OnceCell::new();
 static mut EVENT_LOOP_ENABLED: bool = false;
