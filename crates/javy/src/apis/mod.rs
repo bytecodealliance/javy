@@ -1,8 +1,6 @@
 //! A collection of APIs for Javy.
 //!
-//! APIs are enabled through the the [`Config`](crate::Config) and are defined
-//! in term of the [`Intrinsic`](rquickjs::context::Intrinsic) provided by
-//! rquickjs.
+//! APIs are enabled through the the [`Config`](crate::Config).
 //!
 //! Example usage:
 //! ```rust
@@ -62,10 +60,3 @@ pub(crate) mod json;
 pub(crate) mod random;
 pub(crate) mod stream_io;
 pub(crate) mod text_encoding;
-
-pub(crate) use console::*;
-#[cfg(feature = "json")]
-pub(crate) use json::*;
-pub(crate) use random::*;
-pub(crate) use stream_io::*;
-pub(crate) use text_encoding::*;

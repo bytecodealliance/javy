@@ -3,22 +3,14 @@ use std::str;
 use crate::{
     hold, hold_and_release,
     quickjs::{
-        context::{EvalOptions, Intrinsic},
-        qjs, Ctx, Exception, Function, String as JSString, TypedArray, Value,
+        context::EvalOptions, Ctx, Exception, Function, String as JSString, TypedArray, Value,
     },
     to_js_error, to_string_lossy, Args,
 };
 use anyhow::{anyhow, bail, Error, Result};
 
-pub struct TextEncoding;
-
-impl Intrinsic for TextEncoding {
-    unsafe fn add_intrinsic(ctx: std::ptr::NonNull<qjs::JSContext>) {
-        register(Ctx::from_raw(ctx)).expect("Register TextEncoding APIs to succeed");
-    }
-}
-
-fn register(this: Ctx<'_>) -> Result<()> {
+/// Register `TextDecoder` and `TextEncoder` classes.
+pub(crate) fn register(this: Ctx<'_>) -> Result<()> {
     let globals = this.globals();
     globals.set(
         "__javy_decodeUtf8BufferToString",

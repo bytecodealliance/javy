@@ -1,35 +1,14 @@
-use std::io::{stderr, stdout, Write};
-use std::ptr::NonNull;
+use std::io::Write;
 
 use crate::{
     hold, hold_and_release,
-    quickjs::{context::Intrinsic, prelude::MutFn, qjs, Ctx, Function, Object, Value},
+    quickjs::{prelude::MutFn, Ctx, Function, Object, Value},
     to_js_error, val_to_string, Args,
 };
 use anyhow::Result;
 
-/// An implementation of JavaScript `console` APIs.
-/// This implementation is *not* standard in the sense that it redirects the output of
-/// `console.log` to stderr.
-pub(crate) struct NonStandardConsole;
-
-/// An implemetation of JavaScript `console` APIs. This implementation is
-/// standard as it redirects `console.log` to stdout and `console.error` to
-/// stderr.
-pub(crate) struct Console;
-
-impl Intrinsic for NonStandardConsole {
-    unsafe fn add_intrinsic(ctx: NonNull<qjs::JSContext>) {
-        register(Ctx::from_raw(ctx), stderr(), stderr()).expect("registering console to succeed");
-    }
-}
-
-impl Intrinsic for Console {
-    unsafe fn add_intrinsic(ctx: NonNull<qjs::JSContext>) {
-        register(Ctx::from_raw(ctx), stdout(), stderr()).expect("registering console to succeed");
-    }
-}
-
+/// Register a `console` object on the global object with `.log` and `.error`
+/// streams.
 pub(crate) fn register<T, U>(this: Ctx<'_>, mut log_stream: T, mut error_stream: U) -> Result<()>
 where
     T: Write + 'static,

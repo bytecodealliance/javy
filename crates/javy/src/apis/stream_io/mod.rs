@@ -3,19 +3,13 @@ use std::io::{Read, Stdin, Write};
 
 use crate::{
     hold, hold_and_release,
-    quickjs::{context::Intrinsic, qjs, qjs::JS_GetArrayBuffer, Ctx, Function, Object, Value},
+    quickjs::{qjs::JS_GetArrayBuffer, Ctx, Function, Object, Value},
     to_js_error, Args,
 };
 
-pub struct StreamIO;
-
-impl Intrinsic for StreamIO {
-    unsafe fn add_intrinsic(ctx: std::ptr::NonNull<qjs::JSContext>) {
-        register(Ctx::from_raw(ctx)).expect("Registering StreamIO functions to succeed");
-    }
-}
-
-fn register(this: Ctx<'_>) -> Result<()> {
+/// Register `Javy.IO.readSync` and `Javy.IO.writeSync` functions on the
+/// global object.
+pub(crate) fn register(this: Ctx<'_>) -> Result<()> {
     let globals = this.globals();
     if globals.get::<_, Object>("Javy").is_err() {
         globals.set("Javy", Object::new(this.clone())?)?

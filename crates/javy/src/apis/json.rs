@@ -20,10 +20,9 @@
 use crate::{
     hold, hold_and_release, json,
     quickjs::{
-        context::Intrinsic,
         function::This,
         prelude::{MutFn, Rest},
-        qjs, Ctx, Exception, Function, Object, String as JSString, Value,
+        Ctx, Exception, Function, Object, String as JSString, Value,
     },
     to_js_error, val_to_string, Args,
 };
@@ -35,32 +34,14 @@ use simd_json::Error as SError;
 use anyhow::{anyhow, bail, Result};
 use std::{
     io::{Read, Write},
-    ptr::NonNull,
     sync::OnceLock,
     time::SystemTime,
 };
 
 static DEFAULT_PARSE_KEY: OnceLock<String> = OnceLock::new();
 
-/// Intrinsic to attach faster JSON.{parse/stringify} functions.
-pub struct Json;
-
-/// Intrinsic to attach functions under the `Javy.JSON` namespace.
-pub struct JavyJson;
-
-impl Intrinsic for JavyJson {
-    unsafe fn add_intrinsic(ctx: NonNull<qjs::JSContext>) {
-        register_javy_json(Ctx::from_raw(ctx)).expect("registering Javy.JSON builtins to succeed")
-    }
-}
-
-impl Intrinsic for Json {
-    unsafe fn add_intrinsic(ctx: NonNull<qjs::JSContext>) {
-        register(Ctx::from_raw(ctx)).expect("registering JSON builtins to succeed")
-    }
-}
-
-fn register<'js>(this: Ctx<'js>) -> Result<()> {
+/// Use SIMD implementations for `JSON.parse` and `JSON.stringify`.
+pub(crate) fn register<'js>(this: Ctx<'js>) -> Result<()> {
     let global = this.globals();
 
     let json: Object = global.get("JSON")?;
@@ -193,7 +174,9 @@ fn call_json_stringify(args: Args<'_>) -> Result<Value<'_>> {
     }
 }
 
-fn register_javy_json(this: Ctx<'_>) -> Result<()> {
+/// Register `Javy.JSON.fromStdin` and `Javy.JSON.toStdout` functions on the
+/// global object.
+pub(crate) fn register_javy_json(this: Ctx<'_>) -> Result<()> {
     let globals = this.globals();
     let javy = if globals.get::<_, Object>("Javy").is_err() {
         Object::new(this.clone())?
