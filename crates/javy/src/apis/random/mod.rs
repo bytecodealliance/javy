@@ -1,15 +1,9 @@
-use crate::quickjs::{context::Intrinsic, prelude::Func, qjs, Ctx, Object};
+use crate::quickjs::{prelude::Func, Ctx, Object};
 use anyhow::{Error, Result};
 
-pub struct Random;
-
-impl Intrinsic for Random {
-    unsafe fn add_intrinsic(ctx: std::ptr::NonNull<qjs::JSContext>) {
-        register(Ctx::from_raw(ctx)).expect("`Random` APIs to succeed")
-    }
-}
-
-fn register(cx: Ctx) -> Result<()> {
+/// Register a `random` object on the global object that seeds itself at first
+/// execution.
+pub(crate) fn register(cx: Ctx) -> Result<()> {
     let globals = cx.globals();
     let math: Object<'_> = globals.get("Math").expect("Math global to be defined");
     math.set("random", Func::from(fastrand::f64))?;
