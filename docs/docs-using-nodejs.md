@@ -2,11 +2,20 @@
 This example demonstrates how to run Javy in a Node.js (v20+) host application.
 
 ## Warning
-This example does NOT show how to run a Node.js application in Javy. This is useful for when you want to run untrusted user generated code in a sandbox. This code is meant to be an example not production-ready code. 
+This example does NOT show how to run a Node.js application in Javy. This is
+useful for when you want to run untrusted user generated code in a sandbox. This
+code is meant to be an example not production-ready code. 
 
+It's also important to note that the WASI implementation in NodeJS is currently
+considered [experimental].
+
+[experimental]: https://nodejs.org/api/wasi.html#webassembly-system-interface-wasi
 
 ## Summary
-This example shows how to use a dynamically linked Javy compiled Wasm module. We use std in/out/error to communicate with the embedded javascript see [this blog post](https://k33g.hashnode.dev/wasi-communication-between-nodejs-and-wasm-modules-another-way-with-stdin-and-stdout) for details.
+This example shows how to use a dynamically linked Javy compiled Wasm module. We
+use std in/out/error to communicate with the embedded javascript see [this blog
+post](https://k33g.hashnode.dev/wasi-communication-between-nodejs-and-wasm-modules-another-way-with-stdin-and-stdout)
+for details.
 
 
 ### Steps
