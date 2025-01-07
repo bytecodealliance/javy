@@ -21,7 +21,7 @@ fn test_identity(builder: &mut Builder) -> Result<()> {
 
     let (output, _, fuel_consumed) = run_with_u8s(&mut runner, 42);
     assert_eq!(42, output);
-    assert_fuel_consumed_within_threshold(47_773, fuel_consumed);
+    assert_fuel_consumed_within_threshold(46_797, fuel_consumed);
     Ok(())
 }
 
@@ -41,7 +41,7 @@ fn test_recursive_fib(builder: &mut Builder) -> Result<()> {
 
     let (output, _, fuel_consumed) = run_with_u8s(&mut runner, 5);
     assert_eq!(8, output);
-    assert_fuel_consumed_within_threshold(69_306, fuel_consumed);
+    assert_fuel_consumed_within_threshold(67_869, fuel_consumed);
     Ok(())
 }
 
