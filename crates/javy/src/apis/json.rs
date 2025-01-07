@@ -18,7 +18,7 @@
 //! hotpath and doing any sort of inline processing of the parsed or stringified
 //! values is likely to void any performance benefits.
 use crate::{
-    hold, hold_and_release, json,
+    hold, json,
     quickjs::{
         function::This,
         prelude::{MutFn, Rest},
@@ -32,11 +32,7 @@ use crate::serde::de::get_to_json;
 use simd_json::Error as SError;
 
 use anyhow::{anyhow, bail, Result};
-use std::{
-    io::{Read, Write},
-    sync::OnceLock,
-    time::SystemTime,
-};
+use std::{sync::OnceLock, time::SystemTime};
 
 static DEFAULT_PARSE_KEY: OnceLock<String> = OnceLock::new();
 
@@ -172,53 +168,4 @@ fn call_json_stringify(args: Args<'_>) -> Result<Value<'_>> {
                 |str| str.into_value(),
             )),
     }
-}
-
-/// Register `Javy.JSON.fromStdin` and `Javy.JSON.toStdout` functions on the
-/// global object.
-pub(crate) fn register_javy_json(this: Ctx<'_>) -> Result<()> {
-    let globals = this.globals();
-    let javy = if globals.get::<_, Object>("Javy").is_err() {
-        Object::new(this.clone())?
-    } else {
-        globals.get::<_, Object>("Javy").unwrap()
-    };
-
-    let from_stdin = Function::new(this.clone(), |cx, args| {
-        let (cx, args) = hold_and_release!(cx, args);
-        from_stdin(hold!(cx.clone(), args)).map_err(|e| to_js_error(cx, e))
-    });
-
-    let to_stdout = Function::new(this.clone(), |cx, args| {
-        let (cx, args) = hold_and_release!(cx, args);
-        to_stdout(hold!(cx.clone(), args)).map_err(|e| to_js_error(cx, e))
-    });
-
-    let json = Object::new(this)?;
-    json.set("fromStdin", from_stdin)?;
-    json.set("toStdout", to_stdout)?;
-
-    javy.set("JSON", json)?;
-    globals.set("Javy", javy).map_err(Into::into)
-}
-
-/// Definition for Javy.JSON.fromStdin
-fn from_stdin(args: Args<'_>) -> Result<Value> {
-    // Light experimentation shows that 1k bytes is enough to avoid paying the
-    // high relocation costs. We can modify as we see fit or even make this
-    // configurable if needed.
-    let mut buffer = Vec::with_capacity(1000);
-    let mut fd = std::io::stdin();
-    fd.read_to_end(&mut buffer)?;
-    let (ctx, _) = args.release();
-    json::parse(ctx, &mut buffer)
-}
-
-/// Definition for Javy.JSON.toStdout
-fn to_stdout(args: Args<'_>) -> Result<()> {
-    let (_, args) = args.release();
-    let mut fd = std::io::stdout();
-    let buffer = json::stringify(args[0].clone())?;
-    fd.write_all(&buffer)?;
-    fd.flush().map_err(Into::into)
 }

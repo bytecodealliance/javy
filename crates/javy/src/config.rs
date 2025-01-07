@@ -37,7 +37,6 @@ bitflags! {
     /// moved out.
     pub(crate) struct JavyIntrinsics: u32 {
         const STREAM_IO = 1;
-        const JSON = 1 << 1;
     }
 }
 
@@ -178,15 +177,6 @@ impl Config {
     /// Disabled by default.
     pub fn javy_stream_io(&mut self, enable: bool) -> &mut Self {
         self.javy_intrinsics.set(JavyIntrinsics::STREAM_IO, enable);
-        self
-    }
-
-    /// Whether the `Javy.JSON` intrinsic will be available.
-    /// Disabled by default.
-    /// This setting requires the `json` crate feature to be enabled.
-    #[cfg(feature = "json")]
-    pub fn javy_json(&mut self, enable: bool) -> &mut Self {
-        self.javy_intrinsics.set(JavyIntrinsics::JSON, enable);
         self
     }
 

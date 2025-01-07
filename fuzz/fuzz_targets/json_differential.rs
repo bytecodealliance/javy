@@ -22,7 +22,7 @@ fuzz_target!(|data: ArbitraryValue| {
 
         let mut config = Config::default();
         setup_config(&mut config);
-        config.simd_json_builtins(true).javy_json(true);
+        config.simd_json_builtins(true);
 
         unsafe {
             RT = Some(Runtime::new(std::mem::take(&mut config)).expect("Runtime to be created"));

@@ -114,25 +114,6 @@ fn test_using_runtime_flag_with_dynamic_triggers_error(builder: &mut Builder) ->
     Ok(())
 }
 
-#[javy_cli_test(
-    dyn = true,
-    root = "tests/dynamic-linking-scripts",
-    commands(not(Compile))
-)]
-fn javy_json_identity(builder: &mut Builder) -> Result<()> {
-    let mut runner = builder.input("javy-json-id.js").build()?;
-
-    let input = "{\"x\":5}";
-
-    let bytes = String::from(input).into_bytes();
-    let (out, logs, _) = runner.exec(&bytes)?;
-
-    assert_eq!(String::from_utf8(out)?, input);
-    assert_eq!(String::from_utf8(logs)?, "undefined\n");
-
-    Ok(())
-}
-
 #[javy_cli_test(dyn = true, commands(not(Compile)))]
 fn test_using_plugin_with_dynamic_works(builder: &mut Builder) -> Result<()> {
     let plugin = Plugin::User;

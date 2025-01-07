@@ -15,8 +15,6 @@ runtime_config! {
     pub struct SharedConfig {
         /// Whether to redirect the output of console.log to standard error.
         redirect_stdout_to_stderr: Option<bool>,
-        /// Whether to enable the `Javy.JSON` builtins.
-        javy_json: Option<bool>,
         /// Whether to enable the `Javy.readSync` and `Javy.writeSync` builtins.
         javy_stream_io: Option<bool>,
         /// Whether to override the `JSON.parse` and `JSON.stringify`
@@ -39,9 +37,6 @@ impl SharedConfig {
     pub fn apply_to_config(&self, config: &mut Config) {
         if let Some(enable) = self.redirect_stdout_to_stderr {
             config.redirect_stdout_to_stderr(enable);
-        }
-        if let Some(enable) = self.javy_json {
-            config.javy_json(enable);
         }
         if let Some(enable) = self.javy_stream_io {
             config.javy_stream_io(enable);
