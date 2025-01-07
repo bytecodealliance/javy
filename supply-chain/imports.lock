@@ -44,8 +44,8 @@ user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.anyhow]]
-version = "1.0.94"
-when = "2024-12-03"
+version = "1.0.95"
+when = "2024-12-22"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -305,6 +305,20 @@ user-id = 2915
 user-login = "Amanieu"
 user-name = "Amanieu d'Antras"
 
+[[publisher.indexmap]]
+version = "1.9.3"
+when = "2023-03-24"
+user-id = 539
+user-login = "cuviper"
+user-name = "Josh Stone"
+
+[[publisher.indexmap]]
+version = "2.7.0"
+when = "2024-12-01"
+user-id = 539
+user-login = "cuviper"
+user-name = "Josh Stone"
+
 [[publisher.io-extras]]
 version = "0.18.2"
 when = "2024-03-29"
@@ -411,8 +425,8 @@ user-login = "BurntSushi"
 user-name = "Andrew Gallant"
 
 [[publisher.quote]]
-version = "1.0.37"
-when = "2024-08-22"
+version = "1.0.38"
+when = "2024-12-26"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -502,22 +516,22 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.serde]]
-version = "1.0.204"
-when = "2024-07-06"
+version = "1.0.217"
+when = "2024-12-27"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.serde_derive]]
-version = "1.0.204"
-when = "2024-07-06"
+version = "1.0.217"
+when = "2024-12-27"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.serde_json]]
-version = "1.0.133"
-when = "2024-11-17"
+version = "1.0.135"
+when = "2025-01-07"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -544,8 +558,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.syn]]
-version = "2.0.90"
-when = "2024-11-29"
+version = "2.0.95"
+when = "2025-01-05"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -727,8 +741,8 @@ user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmparser]]
-version = "0.221.2"
-when = "2024-12-02"
+version = "0.222.0"
+when = "2024-12-18"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -739,8 +753,8 @@ user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmprinter]]
-version = "0.221.2"
-when = "2024-12-02"
+version = "0.222.0"
+when = "2024-12-18"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -1641,6 +1655,12 @@ who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
 delta = "0.1.21 -> 0.1.24"
 
+[[audits.bytecode-alliance.audits.shlex]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+version = "1.1.0"
+notes = "Only minor `unsafe` code blocks which look valid and otherwise does what it says on the tin."
+
 [[audits.bytecode-alliance.audits.slice-group-by]]
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
@@ -1920,98 +1940,6 @@ There is unsafe to convert pointers from str to RelativePath, where the latter
 is a transparent wrapper around str so the pointer will be to a valid
 type/value always.
 """
-aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
-
-[[audits.google.audits.serde]]
-who = "Lukasz Anforowicz <lukasza@chromium.org>"
-criteria = "safe-to-deploy"
-delta = "1.0.204 -> 1.0.207"
-notes = "The small change in `src/private/ser.rs` should have no impact on `ub-risk-2`."
-aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
-
-[[audits.google.audits.serde]]
-who = "Lukasz Anforowicz <lukasza@chromium.org>"
-criteria = "safe-to-deploy"
-delta = "1.0.207 -> 1.0.209"
-notes = """
-The delta carries fairly small changes in `src/private/de.rs` and
-`src/private/ser.rs` (see https://crrev.com/c/5812194/2..5).  AFAICT the
-delta has no impact on the `unsafe`, `from_utf8_unchecked`-related parts
-of the crate (in `src/de/format.rs` and `src/ser/impls.rs`).
-"""
-aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
-
-[[audits.google.audits.serde]]
-who = "Adrian Taylor <adetaylor@chromium.org>"
-criteria = "safe-to-deploy"
-delta = "1.0.209 -> 1.0.210"
-notes = "Almost no new code - just feature rearrangement"
-aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
-
-[[audits.google.audits.serde]]
-who = "Liza Burakova <liza@chromium.org>"
-criteria = "safe-to-deploy"
-delta = "1.0.210 -> 1.0.213"
-aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
-
-[[audits.google.audits.serde]]
-who = "Dustin J. Mitchell <djmitche@chromium.org>"
-criteria = "safe-to-deploy"
-delta = "1.0.213 -> 1.0.214"
-notes = "No unsafe, no crypto"
-aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
-
-[[audits.google.audits.serde]]
-who = "Adrian Taylor <adetaylor@chromium.org>"
-criteria = "safe-to-deploy"
-delta = "1.0.214 -> 1.0.215"
-aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
-
-[[audits.google.audits.serde_derive]]
-who = "Lukasz Anforowicz <lukasza@chromium.org>"
-criteria = "safe-to-deploy"
-delta = "1.0.204 -> 1.0.207"
-notes = 'Grepped for \"unsafe\", \"crypt\", \"cipher\", \"fs\", \"net\" - there were no hits'
-aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
-
-[[audits.google.audits.serde_derive]]
-who = "Lukasz Anforowicz <lukasza@chromium.org>"
-criteria = "safe-to-deploy"
-delta = "1.0.207 -> 1.0.209"
-notes = '''
-There are no code changes in this delta - see https://crrev.com/c/5812194/2..5
-
-I've neverthless also grepped for `-i cipher`, `-i crypto`, `\bfs\b`,
-`\bnet\b`, and `\bunsafe\b`.  There were no hits.
-'''
-aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
-
-[[audits.google.audits.serde_derive]]
-who = "Adrian Taylor <adetaylor@chromium.org>"
-criteria = "safe-to-deploy"
-delta = "1.0.209 -> 1.0.210"
-notes = "Almost no new code - just feature rearrangement"
-aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
-
-[[audits.google.audits.serde_derive]]
-who = "Liza Burakova <liza@chromium.org>"
-criteria = "safe-to-deploy"
-delta = "1.0.210 -> 1.0.213"
-notes = "Grepped for 'unsafe', 'crypt', 'cipher', 'fs', 'net' - there were no hits"
-aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
-
-[[audits.google.audits.serde_derive]]
-who = "Dustin J. Mitchell <djmitche@chromium.org>"
-criteria = "safe-to-deploy"
-delta = "1.0.213 -> 1.0.214"
-notes = "No changes to unsafe, no crypto"
-aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
-
-[[audits.google.audits.serde_derive]]
-who = "Adrian Taylor <adetaylor@chromium.org>"
-criteria = "safe-to-deploy"
-delta = "1.0.214 -> 1.0.215"
-notes = "Minor changes should not impact UB risk"
 aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
 
 [[audits.google.audits.socket2]]
@@ -2520,6 +2448,12 @@ The bulk of this is https://github.com/RustCrypto/hashes/pull/490 which adds aar
 I didn't check the implementation thoroughly but there wasn't anything obviously nefarious. 0.10.8 has been out for more than a year
 which suggests no one else has found anything either.
 """
+aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+[[audits.mozilla.audits.shlex]]
+who = "Max Inden <mail@max-inden.de>"
+criteria = "safe-to-deploy"
+delta = "1.1.0 -> 1.3.0"
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
 [[audits.mozilla.audits.socket2]]
