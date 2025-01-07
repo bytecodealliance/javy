@@ -1,3 +1,3 @@
 export function foo() {
-    console.log("Hello from bar!");
+    console.error("Hello from bar!");
 }

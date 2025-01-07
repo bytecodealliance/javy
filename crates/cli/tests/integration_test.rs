@@ -74,48 +74,14 @@ fn test_encoding(builder: &mut Builder) -> Result<()> {
     Ok(())
 }
 
-#[javy_cli_test(commands(not(Build)))]
-fn test_logging_with_compile(builder: &mut Builder) -> Result<()> {
+#[javy_cli_test]
+fn test_console_log(builder: &mut Builder) -> Result<()> {
     let mut runner = builder.input("logging.js").build()?;
-
-    let (output, logs, fuel_consumed) = run(&mut runner, &[]);
-    assert!(output.is_empty());
-    assert_eq!(
-        "hello world from console.log\nhello world from console.error\n",
-        logs.as_str(),
-    );
-    assert_fuel_consumed_within_threshold(36_071, fuel_consumed);
-    Ok(())
-}
-
-#[javy_cli_test(commands(not(Compile)))]
-fn test_logging_without_redirect(builder: &mut Builder) -> Result<()> {
-    let mut runner = builder
-        .input("logging.js")
-        .redirect_stdout_to_stderr(false)
-        .build()?;
 
     let (output, logs, fuel_consumed) = run(&mut runner, &[]);
     assert_eq!(b"hello world from console.log\n".to_vec(), output);
     assert_eq!("hello world from console.error\n", logs.as_str());
     assert_fuel_consumed_within_threshold(36_641, fuel_consumed);
-    Ok(())
-}
-
-#[javy_cli_test(commands(not(Compile)))]
-fn test_logging_with_redirect(builder: &mut Builder) -> Result<()> {
-    let mut runner = builder
-        .input("logging.js")
-        .redirect_stdout_to_stderr(true)
-        .build()?;
-
-    let (output, logs, fuel_consumed) = run(&mut runner, &[]);
-    assert!(output.is_empty());
-    assert_eq!(
-        "hello world from console.log\nhello world from console.error\n",
-        logs.as_str(),
-    );
-    assert_fuel_consumed_within_threshold(35_007, fuel_consumed);
     Ok(())
 }
 

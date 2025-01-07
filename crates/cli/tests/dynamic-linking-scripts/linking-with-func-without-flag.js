@@ -1,5 +1,5 @@
 export function foo() {
-  console.log('In foo');
+  console.error('In foo');
 };
 
-console.log('Toplevel');
+console.error('Toplevel');

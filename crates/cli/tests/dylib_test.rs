@@ -4,7 +4,7 @@ use std::str;
 
 #[test]
 fn test_dylib() -> Result<()> {
-    let js_src = "console.log(42);";
+    let js_src = "console.error(42);";
     let mut runner = Runner::with_dylib(plugin_module()?)?;
 
     let (_, logs, _) = runner.exec_through_dylib(js_src, UseExportedFn::EvalBytecode)?;
@@ -15,7 +15,7 @@ fn test_dylib() -> Result<()> {
 
 #[test]
 fn test_dylib_with_invoke_with_no_fn_name() -> Result<()> {
-    let js_src = "console.log(42);";
+    let js_src = "console.error(42);";
     let mut runner = Runner::with_dylib(plugin_module()?)?;
 
     let (_, logs, _) = runner.exec_through_dylib(js_src, UseExportedFn::Invoke(None))?;
@@ -46,7 +46,7 @@ fn test_dylib_with_error() -> Result<()> {
 
 #[test]
 fn test_dylib_with_exported_func() -> Result<()> {
-    let js_src = "export function foo() { console.log('In foo'); }; console.log('Toplevel');";
+    let js_src = "export function foo() { console.error('In foo'); }; console.error('Toplevel');";
 
     let mut runner = Runner::with_dylib(plugin_module()?)?;
 

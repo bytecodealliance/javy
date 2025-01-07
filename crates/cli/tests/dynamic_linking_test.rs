@@ -104,13 +104,10 @@ fn test_producers_section_present(builder: &mut Builder) -> Result<()> {
     commands(not(Compile))
 )]
 fn test_using_runtime_flag_with_dynamic_triggers_error(builder: &mut Builder) -> Result<()> {
-    let build_result = builder
-        .input("console.js")
-        .redirect_stdout_to_stderr(false)
-        .build();
-    assert!(build_result.is_err_and(|e| e.to_string().contains(
-        "error: Property redirect-stdout-to-stderr is not supported for runtime configuration"
-    )));
+    let build_result = builder.input("console.js").text_encoding(false).build();
+    assert!(build_result.is_err_and(|e| e
+        .to_string()
+        .contains("error: Property text-encoding is not supported for runtime configuration")));
     Ok(())
 }
 

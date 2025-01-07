@@ -374,29 +374,10 @@ mod tests {
     #[test]
     fn js_config_from_config_values() -> Result<()> {
         let group = JsConfig::from_group_values(&Plugin::Default, vec![])?;
-        assert_eq!(group.get("redirect-stdout-to-stderr"), None);
         assert_eq!(group.get("javy-json"), None);
         assert_eq!(group.get("javy-stream-io"), None);
         assert_eq!(group.get("simd-json-builtins"), None);
         assert_eq!(group.get("text-encoding"), None);
-
-        let group = JsConfig::from_group_values(
-            &Plugin::Default,
-            vec![JsGroupValue::Option(JsGroupOption {
-                name: "redirect-stdout-to-stderr".to_string(),
-                enabled: false,
-            })],
-        )?;
-        assert_eq!(group.get("redirect-stdout-to-stderr"), Some(false));
-
-        let group = JsConfig::from_group_values(
-            &Plugin::Default,
-            vec![JsGroupValue::Option(JsGroupOption {
-                name: "redirect-stdout-to-stderr".to_string(),
-                enabled: true,
-            })],
-        )?;
-        assert_eq!(group.get("redirect-stdout-to-stderr"), Some(true));
 
         let group = JsConfig::from_group_values(
             &Plugin::Default,
@@ -474,10 +455,6 @@ mod tests {
             &Plugin::Default,
             vec![
                 JsGroupValue::Option(JsGroupOption {
-                    name: "redirect-stdout-to-stderr".to_string(),
-                    enabled: false,
-                }),
-                JsGroupValue::Option(JsGroupOption {
                     name: "javy-json".to_string(),
                     enabled: false,
                 }),
@@ -495,7 +472,6 @@ mod tests {
                 }),
             ],
         )?;
-        assert_eq!(group.get("redirect-stdout-to-stderr"), Some(false));
         assert_eq!(group.get("javy-json"), Some(false));
         assert_eq!(group.get("javy-stream-io"), Some(false));
         assert_eq!(group.get("simd-json-builtins"), Some(false));

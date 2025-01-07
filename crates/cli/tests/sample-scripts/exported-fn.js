@@ -1,13 +1,13 @@
 export function bar() {
-    console.log("Hello from bar!");
+    console.error("Hello from bar!");
 }
 
 export function foo() {
-    console.log("Hello from foo");
+    console.error("Hello from foo");
 }
 
 export function fooBar() {
-    console.log("Hello from fooBar");
+    console.error("Hello from fooBar");
 }
 
-console.log("Hello from top-level");
+console.error("Hello from top-level");

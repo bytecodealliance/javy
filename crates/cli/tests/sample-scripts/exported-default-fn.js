@@ -1,3 +1,3 @@
 export default function () {
-    console.log(42);
+    console.error(42);
 }
