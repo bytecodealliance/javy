@@ -220,7 +220,7 @@ version = "0.2.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.fastrand]]
-version = "2.2.0"
+version = "2.3.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.float-cmp]]
@@ -313,14 +313,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.if_chain]]
 version = "1.0.2"
-criteria = "safe-to-deploy"
-
-[[exemptions.indexmap]]
-version = "1.9.3"
-criteria = "safe-to-deploy"
-
-[[exemptions.indexmap]]
-version = "2.2.6"
 criteria = "safe-to-deploy"
 
 [[exemptions.ipnet]]
@@ -531,10 +523,6 @@ criteria = "safe-to-deploy"
 version = "2.1.2"
 criteria = "safe-to-deploy"
 
-[[exemptions.shlex]]
-version = "1.3.0"
-criteria = "safe-to-deploy"
-
 [[exemptions.simd-abstraction]]
 version = "0.7.1"
 criteria = "safe-to-deploy"
@@ -628,7 +616,7 @@ version = "2.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.tempfile]]
-version = "3.14.0"
+version = "3.15.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.tinyvec_macros]]
@@ -696,7 +684,7 @@ version = "0.1.3"
 criteria = "safe-to-deploy"
 
 [[exemptions.walrus]]
-version = "0.23.2"
+version = "0.23.3"
 criteria = "safe-to-deploy"
 
 [[exemptions.walrus-macro]]
