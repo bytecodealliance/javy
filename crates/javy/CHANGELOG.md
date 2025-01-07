@@ -8,6 +8,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [4.0.0] - 2025-01-08
+
 ### Removed
 
 - `Javy.JSON.fromStdin` and `Javy.JSON.toStdout` APIs and `javy_json` method on
