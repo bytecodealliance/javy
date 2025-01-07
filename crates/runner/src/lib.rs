@@ -74,8 +74,6 @@ pub struct Builder {
     world: Option<String>,
     /// Whether console.log should write to stderr.
     redirect_stdout_to_stderr: Option<bool>,
-    /// Whether to enable the `Javy.JSON` builtins.
-    javy_json: Option<bool>,
     /// Whether to enable the `Javy.IO` builtins.
     javy_stream_io: Option<bool>,
     /// Whether to override JSON.parse and JSON.stringify with a SIMD based
@@ -108,7 +106,6 @@ impl Default for Builder {
             command: JavyCommand::Build,
             redirect_stdout_to_stderr: None,
             javy_stream_io: None,
-            javy_json: None,
             simd_json_builtins: None,
             text_encoding: None,
             event_loop: None,
@@ -150,11 +147,6 @@ impl Builder {
 
     pub fn redirect_stdout_to_stderr(&mut self, enabled: bool) -> &mut Self {
         self.redirect_stdout_to_stderr = Some(enabled);
-        self
-    }
-
-    pub fn javy_json(&mut self, enabled: bool) -> &mut Self {
-        self.javy_json = Some(enabled);
         self
     }
 
@@ -206,7 +198,6 @@ impl Builder {
             world,
             root,
             redirect_stdout_to_stderr,
-            javy_json,
             javy_stream_io,
             simd_json_builtins,
             text_encoding,
@@ -234,7 +225,6 @@ impl Builder {
                 wit,
                 world,
                 redirect_stdout_to_stderr,
-                javy_json,
                 javy_stream_io,
                 simd_json_builtins,
                 text_encoding,
@@ -311,7 +301,6 @@ impl Runner {
         wit: Option<PathBuf>,
         world: Option<String>,
         redirect_stdout_to_stderr: Option<bool>,
-        javy_json: Option<bool>,
         javy_stream_io: Option<bool>,
         override_json_parse_and_stringify: Option<bool>,
         text_encoding: Option<bool>,
@@ -333,7 +322,6 @@ impl Runner {
             &world,
             preload.is_some(),
             &redirect_stdout_to_stderr,
-            &javy_json,
             &javy_stream_io,
             &override_json_parse_and_stringify,
             &text_encoding,
@@ -562,7 +550,6 @@ impl Runner {
         world: &Option<String>,
         dynamic: bool,
         redirect_stdout_to_stderr: &Option<bool>,
-        javy_json: &Option<bool>,
         javy_stream_io: &Option<bool>,
         simd_json_builtins: &Option<bool>,
         text_encoding: &Option<bool>,
@@ -594,11 +581,6 @@ impl Runner {
                 "redirect-stdout-to-stderr={}",
                 if redirect_stdout_to_stderr { "y" } else { "n" }
             ));
-        }
-
-        if let Some(enabled) = *javy_json {
-            args.push("-J".to_string());
-            args.push(format!("javy-json={}", if enabled { "y" } else { "n" }));
         }
 
         if let Some(enabled) = *javy_stream_io {

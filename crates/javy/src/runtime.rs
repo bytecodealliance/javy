@@ -148,12 +148,6 @@ impl Runtime {
                 stream_io::register(ctx.clone())
                     .expect("registering StreamIO functions to succeed");
             }
-
-            #[cfg(feature = "json")]
-            if javy_intrinsics.contains(JavyIntrinsics::JSON) {
-                json::register_javy_json(ctx.clone())
-                    .expect("registering Javy.JSON builtins to succeed");
-            }
         });
 
         Ok(ManuallyDrop::new(context))

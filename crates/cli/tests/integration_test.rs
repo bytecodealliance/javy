@@ -84,7 +84,7 @@ fn test_logging_with_compile(builder: &mut Builder) -> Result<()> {
         "hello world from console.log\nhello world from console.error\n",
         logs.as_str(),
     );
-    assert_fuel_consumed_within_threshold(36_071, fuel_consumed);
+    assert_fuel_consumed_within_threshold(35_042, fuel_consumed);
     Ok(())
 }
 
@@ -98,7 +98,7 @@ fn test_logging_without_redirect(builder: &mut Builder) -> Result<()> {
     let (output, logs, fuel_consumed) = run(&mut runner, &[]);
     assert_eq!(b"hello world from console.log\n".to_vec(), output);
     assert_eq!("hello world from console.error\n", logs.as_str());
-    assert_fuel_consumed_within_threshold(36_641, fuel_consumed);
+    assert_fuel_consumed_within_threshold(35_860, fuel_consumed);
     Ok(())
 }
 
@@ -116,32 +116,6 @@ fn test_logging_with_redirect(builder: &mut Builder) -> Result<()> {
         logs.as_str(),
     );
     assert_fuel_consumed_within_threshold(35_007, fuel_consumed);
-    Ok(())
-}
-
-#[javy_cli_test(commands(not(Compile)), root = "tests/dynamic-linking-scripts")]
-fn test_javy_json_enabled(builder: &mut Builder) -> Result<()> {
-    let mut runner = builder.input("javy-json-id.js").build()?;
-
-    let input = "{\"x\":5}";
-    let (output, logs, _) = run(&mut runner, input.as_bytes());
-
-    assert_eq!(logs, "undefined\n");
-    assert_eq!(String::from_utf8(output)?, input);
-
-    Ok(())
-}
-
-#[javy_cli_test(commands(not(Compile)), root = "tests/dynamic-linking-scripts")]
-fn test_javy_json_disabled(builder: &mut Builder) -> Result<()> {
-    let mut runner = builder
-        .input("javy-json-id.js")
-        .simd_json_builtins(false)
-        .build()?;
-
-    let result = runner.exec(&[]);
-    assert!(result.is_err());
-
     Ok(())
 }
 
