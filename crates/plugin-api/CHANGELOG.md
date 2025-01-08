@@ -8,6 +8,12 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Removed 
+
+- `javy` dependency updated to 4.0.0 which removes `javy_json` method on
+  `javy_plugin_api::Config` and removes support for `Javy.JSON.fromStdin` and
+  `Javy.JSON.toStdout`.
+
 ## [2.0.0] - 2024-11-27
 
 ### Changed 

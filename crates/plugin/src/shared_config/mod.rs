@@ -13,8 +13,6 @@ runtime_config! {
     #[derive(Debug, Default, Deserialize)]
     #[serde(deny_unknown_fields, rename_all = "kebab-case")]
     pub struct SharedConfig {
-        /// Whether to enable the `Javy.JSON` builtins.
-        javy_json: Option<bool>,
         /// Whether to enable the `Javy.readSync` and `Javy.writeSync` builtins.
         javy_stream_io: Option<bool>,
         /// Whether to override the `JSON.parse` and `JSON.stringify`
@@ -35,9 +33,6 @@ impl SharedConfig {
     }
 
     pub fn apply_to_config(&self, config: &mut Config) {
-        if let Some(enable) = self.javy_json {
-            config.javy_json(enable);
-        }
         if let Some(enable) = self.javy_stream_io {
             config.javy_stream_io(enable);
         }

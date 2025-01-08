@@ -20,8 +20,7 @@ pub extern "C" fn initialize_runtime() {
     config
         .text_encoding(true)
         .javy_stream_io(true)
-        .simd_json_builtins(true)
-        .javy_json(true);
+        .simd_json_builtins(true);
 
     let mut config_bytes = vec![];
     let shared_config = match io::stdin().read_to_end(&mut config_bytes) {

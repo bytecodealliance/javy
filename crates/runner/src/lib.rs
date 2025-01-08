@@ -72,8 +72,6 @@ pub struct Builder {
     wit: Option<PathBuf>,
     /// The name of the wit world.
     world: Option<String>,
-    /// Whether to enable the `Javy.JSON` builtins.
-    javy_json: Option<bool>,
     /// Whether to enable the `Javy.IO` builtins.
     javy_stream_io: Option<bool>,
     /// Whether to override JSON.parse and JSON.stringify with a SIMD based
@@ -105,7 +103,6 @@ impl Default for Builder {
             preload: None,
             command: JavyCommand::Build,
             javy_stream_io: None,
-            javy_json: None,
             simd_json_builtins: None,
             text_encoding: None,
             event_loop: None,
@@ -142,11 +139,6 @@ impl Builder {
 
     pub fn preload(&mut self, ns: String, wasm: impl Into<PathBuf>) -> &mut Self {
         self.preload = Some((ns, wasm.into()));
-        self
-    }
-
-    pub fn javy_json(&mut self, enabled: bool) -> &mut Self {
-        self.javy_json = Some(enabled);
         self
     }
 
@@ -197,7 +189,6 @@ impl Builder {
             wit,
             world,
             root,
-            javy_json,
             javy_stream_io,
             simd_json_builtins,
             text_encoding,
@@ -224,7 +215,6 @@ impl Builder {
                 input,
                 wit,
                 world,
-                javy_json,
                 javy_stream_io,
                 simd_json_builtins,
                 text_encoding,
@@ -300,7 +290,6 @@ impl Runner {
         source: impl AsRef<Path>,
         wit: Option<PathBuf>,
         world: Option<String>,
-        javy_json: Option<bool>,
         javy_stream_io: Option<bool>,
         override_json_parse_and_stringify: Option<bool>,
         text_encoding: Option<bool>,
@@ -321,7 +310,6 @@ impl Runner {
             &wit_file,
             &world,
             preload.is_some(),
-            &javy_json,
             &javy_stream_io,
             &override_json_parse_and_stringify,
             &text_encoding,
@@ -549,7 +537,6 @@ impl Runner {
         wit: &Option<PathBuf>,
         world: &Option<String>,
         dynamic: bool,
-        javy_json: &Option<bool>,
         javy_stream_io: &Option<bool>,
         simd_json_builtins: &Option<bool>,
         text_encoding: &Option<bool>,
@@ -573,11 +560,6 @@ impl Runner {
         if dynamic {
             args.push("-C".to_string());
             args.push("dynamic".to_string());
-        }
-
-        if let Some(enabled) = *javy_json {
-            args.push("-J".to_string());
-            args.push(format!("javy-json={}", if enabled { "y" } else { "n" }));
         }
 
         if let Some(enabled) = *javy_stream_io {
