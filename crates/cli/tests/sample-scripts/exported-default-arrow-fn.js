@@ -1,1 +1,1 @@
-export default () => console.log(42)
+export default () => console.error(42)

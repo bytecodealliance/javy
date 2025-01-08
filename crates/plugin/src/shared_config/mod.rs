@@ -13,8 +13,6 @@ runtime_config! {
     #[derive(Debug, Default, Deserialize)]
     #[serde(deny_unknown_fields, rename_all = "kebab-case")]
     pub struct SharedConfig {
-        /// Whether to redirect the output of console.log to standard error.
-        redirect_stdout_to_stderr: Option<bool>,
         /// Whether to enable the `Javy.readSync` and `Javy.writeSync` builtins.
         javy_stream_io: Option<bool>,
         /// Whether to override the `JSON.parse` and `JSON.stringify`
@@ -35,9 +33,6 @@ impl SharedConfig {
     }
 
     pub fn apply_to_config(&self, config: &mut Config) {
-        if let Some(enable) = self.redirect_stdout_to_stderr {
-            config.redirect_stdout_to_stderr(enable);
-        }
         if let Some(enable) = self.javy_stream_io {
             config.javy_stream_io(enable);
         }

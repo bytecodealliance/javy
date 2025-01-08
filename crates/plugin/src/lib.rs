@@ -17,10 +17,8 @@ pub extern "C" fn initialize_runtime() {
     // variable in subsequent invocations so a different value can't be used to
     // initialize a runtime with a different configuration.
     let mut config = Config::default();
-    // Preserve defaults that used to be passed from the Javy CLI.
     config
         .text_encoding(true)
-        .redirect_stdout_to_stderr(true)
         .javy_stream_io(true)
         .simd_json_builtins(true);
 

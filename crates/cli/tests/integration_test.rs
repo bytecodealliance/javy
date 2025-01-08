@@ -21,7 +21,7 @@ fn test_identity(builder: &mut Builder) -> Result<()> {
 
     let (output, _, fuel_consumed) = run_with_u8s(&mut runner, 42);
     assert_eq!(42, output);
-    assert_fuel_consumed_within_threshold(47_773, fuel_consumed);
+    assert_fuel_consumed_within_threshold(46_797, fuel_consumed);
     Ok(())
 }
 
@@ -41,7 +41,7 @@ fn test_recursive_fib(builder: &mut Builder) -> Result<()> {
 
     let (output, _, fuel_consumed) = run_with_u8s(&mut runner, 5);
     assert_eq!(8, output);
-    assert_fuel_consumed_within_threshold(69_306, fuel_consumed);
+    assert_fuel_consumed_within_threshold(67_869, fuel_consumed);
     Ok(())
 }
 
@@ -74,48 +74,14 @@ fn test_encoding(builder: &mut Builder) -> Result<()> {
     Ok(())
 }
 
-#[javy_cli_test(commands(not(Build)))]
-fn test_logging_with_compile(builder: &mut Builder) -> Result<()> {
+#[javy_cli_test]
+fn test_console_log(builder: &mut Builder) -> Result<()> {
     let mut runner = builder.input("logging.js").build()?;
-
-    let (output, logs, fuel_consumed) = run(&mut runner, &[]);
-    assert!(output.is_empty());
-    assert_eq!(
-        "hello world from console.log\nhello world from console.error\n",
-        logs.as_str(),
-    );
-    assert_fuel_consumed_within_threshold(35_042, fuel_consumed);
-    Ok(())
-}
-
-#[javy_cli_test(commands(not(Compile)))]
-fn test_logging_without_redirect(builder: &mut Builder) -> Result<()> {
-    let mut runner = builder
-        .input("logging.js")
-        .redirect_stdout_to_stderr(false)
-        .build()?;
 
     let (output, logs, fuel_consumed) = run(&mut runner, &[]);
     assert_eq!(b"hello world from console.log\n".to_vec(), output);
     assert_eq!("hello world from console.error\n", logs.as_str());
     assert_fuel_consumed_within_threshold(35_860, fuel_consumed);
-    Ok(())
-}
-
-#[javy_cli_test(commands(not(Compile)))]
-fn test_logging_with_redirect(builder: &mut Builder) -> Result<()> {
-    let mut runner = builder
-        .input("logging.js")
-        .redirect_stdout_to_stderr(true)
-        .build()?;
-
-    let (output, logs, fuel_consumed) = run(&mut runner, &[]);
-    assert!(output.is_empty());
-    assert_eq!(
-        "hello world from console.log\nhello world from console.error\n",
-        logs.as_str(),
-    );
-    assert_fuel_consumed_within_threshold(35_007, fuel_consumed);
     Ok(())
 }
 
