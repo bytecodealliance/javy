@@ -8,6 +8,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [3.0.0] - 2025r-01-08
+
 ### Removed 
 
 - `javy` dependency updated to 4.0.0 which removes `javy_json` method on
