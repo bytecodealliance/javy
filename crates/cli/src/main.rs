@@ -1,24 +1,25 @@
-mod bytecode;
-mod codegen;
 mod commands;
-mod js;
-mod js_config;
 mod option;
-mod plugins;
-mod wit;
 
-use crate::codegen::WitOptions;
 use crate::commands::{Cli, Command, EmitPluginCommandOpts};
 use anyhow::Result;
 use clap::Parser;
-use codegen::{CodeGenBuilder, CodeGenType};
+use codegen::builder::{CodeGenBuilder, WitOptions};
+use codegen::js::JS;
+use codegen::js_config::JsConfig;
+use codegen::plugins::{Plugin, PluginKind, UninitializedPlugin};
+use codegen::CodeGenType;
+use commands::CliJsConfig;
 use commands::CodegenOptionGroup;
-use js::JS;
-use js_config::JsConfig;
-use plugins::{Plugin, UninitializedPlugin};
 use std::fs;
 use std::fs::File;
 use std::io::Write;
+ 
+/// Use the default plugin for most commands.
+const DEFAULT_PLUGIN_MODULE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/plugin.wasm"));
+
+/// Use the legacy plugin when using the `compile -d` command.
+const LEGACY_PLUGIN_MODULE: &[u8] = include_bytes!("./javy_quickjs_provider_v2.wasm");
 
 fn main() -> Result<()> {
     let args = Cli::parse();
@@ -32,54 +33,60 @@ fn main() -> Result<()> {
 
                 Refer to https://github.com/bytecodealliance/javy/issues/702 for
                 details.
-                
+
                 Use the `build` command instead.
             "#
             );
 
             let js = JS::from_file(&opts.input)?;
-            let mut builder = CodeGenBuilder::new();
-            builder
-                .wit_opts(WitOptions::from_tuple((
-                    opts.wit.clone(),
-                    opts.wit_world.clone(),
-                ))?)
-                .source_compression(!opts.no_source_compression);
 
-            let config = JsConfig::default();
-            let mut gen = if opts.dynamic {
-                builder.plugin(Plugin::V2);
-                builder.build(CodeGenType::Dynamic, config)?
+            // Determine plugin configuration based on dynamic flag
+            let (plugin_bytes, plugin_kind, gen_type) = if opts.dynamic {
+              (LEGACY_PLUGIN_MODULE, PluginKind::V2, CodeGenType::Dynamic)
             } else {
-                builder.build(CodeGenType::Static, config)?
+              (DEFAULT_PLUGIN_MODULE, PluginKind::Default, CodeGenType::Static)
             };
 
-            let wasm = gen.generate(&js)?;
+            let plugin = Plugin::from_bytes(plugin_bytes, plugin_kind);
+            let wit_options = WitOptions::from_tuple((opts.wit.clone(), opts.wit_world.clone()))?;
 
+            let builder = CodeGenBuilder::new(
+                plugin,
+                wit_options,
+                !opts.no_source_compression,
+            );
+
+            let wasm = builder
+              .build(gen_type, JsConfig::default())?
+              .generate(&js)?;
+            
             fs::write(&opts.output, wasm)?;
             Ok(())
         }
         Command::Build(opts) => {
             let js = JS::from_file(&opts.input)?;
             let codegen: CodegenOptionGroup = opts.codegen.clone().try_into()?;
-            let plugin = match codegen.plugin {
-                Some(path) => Plugin::new_user_plugin(&path)?,
-                None => Plugin::Default,
-            };
-            let js_opts = JsConfig::from_group_values(&plugin, opts.js.clone())?;
-            let mut builder = CodeGenBuilder::new();
-            builder
-                .wit_opts(codegen.wit)
-                .source_compression(codegen.source_compression)
-                .plugin(plugin);
-            let mut gen = if codegen.dynamic {
-                builder.build(CodeGenType::Dynamic, js_opts)?
+            let codegen_type = if codegen.dynamic {
+              CodeGenType::Dynamic 
             } else {
-                builder.build(CodeGenType::Static, js_opts)?
+              CodeGenType::Static 
             };
+            let plugin = match codegen.plugin {
+                Some(path) => Plugin::new(&path, PluginKind::User)?,
+                None => Plugin::from_bytes(DEFAULT_PLUGIN_MODULE, PluginKind::Default),
+            };
+            let js_opts = CliJsConfig::from_group_values(&plugin, opts.js.clone())?;
+           
+            let builder = CodeGenBuilder::new(
+              plugin,
+              codegen.wit,
+              codegen.source_compression
+            );
 
-            let wasm = gen.generate(&js)?;
-
+            let wasm = builder
+              .build(codegen_type, js_opts)?
+              .generate(&js)?;
+        
             fs::write(&opts.output, wasm)?;
             Ok(())
         }
@@ -104,6 +111,6 @@ fn emit_plugin(opts: &EmitPluginCommandOpts) -> Result<()> {
         Some(path) => Box::new(File::create(path)?),
         _ => Box::new(std::io::stdout()),
     };
-    file.write_all(Plugin::Default.as_bytes())?;
+    file.write_all(Plugin::from_bytes(DEFAULT_PLUGIN_MODULE, PluginKind::Default).as_bytes())?;
     Ok(())
 }

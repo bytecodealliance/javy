@@ -1,18 +1,17 @@
-use crate::{js_config::JsConfig, option::OptionMeta, option_group, plugins::Plugin};
+use crate::option_group;
+use crate::option::{
+  fmt_help, GroupDescriptor, GroupOption, GroupOptionBuilder, GroupOptionParser, OptionValue, OptionMeta
+};
 use anyhow::{anyhow, bail, Result};
 use clap::{
     builder::{StringValueParser, TypedValueParser, ValueParserFactory},
     error::ErrorKind,
     CommandFactory, Parser, Subcommand,
 };
+use codegen::{builder::WitOptions, js_config::JsConfig, plugins::Plugin};
 use std::{
     collections::{HashMap, HashSet},
     path::PathBuf,
-};
-
-use crate::codegen::WitOptions;
-use crate::option::{
-    fmt_help, GroupDescriptor, GroupOption, GroupOptionBuilder, GroupOptionParser, OptionValue,
 };
 
 #[derive(Debug, Parser)]
@@ -26,6 +25,8 @@ pub struct Cli {
     #[command(subcommand)]
     pub command: Command,
 }
+
+pub (crate) struct CliJsConfig(JsConfig);
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
@@ -307,7 +308,7 @@ impl TypedValueParser for JsGroupOptionParser {
     }
 }
 
-impl JsConfig {
+impl CliJsConfig {
     /// Build a JS runtime config from valid runtime config values.
     pub(super) fn from_group_values(
         plugin: &Plugin,
@@ -362,24 +363,24 @@ impl JsConfig {
 mod tests {
     use std::path::PathBuf;
 
-    use crate::{
-        commands::{JsGroupOption, JsGroupValue},
-        js_config::JsConfig,
-        plugins::Plugin,
-    };
-
+    use crate::commands::CliJsConfig;
+    use crate::commands::{JsGroupOption, JsGroupValue};
+    use codegen::plugins::{Plugin, PluginKind};
     use super::{CodegenOption, CodegenOptionGroup, GroupOption};
     use anyhow::{Error, Result};
 
+    const DEFAULT_PLUGIN_MODULE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/plugin.wasm"));
+
     #[test]
     fn js_config_from_config_values() -> Result<()> {
-        let group = JsConfig::from_group_values(&Plugin::Default, vec![])?;
+        let plugin = Plugin::from_bytes(DEFAULT_PLUGIN_MODULE, PluginKind::Default);
+        let group = CliJsConfig::from_group_values(&plugin, vec![])?;
         assert_eq!(group.get("javy-stream-io"), None);
         assert_eq!(group.get("simd-json-builtins"), None);
         assert_eq!(group.get("text-encoding"), None);
 
-        let group = JsConfig::from_group_values(
-            &Plugin::Default,
+        let group = CliJsConfig::from_group_values(
+          &plugin,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "javy-stream-io".to_string(),
                 enabled: false,
@@ -387,8 +388,8 @@ mod tests {
         )?;
         assert_eq!(group.get("javy-stream-io"), Some(false));
 
-        let group = JsConfig::from_group_values(
-            &Plugin::Default,
+        let group = CliJsConfig::from_group_values(
+          &plugin,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "javy-stream-io".to_string(),
                 enabled: true,
@@ -396,8 +397,8 @@ mod tests {
         )?;
         assert_eq!(group.get("javy-stream-io"), Some(true));
 
-        let group = JsConfig::from_group_values(
-            &Plugin::Default,
+        let group = CliJsConfig::from_group_values(
+          &plugin,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "simd-json-builtins".to_string(),
                 enabled: false,
@@ -405,8 +406,8 @@ mod tests {
         )?;
         assert_eq!(group.get("simd-json-builtins"), Some(false));
 
-        let group = JsConfig::from_group_values(
-            &Plugin::Default,
+        let group = CliJsConfig::from_group_values(
+          &plugin,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "simd-json-builtins".to_string(),
                 enabled: true,
@@ -414,8 +415,8 @@ mod tests {
         )?;
         assert_eq!(group.get("simd-json-builtins"), Some(true));
 
-        let group = JsConfig::from_group_values(
-            &Plugin::Default,
+        let group = CliJsConfig::from_group_values(
+          &plugin,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "text-encoding".to_string(),
                 enabled: false,
@@ -423,8 +424,8 @@ mod tests {
         )?;
         assert_eq!(group.get("text-encoding"), Some(false));
 
-        let group = JsConfig::from_group_values(
-            &Plugin::Default,
+        let group = CliJsConfig::from_group_values(
+          &plugin,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "text-encoding".to_string(),
                 enabled: true,
@@ -432,8 +433,8 @@ mod tests {
         )?;
         assert_eq!(group.get("text-encoding"), Some(true));
 
-        let group = JsConfig::from_group_values(
-            &Plugin::Default,
+        let group = CliJsConfig::from_group_values(
+          &plugin,
             vec![
                 JsGroupValue::Option(JsGroupOption {
                     name: "javy-stream-io".to_string(),
