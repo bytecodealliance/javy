@@ -57,9 +57,9 @@ impl CodeGenBuilder {
     /// Create a new [`CodeGenBuilder`].
     pub fn new(plugin: Plugin, wit_opts: WitOptions, source_compression: bool) -> Self {
         Self {
-          plugin,
-          wit_opts,
-          source_compression
+            plugin,
+            wit_opts,
+            source_compression,
         }
     }
 

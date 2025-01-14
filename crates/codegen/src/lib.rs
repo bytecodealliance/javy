@@ -517,7 +517,7 @@ mod test {
         let gen = Generator::new(
             crate::CodeGenType::Dynamic,
             JsConfig::default(),
-            Plugin::from_bytes(&[], PluginKind::Default)
+            Plugin::from_bytes(&[], PluginKind::Default),
         );
         assert!(gen.source_compression);
         assert_eq!(gen.wit_opts, WitOptions::default());
