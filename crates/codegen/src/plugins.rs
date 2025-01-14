@@ -12,63 +12,64 @@ use wasi_common::{pipe::WritePipe, sync::WasiCtxBuilder};
 use wasmtime::{AsContextMut, Engine, Linker};
 use wizer::Wizer;
 
-const PLUGIN_MODULE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/plugin.wasm"));
-
-/// Use the legacy plugin when using the `compile -d` command.
-const QUICKJS_PROVIDER_V2_MODULE: &[u8] = include_bytes!("./javy_quickjs_provider_v2.wasm");
-
 /// A property that is in the config schema returned by the plugin.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct JsConfigProperty {
+pub struct JsConfigProperty {
     /// The name of the property (e.g., `simd-json-builtins`).
-    pub(crate) name: String,
+    pub name: String,
     /// The documentation to display for the property.
-    pub(crate) doc: String,
+    pub doc: String,
 }
 
 /// Different plugins that are available.
 #[derive(Debug)]
-pub enum Plugin {
+pub enum PluginKind {
     /// The default plugin.
     Default,
     /// A plugin for use with the `compile` to maintain backward compatibility.
     V2,
     /// A plugin provided by the user.
-    User { bytes: Vec<u8> },
+    User,
 }
 
-impl Default for Plugin {
-    fn default() -> Self {
-        Self::Default
-    }
+/// Different plugins that are available.
+#[derive(Debug)]
+pub struct Plugin {
+    bytes: Vec<u8>,
+    kind: PluginKind,
 }
 
 impl Plugin {
-    /// Creates a new user plugin.
-    pub fn new_user_plugin(path: &Path) -> Result<Self> {
-        Ok(Self::User {
+    /// Creates a new plugin from a path of a specific type.
+    pub fn new(path: &Path, kind: PluginKind) -> Result<Self> {
+        Ok(Self {
             bytes: fs::read(path)?,
+            kind: kind,
         })
+    }
+
+    /// Creates a new plugin from bytes of a specific kind.
+    pub fn from_bytes(bytes: &[u8], kind: PluginKind) -> Self {
+        Self {
+            bytes: bytes.to_vec(),
+            kind: kind,
+        }
     }
 
     /// Returns true if the plugin is a user plugin.
     pub fn is_user_plugin(&self) -> bool {
-        matches!(&self, Plugin::User { .. })
+        matches!(&self.kind, PluginKind::User)
     }
 
     /// Returns true if the plugin is the legacy v2 plugin.
     pub fn is_v2_plugin(&self) -> bool {
-        matches!(&self, Plugin::V2)
+        matches!(&self.kind, PluginKind::V2)
     }
 
     /// Returns the plugin Wasm module as a byte slice.
     pub fn as_bytes(&self) -> &[u8] {
-        match self {
-            Self::Default => PLUGIN_MODULE,
-            Self::V2 => QUICKJS_PROVIDER_V2_MODULE,
-            Self::User { bytes } => bytes,
-        }
+        self.bytes.as_slice()
     }
 
     /// Uses the plugin to generate QuickJS bytecode.
@@ -78,9 +79,9 @@ impl Plugin {
 
     /// The import namespace to use for this plugin.
     pub fn import_namespace(&self) -> Result<String> {
-        match self {
-            Self::V2 => Ok("javy_quickjs_provider_v2".to_string()),
-            Self::Default | Self::User { .. } => {
+        match self.kind {
+            PluginKind::V2 => Ok("javy_quickjs_provider_v2".to_string()),
+            PluginKind::Default | PluginKind::User { .. } => {
                 let module = walrus::Module::from_buffer(self.as_bytes())?;
                 let import_namespace = module
                     .customs
@@ -101,9 +102,9 @@ impl Plugin {
 
     /// The JS configuration properties supported by this plugin.
     pub fn config_schema(&self) -> Result<Vec<JsConfigProperty>> {
-        match self {
-            Self::V2 | Self::User { .. } => Ok(vec![]),
-            Self::Default => {
+        match self.kind {
+            PluginKind::V2 | PluginKind::User { .. } => Ok(vec![]),
+            PluginKind::Default => {
                 let engine = Engine::default();
                 let module = wasmtime::Module::new(&engine, self.as_bytes())?;
                 let mut linker = Linker::new(&engine);
@@ -141,7 +142,7 @@ impl Plugin {
 }
 
 /// A validated but uninitialized plugin.
-pub(super) struct UninitializedPlugin<'a> {
+pub struct UninitializedPlugin<'a> {
     bytes: &'a [u8],
 }
 

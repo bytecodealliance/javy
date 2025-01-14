@@ -1,14 +1,10 @@
-use crate::{
-    codegen::{CodeGenType, Generator},
-    js_config::JsConfig,
-    plugins::Plugin,
-};
+use crate::{js_config::JsConfig, plugins::Plugin, CodeGenType, Generator};
 use anyhow::{bail, Result};
 use std::path::PathBuf;
 
 /// Options for using WIT in the code generation process.
 #[derive(Default, Clone, Debug, PartialEq)]
-pub(crate) struct WitOptions {
+pub struct WitOptions {
     /// The path of the .wit file to use.
     pub path: Option<PathBuf>,
     /// The name of the wit world to use.
@@ -48,8 +44,7 @@ impl WitOptions {
 }
 
 /// A code generation builder.
-#[derive(Default)]
-pub(crate) struct CodeGenBuilder {
+pub struct CodeGenBuilder {
     /// The plugin to use.
     plugin: Plugin,
     /// WIT options for code generation.
@@ -60,26 +55,12 @@ pub(crate) struct CodeGenBuilder {
 
 impl CodeGenBuilder {
     /// Create a new [`CodeGenBuilder`].
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// Set the plugin.
-    pub fn plugin(&mut self, plugin: Plugin) -> &mut Self {
-        self.plugin = plugin;
-        self
-    }
-
-    /// Set the wit options.
-    pub fn wit_opts(&mut self, opts: WitOptions) -> &mut Self {
-        self.wit_opts = opts;
-        self
-    }
-
-    /// Whether to compress the JS source.
-    pub fn source_compression(&mut self, compress: bool) -> &mut Self {
-        self.source_compression = compress;
-        self
+    pub fn new(plugin: Plugin, wit_opts: WitOptions, source_compression: bool) -> Self {
+        Self {
+            plugin,
+            wit_opts,
+            source_compression,
+        }
     }
 
     /// Build a [`CodeGenerator`].

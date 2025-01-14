@@ -1571,23 +1571,35 @@ name = "javy-cli"
 version = "5.0.0"
 dependencies = [
  "anyhow",
- "brotli",
  "clap",
- "convert_case",
  "criterion",
+ "javy-codegen",
  "javy-runner",
  "javy-test-macros",
  "lazy_static",
  "num-format",
+ "uuid",
+ "wasi-common",
+ "wasmparser 0.222.0",
+ "wasmtime",
+ "wizer",
+]
+
+[[package]]
+name = "javy-codegen"
+version = "5.0.0"
+dependencies = [
+ "anyhow",
+ "brotli",
+ "convert_case",
+ "javy-runner",
  "serde",
  "serde_json",
  "swc_core",
  "tempfile",
- "uuid",
  "walrus",
  "wasi-common",
  "wasm-opt",
- "wasmparser 0.222.0",
  "wasmprinter 0.222.0",
  "wasmtime",
  "wasmtime-wasi",

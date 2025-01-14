@@ -1,0 +1,41 @@
+[package]
+name = "javy-codegen"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "codegen"
+crate-type = ["lib"]
+
+[features]
+dump_wat = ["dep:wasmprinter"]
+
+[dependencies]
+anyhow = { workspace = true }
+brotli = "7.0.0"
+convert_case = "0.6.0"
+walrus = "0.23.3"
+wasmprinter = { version = "0.222.0", optional = true }
+wasm-opt = "0.116.1"
+wasmtime = { workspace = true }
+wasmtime-wasi = { workspace = true }
+wasi-common = { workspace = true }
+wizer = { workspace = true }
+wit-parser = "0.212.0"
+serde = { workspace = true, default-features = false }
+serde_json = { workspace = true }
+swc_core = { version = "10.0.1", features = [
+  "common_sourcemap",
+  "ecma_ast",
+  "ecma_parser",
+] }
+tempfile = { workspace = true }
+
+[dev-dependencies]
+javy-runner = { path = "../runner/" }
+
+[build-dependencies]
+anyhow = "1.0.95"
+wizer = { workspace = true }

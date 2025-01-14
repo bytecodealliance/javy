@@ -33,12 +33,18 @@
 //! as well as ensuring that any features available in the plugin match the
 //! features requsted by the JavaScript bytecode.
 
-mod builder;
+pub mod builder;
+pub mod bytecode;
+
 use std::{fs, rc::Rc, sync::OnceLock};
 
 pub(crate) use builder::*;
 
-mod transform;
+pub mod js;
+pub mod js_config;
+pub mod plugins;
+pub mod transform;
+pub mod wit;
 
 mod exports;
 pub(crate) use exports::*;
@@ -50,12 +56,13 @@ use wasm_opt::{OptimizationOptions, ShrinkLevel};
 use wasmtime_wasi::{pipe::MemoryInputPipe, WasiCtxBuilder};
 use wizer::{Linker, Wizer};
 
-use crate::{js_config::JsConfig, plugins::Plugin, JS};
+use crate::{js::JS, js_config::JsConfig, plugins::Plugin};
+
 use anyhow::Result;
 
 static STDIN_PIPE: OnceLock<MemoryInputPipe> = OnceLock::new();
 
-pub(crate) enum CodeGenType {
+pub enum CodeGenType {
     /// Static code generation.
     Static,
     /// Dynamic code generation.
@@ -106,7 +113,7 @@ impl BytecodeMetadata {
 }
 
 /// Code Generation.
-pub(crate) struct Generator {
+pub struct Generator {
     /// Codegen type to use.
     pub ty: CodeGenType,
     /// JS runtime config.
@@ -175,7 +182,7 @@ impl Generator {
     }
 
     /// Resolve identifiers for functions and memory.
-    pub fn resolve_identifiers(&self, module: &mut Module) -> Result<Identifiers> {
+    pub(crate) fn resolve_identifiers(&self, module: &mut Module) -> Result<Identifiers> {
         match self.ty {
             CodeGenType::Static => {
                 let canonical_abi_realloc_fn = module.exports.get_func("canonical_abi_realloc")?;
@@ -499,7 +506,7 @@ fn print_wat(_wasm_binary: &[u8]) -> Result<()> {
 #[cfg(test)]
 mod test {
     use crate::js_config::JsConfig;
-    use crate::plugins::Plugin;
+    use crate::plugins::{Plugin, PluginKind};
 
     use super::Generator;
     use super::WitOptions;
@@ -508,12 +515,11 @@ mod test {
     #[test]
     fn default_values() -> Result<()> {
         let gen = Generator::new(
-            crate::codegen::CodeGenType::Dynamic,
+            crate::CodeGenType::Dynamic,
             JsConfig::default(),
-            Plugin::Default,
+            Plugin::from_bytes(&[], PluginKind::Default),
         );
         assert!(gen.source_compression);
-        assert!(matches!(gen.plugin, Plugin::Default));
         assert_eq!(gen.wit_opts, WitOptions::default());
 
         Ok(())
