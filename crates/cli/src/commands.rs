@@ -1,7 +1,8 @@
-use crate::option_group;
 use crate::option::{
-  fmt_help, GroupDescriptor, GroupOption, GroupOptionBuilder, GroupOptionParser, OptionValue, OptionMeta
+    fmt_help, GroupDescriptor, GroupOption, GroupOptionBuilder, GroupOptionParser, OptionMeta,
+    OptionValue,
 };
+use crate::option_group;
 use anyhow::{anyhow, bail, Result};
 use clap::{
     builder::{StringValueParser, TypedValueParser, ValueParserFactory},
@@ -26,7 +27,7 @@ pub struct Cli {
     pub command: Command,
 }
 
-pub (crate) struct CliJsConfig(JsConfig);
+pub(crate) struct CliJsConfig(JsConfig);
 
 #[derive(Debug, Subcommand)]
 pub enum Command {
@@ -363,11 +364,11 @@ impl CliJsConfig {
 mod tests {
     use std::path::PathBuf;
 
+    use super::{CodegenOption, CodegenOptionGroup, GroupOption};
     use crate::commands::CliJsConfig;
     use crate::commands::{JsGroupOption, JsGroupValue};
-    use codegen::plugins::{Plugin, PluginKind};
-    use super::{CodegenOption, CodegenOptionGroup, GroupOption};
     use anyhow::{Error, Result};
+    use codegen::plugins::{Plugin, PluginKind};
 
     const DEFAULT_PLUGIN_MODULE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/plugin.wasm"));
 
@@ -380,7 +381,7 @@ mod tests {
         assert_eq!(group.get("text-encoding"), None);
 
         let group = CliJsConfig::from_group_values(
-          &plugin,
+            &plugin,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "javy-stream-io".to_string(),
                 enabled: false,
@@ -389,7 +390,7 @@ mod tests {
         assert_eq!(group.get("javy-stream-io"), Some(false));
 
         let group = CliJsConfig::from_group_values(
-          &plugin,
+            &plugin,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "javy-stream-io".to_string(),
                 enabled: true,
@@ -398,7 +399,7 @@ mod tests {
         assert_eq!(group.get("javy-stream-io"), Some(true));
 
         let group = CliJsConfig::from_group_values(
-          &plugin,
+            &plugin,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "simd-json-builtins".to_string(),
                 enabled: false,
@@ -407,7 +408,7 @@ mod tests {
         assert_eq!(group.get("simd-json-builtins"), Some(false));
 
         let group = CliJsConfig::from_group_values(
-          &plugin,
+            &plugin,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "simd-json-builtins".to_string(),
                 enabled: true,
@@ -416,7 +417,7 @@ mod tests {
         assert_eq!(group.get("simd-json-builtins"), Some(true));
 
         let group = CliJsConfig::from_group_values(
-          &plugin,
+            &plugin,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "text-encoding".to_string(),
                 enabled: false,
@@ -425,7 +426,7 @@ mod tests {
         assert_eq!(group.get("text-encoding"), Some(false));
 
         let group = CliJsConfig::from_group_values(
-          &plugin,
+            &plugin,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "text-encoding".to_string(),
                 enabled: true,
@@ -434,7 +435,7 @@ mod tests {
         assert_eq!(group.get("text-encoding"), Some(true));
 
         let group = CliJsConfig::from_group_values(
-          &plugin,
+            &plugin,
             vec![
                 JsGroupValue::Option(JsGroupOption {
                     name: "javy-stream-io".to_string(),

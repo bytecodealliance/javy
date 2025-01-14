@@ -14,7 +14,7 @@ use commands::CodegenOptionGroup;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
- 
+
 /// Use the default plugin for most commands.
 const DEFAULT_PLUGIN_MODULE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/plugin.wasm"));
 
@@ -42,24 +42,24 @@ fn main() -> Result<()> {
 
             // Determine plugin configuration based on dynamic flag
             let (plugin_bytes, plugin_kind, gen_type) = if opts.dynamic {
-              (LEGACY_PLUGIN_MODULE, PluginKind::V2, CodeGenType::Dynamic)
+                (LEGACY_PLUGIN_MODULE, PluginKind::V2, CodeGenType::Dynamic)
             } else {
-              (DEFAULT_PLUGIN_MODULE, PluginKind::Default, CodeGenType::Static)
+                (
+                    DEFAULT_PLUGIN_MODULE,
+                    PluginKind::Default,
+                    CodeGenType::Static,
+                )
             };
 
             let plugin = Plugin::from_bytes(plugin_bytes, plugin_kind);
             let wit_options = WitOptions::from_tuple((opts.wit.clone(), opts.wit_world.clone()))?;
 
-            let builder = CodeGenBuilder::new(
-                plugin,
-                wit_options,
-                !opts.no_source_compression,
-            );
+            let builder = CodeGenBuilder::new(plugin, wit_options, !opts.no_source_compression);
 
             let wasm = builder
-              .build(gen_type, JsConfig::default())?
-              .generate(&js)?;
-            
+                .build(gen_type, JsConfig::default())?
+                .generate(&js)?;
+
             fs::write(&opts.output, wasm)?;
             Ok(())
         }
@@ -67,26 +67,20 @@ fn main() -> Result<()> {
             let js = JS::from_file(&opts.input)?;
             let codegen: CodegenOptionGroup = opts.codegen.clone().try_into()?;
             let codegen_type = if codegen.dynamic {
-              CodeGenType::Dynamic 
+                CodeGenType::Dynamic
             } else {
-              CodeGenType::Static 
+                CodeGenType::Static
             };
             let plugin = match codegen.plugin {
                 Some(path) => Plugin::new(&path, PluginKind::User)?,
                 None => Plugin::from_bytes(DEFAULT_PLUGIN_MODULE, PluginKind::Default),
             };
             let js_opts = CliJsConfig::from_group_values(&plugin, opts.js.clone())?;
-           
-            let builder = CodeGenBuilder::new(
-              plugin,
-              codegen.wit,
-              codegen.source_compression
-            );
 
-            let wasm = builder
-              .build(codegen_type, js_opts)?
-              .generate(&js)?;
-        
+            let builder = CodeGenBuilder::new(plugin, codegen.wit, codegen.source_compression);
+
+            let wasm = builder.build(codegen_type, js_opts)?.generate(&js)?;
+
             fs::write(&opts.output, wasm)?;
             Ok(())
         }
