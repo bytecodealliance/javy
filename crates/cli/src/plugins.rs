@@ -3,7 +3,7 @@ use anyhow::{anyhow, bail, Result};
 use serde::Deserialize;
 use std::{
     fs,
-    io::{Read, Seek},
+    io::{self, Read, Seek},
     path::Path,
     str,
 };
@@ -12,75 +12,80 @@ use wasi_common::{pipe::WritePipe, sync::WasiCtxBuilder};
 use wasmtime::{AsContextMut, Engine, Linker};
 use wizer::Wizer;
 
-const PLUGIN_MODULE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/plugin.wasm"));
-
-/// Use the legacy plugin when using the `compile -d` command.
-const QUICKJS_PROVIDER_V2_MODULE: &[u8] = include_bytes!("./javy_quickjs_provider_v2.wasm");
-
-/// A property that is in the config schema returned by the plugin.
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct JsConfigProperty {
-    /// The name of the property (e.g., `simd-json-builtins`).
-    pub(crate) name: String,
-    /// The documentation to display for the property.
-    pub(crate) doc: String,
-}
-
-/// Different plugins that are available.
-#[derive(Debug)]
-pub enum Plugin {
-    /// The default plugin.
+/// Represents the different kinds of plugins
+#[cfg(feature = "plugin-v2")]
+#[derive(Clone, Debug)]
+pub enum PluginKind {
     Default,
-    /// A plugin for use with the `compile` to maintain backward compatibility.
     V2,
-    /// A plugin provided by the user.
-    User { bytes: Vec<u8> },
 }
 
-impl Default for Plugin {
-    fn default() -> Self {
-        Self::Default
-    }
+/// Represents the different kinds of plugins
+#[cfg(not(feature = "plugin-v2"))]
+#[derive(Clone, Debug)]
+enum PluginKind {
+    Default,
+    V2,
+}
+
+/// Used to represent a plugin as a byte array.
+#[derive(Clone, Debug)]
+pub struct Plugin {
+    pub bytes: Vec<u8>,
+    kind: PluginKind,
 }
 
 impl Plugin {
-    /// Creates a new user plugin.
-    pub fn new_user_plugin(path: &Path) -> Result<Self> {
-        Ok(Self::User {
-            bytes: fs::read(path)?,
-        })
-    }
-
-    /// Returns true if the plugin is a user plugin.
-    pub fn is_user_plugin(&self) -> bool {
-        matches!(&self, Plugin::User { .. })
-    }
-
-    /// Returns true if the plugin is the legacy v2 plugin.
-    pub fn is_v2_plugin(&self) -> bool {
-        matches!(&self, Plugin::V2)
-    }
-
-    /// Returns the plugin Wasm module as a byte slice.
-    pub fn as_bytes(&self) -> &[u8] {
-        match self {
-            Self::Default => PLUGIN_MODULE,
-            Self::V2 => QUICKJS_PROVIDER_V2_MODULE,
-            Self::User { bytes } => bytes,
+    /// Constructs a new instance of Plugin.
+    #[cfg(not(feature = "plugin-v2"))]
+    pub fn new(bytes: Vec<u8>) -> Self {
+        Self {
+            bytes: bytes,
+            kind: PluginKind::Default,
         }
     }
 
-    /// Uses the plugin to generate QuickJS bytecode.
+    /// Constructs a new instance of Plugin.
+    #[cfg(feature = "plugin-v2")]
+    pub fn new(bytes: Vec<u8>, kind: PluginKind) -> Self {
+        Self {
+            bytes: bytes,
+            kind: kind,
+        }
+    }
+
+    #[cfg(feature = "plugin-v2")]
+    pub fn is_v2_plugin(&self) -> bool {
+        match self.kind {
+            PluginKind::V2 => true,
+            PluginKind::Default => false,
+        }
+    }
+
+    #[cfg(not(feature = "plugin-v2"))]
+    /// Constructs a new instance of Plugin.
+    pub fn new_from_path<P: AsRef<Path>>(path: P) -> io::Result<Self> {
+        let bytes = fs::read(path)?;
+        Ok(Self::new(bytes))
+    }
+
+    #[cfg(feature = "plugin-v2")]
+    /// Constructs a new instance of Plugin.
+    pub fn new_from_path<P: AsRef<Path>>(path: P, kind: PluginKind) -> io::Result<Self> {
+        let bytes = fs::read(path)?;
+        Ok(Self::new(bytes, kind))
+    }
+
+    /// Uses a plugin to generate QuickJS bytecode.
     pub fn compile_source(&self, js_source_code: &[u8]) -> Result<Vec<u8>> {
-        bytecode::compile_source(self, js_source_code)
+        bytecode::compile_source(&self, js_source_code)
     }
 
     /// The import namespace to use for this plugin.
     pub fn import_namespace(&self) -> Result<String> {
-        match self {
-            Self::V2 => Ok("javy_quickjs_provider_v2".to_string()),
-            Self::Default | Self::User { .. } => {
+        match self.kind {
+            PluginKind::V2 => Ok("javy_quickjs_provider_v2".to_string()),
+            PluginKind::Default { .. } => {
                 let module = walrus::Module::from_buffer(self.as_bytes())?;
                 let import_namespace = module
                     .customs
@@ -99,11 +104,28 @@ impl Plugin {
         }
     }
 
+    /// Returns the plugin Wasm module as a byte slice.
+    pub fn as_bytes(&self) -> &[u8] {
+        self.bytes.as_slice()
+    }
+}
+
+/// A property that is in the config schema returned by the plugin.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct JsConfigProperty {
+    /// The name of the property (e.g., `simd-json-builtins`).
+    pub(crate) name: String,
+    /// The documentation to display for the property.
+    pub(crate) doc: String,
+}
+
+impl Plugin {
     /// The JS configuration properties supported by this plugin.
     pub fn config_schema(&self) -> Result<Vec<JsConfigProperty>> {
-        match self {
-            Self::V2 | Self::User { .. } => Ok(vec![]),
-            Self::Default => {
+        match self.kind {
+            PluginKind::V2 { .. } => Ok(vec![]),
+            PluginKind::Default => {
                 let engine = Engine::default();
                 let module = wasmtime::Module::new(&engine, self.as_bytes())?;
                 let mut linker = Linker::new(&engine);

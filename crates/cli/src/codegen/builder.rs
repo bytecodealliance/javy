@@ -48,7 +48,6 @@ impl WitOptions {
 }
 
 /// A code generation builder.
-#[derive(Default)]
 pub(crate) struct CodeGenBuilder {
     /// The plugin to use.
     plugin: Plugin,
@@ -60,26 +59,12 @@ pub(crate) struct CodeGenBuilder {
 
 impl CodeGenBuilder {
     /// Create a new [`CodeGenBuilder`].
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// Set the plugin.
-    pub fn plugin(&mut self, plugin: Plugin) -> &mut Self {
-        self.plugin = plugin;
-        self
-    }
-
-    /// Set the wit options.
-    pub fn wit_opts(&mut self, opts: WitOptions) -> &mut Self {
-        self.wit_opts = opts;
-        self
-    }
-
-    /// Whether to compress the JS source.
-    pub fn source_compression(&mut self, compress: bool) -> &mut Self {
-        self.source_compression = compress;
-        self
+    pub fn new(plugin: Plugin, wit_opts: WitOptions, source_compression: bool) -> Self {
+        Self {
+            plugin,
+            wit_opts,
+            source_compression,
+        }
     }
 
     /// Build a [`CodeGenerator`].

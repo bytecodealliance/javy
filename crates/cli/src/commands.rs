@@ -366,20 +366,25 @@ mod tests {
         commands::{JsGroupOption, JsGroupValue},
         js_config::JsConfig,
         plugins::Plugin,
+        plugins::PluginKind,
     };
 
     use super::{CodegenOption, CodegenOptionGroup, GroupOption};
     use anyhow::{Error, Result};
 
+    const PLUGIN_MODULE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/plugin.wasm"));
+
     #[test]
     fn js_config_from_config_values() -> Result<()> {
-        let group = JsConfig::from_group_values(&Plugin::Default, vec![])?;
+        let plugin = Plugin::new(PLUGIN_MODULE.to_vec(), PluginKind::Default);
+
+        let group = JsConfig::from_group_values(&plugin, vec![])?;
         assert_eq!(group.get("javy-stream-io"), None);
         assert_eq!(group.get("simd-json-builtins"), None);
         assert_eq!(group.get("text-encoding"), None);
 
         let group = JsConfig::from_group_values(
-            &Plugin::Default,
+            &plugin,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "javy-stream-io".to_string(),
                 enabled: false,
@@ -388,7 +393,7 @@ mod tests {
         assert_eq!(group.get("javy-stream-io"), Some(false));
 
         let group = JsConfig::from_group_values(
-            &Plugin::Default,
+            &plugin,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "javy-stream-io".to_string(),
                 enabled: true,
@@ -397,7 +402,7 @@ mod tests {
         assert_eq!(group.get("javy-stream-io"), Some(true));
 
         let group = JsConfig::from_group_values(
-            &Plugin::Default,
+            &plugin,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "simd-json-builtins".to_string(),
                 enabled: false,
@@ -406,7 +411,7 @@ mod tests {
         assert_eq!(group.get("simd-json-builtins"), Some(false));
 
         let group = JsConfig::from_group_values(
-            &Plugin::Default,
+            &plugin,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "simd-json-builtins".to_string(),
                 enabled: true,
@@ -415,7 +420,7 @@ mod tests {
         assert_eq!(group.get("simd-json-builtins"), Some(true));
 
         let group = JsConfig::from_group_values(
-            &Plugin::Default,
+            &plugin,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "text-encoding".to_string(),
                 enabled: false,
@@ -424,7 +429,7 @@ mod tests {
         assert_eq!(group.get("text-encoding"), Some(false));
 
         let group = JsConfig::from_group_values(
-            &Plugin::Default,
+            &plugin,
             vec![JsGroupValue::Option(JsGroupOption {
                 name: "text-encoding".to_string(),
                 enabled: true,
@@ -433,7 +438,7 @@ mod tests {
         assert_eq!(group.get("text-encoding"), Some(true));
 
         let group = JsConfig::from_group_values(
-            &Plugin::Default,
+            &plugin,
             vec![
                 JsGroupValue::Option(JsGroupOption {
                     name: "javy-stream-io".to_string(),

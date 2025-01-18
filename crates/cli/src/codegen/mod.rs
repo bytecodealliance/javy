@@ -109,8 +109,6 @@ impl BytecodeMetadata {
 pub(crate) struct Generator {
     /// Codegen type to use.
     pub ty: CodeGenType,
-    /// JS runtime config.
-    pub js_runtime_config: JsConfig,
     /// Plugin to use.
     pub plugin: Plugin,
     /// JavaScript function exports.
@@ -119,14 +117,32 @@ pub(crate) struct Generator {
     pub source_compression: bool,
     /// WIT options for code generation.
     pub wit_opts: WitOptions,
+    /// An optional JS runtime config.
+    js_runtime_config: Option<JsConfig>,
 }
 
 impl Generator {
+    /// Constructs a new instance of Plugin.
+    #[cfg(not(feature = "plugin-v2"))]
+    /// Creates a new [`Generator`].
+    pub fn new(ty: CodeGenType, plugin: Plugin) -> Self {
+        Self {
+            ty,
+            js_runtime_config: None,
+            source_compression: true,
+            plugin,
+            function_exports: Default::default(),
+            wit_opts: Default::default(),
+        }
+    }
+
+    /// Constructs a new instance of Plugin.
+    #[cfg(feature = "plugin-v2")]
     /// Creates a new [`Generator`].
     pub fn new(ty: CodeGenType, js_runtime_config: JsConfig, plugin: Plugin) -> Self {
         Self {
             ty,
-            js_runtime_config,
+            js_runtime_config: Some(js_runtime_config),
             source_compression: true,
             plugin,
             function_exports: Default::default(),
@@ -139,8 +155,13 @@ impl Generator {
         let config = transform::module_config();
         let module = match &self.ty {
             CodeGenType::Static => {
-                // Copy config JSON into stdin for `initialize_runtime` function.
-                let runtime_config = self.js_runtime_config.to_json()?;
+                /// Set runtime config to either a valid runtime config or null bytes.
+                let runtime_config = match &self.js_runtime_config {
+                    Some(js_runtime_config) => js_runtime_config.to_json()?,
+                    None => Vec::new(),
+                };
+
+                /// Copy config JSON into stdin for `initialize_runtime` function.
                 STDIN_PIPE
                     .set(MemoryInputPipe::new(runtime_config))
                     .unwrap();
@@ -372,7 +393,7 @@ impl Generator {
                 module.exports.remove("canonical_abi_realloc")?;
                 // User plugins won't have an `eval_bytecode` function that
                 // Javy "owns".
-                if !self.plugin.is_user_plugin() {
+                if !self.plugin.is_v2_plugin() {
                     module.exports.remove("eval_bytecode")?;
                 }
                 module.exports.remove("invoke")?;
@@ -500,20 +521,24 @@ fn print_wat(_wasm_binary: &[u8]) -> Result<()> {
 mod test {
     use crate::js_config::JsConfig;
     use crate::plugins::Plugin;
+    use crate::plugins::PluginKind;
 
     use super::Generator;
     use super::WitOptions;
     use anyhow::Result;
 
+    const PLUGIN_MODULE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/plugin.wasm"));
+
     #[test]
     fn default_values() -> Result<()> {
+        let plugin = Plugin::new(PLUGIN_MODULE.to_vec(), PluginKind::Default);
         let gen = Generator::new(
             crate::codegen::CodeGenType::Dynamic,
             JsConfig::default(),
-            Plugin::Default,
+            plugin,
         );
         assert!(gen.source_compression);
-        assert!(matches!(gen.plugin, Plugin::Default));
+        assert!(matches!(gen.plugin, plugin));
         assert_eq!(gen.wit_opts, WitOptions::default());
 
         Ok(())
