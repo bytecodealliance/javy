@@ -2,10 +2,11 @@ use anyhow::{anyhow, Result};
 use convert_case::{Case, Casing};
 use std::{env, path::Path};
 
-use crate::{js::JS, wit};
+use crate::{codegen::wit, js::JS};
 
 pub(crate) type Exports = Vec<Export>;
 
+#[derive(Clone)]
 pub(crate) struct Export {
     pub wit: String,
     pub js: String,

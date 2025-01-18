@@ -24,7 +24,7 @@ use swc_core::{
     },
 };
 
-use crate::plugins::Plugin;
+use crate::codegen::plugin::Plugin;
 
 #[derive(Clone, Debug)]
 pub struct JS {

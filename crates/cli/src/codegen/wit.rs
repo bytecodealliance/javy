@@ -1,8 +1,49 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::{bail, Result};
 
 use wit_parser::{Resolve, WorldItem};
+
+/// Options for using WIT in the code generation process.
+#[derive(Default, Clone, Debug, PartialEq)]
+pub(crate) struct WitOptions {
+    /// The path of the .wit file to use.
+    pub path: Option<PathBuf>,
+    /// The name of the wit world to use.
+    pub world: Option<String>,
+}
+
+impl WitOptions {
+    pub fn from_tuple(opts: (Option<PathBuf>, Option<String>)) -> Result<Self> {
+        match opts {
+            (None, None) => Ok(Self {
+                path: None,
+                world: None,
+            }),
+            (None, Some(_)) => Ok(Self {
+                path: None,
+                world: None,
+            }),
+            (Some(_), None) => bail!("Must provide WIT world when providing WIT file"),
+            (path, world) => Ok(Self { path, world }),
+        }
+    }
+
+    /// Whether WIT options were defined.
+    pub fn defined(&self) -> bool {
+        self.path.is_some() && self.world.is_some()
+    }
+
+    /// Unwraps a refernce to the .wit file path.
+    pub fn unwrap_path(&self) -> &PathBuf {
+        self.path.as_ref().unwrap()
+    }
+
+    /// Unwraps a reference to the WIT world name.
+    pub fn unwrap_world(&self) -> &String {
+        self.world.as_ref().unwrap()
+    }
+}
 
 pub fn parse_exports(wit: impl AsRef<Path>, world: &str) -> Result<Vec<String>> {
     let mut resolve = Resolve::default();
