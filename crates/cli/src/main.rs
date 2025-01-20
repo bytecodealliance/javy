@@ -15,7 +15,7 @@ use codegen::{CodeGenBuilder, CodeGenType};
 use commands::CodegenOptionGroup;
 use js::JS;
 use js_config::JsConfig;
-use plugins::{Plugin, UninitializedPlugin};
+use plugins::{InternalPlugin, Plugin, PluginKind, UninitializedPlugin};
 use std::fs;
 use std::fs::File;
 use std::io::Write;
@@ -43,9 +43,15 @@ fn main() -> Result<()> {
             let js = JS::from_file(&opts.input)?;
 
             let plugin = if opts.dynamic {
-                Plugin::new(QUICKJS_PROVIDER_V2_MODULE.to_vec(), plugins::PluginKind::V2)
+                Plugin::new(
+                    QUICKJS_PROVIDER_V2_MODULE.to_vec(),
+                    PluginKind::Internal(InternalPlugin::Legacy),
+                )
             } else {
-                Plugin::new(PLUGIN_MODULE.to_vec(), plugins::PluginKind::Default)
+                Plugin::new(
+                    PLUGIN_MODULE.to_vec(),
+                    PluginKind::Internal(InternalPlugin::Default),
+                )
             };
 
             let builder = CodeGenBuilder::new(
@@ -71,18 +77,15 @@ fn main() -> Result<()> {
             let js = JS::from_file(&opts.input)?;
             let codegen: CodegenOptionGroup = opts.codegen.clone().try_into()?;
 
-            // We always have to assume a custom plugin when a user provides the path.
             let plugin = match &codegen.plugin {
-                Some(path) => Plugin::new_from_path(&path, plugins::PluginKind::Default)?,
-                None => Plugin::new(PLUGIN_MODULE.to_vec(), plugins::PluginKind::Default),
+                Some(path) => Plugin::new_from_path(&path, PluginKind::External)?,
+                None => Plugin::new(
+                    PLUGIN_MODULE.to_vec(),
+                    PluginKind::Internal(InternalPlugin::Default),
+                ),
             };
 
-            // Custom plugin and support for runtime configuration are mutally exclusive.
-            let js_opts = match &codegen.plugin {
-                Some(_) => JsConfig::default(),
-                None => JsConfig::from_group_values(&plugin, opts.js.clone())?,
-            };
-
+            let js_opts = JsConfig::from_group_values(&plugin, opts.js.clone())?;
             let builder = CodeGenBuilder::new(plugin, codegen.wit, codegen.source_compression);
 
             let mut gen = if codegen.dynamic {
@@ -117,6 +120,12 @@ fn emit_plugin(opts: &EmitPluginCommandOpts) -> Result<()> {
         Some(path) => Box::new(File::create(path)?),
         _ => Box::new(std::io::stdout()),
     };
-    file.write_all(Plugin::new(PLUGIN_MODULE.to_vec(), plugins::PluginKind::Default).as_bytes())?;
+    file.write_all(
+        Plugin::new(
+            PLUGIN_MODULE.to_vec(),
+            PluginKind::Internal(InternalPlugin::Default),
+        )
+        .as_bytes(),
+    )?;
     Ok(())
 }

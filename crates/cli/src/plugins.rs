@@ -1,37 +1,44 @@
 use crate::bytecode;
 use anyhow::{anyhow, bail, Result};
-use serde::Deserialize;
 use std::{
     fs,
-    io::{self, Read, Seek},
+    io::{self},
     path::Path,
     str,
 };
 use walrus::{ExportItem, ValType};
-use wasi_common::{pipe::WritePipe, sync::WasiCtxBuilder};
-use wasmtime::{AsContextMut, Engine, Linker};
 use wizer::Wizer;
 
-/// Represents the different kinds of plugins
+/// Represents the kind of plugin.
 #[cfg(feature = "plugin-v2")]
-#[derive(Clone, Debug)]
-pub enum PluginKind {
-    Default,
-    V2,
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum PluginKind {
+    // Built-in system plugins (e.g., default, legacy).
+    Internal(InternalPlugin),
+    // External plugins defined by the user.
+    External,
 }
 
-/// Represents the different kinds of plugins
+/// Represents the kind of plugin.
 #[cfg(not(feature = "plugin-v2"))]
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 enum PluginKind {
-    Default,
-    V2,
+    // Built-in system plugins (e.g., default, legacy).
+    Internal(InternalPlugin),
+    // External plugins defined by the user.
+    External,
 }
 
-/// Used to represent a plugin as a byte array.
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum InternalPlugin {
+    Default, // Default internal plugin.
+    Legacy,  // Legacy V2 internal plugin.
+}
+
+/// Represents any valid Javy plugin.
 #[derive(Clone, Debug)]
-pub struct Plugin {
-    pub bytes: Vec<u8>,
+pub(crate) struct Plugin {
+    pub(crate) bytes: Vec<u8>,
     kind: PluginKind,
 }
 
@@ -41,51 +48,51 @@ impl Plugin {
     pub fn new(bytes: Vec<u8>) -> Self {
         Self {
             bytes: bytes,
-            kind: PluginKind::Default,
+            kind: PluginKind::External,
         }
     }
 
     /// Constructs a new instance of Plugin.
     #[cfg(feature = "plugin-v2")]
-    pub fn new(bytes: Vec<u8>, kind: PluginKind) -> Self {
+    pub(crate) fn new(bytes: Vec<u8>, kind: PluginKind) -> Self {
         Self {
             bytes: bytes,
             kind: kind,
         }
     }
 
+    /// Return sthe version of a Plugin.
     #[cfg(feature = "plugin-v2")]
-    pub fn is_v2_plugin(&self) -> bool {
-        match self.kind {
-            PluginKind::V2 => true,
-            PluginKind::Default => false,
-        }
+    pub(crate) fn kind(&self) -> PluginKind {
+        self.kind
     }
 
-    #[cfg(not(feature = "plugin-v2"))]
     /// Constructs a new instance of Plugin.
-    pub fn new_from_path<P: AsRef<Path>>(path: P) -> io::Result<Self> {
+    #[cfg(not(feature = "plugin-v2"))]
+    pub(crate) fn new_from_path<P: AsRef<Path>>(path: P) -> io::Result<Self> {
         let bytes = fs::read(path)?;
         Ok(Self::new(bytes))
     }
 
-    #[cfg(feature = "plugin-v2")]
     /// Constructs a new instance of Plugin.
-    pub fn new_from_path<P: AsRef<Path>>(path: P, kind: PluginKind) -> io::Result<Self> {
+    #[cfg(feature = "plugin-v2")]
+    pub(crate) fn new_from_path<P: AsRef<Path>>(path: P, kind: PluginKind) -> io::Result<Self> {
         let bytes = fs::read(path)?;
         Ok(Self::new(bytes, kind))
     }
 
     /// Uses a plugin to generate QuickJS bytecode.
-    pub fn compile_source(&self, js_source_code: &[u8]) -> Result<Vec<u8>> {
+    pub(crate) fn compile_source(&self, js_source_code: &[u8]) -> Result<Vec<u8>> {
         bytecode::compile_source(&self, js_source_code)
     }
 
     /// The import namespace to use for this plugin.
-    pub fn import_namespace(&self) -> Result<String> {
+    pub(crate) fn import_namespace(&self) -> Result<String> {
         match self.kind {
-            PluginKind::V2 => Ok("javy_quickjs_provider_v2".to_string()),
-            PluginKind::Default { .. } => {
+            PluginKind::Internal(InternalPlugin::Legacy) => {
+                Ok("javy_quickjs_provider_v2".to_string())
+            }
+            PluginKind::Internal(InternalPlugin::Default) | PluginKind::External => {
                 let module = walrus::Module::from_buffer(self.as_bytes())?;
                 let import_namespace = module
                     .customs
@@ -105,60 +112,8 @@ impl Plugin {
     }
 
     /// Returns the plugin Wasm module as a byte slice.
-    pub fn as_bytes(&self) -> &[u8] {
+    pub(crate) fn as_bytes(&self) -> &[u8] {
         self.bytes.as_slice()
-    }
-}
-
-/// A property that is in the config schema returned by the plugin.
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct JsConfigProperty {
-    /// The name of the property (e.g., `simd-json-builtins`).
-    pub(crate) name: String,
-    /// The documentation to display for the property.
-    pub(crate) doc: String,
-}
-
-impl Plugin {
-    /// The JS configuration properties supported by this plugin.
-    pub fn config_schema(&self) -> Result<Vec<JsConfigProperty>> {
-        match self.kind {
-            PluginKind::V2 { .. } => Ok(vec![]),
-            PluginKind::Default => {
-                let engine = Engine::default();
-                let module = wasmtime::Module::new(&engine, self.as_bytes())?;
-                let mut linker = Linker::new(&engine);
-                wasi_common::sync::snapshots::preview_1::add_wasi_snapshot_preview1_to_linker(
-                    &mut linker,
-                    |s| s,
-                )?;
-                let stdout = WritePipe::new_in_memory();
-                let wasi = WasiCtxBuilder::new()
-                    .inherit_stderr()
-                    .stdout(Box::new(stdout.clone()))
-                    .build();
-                let mut store = wasmtime::Store::new(&engine, wasi);
-                let instance = linker.instantiate(store.as_context_mut(), &module)?;
-                instance
-                    .get_typed_func::<(), ()>(store.as_context_mut(), "config_schema")?
-                    .call(store.as_context_mut(), ())?;
-                drop(store);
-                let mut config_json = vec![];
-                let mut cursor = stdout.try_into_inner().unwrap();
-                cursor.rewind()?;
-                cursor.read_to_end(&mut config_json)?;
-                let config_schema = serde_json::from_slice::<ConfigSchema>(&config_json)?;
-                let mut configs = Vec::with_capacity(config_schema.supported_properties.len());
-                for config in config_schema.supported_properties {
-                    configs.push(JsConfigProperty {
-                        name: config.name,
-                        doc: config.doc,
-                    });
-                }
-                Ok(configs)
-            }
-        }
     }
 }
 
@@ -264,12 +219,6 @@ impl<'a> UninitializedPlugin<'a> {
 
         Ok(())
     }
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct ConfigSchema {
-    supported_properties: Vec<JsConfigProperty>,
 }
 
 #[cfg(test)]

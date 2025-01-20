@@ -50,7 +50,12 @@ use wasm_opt::{OptimizationOptions, ShrinkLevel};
 use wasmtime_wasi::{pipe::MemoryInputPipe, WasiCtxBuilder};
 use wizer::{Linker, Wizer};
 
-use crate::{js_config::JsConfig, plugins::Plugin, JS};
+use crate::{
+    js_config::JsConfig,
+    plugins::{InternalPlugin, Plugin, PluginKind},
+    JS,
+};
+
 use anyhow::Result;
 
 static STDIN_PIPE: OnceLock<MemoryInputPipe> = OnceLock::new();
@@ -123,23 +128,9 @@ pub(crate) struct Generator {
 
 impl Generator {
     /// Constructs a new instance of Plugin.
-    #[cfg(not(feature = "plugin-v2"))]
-    /// Creates a new [`Generator`].
-    pub fn new(ty: CodeGenType, plugin: Plugin) -> Self {
-        Self {
-            ty,
-            js_runtime_config: None,
-            source_compression: true,
-            plugin,
-            function_exports: Default::default(),
-            wit_opts: Default::default(),
-        }
-    }
-
-    /// Constructs a new instance of Plugin.
     #[cfg(feature = "plugin-v2")]
     /// Creates a new [`Generator`].
-    pub fn new(ty: CodeGenType, js_runtime_config: JsConfig, plugin: Plugin) -> Self {
+    pub(crate) fn new(ty: CodeGenType, js_runtime_config: JsConfig, plugin: Plugin) -> Self {
         Self {
             ty,
             js_runtime_config: Some(js_runtime_config),
@@ -196,7 +187,7 @@ impl Generator {
     }
 
     /// Resolve identifiers for functions and memory.
-    pub fn resolve_identifiers(&self, module: &mut Module) -> Result<Identifiers> {
+    pub(crate) fn resolve_identifiers(&self, module: &mut Module) -> Result<Identifiers> {
         match self.ty {
             CodeGenType::Static => {
                 let canonical_abi_realloc_fn = module.exports.get_func("canonical_abi_realloc")?;
@@ -234,7 +225,10 @@ impl Generator {
                 // User plugins also won't have an `eval_bytecode` function to
                 // import. We want to remove `eval_bytecode` from the default
                 // plugin so we don't want to emit more uses of it.
-                let eval_bytecode_fn_id = if self.plugin.is_v2_plugin() {
+                let eval_bytecode_fn_id = if matches!(
+                    self.plugin.kind(),
+                    PluginKind::Internal(InternalPlugin::Legacy)
+                ) {
                     let eval_bytecode_type = module.types.add(&[ValType::I32, ValType::I32], &[]);
                     let (eval_bytecode_fn_id, _) = module.add_import_func(
                         &import_namespace,
@@ -312,7 +306,10 @@ impl Generator {
             // support calling `invoke` with a null function. The default
             // plugin and user plugins do accept null functions.
             assert!(
-                !self.plugin.is_v2_plugin(),
+                !matches!(
+                    self.plugin.kind(),
+                    PluginKind::Internal(InternalPlugin::Legacy)
+                ),
                 "Using invoke with null function not supported for v2 plugin"
             );
             instructions
@@ -391,9 +388,9 @@ impl Generator {
             CodeGenType::Static => {
                 // Remove no longer necessary exports.
                 module.exports.remove("canonical_abi_realloc")?;
-                // User plugins won't have an `eval_bytecode` function that
-                // Javy "owns".
-                if !self.plugin.is_v2_plugin() {
+
+                // Only internal plugins define eval_bytecode
+                if !matches!(self.plugin.kind(), PluginKind::External) {
                     module.exports.remove("eval_bytecode")?;
                 }
                 module.exports.remove("invoke")?;
@@ -520,8 +517,7 @@ fn print_wat(_wasm_binary: &[u8]) -> Result<()> {
 #[cfg(test)]
 mod test {
     use crate::js_config::JsConfig;
-    use crate::plugins::Plugin;
-    use crate::plugins::PluginKind;
+    use crate::plugins::{InternalPlugin, Plugin, PluginKind};
 
     use super::Generator;
     use super::WitOptions;
@@ -531,9 +527,12 @@ mod test {
 
     #[test]
     fn default_values() -> Result<()> {
-        let plugin = Plugin::new(PLUGIN_MODULE.to_vec(), PluginKind::Default);
+        let plugin = Plugin::new(
+            PLUGIN_MODULE.to_vec(),
+            PluginKind::Internal(InternalPlugin::Default),
+        );
         let gen = Generator::new(
-            crate::codegen::CodeGenType::Dynamic,
+            crate::codegen::CodeGenType::Static,
             JsConfig::default(),
             plugin,
         );

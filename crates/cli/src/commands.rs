@@ -1,4 +1,9 @@
-use crate::{js_config::JsConfig, option::OptionMeta, option_group, plugins::Plugin};
+use crate::{
+    js_config::{ConfigSchema, JsConfig},
+    option::OptionMeta,
+    option_group,
+    plugins::Plugin,
+};
 use anyhow::{anyhow, bail, Result};
 use clap::{
     builder::{StringValueParser, TypedValueParser, ValueParserFactory},
@@ -207,9 +212,9 @@ option_group! {
         /// Enable source code compression, which generates smaller WebAssembly
         /// files at the cost of increased compile time.
         SourceCompression(bool),
-        /// Optional path to Javy plugin Wasm module. Not supported for
-        /// dynamically linked modules. JavaScript config options are also not
-        /// supported when using this parameter.
+        /// Optional path to Javy plugin Wasm module. Required for dynamically
+        /// linked modules. JavaScript config options are also not supported when
+        /// using this parameter.
         Plugin(PathBuf),
     }
 }
@@ -313,7 +318,9 @@ impl JsConfig {
         plugin: &Plugin,
         group_values: Vec<JsGroupValue>,
     ) -> Result<JsConfig> {
-        let supported_properties = plugin.config_schema()?;
+        // Always attempt to fetch the supported properties from a plugin.
+        let supported_properties = ConfigSchema::from_plugin(plugin)?
+            .map_or(Vec::new(), |schema| schema.supported_properties);
 
         let mut supported_names = HashSet::new();
         for property in &supported_properties {
@@ -365,8 +372,7 @@ mod tests {
     use crate::{
         commands::{JsGroupOption, JsGroupValue},
         js_config::JsConfig,
-        plugins::Plugin,
-        plugins::PluginKind,
+        plugins::{Plugin, PluginKind},
     };
 
     use super::{CodegenOption, CodegenOptionGroup, GroupOption};
@@ -376,7 +382,10 @@ mod tests {
 
     #[test]
     fn js_config_from_config_values() -> Result<()> {
-        let plugin = Plugin::new(PLUGIN_MODULE.to_vec(), PluginKind::Default);
+        let plugin = Plugin::new(
+            PLUGIN_MODULE.to_vec(),
+            PluginKind::Internal(crate::plugins::InternalPlugin::Default),
+        );
 
         let group = JsConfig::from_group_values(&plugin, vec![])?;
         assert_eq!(group.get("javy-stream-io"), None);
