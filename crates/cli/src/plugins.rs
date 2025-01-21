@@ -81,7 +81,7 @@ impl Plugin {
 #[cfg(not(feature = "plugin-v2"))]
 impl Plugin {
     /// Constructs a new instance of Plugin.
-    pub fn new(bytes: Vec<u8>) -> Self {
+    pub(crate) fn new(bytes: Vec<u8>) -> Self {
         Self {
             bytes: bytes,
             kind: PluginKind::External,
