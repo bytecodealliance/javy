@@ -11,9 +11,9 @@ name = "javy"
 path = "src/main.rs"
 
 [features]
-default = ["plugin-v2"]
+default = ["plugin-internal"]
 dump_wat = ["dep:wasmprinter"]
-plugin-v2 = []
+plugin-internal = []
 
 [dependencies]
 wizer = { workspace = true }

@@ -1,6 +1,5 @@
 use crate::{
     codegen::{CodeGenType, Generator},
-    js_config::JsConfig,
     plugins::Plugin,
 };
 use anyhow::{bail, Result};
@@ -66,10 +65,24 @@ impl CodeGenBuilder {
             source_compression,
         }
     }
+}
 
+#[cfg(feature = "plugin-internal")]
+impl CodeGenBuilder {
     /// Build a [`CodeGenerator`].
-    pub fn build(self, ty: CodeGenType, js_runtime_config: JsConfig) -> Result<Generator> {
+    pub fn build(self, ty: CodeGenType, js_runtime_config: Vec<u8>) -> Result<Generator> {
         let mut generator = Generator::new(ty, js_runtime_config, self.plugin);
+        generator.source_compression = self.source_compression;
+        generator.wit_opts = self.wit_opts;
+        Ok(generator)
+    }
+}
+
+#[cfg(not(feature = "plugin-internal"))]
+impl CodeGenBuilder {
+    /// Build a [`CodeGenerator`].
+    pub fn build(self, ty: CodeGenType) -> Result<Generator> {
+        let mut generator = Generator::new(ty, Vec::new(), self.plugin);
         generator.source_compression = self.source_compression;
         generator.wit_opts = self.wit_opts;
         Ok(generator)

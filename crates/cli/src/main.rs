@@ -63,9 +63,9 @@ fn main() -> Result<()> {
             let config = JsConfig::default();
 
             let mut gen = if opts.dynamic {
-                builder.build(CodeGenType::Dynamic, config)?
+                builder.build(CodeGenType::Dynamic, config.to_json()?)?
             } else {
-                builder.build(CodeGenType::Static, config)?
+                builder.build(CodeGenType::Static, config.to_json()?)?
             };
 
             let wasm = gen.generate(&js)?;
@@ -89,9 +89,9 @@ fn main() -> Result<()> {
             let builder = CodeGenBuilder::new(plugin, codegen.wit, codegen.source_compression);
 
             let mut gen = if codegen.dynamic {
-                builder.build(CodeGenType::Dynamic, js_opts)?
+                builder.build(CodeGenType::Dynamic, js_opts.to_json()?)?
             } else {
-                builder.build(CodeGenType::Static, js_opts)?
+                builder.build(CodeGenType::Static, js_opts.to_json()?)?
             };
 
             let wasm = gen.generate(&js)?;

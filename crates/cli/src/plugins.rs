@@ -10,7 +10,7 @@ use walrus::{ExportItem, ValType};
 use wizer::Wizer;
 
 /// Represents the kind of plugin.
-#[cfg(feature = "plugin-v2")]
+#[cfg(feature = "plugin-internal")]
 #[derive(Clone, Copy, Debug)]
 pub(crate) enum PluginKind {
     // Built-in system plugins (e.g., default, legacy).
@@ -20,7 +20,7 @@ pub(crate) enum PluginKind {
 }
 
 /// Represents the kind of plugin.
-#[cfg(not(feature = "plugin-v2"))]
+#[cfg(not(feature = "plugin-internal"))]
 #[derive(Clone, Copy, Debug)]
 enum PluginKind {
     // Built-in system plugins (e.g., default, legacy).
@@ -30,7 +30,7 @@ enum PluginKind {
 }
 
 /// Represents the kind of internal plugin.
-#[cfg(feature = "plugin-v2")]
+#[cfg(feature = "plugin-internal")]
 #[derive(Clone, Copy, Debug)]
 pub(crate) enum InternalPluginKind {
     // Default internal plugin.
@@ -40,7 +40,7 @@ pub(crate) enum InternalPluginKind {
 }
 
 /// Represents the kind of internal plugin.
-#[cfg(not(feature = "plugin-v2"))]
+#[cfg(not(feature = "plugin-internal"))]
 #[derive(Clone, Copy, Debug)]
 enum InternalPluginKind {
     // Default internal plugin.
@@ -56,7 +56,7 @@ pub(crate) struct Plugin {
     kind: PluginKind,
 }
 
-#[cfg(feature = "plugin-v2")]
+#[cfg(feature = "plugin-internal")]
 impl Plugin {
     /// Constructs a new instance of Plugin.
     pub(crate) fn new(bytes: Vec<u8>, kind: PluginKind) -> Self {
@@ -71,14 +71,9 @@ impl Plugin {
         let bytes = fs::read(path)?;
         Ok(Self::new(bytes, kind))
     }
-
-    /// Returns the kind of Plugin.
-    pub(crate) fn kind(&self) -> PluginKind {
-        self.kind
-    }
 }
 
-#[cfg(not(feature = "plugin-v2"))]
+#[cfg(not(feature = "plugin-internal"))]
 impl Plugin {
     /// Constructs a new instance of Plugin.
     pub(crate) fn new(bytes: Vec<u8>) -> Self {
@@ -96,6 +91,11 @@ impl Plugin {
 }
 
 impl Plugin {
+    /// Returns the kind of Plugin.
+    pub(crate) fn kind(&self) -> PluginKind {
+        self.kind
+    }
+
     /// Uses a plugin to generate QuickJS bytecode.
     pub(crate) fn compile_source(&self, js_source_code: &[u8]) -> Result<Vec<u8>> {
         bytecode::compile_source(&self, js_source_code)

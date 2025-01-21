@@ -51,7 +51,6 @@ use wasmtime_wasi::{pipe::MemoryInputPipe, WasiCtxBuilder};
 use wizer::{Linker, Wizer};
 
 use crate::{
-    js_config::JsConfig,
     plugins::{InternalPluginKind, Plugin, PluginKind},
     JS,
 };
@@ -122,14 +121,14 @@ pub(crate) struct Generator {
     pub source_compression: bool,
     /// WIT options for code generation.
     pub wit_opts: WitOptions,
-    /// An optional JS runtime config.
-    pub js_runtime_config: Option<JsConfig>,
+    /// An optional JS runtime config provided as JSON bytes.
+    js_runtime_config: Option<Vec<u8>>,
 }
 
+#[cfg(feature = "plugin-internal")]
 impl Generator {
     /// Creates a new [`Generator`].
-    #[cfg(feature = "plugin-v2")]
-    pub(crate) fn new(ty: CodeGenType, js_runtime_config: JsConfig, plugin: Plugin) -> Self {
+    pub(crate) fn new(ty: CodeGenType, js_runtime_config: Vec<u8>, plugin: Plugin) -> Self {
         Self {
             ty,
             js_runtime_config: Some(js_runtime_config),
@@ -139,19 +138,34 @@ impl Generator {
             wit_opts: Default::default(),
         }
     }
+}
 
+/// Creates a new [`Generator`].
+#[cfg(not(feature = "plugin-internal"))]
+impl Generator {
+    /// Creates a new [`Generator`].
+    pub(crate) fn new(ty: CodeGenType, plugin: Plugin) -> Self {
+        Self {
+            ty,
+            js_runtime_config: None,
+            source_compression: true,
+            plugin,
+            function_exports: Default::default(),
+            wit_opts: Default::default(),
+        }
+    }
+}
+
+impl Generator {
     /// Generate the starting module.
     fn generate_initial_module(&self) -> Result<Module> {
         let config = transform::module_config();
         let module = match &self.ty {
             CodeGenType::Static => {
-                /// Set runtime config to either a valid runtime config or null bytes.
-                let runtime_config = match &self.js_runtime_config {
-                    Some(js_runtime_config) => js_runtime_config.to_json()?,
-                    None => Vec::new(),
-                };
+                // Set runtime config to either a valid runtime config or null bytes.
+                let runtime_config = self.js_runtime_config.clone().unwrap_or_default();
 
-                /// Copy config JSON into stdin for `initialize_runtime` function.
+                // Copy config JSON into stdin for `initialize_runtime` function.
                 STDIN_PIPE
                     .set(MemoryInputPipe::new(runtime_config))
                     .unwrap();
