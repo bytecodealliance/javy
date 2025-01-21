@@ -15,7 +15,7 @@ use codegen::{CodeGenBuilder, CodeGenType};
 use commands::CodegenOptionGroup;
 use js::JS;
 use js_config::JsConfig;
-use plugins::{InternalPlugin, Plugin, PluginKind, UninitializedPlugin};
+use plugins::{InternalPluginKind, Plugin, PluginKind, UninitializedPlugin};
 use std::fs;
 use std::fs::File;
 use std::io::Write;
@@ -45,12 +45,12 @@ fn main() -> Result<()> {
             let plugin = if opts.dynamic {
                 Plugin::new(
                     QUICKJS_PROVIDER_V2_MODULE.to_vec(),
-                    PluginKind::Internal(InternalPlugin::Legacy),
+                    PluginKind::Internal(InternalPluginKind::V2),
                 )
             } else {
                 Plugin::new(
                     PLUGIN_MODULE.to_vec(),
-                    PluginKind::Internal(InternalPlugin::Default),
+                    PluginKind::Internal(InternalPluginKind::Default),
                 )
             };
 
@@ -81,7 +81,7 @@ fn main() -> Result<()> {
                 Some(path) => Plugin::new_from_path(&path, PluginKind::External)?,
                 None => Plugin::new(
                     PLUGIN_MODULE.to_vec(),
-                    PluginKind::Internal(InternalPlugin::Default),
+                    PluginKind::Internal(InternalPluginKind::Default),
                 ),
             };
 
@@ -123,7 +123,7 @@ fn emit_plugin(opts: &EmitPluginCommandOpts) -> Result<()> {
     file.write_all(
         Plugin::new(
             PLUGIN_MODULE.to_vec(),
-            PluginKind::Internal(InternalPlugin::Default),
+            PluginKind::Internal(InternalPluginKind::Default),
         )
         .as_bytes(),
     )?;

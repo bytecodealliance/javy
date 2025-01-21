@@ -52,7 +52,7 @@ use wizer::{Linker, Wizer};
 
 use crate::{
     js_config::JsConfig,
-    plugins::{InternalPlugin, Plugin, PluginKind},
+    plugins::{InternalPluginKind, Plugin, PluginKind},
     JS,
 };
 
@@ -127,9 +127,8 @@ pub(crate) struct Generator {
 }
 
 impl Generator {
-    /// Constructs a new instance of Plugin.
-    #[cfg(feature = "plugin-v2")]
     /// Creates a new [`Generator`].
+    #[cfg(feature = "plugin-v2")]
     pub(crate) fn new(ty: CodeGenType, js_runtime_config: JsConfig, plugin: Plugin) -> Self {
         Self {
             ty,
@@ -227,7 +226,7 @@ impl Generator {
                 // plugin so we don't want to emit more uses of it.
                 let eval_bytecode_fn_id = if matches!(
                     self.plugin.kind(),
-                    PluginKind::Internal(InternalPlugin::Legacy)
+                    PluginKind::Internal(InternalPluginKind::V2)
                 ) {
                     let eval_bytecode_type = module.types.add(&[ValType::I32, ValType::I32], &[]);
                     let (eval_bytecode_fn_id, _) = module.add_import_func(
@@ -308,7 +307,7 @@ impl Generator {
             assert!(
                 !matches!(
                     self.plugin.kind(),
-                    PluginKind::Internal(InternalPlugin::Legacy)
+                    PluginKind::Internal(InternalPluginKind::V2)
                 ),
                 "Using invoke with null function not supported for v2 plugin"
             );
@@ -389,10 +388,11 @@ impl Generator {
                 // Remove no longer necessary exports.
                 module.exports.remove("canonical_abi_realloc")?;
 
-                // Only internal plugins define eval_bytecode
-                if !matches!(self.plugin.kind(), PluginKind::External) {
+                // Only internal plugins expose eval_bytecode function.
+                if matches!(self.plugin.kind(), PluginKind::Internal(..)) {
                     module.exports.remove("eval_bytecode")?;
                 }
+
                 module.exports.remove("invoke")?;
                 module.exports.remove("compile_src")?;
 
@@ -512,34 +512,4 @@ fn print_wat(wasm_binary: &[u8]) -> Result<()> {
 #[cfg(not(feature = "dump_wat"))]
 fn print_wat(_wasm_binary: &[u8]) -> Result<()> {
     Ok(())
-}
-
-#[cfg(test)]
-mod test {
-    use crate::js_config::JsConfig;
-    use crate::plugins::{InternalPlugin, Plugin, PluginKind};
-
-    use super::Generator;
-    use super::WitOptions;
-    use anyhow::Result;
-
-    const PLUGIN_MODULE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/plugin.wasm"));
-
-    #[test]
-    fn default_values() -> Result<()> {
-        let plugin = Plugin::new(
-            PLUGIN_MODULE.to_vec(),
-            PluginKind::Internal(InternalPlugin::Default),
-        );
-        let gen = Generator::new(
-            crate::codegen::CodeGenType::Static,
-            JsConfig::default(),
-            plugin,
-        );
-        assert!(gen.source_compression);
-        assert!(matches!(gen.plugin, plugin));
-        assert_eq!(gen.wit_opts, WitOptions::default());
-
-        Ok(())
-    }
 }

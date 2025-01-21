@@ -1,4 +1,4 @@
-use crate::plugins::{InternalPlugin, Plugin, PluginKind};
+use crate::plugins::{InternalPluginKind, Plugin, PluginKind};
 use anyhow::Result;
 use serde::Deserialize;
 use std::{
@@ -17,46 +17,44 @@ pub(crate) struct ConfigSchema {
 
 impl ConfigSchema {
     pub(crate) fn from_plugin(plugin: &Plugin) -> Result<Option<ConfigSchema>> {
-        if matches!(
-            plugin.kind(),
-            PluginKind::Internal(InternalPlugin::Legacy) | PluginKind::External
-        ) {
-            return Ok(None);
+        match plugin.kind() {
+            PluginKind::Internal(InternalPluginKind::V2) | PluginKind::External => Ok(None),
+            PluginKind::Internal(InternalPluginKind::Default) => {
+                let engine = Engine::default();
+                let module = wasmtime::Module::new(&engine, plugin.as_bytes())?;
+                let mut linker = Linker::new(&engine);
+                wasi_common::sync::snapshots::preview_1::add_wasi_snapshot_preview1_to_linker(
+                    &mut linker,
+                    |s| s,
+                )?;
+                let stdout = WritePipe::new_in_memory();
+                let wasi = WasiCtxBuilder::new()
+                    .inherit_stderr()
+                    .stdout(Box::new(stdout.clone()))
+                    .build();
+                let mut store = wasmtime::Store::new(&engine, wasi);
+                let instance = linker.instantiate(store.as_context_mut(), &module)?;
+                instance
+                    .get_typed_func::<(), ()>(store.as_context_mut(), "config_schema")?
+                    .call(store.as_context_mut(), ())?;
+                drop(store);
+                let mut config_json = vec![];
+                let mut cursor = stdout.try_into_inner().unwrap();
+                cursor.rewind()?;
+                cursor.read_to_end(&mut config_json)?;
+                let config_schema = serde_json::from_slice::<ConfigSchema>(&config_json)?;
+                let mut configs = Vec::with_capacity(config_schema.supported_properties.len());
+                for config in config_schema.supported_properties {
+                    configs.push(JsConfigProperty {
+                        name: config.name,
+                        doc: config.doc,
+                    });
+                }
+                Ok(Some(Self {
+                    supported_properties: configs,
+                }))
+            }
         }
-
-        let engine = Engine::default();
-        let module = wasmtime::Module::new(&engine, plugin.as_bytes())?;
-        let mut linker = Linker::new(&engine);
-        wasi_common::sync::snapshots::preview_1::add_wasi_snapshot_preview1_to_linker(
-            &mut linker,
-            |s| s,
-        )?;
-        let stdout = WritePipe::new_in_memory();
-        let wasi = WasiCtxBuilder::new()
-            .inherit_stderr()
-            .stdout(Box::new(stdout.clone()))
-            .build();
-        let mut store = wasmtime::Store::new(&engine, wasi);
-        let instance = linker.instantiate(store.as_context_mut(), &module)?;
-        instance
-            .get_typed_func::<(), ()>(store.as_context_mut(), "config_schema")?
-            .call(store.as_context_mut(), ())?;
-        drop(store);
-        let mut config_json = vec![];
-        let mut cursor = stdout.try_into_inner().unwrap();
-        cursor.rewind()?;
-        cursor.read_to_end(&mut config_json)?;
-        let config_schema = serde_json::from_slice::<ConfigSchema>(&config_json)?;
-        let mut configs = Vec::with_capacity(config_schema.supported_properties.len());
-        for config in config_schema.supported_properties {
-            configs.push(JsConfigProperty {
-                name: config.name,
-                doc: config.doc,
-            });
-        }
-        Ok(Some(Self {
-            supported_properties: configs,
-        }))
     }
 }
 

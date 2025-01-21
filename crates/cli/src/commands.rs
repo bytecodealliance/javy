@@ -372,7 +372,7 @@ mod tests {
     use crate::{
         commands::{JsGroupOption, JsGroupValue},
         js_config::JsConfig,
-        plugins::{Plugin, PluginKind},
+        plugins::{InternalPluginKind, Plugin, PluginKind},
     };
 
     use super::{CodegenOption, CodegenOptionGroup, GroupOption};
@@ -384,7 +384,7 @@ mod tests {
     fn js_config_from_config_values() -> Result<()> {
         let plugin = Plugin::new(
             PLUGIN_MODULE.to_vec(),
-            PluginKind::Internal(crate::plugins::InternalPlugin::Default),
+            PluginKind::Internal(InternalPluginKind::Default),
         );
 
         let group = JsConfig::from_group_values(&plugin, vec![])?;

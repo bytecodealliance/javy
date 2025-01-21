@@ -14,8 +14,8 @@ use wizer::Wizer;
 #[derive(Clone, Copy, Debug)]
 pub(crate) enum PluginKind {
     // Built-in system plugins (e.g., default, legacy).
-    Internal(InternalPlugin),
-    // External plugins defined by the user.
+    Internal(InternalPluginKind),
+    // External plugins are provided by a user.
     External,
 }
 
@@ -25,14 +25,28 @@ pub(crate) enum PluginKind {
 enum PluginKind {
     // Built-in system plugins (e.g., default, legacy).
     Internal(InternalPlugin),
-    // External plugins defined by the user.
+    // External plugins are provided by a user.
     External,
 }
 
+/// Represents the kind of internal plugin.
+#[cfg(feature = "plugin-v2")]
 #[derive(Clone, Copy, Debug)]
-pub(crate) enum InternalPlugin {
-    Default, // Default internal plugin.
-    Legacy,  // Legacy V2 internal plugin.
+pub(crate) enum InternalPluginKind {
+    // Default internal plugin.
+    Default,
+    // Legacy V2 internal plugin.
+    V2,
+}
+
+/// Represents the kind of internal plugin.
+#[cfg(not(feature = "plugin-v2"))]
+#[derive(Clone, Copy, Debug)]
+enum InternalPluginKind {
+    // Default internal plugin.
+    Default,
+    // Legacy V2 internal plugin.
+    V2,
 }
 
 /// Represents any valid Javy plugin.
@@ -42,9 +56,31 @@ pub(crate) struct Plugin {
     kind: PluginKind,
 }
 
+#[cfg(feature = "plugin-v2")]
 impl Plugin {
     /// Constructs a new instance of Plugin.
-    #[cfg(not(feature = "plugin-v2"))]
+    pub(crate) fn new(bytes: Vec<u8>, kind: PluginKind) -> Self {
+        Self {
+            bytes: bytes,
+            kind: kind,
+        }
+    }
+
+    /// Constructs a new instance of Plugin from a given path.
+    pub(crate) fn new_from_path<P: AsRef<Path>>(path: P, kind: PluginKind) -> io::Result<Self> {
+        let bytes = fs::read(path)?;
+        Ok(Self::new(bytes, kind))
+    }
+
+    /// Returns the kind of Plugin.
+    pub(crate) fn kind(&self) -> PluginKind {
+        self.kind
+    }
+}
+
+#[cfg(not(feature = "plugin-v2"))]
+impl Plugin {
+    /// Constructs a new instance of Plugin.
     pub fn new(bytes: Vec<u8>) -> Self {
         Self {
             bytes: bytes,
@@ -53,34 +89,13 @@ impl Plugin {
     }
 
     /// Constructs a new instance of Plugin.
-    #[cfg(feature = "plugin-v2")]
-    pub(crate) fn new(bytes: Vec<u8>, kind: PluginKind) -> Self {
-        Self {
-            bytes: bytes,
-            kind: kind,
-        }
-    }
-
-    /// Return sthe version of a Plugin.
-    #[cfg(feature = "plugin-v2")]
-    pub(crate) fn kind(&self) -> PluginKind {
-        self.kind
-    }
-
-    /// Constructs a new instance of Plugin.
-    #[cfg(not(feature = "plugin-v2"))]
     pub(crate) fn new_from_path<P: AsRef<Path>>(path: P) -> io::Result<Self> {
         let bytes = fs::read(path)?;
         Ok(Self::new(bytes))
     }
+}
 
-    /// Constructs a new instance of Plugin.
-    #[cfg(feature = "plugin-v2")]
-    pub(crate) fn new_from_path<P: AsRef<Path>>(path: P, kind: PluginKind) -> io::Result<Self> {
-        let bytes = fs::read(path)?;
-        Ok(Self::new(bytes, kind))
-    }
-
+impl Plugin {
     /// Uses a plugin to generate QuickJS bytecode.
     pub(crate) fn compile_source(&self, js_source_code: &[u8]) -> Result<Vec<u8>> {
         bytecode::compile_source(&self, js_source_code)
@@ -89,10 +104,10 @@ impl Plugin {
     /// The import namespace to use for this plugin.
     pub(crate) fn import_namespace(&self) -> Result<String> {
         match self.kind {
-            PluginKind::Internal(InternalPlugin::Legacy) => {
+            PluginKind::Internal(InternalPluginKind::V2) => {
                 Ok("javy_quickjs_provider_v2".to_string())
             }
-            PluginKind::Internal(InternalPlugin::Default) | PluginKind::External => {
+            PluginKind::Internal(InternalPluginKind::Default) | PluginKind::External => {
                 let module = walrus::Module::from_buffer(self.as_bytes())?;
                 let import_namespace = module
                     .customs
