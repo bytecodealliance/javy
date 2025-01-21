@@ -123,7 +123,7 @@ pub(crate) struct Generator {
     /// WIT options for code generation.
     pub wit_opts: WitOptions,
     /// An optional JS runtime config.
-    js_runtime_config: Option<JsConfig>,
+    pub js_runtime_config: Option<JsConfig>,
 }
 
 impl Generator {
