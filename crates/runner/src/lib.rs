@@ -671,6 +671,7 @@ impl Runner {
             let module = Module::from_binary(self.linker.engine(), bytes)?;
             let instance = self.linker.instantiate(store.as_context_mut(), &module)?;
             self.linker.allow_shadowing(true);
+            self.linker.define_unknown_imports_as_traps(&module)?;
             self.linker
                 .instance(store.as_context_mut(), name, instance)?;
         }

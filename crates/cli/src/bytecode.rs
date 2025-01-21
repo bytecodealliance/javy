@@ -21,6 +21,7 @@ fn create_wasm_env(plugin: &Plugin) -> Result<(Store<WasiCtx>, Instance, Memory)
         &mut linker,
         |s| s,
     )?;
+    linker.define_unknown_imports_as_traps(&module)?;
     let wasi = WasiCtxBuilder::new().inherit_stderr().build();
     let mut store = Store::new(&engine, wasi);
     let instance = linker.instantiate(store.as_context_mut(), &module)?;
