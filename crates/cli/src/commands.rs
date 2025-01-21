@@ -207,9 +207,9 @@ option_group! {
         /// Enable source code compression, which generates smaller WebAssembly
         /// files at the cost of increased compile time.
         SourceCompression(bool),
-        /// Optional path to Javy plugin Wasm module. Not supported for
-        /// dynamically linked modules. JavaScript config options are also not
-        /// supported when using this parameter.
+        /// Path to Javy plugin Wasm module. Optional for statically linked
+        /// modules and required for dynamically linked modules. JavaScript
+        /// config options are not supported when using this parameter.
         Plugin(PathBuf),
     }
 }
