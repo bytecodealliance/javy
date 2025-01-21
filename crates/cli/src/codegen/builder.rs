@@ -82,7 +82,7 @@ impl CodeGenBuilder {
 impl CodeGenBuilder {
     /// Build a [`CodeGenerator`].
     pub fn build(self, ty: CodeGenType) -> Result<Generator> {
-        let mut generator = Generator::new(ty, Vec::new(), self.plugin);
+        let mut generator = Generator::new(ty, self.plugin);
         generator.source_compression = self.source_compression;
         generator.wit_opts = self.wit_opts;
         Ok(generator)
