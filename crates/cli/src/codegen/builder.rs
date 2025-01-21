@@ -1,6 +1,5 @@
 use crate::{
     codegen::{CodeGenType, Generator},
-    js_config::JsConfig,
     plugins::Plugin,
 };
 use anyhow::{bail, Result};
@@ -48,7 +47,6 @@ impl WitOptions {
 }
 
 /// A code generation builder.
-#[derive(Default)]
 pub(crate) struct CodeGenBuilder {
     /// The plugin to use.
     plugin: Plugin,
@@ -60,31 +58,31 @@ pub(crate) struct CodeGenBuilder {
 
 impl CodeGenBuilder {
     /// Create a new [`CodeGenBuilder`].
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(plugin: Plugin, wit_opts: WitOptions, source_compression: bool) -> Self {
+        Self {
+            plugin,
+            wit_opts,
+            source_compression,
+        }
     }
+}
 
-    /// Set the plugin.
-    pub fn plugin(&mut self, plugin: Plugin) -> &mut Self {
-        self.plugin = plugin;
-        self
-    }
-
-    /// Set the wit options.
-    pub fn wit_opts(&mut self, opts: WitOptions) -> &mut Self {
-        self.wit_opts = opts;
-        self
-    }
-
-    /// Whether to compress the JS source.
-    pub fn source_compression(&mut self, compress: bool) -> &mut Self {
-        self.source_compression = compress;
-        self
-    }
-
+#[cfg(feature = "plugin-internal")]
+impl CodeGenBuilder {
     /// Build a [`CodeGenerator`].
-    pub fn build(self, ty: CodeGenType, js_runtime_config: JsConfig) -> Result<Generator> {
+    pub fn build(self, ty: CodeGenType, js_runtime_config: Vec<u8>) -> Result<Generator> {
         let mut generator = Generator::new(ty, js_runtime_config, self.plugin);
+        generator.source_compression = self.source_compression;
+        generator.wit_opts = self.wit_opts;
+        Ok(generator)
+    }
+}
+
+#[cfg(not(feature = "plugin-internal"))]
+impl CodeGenBuilder {
+    /// Build a [`CodeGenerator`].
+    pub fn build(self, ty: CodeGenType) -> Result<Generator> {
+        let mut generator = Generator::new(ty, self.plugin);
         generator.source_compression = self.source_compression;
         generator.wit_opts = self.wit_opts;
         Ok(generator)
