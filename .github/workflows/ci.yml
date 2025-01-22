@@ -57,7 +57,7 @@ jobs:
       - name: Test
         env:
           CARGO_TARGET_WASM32_WASIP1_RUNNER: wasmtime --dir=.
-        run: cargo hack test --target=wasm32-wasip1 --workspace --exclude=javy-cli --exclude=javy-runner --each-feature -- --nocapture
+        run: cargo hack test --target=wasm32-wasip1 --workspace --exclude=javy-cli --exclude=javy-runner --exclude=javy-test-plugin --each-feature -- --nocapture
 
       - name: Test Runner
         run: cargo test --package=javy-runner

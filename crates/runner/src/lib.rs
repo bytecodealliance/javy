@@ -669,12 +669,16 @@ impl Runner {
 
         if let Some((name, bytes)) = &self.preload {
             let module = Module::from_binary(self.linker.engine(), bytes)?;
+            // Allow unknown imports for dynamically linked `test-plugin`.
+            self.linker.define_unknown_imports_as_traps(&module)?;
             let instance = self.linker.instantiate(store.as_context_mut(), &module)?;
             self.linker.allow_shadowing(true);
             self.linker
                 .instance(store.as_context_mut(), name, instance)?;
         }
 
+        // Allow unknown imports for statically linked `test-plugin`.
+        self.linker.define_unknown_imports_as_traps(&module)?;
         let instance = self.linker.instantiate(store.as_context_mut(), &module)?;
         let run = instance.get_typed_func::<(), ()>(store.as_context_mut(), func)?;
 
