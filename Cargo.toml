@@ -12,7 +12,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "5.0.0"
+version = "5.0.1"
 authors = ["The Javy Project Developers"]
 edition = "2021"
 license = "Apache-2.0 WITH LLVM-exception"
