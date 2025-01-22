@@ -669,9 +669,13 @@ impl Runner {
 
         if let Some((name, bytes)) = &self.preload {
             let module = Module::from_binary(self.linker.engine(), bytes)?;
+            // `test-plugin` contains an imported function to test whether we
+            // can build a Javy module when an imported function is present in
+            // the plugin. The test itself doesn't call the imported function
+            // so we can safely trap if it's called.
+            self.linker.define_unknown_imports_as_traps(&module)?;
             let instance = self.linker.instantiate(store.as_context_mut(), &module)?;
             self.linker.allow_shadowing(true);
-            self.linker.define_unknown_imports_as_traps(&module)?;
             self.linker
                 .instance(store.as_context_mut(), name, instance)?;
         }
