@@ -1579,8 +1579,8 @@ dependencies = [
  "quickcheck",
  "rmp-serde",
  "rquickjs",
- "rquickjs-core",
- "rquickjs-sys",
+ "rquickjs-core 0.9.0",
+ "rquickjs-sys 0.6.1",
  "serde",
  "serde-transcode",
  "serde_json",
@@ -2340,7 +2340,7 @@ version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "313802853d6b1a91a7ecaef37b88b2e3be94dbfd8e46e8c585ec7d03977c4585"
 dependencies = [
- "rquickjs-core",
+ "rquickjs-core 0.6.1",
  "rquickjs-macro",
 ]
 
@@ -2351,7 +2351,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b61d5ef0cf929f69b30c106b70cafbf8c9b00435da7b13c004e61db639ae7cc"
 dependencies = [
  "relative-path",
- "rquickjs-sys",
+ "rquickjs-sys 0.6.1",
+]
+
+[[package]]
+name = "rquickjs-core"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e82e0ca83028ad5b533b53b96c395bbaab905a5774de4aaf1004eeacafa3d85d"
+dependencies = [
+ "rquickjs-sys 0.9.0",
 ]
 
 [[package]]
@@ -2368,7 +2377,7 @@ dependencies = [
  "proc-macro-error",
  "proc-macro2",
  "quote",
- "rquickjs-core",
+ "rquickjs-core 0.6.1",
  "syn 2.0.97",
 ]
 
@@ -2379,6 +2388,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "22a6df95dbd61eacfa2fb7571c9d0a6d2acb168135f6261ddd53d0347fd65441"
 dependencies = [
  "bindgen",
+ "cc",
+]
+
+[[package]]
+name = "rquickjs-sys"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7fed0097b0b4fbb2a87f6dd3b995a7c64ca56de30007eb7e867dfdfc78324ba5"
+dependencies = [
  "cc",
 ]
 
