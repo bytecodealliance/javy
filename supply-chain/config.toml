@@ -131,6 +131,10 @@ criteria = "safe-to-deploy"
 version = "0.6.0"
 criteria = "safe-to-deploy"
 
+[[exemptions.convert_case]]
+version = "0.7.1"
+criteria = "safe-to-deploy"
+
 [[exemptions.cpp_demangle]]
 version = "0.3.5"
 criteria = "safe-to-deploy"
@@ -269,6 +273,10 @@ criteria = "safe-to-deploy"
 
 [[exemptions.getrandom]]
 version = "0.2.2"
+criteria = "safe-to-deploy"
+
+[[exemptions.getrandom]]
+version = "0.3.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.getset]]
@@ -620,7 +628,7 @@ version = "2.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.tempfile]]
-version = "3.15.0"
+version = "3.16.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.tinyvec_macros]]
@@ -672,7 +680,7 @@ version = "0.2.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.uuid]]
-version = "1.11.0"
+version = "1.12.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.value-trait]]
@@ -693,10 +701,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.walrus-macro]]
 version = "0.22.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.wasi]]
-version = "0.11.0+wasi-snapshot-preview1"
 criteria = "safe-to-deploy"
 
 [[exemptions.wasm-bindgen]]

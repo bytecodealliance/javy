@@ -594,6 +594,12 @@ user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2019-06-09"
 end = "2024-10-03"
 
+[[trusted.wasi]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2020-06-03"
+end = "2026-02-03"
+
 [[trusted.wasi-common]]
 criteria = "safe-to-deploy"
 user-id = 1 # Alex Crichton (alexcrichton)
