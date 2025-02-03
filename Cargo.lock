@@ -1579,8 +1579,8 @@ dependencies = [
  "quickcheck",
  "rmp-serde",
  "rquickjs",
- "rquickjs-core",
- "rquickjs-sys",
+ "rquickjs-core 0.6.1",
+ "rquickjs-sys 0.6.1",
  "serde",
  "serde-transcode",
  "serde_json",
@@ -2065,36 +2065,11 @@ dependencies = [
 
 [[package]]
 name = "proc-macro-crate"
-version = "1.3.1"
+version = "3.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f4c021e1093a56626774e81216a4ce732a735e5bad4868a03f3ed65ca0c3919"
+checksum = "8ecf48c7ca261d60b74ab1a7b20da18bede46776b2e55535cb958eb595c5fa7b"
 dependencies = [
- "once_cell",
- "toml_edit 0.19.15",
-]
-
-[[package]]
-name = "proc-macro-error"
-version = "1.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da25490ff9892aab3fcf7c36f08cfb902dd3e71ca0f9f9517bea02a73a5ce38c"
-dependencies = [
- "proc-macro-error-attr",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
- "version_check",
-]
-
-[[package]]
-name = "proc-macro-error-attr"
-version = "1.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1be40180e52ecc98ad80b184934baf3d0d29f979574e439af5a55274b35f869"
-dependencies = [
- "proc-macro2",
- "quote",
- "version_check",
+ "toml_edit",
 ]
 
 [[package]]
@@ -2336,11 +2311,11 @@ dependencies = [
 
 [[package]]
 name = "rquickjs"
-version = "0.6.1"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "313802853d6b1a91a7ecaef37b88b2e3be94dbfd8e46e8c585ec7d03977c4585"
+checksum = "5c5227859c4dfc83f428e58f9569bf439e628c8d139020e7faff437e6f5abaa0"
 dependencies = [
- "rquickjs-core",
+ "rquickjs-core 0.9.0",
  "rquickjs-macro",
 ]
 
@@ -2350,25 +2325,33 @@ version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b61d5ef0cf929f69b30c106b70cafbf8c9b00435da7b13c004e61db639ae7cc"
 dependencies = [
+ "rquickjs-sys 0.6.1",
+]
+
+[[package]]
+name = "rquickjs-core"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e82e0ca83028ad5b533b53b96c395bbaab905a5774de4aaf1004eeacafa3d85d"
+dependencies = [
  "relative-path",
- "rquickjs-sys",
+ "rquickjs-sys 0.9.0",
 ]
 
 [[package]]
 name = "rquickjs-macro"
-version = "0.6.1"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52decfafae40368b74e1513235245612680224924925736f386b9456b78efce9"
+checksum = "b4d2eccd988a924a470a76fbd81a191b22d1f5f4f4619cf5662a8c1ab4ca1db7"
 dependencies = [
  "convert_case 0.6.0",
  "fnv",
  "ident_case",
  "indexmap 2.7.0",
  "proc-macro-crate",
- "proc-macro-error",
  "proc-macro2",
  "quote",
- "rquickjs-core",
+ "rquickjs-core 0.9.0",
  "syn 2.0.97",
 ]
 
@@ -2377,6 +2360,15 @@ name = "rquickjs-sys"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "22a6df95dbd61eacfa2fb7571c9d0a6d2acb168135f6261ddd53d0347fd65441"
+dependencies = [
+ "cc",
+]
+
+[[package]]
+name = "rquickjs-sys"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7fed0097b0b4fbb2a87f6dd3b995a7c64ca56de30007eb7e867dfdfc78324ba5"
 dependencies = [
  "bindgen",
  "cc",
@@ -2524,9 +2516,9 @@ dependencies = [
 
 [[package]]
 name = "serde_spanned"
-version = "0.6.6"
+version = "0.6.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79e674e01f999af37c49f70a6ede167a8a60b2503e56c5599532a65baa5969a0"
+checksum = "87607cb1398ed59d48732e575a4c28a7a8ebf2454b964fe3f224f2afc07909e1"
 dependencies = [
  "serde",
 ]
@@ -3066,40 +3058,29 @@ dependencies = [
  "serde",
  "serde_spanned",
  "toml_datetime",
- "toml_edit 0.22.14",
+ "toml_edit",
 ]
 
 [[package]]
 name = "toml_datetime"
-version = "0.6.6"
+version = "0.6.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4badfd56924ae69bcc9039335b2e017639ce3f9b001c393c1b2d1ef846ce2cbf"
+checksum = "0dd7358ecb8fc2f8d014bf86f6f638ce72ba252a2c3a2572f2a795f1d23efb41"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "toml_edit"
-version = "0.19.15"
+version = "0.22.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b5bb770da30e5cbfde35a2d7b9b8a2c4b8ef89548a7a6aeab5c9a576e3e7421"
-dependencies = [
- "indexmap 2.7.0",
- "toml_datetime",
- "winnow 0.5.40",
-]
-
-[[package]]
-name = "toml_edit"
-version = "0.22.14"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f21c7aaf97f1bd9ca9d4f9e73b0a6c74bd5afef56f2bc931943a6e1c37e04e38"
+checksum = "02a8b472d1a3d7c18e2d61a489aee3453fd9031c33e4f55bd533f4a7adca1bee"
 dependencies = [
  "indexmap 2.7.0",
  "serde",
  "serde_spanned",
  "toml_datetime",
- "winnow 0.6.13",
+ "winnow",
 ]
 
 [[package]]
@@ -4141,18 +4122,9 @@ checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
 
 [[package]]
 name = "winnow"
-version = "0.5.40"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f593a95398737aeed53e489c785df13f3618e41dbcd6718c6addbf1395aa6876"
-dependencies = [
- "memchr",
-]
-
-[[package]]
-name = "winnow"
-version = "0.6.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "59b5e5f6c299a3c7890b876a2a587f3115162487e704907d9b6cd29473052ba1"
+checksum = "7e49d2d35d3fad69b39b94139037ecfb4f359f08958b9c11e7315ce770462419"
 dependencies = [
  "memchr",
 ]
