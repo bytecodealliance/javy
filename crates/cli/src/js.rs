@@ -32,7 +32,7 @@ pub struct JS {
 }
 
 impl JS {
-    fn from_string(source_code: String) -> JS {
+    pub fn from_string(source_code: String) -> JS {
         JS {
             source_code: Rc::new(source_code),
         }
