@@ -37,6 +37,7 @@ use std::{fs, rc::Rc, sync::OnceLock};
 
 pub(crate) mod bytecode;
 pub(crate) mod exports;
+pub(crate) mod js;
 pub(crate) mod plugin;
 pub(crate) mod transform;
 pub(crate) mod wit;
@@ -50,8 +51,6 @@ use wasmtime_wasi::{pipe::MemoryInputPipe, WasiCtxBuilder};
 use wizer::{Linker, Wizer};
 
 use anyhow::Result;
-
-use crate::js::JS;
 
 static STDIN_PIPE: OnceLock<MemoryInputPipe> = OnceLock::new();
 
@@ -315,7 +314,7 @@ impl Generator {
     fn generate_main(
         &self,
         module: &mut Module,
-        js: &JS,
+        js: &js::JS,
         imports: &Identifiers,
     ) -> Result<BytecodeMetadata> {
         let bytecode = js.compile(&self.plugin)?;
@@ -518,7 +517,7 @@ impl Generator {
     //    (data (;0;) "\02\05\18function.mjs\06foo\0econsole\06log\06bar\0f\bc\03\00\01\00\00\be\03\00\00\0e\00\06\01\a0\01\00\00\00\03\01\01\1a\00\be\03\00\01\08\ea\05\c0\00\e1)8\e0\00\00\00B\e1\00\00\00\04\e2\00\00\00$\01\00)\bc\03\01\04\01\00\07\0a\0eC\06\01\be\03\00\00\00\03\00\00\13\008\e0\00\00\00B\e1\00\00\00\04\df\00\00\00$\01\00)\bc\03\01\02\03]")
     //    (data (;1;) "foo")
     //  )
-    pub fn generate(&mut self, js: &JS) -> Result<Vec<u8>> {
+    pub fn generate(&mut self, js: &js::JS) -> Result<Vec<u8>> {
         if self.wit_opts.defined() {
             self.function_exports = exports::process_exports(
                 js,

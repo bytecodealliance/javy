@@ -165,9 +165,9 @@ impl JS {
 
 #[cfg(test)]
 mod tests {
-    use crate::js::JS;
-
     use anyhow::Result;
+
+    use crate::codegen::js::JS;
 
     #[test]
     fn parse_no_exports() -> Result<()> {

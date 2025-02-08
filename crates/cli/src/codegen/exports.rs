@@ -2,7 +2,7 @@ use anyhow::{anyhow, Result};
 use convert_case::{Case, Casing};
 use std::{env, path::Path};
 
-use crate::{codegen::wit, js::JS};
+use crate::{codegen::js::JS, codegen::wit};
 
 pub(crate) type Exports = Vec<Export>;
 

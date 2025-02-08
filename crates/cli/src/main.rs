@@ -1,6 +1,5 @@
 mod codegen;
 mod commands;
-mod js;
 mod js_config;
 mod option;
 mod plugin;
@@ -8,11 +7,11 @@ mod plugin;
 use crate::commands::{Cli, Command, EmitPluginCommandOpts};
 use anyhow::Result;
 use clap::Parser;
+use codegen::js::JS;
 use codegen::{
     plugin::Plugin, plugin::UninitializedPlugin, wit::WitOptions, Generator, LinkingKind,
 };
 use commands::CodegenOptionGroup;
-use js::JS;
 use js_config::JsConfig;
 use plugin::{CliPlugin, PluginKind, PLUGIN_MODULE, QUICKJS_PROVIDER_V2_MODULE};
 use std::fs;
