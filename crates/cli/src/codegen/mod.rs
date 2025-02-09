@@ -54,6 +54,7 @@ use anyhow::Result;
 
 static STDIN_PIPE: OnceLock<MemoryInputPipe> = OnceLock::new();
 
+/// The type of linking to use.
 #[derive(Clone)]
 pub(crate) enum LinkingKind {
     Static,
@@ -122,7 +123,7 @@ pub struct Generator {
     pub(crate) wit_opts: wit::WitOptions,
     /// JavaScript function exports.
     pub(crate) function_exports: exports::Exports,
-    /// The kind of plugin to link to.
+    /// The kind of plugin a generator will link.
     plugin_kind: plugin::PluginKind,
     /// An optional JS runtime config provided as JSON bytes.
     js_runtime_config: Vec<u8>,

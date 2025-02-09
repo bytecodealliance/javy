@@ -10,6 +10,7 @@ use wizer::Wizer;
 
 use super::bytecode;
 
+/// Represents what kind of plugin.
 #[derive(Default, Clone)]
 pub(crate) enum PluginKind {
     #[default]
