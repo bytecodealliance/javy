@@ -48,13 +48,13 @@ fn main() -> Result<()> {
 
             if opts.dynamic {
                 generator
-                    .linking(LinkingKind::Dynamic)
                     .plugin(Plugin::new(QUICKJS_PROVIDER_V2_MODULE.to_vec()))
+                    .linking(LinkingKind::Dynamic)
                     .linking_v2_plugin(true);
             } else {
                 generator
-                    .linking(LinkingKind::Static)
                     .plugin(Plugin::new(PLUGIN_MODULE.to_vec()))
+                    .linking(LinkingKind::Static)
                     .linking_default_plugin(true);
             };
 
@@ -83,9 +83,9 @@ fn main() -> Result<()> {
 
             // Configure the generator with the provided options.
             generator
+                .plugin(cli_plugin.into_plugin())
                 .wit_opts(codegen_opts.wit)
                 .source_compression(!codegen_opts.source_compression)
-                .plugin(cli_plugin.into_plugin())
                 .js_runtime_config(js_opts.to_json()?);
 
             if codegen_opts.dynamic {
