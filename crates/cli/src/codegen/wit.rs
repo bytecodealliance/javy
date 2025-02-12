@@ -14,6 +14,7 @@ pub(crate) struct WitOptions {
 }
 
 impl WitOptions {
+    /// Generate WitOptions from a Tuple of Options.
     pub fn from_tuple(opts: (Option<PathBuf>, Option<String>)) -> Result<Self> {
         match opts {
             (None, None) => Ok(Self {

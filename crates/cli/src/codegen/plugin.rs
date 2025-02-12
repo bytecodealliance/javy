@@ -1,28 +1,52 @@
-use anyhow::{anyhow, bail, Result};
+use anyhow::{anyhow, Result};
 use std::{
     fs,
     io::{self},
     path::Path,
     str,
 };
-use walrus::{ExportItem, ValType};
-use wizer::Wizer;
 
 use super::bytecode;
 
-/// Represents what kind of plugin.
-#[derive(Default, Clone)]
+/// Represents the kind of a plugin.
+// This is an internal detail of this module.
+#[derive(Default, PartialEq, Copy, Clone)]
 pub(crate) enum PluginKind {
     #[default]
-    None,
+    User,
     Default,
     V2,
+}
+
+impl PluginKind {
+    pub(crate) fn import_namespace(self, plugin: &Plugin) -> Result<String> {
+        match self {
+            PluginKind::V2 => Ok("javy_quickjs_provider_v2".to_string()),
+            PluginKind::User | PluginKind::Default => {
+                // The import namespace to use for this plugin.
+                let module = walrus::Module::from_buffer(plugin.as_bytes())?;
+                let import_namespace: std::borrow::Cow<'_, [u8]> = module
+                    .customs
+                    .iter()
+                    .find_map(|(_, section)| {
+                        if section.name() == "import_namespace" {
+                            Some(section)
+                        } else {
+                            None
+                        }
+                    })
+                    .ok_or_else(|| anyhow!("Plugin is missing import_namespace custom section"))?
+                    .data(&Default::default()); // Argument is required but not actually used for anything.
+                Ok(str::from_utf8(&import_namespace)?.to_string())
+            }
+        }
+    }
 }
 
 /// Represents any valid Javy plugin.
 #[derive(Clone, Debug)]
 pub struct Plugin {
-    pub bytes: Vec<u8>,
+    bytes: Vec<u8>,
 }
 
 impl Default for Plugin {
@@ -50,189 +74,8 @@ impl Plugin {
 }
 
 impl Plugin {
-    /// Uses a plugin to generate QuickJS bytecode.
-    pub fn compile_source(&self, js_source_code: &[u8]) -> Result<Vec<u8>> {
+    /// Generate valid QuickJS bytecode using a Plugin.
+    pub(crate) fn compile_source(&self, js_source_code: &[u8]) -> Result<Vec<u8>> {
         bytecode::compile_source(&self.as_bytes(), js_source_code)
-    }
-
-    /// The import namespace to use for this plugin.
-    pub(crate) fn import_namespace(&self) -> Result<String> {
-        let module = walrus::Module::from_buffer(self.as_bytes())?;
-        let import_namespace: std::borrow::Cow<'_, [u8]> = module
-            .customs
-            .iter()
-            .find_map(|(_, section)| {
-                if section.name() == "import_namespace" {
-                    Some(section)
-                } else {
-                    None
-                }
-            })
-            .ok_or_else(|| anyhow!("Plugin is missing import_namespace custom section"))?
-            .data(&Default::default()); // Argument is required but not actually used for anything.
-        Ok(str::from_utf8(&import_namespace)?.to_string())
-    }
-}
-
-/// A validated but uninitialized plugin.
-pub struct UninitializedPlugin<'a> {
-    bytes: &'a [u8],
-}
-
-impl<'a> UninitializedPlugin<'a> {
-    /// Creates a validated but uninitialized plugin.
-    pub fn new(bytes: &'a [u8]) -> Result<Self> {
-        Self::validate(bytes)?;
-        Ok(Self { bytes })
-    }
-
-    fn validate(plugin_bytes: &'a [u8]) -> Result<()> {
-        let mut errors = vec![];
-
-        let module = walrus::Module::from_buffer(plugin_bytes)?;
-
-        if let Err(err) = Self::validate_exported_func(&module, "initialize_runtime", &[], &[]) {
-            errors.push(err);
-        }
-        if let Err(err) = Self::validate_exported_func(
-            &module,
-            "compile_src",
-            &[ValType::I32, ValType::I32],
-            &[ValType::I32],
-        ) {
-            errors.push(err);
-        }
-        if let Err(err) = Self::validate_exported_func(
-            &module,
-            "invoke",
-            &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
-            &[],
-        ) {
-            errors.push(err);
-        }
-
-        let has_memory = module
-            .exports
-            .iter()
-            .any(|export| export.name == "memory" && matches!(export.item, ExportItem::Memory(_)));
-        if !has_memory {
-            errors.push("missing exported memory named `memory`".to_string());
-        }
-
-        let has_import_namespace = module
-            .customs
-            .iter()
-            .any(|(_, section)| section.name() == "import_namespace");
-        if !has_import_namespace {
-            errors.push("missing custom section named `import_namespace`".to_string());
-        }
-
-        if !errors.is_empty() {
-            bail!("Problems with module: {}", errors.join(", "))
-        }
-        Ok(())
-    }
-
-    /// Initializes the plugin.
-    pub fn initialize(&self) -> Result<Vec<u8>> {
-        let initialized_plugin = Wizer::new()
-            .allow_wasi(true)?
-            .init_func("initialize_runtime")
-            .keep_init_func(true)
-            .wasm_bulk_memory(true)
-            .run(self.bytes)?;
-
-        let tempdir = tempfile::tempdir()?;
-        let in_tempfile_path = tempdir.path().join("in_temp.wasm");
-        let out_tempfile_path = tempdir.path().join("out_temp.wasm");
-        fs::write(&in_tempfile_path, initialized_plugin)?;
-        wasm_opt::OptimizationOptions::new_opt_level_3() // Aggressively optimize for speed.
-            .shrink_level(wasm_opt::ShrinkLevel::Level0) // Don't optimize for size at the expense of performance.
-            .debug_info(false)
-            .run(&in_tempfile_path, &out_tempfile_path)?;
-        Ok(fs::read(out_tempfile_path)?)
-    }
-
-    fn validate_exported_func(
-        module: &walrus::Module,
-        name: &str,
-        expected_params: &[ValType],
-        expected_results: &[ValType],
-    ) -> Result<(), String> {
-        let func_id = module
-            .exports
-            .get_func(name)
-            .map_err(|_| format!("missing export for function named `{name}`"))?;
-        let function = module.funcs.get(func_id);
-        let ty_id = function.ty();
-        let ty = module.types.get(ty_id);
-        let params = ty.params();
-        let has_correct_params = params == expected_params;
-        let results = ty.results();
-        let has_correct_results = results == expected_results;
-        if !has_correct_params || !has_correct_results {
-            return Err(format!("type for function `{name}` is incorrect"));
-        }
-
-        Ok(())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use anyhow::Result;
-    use walrus::{FunctionBuilder, ModuleConfig, ValType};
-
-    use crate::codegen::plugin::UninitializedPlugin;
-
-    #[test]
-    fn test_validate_plugin_with_everything_missing() -> Result<()> {
-        let mut empty_module = walrus::Module::with_config(ModuleConfig::default());
-        let plugin_bytes = empty_module.emit_wasm();
-        let error = UninitializedPlugin::new(&plugin_bytes).err().unwrap();
-        assert_eq!(
-            error.to_string(),
-            "Problems with module: missing export for function named \
-            `initialize_runtime`, missing export for function named \
-            `compile_src`, missing export for function named `invoke`, \
-            missing exported memory named `memory`, missing custom section \
-            named `import_namespace`"
-        );
-        Ok(())
-    }
-
-    #[test]
-    fn test_validate_plugin_with_wrong_params_for_initialize_runtime() -> Result<()> {
-        let mut module = walrus::Module::with_config(ModuleConfig::default());
-        let initialize_runtime = FunctionBuilder::new(&mut module.types, &[ValType::I32], &[])
-            .finish(vec![], &mut module.funcs);
-        module.exports.add("initialize_runtime", initialize_runtime);
-
-        let plugin_bytes = module.emit_wasm();
-        let error = UninitializedPlugin::new(&plugin_bytes).err().unwrap();
-        let expected_part_of_error =
-            "Problems with module: type for function `initialize_runtime` is incorrect,";
-        if !error.to_string().contains(expected_part_of_error) {
-            panic!("Expected error to contain '{expected_part_of_error}' but it did not. Full error is: '{error}'");
-        }
-        Ok(())
-    }
-
-    #[test]
-    fn test_validate_plugin_with_wrong_results_for_initialize_runtime() -> Result<()> {
-        let mut module = walrus::Module::with_config(ModuleConfig::default());
-        let mut initialize_runtime = FunctionBuilder::new(&mut module.types, &[], &[ValType::I32]);
-        initialize_runtime.func_body().i32_const(0);
-        let initialize_runtime = initialize_runtime.finish(vec![], &mut module.funcs);
-        module.exports.add("initialize_runtime", initialize_runtime);
-
-        let plugin_bytes = module.emit_wasm();
-        let error = UninitializedPlugin::new(&plugin_bytes).err().unwrap();
-        let expected_part_of_error =
-            "Problems with module: type for function `initialize_runtime` is incorrect,";
-        if !error.to_string().contains(expected_part_of_error) {
-            panic!("Expected error to contain '{expected_part_of_error}' but it did not. Full error is: '{error}'");
-        }
-        Ok(())
     }
 }

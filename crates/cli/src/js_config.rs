@@ -19,7 +19,7 @@ pub(crate) struct ConfigSchema {
 impl ConfigSchema {
     pub(crate) fn from_cli_plugin(cli_plugin: &CliPlugin) -> Result<Option<ConfigSchema>> {
         match cli_plugin.kind {
-            PluginKind::None => return Ok(None),
+            PluginKind::User => return Ok(None),
             PluginKind::Default => {
                 let engine = Engine::default();
                 let module = wasmtime::Module::new(&engine, cli_plugin.as_plugin().as_bytes())?;

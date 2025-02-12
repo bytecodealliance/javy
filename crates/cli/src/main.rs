@@ -8,12 +8,12 @@ use crate::commands::{Cli, Command, EmitPluginCommandOpts};
 use anyhow::Result;
 use clap::Parser;
 use codegen::js::JS;
-use codegen::{
-    plugin::Plugin, plugin::UninitializedPlugin, wit::WitOptions, Generator, LinkingKind,
-};
+use codegen::{plugin::Plugin, wit::WitOptions, Generator, LinkingKind};
 use commands::CodegenOptionGroup;
 use js_config::JsConfig;
-use plugin::{CliPlugin, PluginKind, PLUGIN_MODULE, QUICKJS_PROVIDER_V2_MODULE};
+use plugin::{
+    CliPlugin, PluginKind, UninitializedPlugin, PLUGIN_MODULE, QUICKJS_PROVIDER_V2_MODULE,
+};
 use std::fs;
 use std::fs::File;
 use std::io::Write;
@@ -70,7 +70,7 @@ fn main() -> Result<()> {
 
             // Always assume the default plugin if no plugin is provided.
             let cli_plugin = match &codegen_opts.plugin {
-                Some(path) => CliPlugin::new(Plugin::new_from_path(&path)?, PluginKind::None),
+                Some(path) => CliPlugin::new(Plugin::new_from_path(&path)?, PluginKind::User),
                 None => CliPlugin::new(Plugin::new(PLUGIN_MODULE.to_vec()), PluginKind::Default),
             };
 
@@ -120,6 +120,6 @@ fn emit_plugin(opts: &EmitPluginCommandOpts) -> Result<()> {
         Some(path) => Box::new(File::create(path)?),
         _ => Box::new(std::io::stdout()),
     };
-    file.write_all(Plugin::new(PLUGIN_MODULE.to_vec()).as_bytes())?;
+    file.write_all(PLUGIN_MODULE)?;
     Ok(())
 }

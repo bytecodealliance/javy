@@ -54,10 +54,12 @@ use anyhow::Result;
 
 static STDIN_PIPE: OnceLock<MemoryInputPipe> = OnceLock::new();
 
-/// The type of linking to use.
+/// The kind of linking to use.
 #[derive(Clone)]
 pub(crate) enum LinkingKind {
+    /// Static linking
     Static,
+    /// Dynamic linking
     Dynamic,
 }
 
@@ -110,7 +112,8 @@ impl BytecodeMetadata {
     }
 }
 
-/// Code Generation.
+/// Generator used to produce valid WASM
+/// binaries from JS.
 #[derive(Default, Clone)]
 pub struct Generator {
     /// Plugin to use.
@@ -135,21 +138,25 @@ impl Generator {
         Self::default()
     }
 
+    /// Set the plugin.
     pub(crate) fn plugin(&mut self, plugin: plugin::Plugin) -> &mut Self {
         self.plugin = plugin;
         self
     }
 
+    /// Set the kind of linking
     pub(crate) fn linking(&mut self, linking: LinkingKind) -> &mut Self {
         self.linking = linking;
         self
     }
 
+    /// Set the JS source compression
     pub(crate) fn source_compression(&mut self, source_compression: bool) -> &mut Self {
         self.source_compression = source_compression;
         self
     }
 
+    /// Set the wit options.
     pub(crate) fn wit_opts(&mut self, wit_opts: wit::WitOptions) -> &mut Self {
         self.wit_opts = wit_opts;
         self
@@ -160,7 +167,7 @@ impl Generator {
         self.plugin_kind = if value {
             plugin::PluginKind::Default
         } else {
-            plugin::PluginKind::None
+            plugin::PluginKind::User
         };
 
         self
@@ -171,13 +178,13 @@ impl Generator {
         self.plugin_kind = if value {
             plugin::PluginKind::V2
         } else {
-            plugin::PluginKind::None
+            plugin::PluginKind::User
         };
 
         self
     }
 
-    /// Runtime configuration options to pass to the module.
+    /// Set the JS runtime configuration options to pass to the module.
     pub fn js_runtime_config(&mut self, js_runtime_config: Vec<u8>) -> &mut Self {
         self.js_runtime_config = js_runtime_config;
         self
@@ -249,12 +256,9 @@ impl Generator {
             }
             LinkingKind::Dynamic => {
                 // All plugins by default are assumed to be linking against default
-                // or no module. For plugins linking against the V2 module we need
-                // the import_namespace will always be hardcoded to the same value.
-                let import_namespace = match self.plugin_kind {
-                    plugin::PluginKind::V2 => "javy_quickjs_provider_v2".to_string(),
-                    _ => self.plugin.import_namespace()?,
-                };
+                // or a user module. V2 modules require a different import namespace
+                // so we use the plugin_kind to determine the namespace for imports.
+                let import_namespace = self.plugin_kind.import_namespace(&self.plugin)?;
 
                 let canonical_abi_realloc_type = module.types.add(
                     &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
@@ -518,6 +522,7 @@ impl Generator {
     //    (data (;0;) "\02\05\18function.mjs\06foo\0econsole\06log\06bar\0f\bc\03\00\01\00\00\be\03\00\00\0e\00\06\01\a0\01\00\00\00\03\01\01\1a\00\be\03\00\01\08\ea\05\c0\00\e1)8\e0\00\00\00B\e1\00\00\00\04\e2\00\00\00$\01\00)\bc\03\01\04\01\00\07\0a\0eC\06\01\be\03\00\00\00\03\00\00\13\008\e0\00\00\00B\e1\00\00\00\04\df\00\00\00$\01\00)\bc\03\01\02\03]")
     //    (data (;1;) "foo")
     //  )
+    /// Generate a valid WASM binary from JS.
     pub fn generate(&mut self, js: &js::JS) -> Result<Vec<u8>> {
         if self.wit_opts.defined() {
             self.function_exports = exports::process_exports(
