@@ -118,7 +118,7 @@ impl BytecodeMetadata {
 pub struct Generator {
     /// Plugin to use.
     pub(crate) plugin: plugin::Plugin,
-    /// What kind of linking to use when generating.
+    /// What kind of linking to use when generating a module.
     pub(crate) linking: LinkingKind,
     /// Whether to embed the compressed JS source in the generated module.
     pub(crate) source_compression: bool,
@@ -255,9 +255,10 @@ impl Generator {
                 ))
             }
             LinkingKind::Dynamic => {
-                // All plugins by default are assumed to be linking against default
-                // or a user module. V2 modules require a different import namespace
-                // so we use the plugin_kind to determine the namespace for imports.
+                // All code by default is assumed to be linking against a default
+                // or a user provided plugin. However V2 plugins require a different
+                // import namespace to be used instead so we use the plugin_kind to
+                // to determine the import_namespace.
                 let import_namespace = self.plugin_kind.import_namespace(&self.plugin)?;
 
                 let canonical_abi_realloc_type = module.types.add(

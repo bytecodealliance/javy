@@ -46,7 +46,7 @@ impl WitOptions {
     }
 }
 
-pub fn parse_exports(wit: impl AsRef<Path>, world: &str) -> Result<Vec<String>> {
+pub(crate) fn parse_exports(wit: impl AsRef<Path>, world: &str) -> Result<Vec<String>> {
     let mut resolve = Resolve::default();
     resolve.push_path(wit.as_ref())?;
     let (_, package_id) = resolve.package_names.first().unwrap();

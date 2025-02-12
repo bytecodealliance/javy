@@ -19,6 +19,8 @@ pub(crate) enum PluginKind {
 }
 
 impl PluginKind {
+    /// Determine the import namespace of a provided plugin.
+    // This is an internal detail of this module.
     pub(crate) fn import_namespace(self, plugin: &Plugin) -> Result<String> {
         match self {
             PluginKind::V2 => Ok("javy_quickjs_provider_v2".to_string()),

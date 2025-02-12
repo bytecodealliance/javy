@@ -59,7 +59,7 @@ impl JS {
         plugin.compile_source(self.source_code.as_bytes())
     }
 
-    /// Get Brotli compressed JS source code.
+    /// Get Brotli compressed JS source code as bytes.
     pub fn compress(&self) -> Result<Vec<u8>> {
         let mut compressed_source_code: Vec<u8> = vec![];
         enc::BrotliCompress(
