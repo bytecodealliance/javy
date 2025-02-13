@@ -55,18 +55,13 @@ use anyhow::Result;
 static STDIN_PIPE: OnceLock<MemoryInputPipe> = OnceLock::new();
 
 /// The kind of linking to use.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub(crate) enum LinkingKind {
+    #[default]
     /// Static linking
     Static,
     /// Dynamic linking
     Dynamic,
-}
-
-impl Default for LinkingKind {
-    fn default() -> LinkingKind {
-        LinkingKind::Static
-    }
 }
 
 /// Identifiers used by the generated module.

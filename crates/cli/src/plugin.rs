@@ -7,11 +7,16 @@ use wizer::Wizer;
 pub const PLUGIN_MODULE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/plugin.wasm"));
 pub const QUICKJS_PROVIDER_V2_MODULE: &[u8] = include_bytes!("./javy_quickjs_provider_v2.wasm");
 
+/// Represents the kind of a plugin.
+// This is an internal detail of this module.
 pub(crate) enum PluginKind {
     User,
     Default,
 }
 
+/// Represents a Plugin as well as it's kind
+/// for use within the Javy CLI crate.
+// This is an internal detail of this module.
 pub(crate) struct CliPlugin {
     pub(crate) plugin: Plugin,
     pub(crate) kind: PluginKind,
@@ -19,10 +24,7 @@ pub(crate) struct CliPlugin {
 
 impl CliPlugin {
     pub fn new(plugin: Plugin, kind: PluginKind) -> Self {
-        CliPlugin {
-            plugin: plugin,
-            kind: kind,
-        }
+        CliPlugin { plugin, kind }
     }
 
     pub fn as_plugin(&self) -> &Plugin {

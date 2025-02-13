@@ -70,7 +70,7 @@ fn main() -> Result<()> {
 
             // Always assume the default plugin if no plugin is provided.
             let cli_plugin = match &codegen_opts.plugin {
-                Some(path) => CliPlugin::new(Plugin::new_from_path(&path)?, PluginKind::User),
+                Some(path) => CliPlugin::new(Plugin::new_from_path(path)?, PluginKind::User),
                 None => CliPlugin::new(Plugin::new(PLUGIN_MODULE.to_vec()), PluginKind::Default),
             };
 

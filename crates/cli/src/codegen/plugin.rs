@@ -45,22 +45,16 @@ impl PluginKind {
     }
 }
 
-/// Represents any valid Javy plugin.
-#[derive(Clone, Debug)]
+/// Represents ny valid Javy plugin.
+#[derive(Clone, Debug, Default)]
 pub struct Plugin {
     bytes: Vec<u8>,
-}
-
-impl Default for Plugin {
-    fn default() -> Self {
-        Self { bytes: Vec::new() }
-    }
 }
 
 impl Plugin {
     /// Constructs a new instance of Plugin.
     pub fn new(bytes: Vec<u8>) -> Self {
-        Plugin { bytes: bytes }
+        Plugin { bytes }
     }
 
     /// Constructs a new instance of Plugin from a given path.
@@ -78,6 +72,6 @@ impl Plugin {
 impl Plugin {
     /// Generate valid QuickJS bytecode using a Plugin.
     pub(crate) fn compile_source(&self, js_source_code: &[u8]) -> Result<Vec<u8>> {
-        bytecode::compile_source(&self.as_bytes(), js_source_code)
+        bytecode::compile_source(self.as_bytes(), js_source_code)
     }
 }
