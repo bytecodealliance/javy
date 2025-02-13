@@ -24,20 +24,23 @@ use swc_core::{
     },
 };
 
-use crate::plugins::Plugin;
+use crate::codegen::plugin::Plugin;
 
+/// A structure representing valid JS code.
 #[derive(Clone, Debug)]
 pub struct JS {
     source_code: Rc<String>,
 }
 
 impl JS {
-    fn from_string(source_code: String) -> JS {
+    /// Generate a valid JS instance from a string containing JS.
+    pub fn from_string(source_code: String) -> JS {
         JS {
             source_code: Rc::new(source_code),
         }
     }
 
+    /// Generate a valid JS instance from a file containing JS.
     pub fn from_file(path: &Path) -> Result<JS> {
         let mut input_file = File::open(path)
             .with_context(|| format!("Failed to open input file {}", path.display()))?;
@@ -46,6 +49,7 @@ impl JS {
         Ok(Self::from_string(String::from_utf8(contents)?))
     }
 
+    /// Get JS source code as bytes.
     pub fn as_bytes(&self) -> &[u8] {
         self.source_code.as_bytes()
     }
@@ -55,6 +59,7 @@ impl JS {
         plugin.compile_source(self.source_code.as_bytes())
     }
 
+    /// Get Brotli compressed JS source code as bytes.
     pub fn compress(&self) -> Result<Vec<u8>> {
         let mut compressed_source_code: Vec<u8> = vec![];
         enc::BrotliCompress(
@@ -68,6 +73,7 @@ impl JS {
         Ok(compressed_source_code)
     }
 
+    /// Get the exports from a JS instance.
     pub fn exports(&self) -> Result<Vec<String>> {
         let module = self.parse_module()?;
 
@@ -165,9 +171,9 @@ impl JS {
 
 #[cfg(test)]
 mod tests {
-    use crate::js::JS;
-
     use anyhow::Result;
+
+    use crate::codegen::js::JS;
 
     #[test]
     fn parse_no_exports() -> Result<()> {

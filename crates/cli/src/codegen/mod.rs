@@ -33,15 +33,15 @@
 //! as well as ensuring that any features available in the plugin match the
 //! features requsted by the JavaScript bytecode.
 
-mod builder;
 use std::{fs, rc::Rc, sync::OnceLock};
 
-pub(crate) use builder::*;
+pub(crate) mod bytecode;
+pub(crate) mod exports;
+pub(crate) mod js;
+pub(crate) mod plugin;
+pub(crate) mod transform;
+pub(crate) mod wit;
 
-mod transform;
-
-mod exports;
-pub(crate) use exports::*;
 use transform::SourceCodeSection;
 use walrus::{
     DataId, DataKind, ExportItem, FunctionBuilder, FunctionId, LocalId, MemoryId, Module, ValType,
@@ -50,15 +50,17 @@ use wasm_opt::{OptimizationOptions, ShrinkLevel};
 use wasmtime_wasi::{pipe::MemoryInputPipe, WasiCtxBuilder};
 use wizer::{Linker, Wizer};
 
-use crate::{js_config::JsConfig, plugins::Plugin, JS};
 use anyhow::Result;
 
 static STDIN_PIPE: OnceLock<MemoryInputPipe> = OnceLock::new();
 
-pub(crate) enum CodeGenType {
-    /// Static code generation.
+/// The kind of linking to use.
+#[derive(Clone, Default)]
+pub(crate) enum LinkingKind {
+    #[default]
+    /// Static linking
     Static,
-    /// Dynamic code generation.
+    /// Dynamic linking
     Dynamic,
 }
 
@@ -105,44 +107,94 @@ impl BytecodeMetadata {
     }
 }
 
-/// Code Generation.
-pub(crate) struct Generator {
-    /// Codegen type to use.
-    pub ty: CodeGenType,
-    /// JS runtime config.
-    pub js_runtime_config: JsConfig,
+/// Generator used to produce valid WASM
+/// binaries from JS.
+#[derive(Default, Clone)]
+pub struct Generator {
     /// Plugin to use.
-    pub plugin: Plugin,
-    /// JavaScript function exports.
-    function_exports: Exports,
+    pub(crate) plugin: plugin::Plugin,
+    /// What kind of linking to use when generating a module.
+    pub(crate) linking: LinkingKind,
     /// Whether to embed the compressed JS source in the generated module.
-    pub source_compression: bool,
+    pub(crate) source_compression: bool,
     /// WIT options for code generation.
-    pub wit_opts: WitOptions,
+    pub(crate) wit_opts: wit::WitOptions,
+    /// JavaScript function exports.
+    pub(crate) function_exports: exports::Exports,
+    /// The kind of plugin a generator will link.
+    plugin_kind: plugin::PluginKind,
+    /// An optional JS runtime config provided as JSON bytes.
+    js_runtime_config: Vec<u8>,
 }
 
 impl Generator {
-    /// Creates a new [`Generator`].
-    pub fn new(ty: CodeGenType, js_runtime_config: JsConfig, plugin: Plugin) -> Self {
-        Self {
-            ty,
-            js_runtime_config,
-            source_compression: true,
-            plugin,
-            function_exports: Default::default(),
-            wit_opts: Default::default(),
-        }
+    /// Create a new [`CodeGenBuilder`].
+    pub(crate) fn new() -> Self {
+        Self::default()
     }
 
+    /// Set the plugin.
+    pub(crate) fn plugin(&mut self, plugin: plugin::Plugin) -> &mut Self {
+        self.plugin = plugin;
+        self
+    }
+
+    /// Set the kind of linking
+    pub(crate) fn linking(&mut self, linking: LinkingKind) -> &mut Self {
+        self.linking = linking;
+        self
+    }
+
+    /// Set the JS source compression
+    pub(crate) fn source_compression(&mut self, source_compression: bool) -> &mut Self {
+        self.source_compression = source_compression;
+        self
+    }
+
+    /// Set the wit options.
+    pub(crate) fn wit_opts(&mut self, wit_opts: wit::WitOptions) -> &mut Self {
+        self.wit_opts = wit_opts;
+        self
+    }
+
+    /// Set true if linking with a default plugin module.
+    pub fn linking_default_plugin(&mut self, value: bool) -> &mut Self {
+        self.plugin_kind = if value {
+            plugin::PluginKind::Default
+        } else {
+            plugin::PluginKind::User
+        };
+
+        self
+    }
+
+    /// Set true if linking with a V2 plugin module.
+    pub fn linking_v2_plugin(&mut self, value: bool) -> &mut Self {
+        self.plugin_kind = if value {
+            plugin::PluginKind::V2
+        } else {
+            plugin::PluginKind::User
+        };
+
+        self
+    }
+
+    /// Set the JS runtime configuration options to pass to the module.
+    pub fn js_runtime_config(&mut self, js_runtime_config: Vec<u8>) -> &mut Self {
+        self.js_runtime_config = js_runtime_config;
+        self
+    }
+}
+
+impl Generator {
     /// Generate the starting module.
     fn generate_initial_module(&self) -> Result<Module> {
         let config = transform::module_config();
-        let module = match &self.ty {
-            CodeGenType::Static => {
+        let module = match &self.linking {
+            LinkingKind::Static => {
                 // Copy config JSON into stdin for `initialize_runtime` function.
-                let runtime_config = self.js_runtime_config.to_json()?;
                 STDIN_PIPE
-                    .set(MemoryInputPipe::new(runtime_config))
+                    .set(MemoryInputPipe::new(self.js_runtime_config.clone()))
                     .unwrap();
                 let wasm = Wizer::new()
                     .init_func("initialize_runtime")
@@ -169,15 +221,15 @@ impl Generator {
                     .run(self.plugin.as_bytes())?;
                 config.parse(&wasm)?
             }
-            CodeGenType::Dynamic => Module::with_config(config),
+            LinkingKind::Dynamic => Module::with_config(config),
         };
         Ok(module)
     }
 
     /// Resolve identifiers for functions and memory.
-    pub fn resolve_identifiers(&self, module: &mut Module) -> Result<Identifiers> {
-        match self.ty {
-            CodeGenType::Static => {
+    pub(crate) fn resolve_identifiers(&self, module: &mut Module) -> Result<Identifiers> {
+        match self.linking {
+            LinkingKind::Static => {
                 let canonical_abi_realloc_fn = module.exports.get_func("canonical_abi_realloc")?;
                 let eval_bytecode = module.exports.get_func("eval_bytecode").ok();
                 let invoke = module.exports.get_func("invoke")?;
@@ -197,8 +249,13 @@ impl Generator {
                     memory,
                 ))
             }
-            CodeGenType::Dynamic => {
-                let import_namespace = self.plugin.import_namespace()?;
+            LinkingKind::Dynamic => {
+                // All code by default is assumed to be linking against a default
+                // or a user provided plugin. However V2 plugins require a different
+                // import namespace to be used instead so we use the plugin_kind to
+                // to determine the import_namespace.
+                let import_namespace = self.plugin_kind.import_namespace(&self.plugin)?;
+
                 let canonical_abi_realloc_type = module.types.add(
                     &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
                     &[ValType::I32],
@@ -213,16 +270,18 @@ impl Generator {
                 // User plugins also won't have an `eval_bytecode` function to
                 // import. We want to remove `eval_bytecode` from the default
                 // plugin so we don't want to emit more uses of it.
-                let eval_bytecode_fn_id = if self.plugin.is_v2_plugin() {
-                    let eval_bytecode_type = module.types.add(&[ValType::I32, ValType::I32], &[]);
-                    let (eval_bytecode_fn_id, _) = module.add_import_func(
-                        &import_namespace,
-                        "eval_bytecode",
-                        eval_bytecode_type,
-                    );
-                    Some(eval_bytecode_fn_id)
-                } else {
-                    None
+                let eval_bytecode_fn_id = match self.plugin_kind {
+                    plugin::PluginKind::V2 => {
+                        let eval_bytecode_type =
+                            module.types.add(&[ValType::I32, ValType::I32], &[]);
+                        let (eval_bytecode_fn_id, _) = module.add_import_func(
+                            &import_namespace,
+                            "eval_bytecode",
+                            eval_bytecode_type,
+                        );
+                        Some(eval_bytecode_fn_id)
+                    }
+                    _ => None,
                 };
 
                 let invoke_type = module.types.add(
@@ -230,7 +289,7 @@ impl Generator {
                     &[],
                 );
                 let (invoke_fn_id, _) =
-                    module.add_import_func(&self.plugin.import_namespace()?, "invoke", invoke_type);
+                    module.add_import_func(&import_namespace, "invoke", invoke_type);
 
                 let (memory_id, _) = module.add_import_memory(
                     &import_namespace,
@@ -256,7 +315,7 @@ impl Generator {
     fn generate_main(
         &self,
         module: &mut Module,
-        js: &JS,
+        js: &js::JS,
         imports: &Identifiers,
     ) -> Result<BytecodeMetadata> {
         let bytecode = js.compile(&self.plugin)?;
@@ -291,7 +350,7 @@ impl Generator {
             // support calling `invoke` with a null function. The default
             // plugin and user plugins do accept null functions.
             assert!(
-                !self.plugin.is_v2_plugin(),
+                !matches!(self.plugin_kind, plugin::PluginKind::V2),
                 "Using invoke with null function not supported for v2 plugin"
             );
             instructions
@@ -366,15 +425,19 @@ impl Generator {
 
     /// Clean-up the generated Wasm.
     fn postprocess(&self, module: &mut Module) -> Result<Vec<u8>> {
-        match self.ty {
-            CodeGenType::Static => {
+        match self.linking {
+            LinkingKind::Static => {
                 // Remove no longer necessary exports.
                 module.exports.remove("canonical_abi_realloc")?;
-                // User plugins won't have an `eval_bytecode` function that
-                // Javy "owns".
-                if !self.plugin.is_user_plugin() {
+
+                // Only internal plugins expose eval_bytecode function.
+                if matches!(
+                    self.plugin_kind,
+                    plugin::PluginKind::Default | plugin::PluginKind::V2
+                ) {
                     module.exports.remove("eval_bytecode")?;
                 }
+
                 module.exports.remove("invoke")?;
                 module.exports.remove("compile_src")?;
 
@@ -391,7 +454,7 @@ impl Generator {
 
                 Ok(fs::read(&tempfile_path)?)
             }
-            CodeGenType::Dynamic => Ok(module.emit_wasm()),
+            LinkingKind::Dynamic => Ok(module.emit_wasm()),
         }
     }
 
@@ -455,7 +518,8 @@ impl Generator {
     //    (data (;0;) "\02\05\18function.mjs\06foo\0econsole\06log\06bar\0f\bc\03\00\01\00\00\be\03\00\00\0e\00\06\01\a0\01\00\00\00\03\01\01\1a\00\be\03\00\01\08\ea\05\c0\00\e1)8\e0\00\00\00B\e1\00\00\00\04\e2\00\00\00$\01\00)\bc\03\01\04\01\00\07\0a\0eC\06\01\be\03\00\00\00\03\00\00\13\008\e0\00\00\00B\e1\00\00\00\04\df\00\00\00$\01\00)\bc\03\01\02\03]")
     //    (data (;1;) "foo")
     //  )
-    pub fn generate(&mut self, js: &JS) -> Result<Vec<u8>> {
+    /// Generate a valid WASM binary from JS.
+    pub fn generate(&mut self, js: &js::JS) -> Result<Vec<u8>> {
         if self.wit_opts.defined() {
             self.function_exports = exports::process_exports(
                 js,
@@ -494,28 +558,4 @@ fn print_wat(wasm_binary: &[u8]) -> Result<()> {
 #[cfg(not(feature = "dump_wat"))]
 fn print_wat(_wasm_binary: &[u8]) -> Result<()> {
     Ok(())
-}
-
-#[cfg(test)]
-mod test {
-    use crate::js_config::JsConfig;
-    use crate::plugins::Plugin;
-
-    use super::Generator;
-    use super::WitOptions;
-    use anyhow::Result;
-
-    #[test]
-    fn default_values() -> Result<()> {
-        let gen = Generator::new(
-            crate::codegen::CodeGenType::Dynamic,
-            JsConfig::default(),
-            Plugin::Default,
-        );
-        assert!(gen.source_compression);
-        assert!(matches!(gen.plugin, Plugin::Default));
-        assert_eq!(gen.wit_opts, WitOptions::default());
-
-        Ok(())
-    }
 }
