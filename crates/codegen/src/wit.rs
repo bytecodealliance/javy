@@ -6,7 +6,7 @@ use wit_parser::{Resolve, WorldItem};
 
 /// Options for using WIT in the code generation process.
 #[derive(Default, Clone, Debug, PartialEq)]
-pub(crate) struct WitOptions {
+pub struct WitOptions {
     /// The path of the .wit file to use.
     pub path: Option<PathBuf>,
     /// The name of the wit world to use.

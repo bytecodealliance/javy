@@ -37,10 +37,14 @@ use std::{fs, rc::Rc, sync::OnceLock};
 
 pub(crate) mod bytecode;
 pub(crate) mod exports;
-pub(crate) mod js;
-pub(crate) mod plugin;
 pub(crate) mod transform;
-pub(crate) mod wit;
+
+pub mod js;
+pub mod plugin;
+pub mod wit;
+
+pub use crate::js::JS;
+pub use crate::plugin::Plugin;
 
 use transform::SourceCodeSection;
 use walrus::{
@@ -56,7 +60,7 @@ static STDIN_PIPE: OnceLock<MemoryInputPipe> = OnceLock::new();
 
 /// The kind of linking to use.
 #[derive(Clone, Default)]
-pub(crate) enum LinkingKind {
+pub enum LinkingKind {
     #[default]
     /// Static linking
     Static,
@@ -129,30 +133,30 @@ pub struct Generator {
 
 impl Generator {
     /// Create a new [`CodeGenBuilder`].
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self::default()
     }
 
     /// Set the plugin.
-    pub(crate) fn plugin(&mut self, plugin: plugin::Plugin) -> &mut Self {
+    pub fn plugin(&mut self, plugin: plugin::Plugin) -> &mut Self {
         self.plugin = plugin;
         self
     }
 
     /// Set the kind of linking
-    pub(crate) fn linking(&mut self, linking: LinkingKind) -> &mut Self {
+    pub fn linking(&mut self, linking: LinkingKind) -> &mut Self {
         self.linking = linking;
         self
     }
 
     /// Set the JS source compression
-    pub(crate) fn source_compression(&mut self, source_compression: bool) -> &mut Self {
+    pub fn source_compression(&mut self, source_compression: bool) -> &mut Self {
         self.source_compression = source_compression;
         self
     }
 
     /// Set the wit options.
-    pub(crate) fn wit_opts(&mut self, wit_opts: wit::WitOptions) -> &mut Self {
+    pub fn wit_opts(&mut self, wit_opts: wit::WitOptions) -> &mut Self {
         self.wit_opts = wit_opts;
         self
     }

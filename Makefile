@@ -49,7 +49,7 @@ test-wpt: cli
 
 tests: test-javy test-plugin-api test-plugin test-runner test-cli test-wpt
 
-fmt: fmt-javy fmt-plugin-api fmt-plugin fmt-cli
+fmt: fmt-javy fmt-plugin-api fmt-plugin fmt-cli fmt-codegen
 
 fmt-javy:
 	cargo fmt --package=javy -- --check
@@ -68,3 +68,7 @@ fmt-plugin:
 fmt-cli:
 	cargo fmt --package=javy-cli -- --check
 	CARGO_PROFILE_RELEASE_LTO=off cargo clippy --package=javy-cli --release --all-targets -- -D warnings
+
+fmt-codegen: 
+	cargo fmt --package=javy-codegen -- --check
+	cargo clippy --package=javy-codegen --release --all-targets -- -D warnings

@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "crates/cli",
+  "crates/codegen",
   "crates/javy",
   "crates/plugin",
   "crates/plugin-api",

@@ -24,7 +24,7 @@ use swc_core::{
     },
 };
 
-use crate::codegen::plugin::Plugin;
+use crate::plugin::Plugin;
 
 /// A structure representing valid JS code.
 #[derive(Clone, Debug)]
@@ -173,7 +173,7 @@ impl JS {
 mod tests {
     use anyhow::Result;
 
-    use crate::codegen::js::JS;
+    use crate::js::JS;
 
     #[test]
     fn parse_no_exports() -> Result<()> {
