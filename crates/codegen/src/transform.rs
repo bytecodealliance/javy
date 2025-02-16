@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use anyhow::Result;
 use walrus::{CustomSection, IdsToIndices, ModuleConfig, ModuleProducers};
 
-use crate::codegen::js::JS;
+use crate::js::JS;
 
 #[derive(Debug)]
 pub(crate) struct SourceCodeSection {

@@ -1,4 +1,3 @@
-mod codegen;
 mod commands;
 mod js_config;
 mod option;
@@ -7,9 +6,9 @@ mod plugin;
 use crate::commands::{Cli, Command, EmitPluginCommandOpts};
 use anyhow::Result;
 use clap::Parser;
-use codegen::js::JS;
-use codegen::{plugin::Plugin, wit::WitOptions, Generator, LinkingKind};
+
 use commands::CodegenOptionGroup;
+use javy_codegen::{js::JS, plugin::Plugin, wit::WitOptions, Generator, LinkingKind};
 use js_config::JsConfig;
 use plugin::{
     CliPlugin, PluginKind, UninitializedPlugin, PLUGIN_MODULE, QUICKJS_PROVIDER_V2_MODULE,
