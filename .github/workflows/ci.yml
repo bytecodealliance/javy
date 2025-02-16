@@ -66,6 +66,7 @@ jobs:
         run: |
           cargo clippy --workspace \
           --exclude=javy-cli \
+          --exclude=javy-codegen \
           --exclude=javy-runner \
           --exclude=javy-fuzz \
           --target=wasm32-wasip1 --all-targets -- -D warnings
