@@ -1822,6 +1822,19 @@ criteria = "safe-to-run"
 version = "0.7.4"
 aggregated-from = "https://chromium.googlesource.com/chromiumos/third_party/rust_crates/+/refs/heads/main/cargo-vet/audits.toml?format=TEXT"
 
+[[audits.google.audits.arrayvec]]
+who = "Lukasz Anforowicz <lukasza@chromium.org>"
+criteria = "safe-to-deploy"
+version = "0.7.6"
+notes = '''
+Grepped for `-i cipher`, `-i crypto`, `'\bfs\b'`, `'\bnet\b'` and there were
+no hits, except for some `net` usage in tests.
+
+The crate has quite a few bits of `unsafe` Rust.  The audit comments can be
+found in https://chromium-review.googlesource.com/c/chromium/src/+/6187726/2
+'''
+aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
+
 [[audits.google.audits.bitflags]]
 who = "Lukasz Anforowicz <lukasza@chromium.org>"
 criteria = "safe-to-deploy"
@@ -2044,6 +2057,12 @@ criteria = "safe-to-deploy"
 delta = "1.7.0 -> 1.8.0"
 aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
 
+[[audits.google.audits.unicode-xid]]
+who = "George Burgess IV <gbiv@google.com>"
+criteria = "safe-to-deploy"
+version = "0.2.4"
+aggregated-from = "https://chromium.googlesource.com/chromiumos/third_party/rust_crates/+/refs/heads/main/cargo-vet/audits.toml?format=TEXT"
+
 [[audits.google.audits.version_check]]
 who = "George Burgess IV <gbiv@google.com>"
 criteria = "safe-to-deploy"
@@ -2158,7 +2177,7 @@ who = "Manish Goregaokar <manishsmail@gmail.com>"
 criteria = "safe-to-deploy"
 user-id = 1139 # Manish Goregaokar (Manishearth)
 start = "2019-11-06"
-end = "2024-05-03"
+end = "2026-02-01"
 notes = "All code written or reviewed by Manish"
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
@@ -2167,16 +2186,7 @@ who = "Manish Goregaokar <manishsmail@gmail.com>"
 criteria = "safe-to-deploy"
 user-id = 1139 # Manish Goregaokar (Manishearth)
 start = "2019-05-15"
-end = "2024-05-03"
-notes = "All code written or reviewed by Manish"
-aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
-
-[[audits.mozilla.wildcard-audits.unicode-xid]]
-who = "Manish Goregaokar <manishsmail@gmail.com>"
-criteria = "safe-to-deploy"
-user-id = 1139 # Manish Goregaokar (Manishearth)
-start = "2019-07-25"
-end = "2024-05-03"
+end = "2026-02-01"
 notes = "All code written or reviewed by Manish"
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
