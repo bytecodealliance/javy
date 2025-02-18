@@ -45,7 +45,7 @@ impl PluginKind {
     }
 }
 
-/// Represents ny valid Javy plugin.
+/// Represents any valid Javy plugin.
 #[derive(Clone, Debug, Default)]
 pub struct Plugin {
     bytes: Vec<u8>,
