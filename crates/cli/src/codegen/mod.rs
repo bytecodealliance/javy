@@ -128,7 +128,7 @@ pub struct Generator {
 }
 
 impl Generator {
-    /// Create a new [`CodeGenBuilder`].
+    /// Create a new [`Generator`].
     pub(crate) fn new() -> Self {
         Self::default()
     }
