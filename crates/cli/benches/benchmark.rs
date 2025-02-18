@@ -199,6 +199,8 @@ fn execute_javy(index_js: &Path, wasm: &Path, linking: &Linking) -> Result<()> {
     if let Linking::Dynamic = linking {
         args.push("-C");
         args.push("dynamic");
+        args.push("-C");
+        args.push("plugin=../../target/wasm32-wasip1/release/plugin_wizened.wasm");
     }
     let status_code = Command::new(Path::new("../../target/release/javy").to_str().unwrap())
         .args(args)
