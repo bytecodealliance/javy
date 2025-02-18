@@ -36,12 +36,10 @@ serde = { workspace = true, default-features = false }
 serde_json = { workspace = true }
 
 [dev-dependencies]
-lazy_static = "1.5"
 criterion = "0.5"
 num-format = "0.4.4"
 wasmparser = "0.224.0"
 javy-runner = { path = "../runner/" }
-uuid = { workspace = true }
 javy-test-macros = { path = "../test-macros/" }
 
 [build-dependencies]
