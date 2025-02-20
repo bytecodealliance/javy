@@ -24,7 +24,7 @@ use swc_core::{
     },
 };
 
-use crate::codegen::plugin::Plugin;
+use crate::plugin::Plugin;
 
 /// A structure representing valid JS code.
 #[derive(Clone, Debug)]
@@ -55,12 +55,12 @@ impl JS {
     }
 
     /// Compiles a JavaScript source to bytecode using a QuickJS plugin.
-    pub fn compile(&self, plugin: &Plugin) -> Result<Vec<u8>> {
+    pub(crate) fn compile(&self, plugin: &Plugin) -> Result<Vec<u8>> {
         plugin.compile_source(self.source_code.as_bytes())
     }
 
     /// Get Brotli compressed JS source code as bytes.
-    pub fn compress(&self) -> Result<Vec<u8>> {
+    pub(crate) fn compress(&self) -> Result<Vec<u8>> {
         let mut compressed_source_code: Vec<u8> = vec![];
         enc::BrotliCompress(
             &mut Cursor::new(&self.source_code.as_bytes()),
@@ -74,7 +74,7 @@ impl JS {
     }
 
     /// Get the exports from a JS instance.
-    pub fn exports(&self) -> Result<Vec<String>> {
+    pub(crate) fn exports(&self) -> Result<Vec<String>> {
         let module = self.parse_module()?;
 
         // function foo() ...
@@ -173,7 +173,7 @@ impl JS {
 mod tests {
     use anyhow::Result;
 
-    use crate::codegen::js::JS;
+    use crate::js::JS;
 
     #[test]
     fn parse_no_exports() -> Result<()> {

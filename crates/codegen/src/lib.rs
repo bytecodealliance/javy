@@ -37,10 +37,15 @@ use std::{fs, rc::Rc, sync::OnceLock};
 
 pub(crate) mod bytecode;
 pub(crate) mod exports;
+pub(crate) mod transform;
+
 pub(crate) mod js;
 pub(crate) mod plugin;
-pub(crate) mod transform;
 pub(crate) mod wit;
+
+pub use crate::js::JS;
+pub use crate::plugin::Plugin;
+pub use crate::wit::WitOptions;
 
 use transform::SourceCodeSection;
 use walrus::{
@@ -56,7 +61,7 @@ static STDIN_PIPE: OnceLock<MemoryInputPipe> = OnceLock::new();
 
 /// The kind of linking to use.
 #[derive(Clone, Default)]
-pub(crate) enum LinkingKind {
+pub enum LinkingKind {
     #[default]
     /// Static linking
     Static,
@@ -129,34 +134,35 @@ pub struct Generator {
 
 impl Generator {
     /// Create a new [`Generator`].
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self::default()
     }
 
     /// Set the plugin.
-    pub(crate) fn plugin(&mut self, plugin: plugin::Plugin) -> &mut Self {
+    pub fn plugin(&mut self, plugin: plugin::Plugin) -> &mut Self {
         self.plugin = plugin;
         self
     }
 
     /// Set the kind of linking
-    pub(crate) fn linking(&mut self, linking: LinkingKind) -> &mut Self {
+    pub fn linking(&mut self, linking: LinkingKind) -> &mut Self {
         self.linking = linking;
         self
     }
 
     /// Set the JS source compression
-    pub(crate) fn source_compression(&mut self, source_compression: bool) -> &mut Self {
+    pub fn source_compression(&mut self, source_compression: bool) -> &mut Self {
         self.source_compression = source_compression;
         self
     }
 
     /// Set the wit options.
-    pub(crate) fn wit_opts(&mut self, wit_opts: wit::WitOptions) -> &mut Self {
+    pub fn wit_opts(&mut self, wit_opts: wit::WitOptions) -> &mut Self {
         self.wit_opts = wit_opts;
         self
     }
 
+    #[cfg(feature = "plugin_internal")]
     /// Set true if linking with a default plugin module.
     pub fn linking_default_plugin(&mut self, value: bool) -> &mut Self {
         self.plugin_kind = if value {
@@ -168,6 +174,7 @@ impl Generator {
         self
     }
 
+    #[cfg(feature = "plugin_internal")]
     /// Set true if linking with a V2 plugin module.
     pub fn linking_v2_plugin(&mut self, value: bool) -> &mut Self {
         self.plugin_kind = if value {
@@ -179,6 +186,7 @@ impl Generator {
         self
     }
 
+    #[cfg(feature = "plugin_internal")]
     /// Set the JS runtime configuration options to pass to the module.
     pub fn js_runtime_config(&mut self, js_runtime_config: Vec<u8>) -> &mut Self {
         self.js_runtime_config = js_runtime_config;
@@ -550,7 +558,7 @@ impl Generator {
 fn print_wat(wasm_binary: &[u8]) -> Result<()> {
     println!(
         "Generated WAT: \n{}",
-        wasmprinter::print_bytes(&wasm_binary)?
+        wasmprinter::print_bytes(wasm_binary)?
     );
     Ok(())
 }
