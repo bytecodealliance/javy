@@ -11,6 +11,7 @@ use super::bytecode;
 /// Represents the kind of a plugin.
 // This is an internal detail of this module.
 #[derive(Default, PartialEq, Copy, Clone)]
+#[allow(dead_code)] // Suppresses warnings for feature-gated variants
 pub(crate) enum PluginKind {
     #[default]
     User,
@@ -45,7 +46,7 @@ impl PluginKind {
     }
 }
 
-/// Represents ny valid Javy plugin.
+/// Represents any valid Javy plugin.
 #[derive(Clone, Debug, Default)]
 pub struct Plugin {
     bytes: Vec<u8>,

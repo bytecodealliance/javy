@@ -4,12 +4,13 @@ version.workspace = true
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "WASM generation library for use with Javy"
+description = "Wasm generation library for use with Javy"
 homepage = "https://github.com/bytecodealliance/javy/tree/main/crates/codegen"
 repository = "https://github.com/bytecodealliance/javy/tree/main/crates/codegen"
 categories = ["wasm"]
 
 [features]
+plugin_internal = []
 dump_wat = ["dep:wasmprinter"]
 
 [dependencies]
@@ -30,16 +31,3 @@ wit-parser = "0.212.0"
 convert_case = "0.7.1"
 wasm-opt = "0.116.1"
 tempfile = { workspace = true }
-
-[dev-dependencies]
-lazy_static = "1.5"
-criterion = "0.5"
-num-format = "0.4.4"
-wasmparser = "0.224.0"
-javy-runner = { path = "../runner/" }
-uuid = { workspace = true }
-javy-test-macros = { path = "../test-macros/" }
-
-[build-dependencies]
-anyhow = "1.0.95"
-wizer = { workspace = true }

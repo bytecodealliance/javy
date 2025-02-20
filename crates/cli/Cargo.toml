@@ -21,7 +21,7 @@ tempfile = { workspace = true }
 clap = { version = "4.5.27", features = ["derive"] }
 serde = { workspace = true, default-features = false }
 serde_json = { workspace = true }
-javy-codegen = { path = "../codegen/" }
+javy-codegen = { path = "../codegen/", features = ["plugin_internal"] }
 
 [dev-dependencies]
 lazy_static = "1.5"

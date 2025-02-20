@@ -1,7 +1,7 @@
 <div align="center">
   <h1><code>javy-codegen</code></h1>
   <p>
-    <strong>A crate for generating WASM modules using Javy</strong>
+    <strong>A crate for generating Wasm modules using Javy</strong>
   </p>
   <p>
     <a href="https://docs.rs/javy-codegen"><img src="https://docs.rs/javy-codegen/badge.svg" alt="Documentation Status" /></a>

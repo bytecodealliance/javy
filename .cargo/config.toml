@@ -6,10 +6,10 @@
 # reference-types.
 [target.wasm32-wasip1]
 rustflags = [
-    "-C",
-    "target-feature=+simd128",
-    "-C",
-    "target-feature=-reference-types",
+  "-C",
+  "target-feature=+simd128",
+  "-C",
+  "target-feature=-reference-types",
 ]
 
 # We want to ensure that all the MSVC dependencies are statically resolved and

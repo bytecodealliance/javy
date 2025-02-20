@@ -31,17 +31,17 @@ impl WitOptions {
     }
 
     /// Whether WIT options were defined.
-    pub fn defined(&self) -> bool {
+    pub(crate) fn defined(&self) -> bool {
         self.path.is_some() && self.world.is_some()
     }
 
     /// Unwraps a refernce to the .wit file path.
-    pub fn unwrap_path(&self) -> &PathBuf {
+    pub(crate) fn unwrap_path(&self) -> &PathBuf {
         self.path.as_ref().unwrap()
     }
 
     /// Unwraps a reference to the WIT world name.
-    pub fn unwrap_world(&self) -> &String {
+    pub(crate) fn unwrap_world(&self) -> &String {
         self.world.as_ref().unwrap()
     }
 }

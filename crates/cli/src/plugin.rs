@@ -1,5 +1,5 @@
 use anyhow::{bail, Result};
-use javy_codegen::plugin::Plugin;
+use javy_codegen::Plugin;
 use std::{fs, str};
 use walrus::{ExportItem, ValType};
 use wizer::Wizer;

@@ -8,7 +8,7 @@ use anyhow::Result;
 use clap::Parser;
 
 use commands::CodegenOptionGroup;
-use javy_codegen::{js::JS, plugin::Plugin, wit::WitOptions, Generator, LinkingKind};
+use javy_codegen::{Generator, LinkingKind, Plugin, WitOptions, JS};
 use js_config::JsConfig;
 use plugin::{
     CliPlugin, PluginKind, UninitializedPlugin, PLUGIN_MODULE, QUICKJS_PROVIDER_V2_MODULE,

@@ -39,12 +39,13 @@ pub(crate) mod bytecode;
 pub(crate) mod exports;
 pub(crate) mod transform;
 
-pub mod js;
-pub mod plugin;
-pub mod wit;
+pub(crate) mod js;
+pub(crate) mod plugin;
+pub(crate) mod wit;
 
 pub use crate::js::JS;
 pub use crate::plugin::Plugin;
+pub use crate::wit::WitOptions;
 
 use transform::SourceCodeSection;
 use walrus::{
@@ -132,7 +133,7 @@ pub struct Generator {
 }
 
 impl Generator {
-    /// Create a new [`CodeGenBuilder`].
+    /// Create a new [`Generator`].
     pub fn new() -> Self {
         Self::default()
     }
@@ -161,6 +162,7 @@ impl Generator {
         self
     }
 
+    #[cfg(feature = "plugin_internal")]
     /// Set true if linking with a default plugin module.
     pub fn linking_default_plugin(&mut self, value: bool) -> &mut Self {
         self.plugin_kind = if value {
@@ -172,6 +174,7 @@ impl Generator {
         self
     }
 
+    #[cfg(feature = "plugin_internal")]
     /// Set true if linking with a V2 plugin module.
     pub fn linking_v2_plugin(&mut self, value: bool) -> &mut Self {
         self.plugin_kind = if value {
@@ -183,6 +186,7 @@ impl Generator {
         self
     }
 
+    #[cfg(feature = "plugin_internal")]
     /// Set the JS runtime configuration options to pass to the module.
     pub fn js_runtime_config(&mut self, js_runtime_config: Vec<u8>) -> &mut Self {
         self.js_runtime_config = js_runtime_config;
@@ -554,7 +558,7 @@ impl Generator {
 fn print_wat(wasm_binary: &[u8]) -> Result<()> {
     println!(
         "Generated WAT: \n{}",
-        wasmprinter::print_bytes(&wasm_binary)?
+        wasmprinter::print_bytes(wasm_binary)?
     );
     Ok(())
 }
