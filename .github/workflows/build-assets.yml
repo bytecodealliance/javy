@@ -39,6 +39,18 @@ jobs:
           tar xvf /tmp/wizer.tar.xz --strip-components=1 -C /tmp/wizer
           echo "/tmp/wizer" >> $GITHUB_PATH
 
+      - name: Read wasm-opt version
+        id: wasm_opt_version
+        shell: bash
+        run: |
+          VERSION=$(cargo metadata --format-version=1 --locked | jq '.packages[] | select(.name == "wasm-opt") | .version' -r)
+          echo "WASMOPT_VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Install wasm-opt
+        shell: bash
+        run: |
+          cargo install --locked wasm-opt@${{ steps.wasm_opt_version.outputs.WASMOPT_VERSION }}
+
       - name: Make plugin
         run: make plugin
 
@@ -50,7 +62,8 @@ jobs:
 
       - name: Wizen and archive wizened plugin
         run: |
-          wizer target/wasm32-wasip1/release/plugin.wasm --allow-wasi --init-func initialize_runtime --wasm-bulk-memory true -o target/wasm32-wasip1/release/plugin_wizened.wasm
+          wasm-opt target/wasm32-wasip1/release/plugin.wasm target/wasm32-wasip1/release/plugin_optimized.wasm
+          wizer target/wasm32-wasip1/release/plugin_optimized.wasm --allow-wasi --init-func initialize_runtime --wasm-bulk-memory true -o target/wasm32-wasip1/release/plugin_wizened.wasm
           gzip -k -f target/wasm32-wasip1/release/plugin_wizened.wasm && mv target/wasm32-wasip1/release/plugin_wizened.wasm.gz plugin.wasm.gz
 
       - name: Upload archived plugin to artifacts
