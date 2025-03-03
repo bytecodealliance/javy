@@ -62,7 +62,7 @@ jobs:
 
       - name: Wizen and archive wizened plugin
         run: |
-          wasm-opt target/wasm32-wasip1/release/plugin.wasm target/wasm32-wasip1/release/plugin_optimized.wasm
+          wasm-opt target/wasm32-wasip1/release/plugin.wasm -O3 --shrink-level 0 -o target/wasm32-wasip1/release/plugin_optimized.wasm
           wizer target/wasm32-wasip1/release/plugin_optimized.wasm --allow-wasi --init-func initialize_runtime --wasm-bulk-memory true -o target/wasm32-wasip1/release/plugin_wizened.wasm
           gzip -k -f target/wasm32-wasip1/release/plugin_wizened.wasm && mv target/wasm32-wasip1/release/plugin_wizened.wasm.gz plugin.wasm.gz
 
