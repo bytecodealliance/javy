@@ -79,6 +79,10 @@ criteria = "safe-to-deploy"
 version = "1.0.0"
 criteria = "safe-to-deploy"
 
+[[exemptions.bitflags]]
+version = "2.9.0"
+criteria = "safe-to-deploy"
+
 [[exemptions.bitvec]]
 version = "1.0.1"
 criteria = "safe-to-deploy"
@@ -132,7 +136,7 @@ version = "0.6.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.convert_case]]
-version = "0.7.1"
+version = "0.8.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.cpp_demangle]]
@@ -563,10 +567,6 @@ criteria = "safe-to-deploy"
 version = "9.0.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.stable_deref_trait]]
-version = "1.2.0"
-criteria = "safe-to-deploy"
-
 [[exemptions.stacker]]
 version = "0.1.15"
 criteria = "safe-to-deploy"
@@ -628,7 +628,7 @@ version = "2.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.tempfile]]
-version = "3.16.0"
+version = "3.17.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.tinyvec_macros]]
@@ -667,10 +667,6 @@ criteria = "safe-to-deploy"
 version = "1.2.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.unicode-width]]
-version = "0.1.13"
-criteria = "safe-to-deploy"
-
 [[exemptions.url]]
 version = "2.5.2"
 criteria = "safe-to-deploy"
@@ -680,7 +676,7 @@ version = "0.2.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.uuid]]
-version = "1.12.1"
+version = "1.15.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.value-trait]]
