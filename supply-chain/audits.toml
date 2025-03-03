@@ -382,7 +382,7 @@ end = "2024-07-12"
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-04-23"
-end = "2025-01-03"
+end = "2026-03-03"
 
 [[trusted.quickcheck]]
 criteria = "safe-to-deploy"
@@ -394,7 +394,7 @@ end = "2024-10-03"
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-04-09"
-end = "2025-01-03"
+end = "2026-03-03"
 
 [[trusted.rayon]]
 criteria = "safe-to-deploy"
