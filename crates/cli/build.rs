@@ -44,6 +44,15 @@ fn copy_plugin() -> Result<()> {
         .unwrap()
         .join("target/wasm32-wasip1/release");
     let plugin_path = module_path.join("plugin.wasm");
+
+    // Re-encode overlong indexes before running Wizer.
+    let tempdir = tempfile::tempdir()?;
+    let out_wasmopt_path = tempdir.path().join("out_temp.wasm");
+    wasm_opt::OptimizationOptions::new_opt_level_3() // Aggressively optimize for speed.
+        .shrink_level(wasm_opt::ShrinkLevel::Level0) // Don't optimize for size at the expense of performance.
+        .debug_info(false)
+        .run(&plugin_path, &out_wasmopt_path)?;
+
     let plugin_wizened_path = module_path.join("plugin_wizened.wasm");
 
     let mut wizer = wizer::Wizer::new();
@@ -52,7 +61,7 @@ fn copy_plugin() -> Result<()> {
         .keep_init_func(true) // Necessary for static codegen.
         .allow_wasi(true)?
         .wasm_bulk_memory(true)
-        .run(read_file(&plugin_path)?.as_slice())?;
+        .run(read_file(&out_wasmopt_path)?.as_slice())?;
     fs::File::create(&plugin_wizened_path)?.write_all(&wizened)?;
 
     println!("cargo:rerun-if-changed={}", plugin_path.to_str().unwrap());

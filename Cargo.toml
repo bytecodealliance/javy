@@ -22,6 +22,7 @@ wizer = "7.0.0"
 wasmtime = "23"
 wasmtime-wasi = "23"
 wasi-common = "23"
+wasm-opt = "0.116.1"
 anyhow = "1.0"
 javy = { path = "crates/javy", version = "4.0.1-alpha.1" }
 tempfile = "3.16.0"
