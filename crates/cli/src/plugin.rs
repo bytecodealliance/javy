@@ -50,17 +50,22 @@ impl<'a> UninitializedPlugin<'a> {
 
     /// Initializes the plugin.
     pub(crate) fn initialize(&self) -> Result<Vec<u8>> {
-        let initialized_plugin = Wizer::new()
+        // Need to re-encode overlong indexes before running Wizer.
+        let wasm_opted_plugin = Self::run_wasm_opt(self.bytes)?;
+
+        Wizer::new()
             .allow_wasi(true)?
             .init_func("initialize_runtime")
             .keep_init_func(true)
             .wasm_bulk_memory(true)
-            .run(self.bytes)?;
+            .run(&wasm_opted_plugin)
+    }
 
+    fn run_wasm_opt(plugin: &[u8]) -> Result<Vec<u8>> {
         let tempdir = tempfile::tempdir()?;
         let in_tempfile_path = tempdir.path().join("in_temp.wasm");
         let out_tempfile_path = tempdir.path().join("out_temp.wasm");
-        fs::write(&in_tempfile_path, initialized_plugin)?;
+        fs::write(&in_tempfile_path, plugin)?;
         wasm_opt::OptimizationOptions::new_opt_level_3() // Aggressively optimize for speed.
             .shrink_level(wasm_opt::ShrinkLevel::Level0) // Don't optimize for size at the expense of performance.
             .debug_info(false)

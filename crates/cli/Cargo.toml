@@ -29,7 +29,7 @@ swc_core = { version = "10.7.0", features = [
 ] }
 wit-parser = "0.212.0"
 convert_case = "0.7.1"
-wasm-opt = "0.116.1"
+wasm-opt = { workspace = true }
 tempfile = { workspace = true }
 clap = { version = "4.5.27", features = ["derive"] }
 serde = { workspace = true, default-features = false }
@@ -43,7 +43,9 @@ javy-runner = { path = "../runner/" }
 javy-test-macros = { path = "../test-macros/" }
 
 [build-dependencies]
-anyhow = "1.0.95"
+anyhow = { workspace = true }
+tempfile = { workspace = true }
+wasm-opt = { workspace = true }
 wizer = { workspace = true }
 
 [[bench]]
