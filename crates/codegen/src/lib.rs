@@ -39,6 +39,7 @@
 //! ```no_run
 //! use std::path::Path;
 //! use javy_codegen::{Generator, LinkingKind, Plugin, JS};
+//!
 //! fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!  // Load your target Javascript.
 //!  let js = JS::from_file(Path::new("example.js"))?;
