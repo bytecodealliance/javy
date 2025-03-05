@@ -63,11 +63,9 @@
 //! * [`JS`] - Represents a JavaScript bytecode.
 //!
 //! ## Features
-//! Some feature flags are only avaliable when specifying the `javy_unstable` flag:
 //!
 //! * `plugin_internal` - Enables additional code generation options for internal use.
-//!
-//! This flag enables unstable features. The public API of these features may break. To enable these features, the --cfg javy_unstable argument must be passed to rustc when compiling. This serves to explicitly opt-in to features which may break.
+//! >  Please note that this flag enables an unstable feature. The unstable API's exposed by this future may break in the future without notice.
 
 use std::{fs, rc::Rc, sync::OnceLock};
 
