@@ -8,7 +8,6 @@
 //! 1. Static code generation
 //! 2. Dynamic code generation
 //!
-//!
 //! ## Static code generation
 //!
 //! A single unit of code is generated, which is a Wasm module consisting of the
@@ -32,6 +31,43 @@
 //! the plugin version of the imports requested by the generated Wasm module
 //! as well as ensuring that any features available in the plugin match the
 //! features requsted by the JavaScript bytecode.
+//!
+//! ## Examples
+//!
+//! Simple Wasm module generation:
+//!
+//! ```no_run
+//! use std::path::Path;
+//! use javy_codegen::{Generator, LinkingKind, Plugin, JS};
+//! fn main() -> Result<(), Box<dyn std::error::Error>> {
+//!  // Load your target Javascript.
+//!  let js = JS::from_file(Path::new("example.js"))?;
+//!
+//!  // Load existing pre-initialized Javy plugin.
+//!  let plugin = Plugin::new_from_path(Path::new("example-plugin.wasm"))?;
+//!
+//!  // Configure code generator.
+//!  let mut generator = Generator::new(plugin);
+//!  generator.linking(LinkingKind::Static);
+//!
+//!  // Generate your WASM module.
+//!  let wasm = generator.generate(&js);
+//!
+//!  Ok(())
+//! }
+//! ```
+//!
+//! ## Core concepts
+//! * [`Generator`] - The main entry point for generating Wasm modules.
+//! * [`Plugin`] - Represents a pre-initialized Javy plugin.
+//! * [`JS`] - Represents a JavaScript bytecode.
+//!
+//! ## Features
+//! Some feature flags are only avaliable when specifying the `javy_unstable` flag:
+//!
+//! * `plugin_internal` - Enables additional code generation options for internal use.
+//!
+//! This flag enables unstable features. The public API of these features may break. To enable these features, the --cfg javy_unstable argument must be passed to rustc when compiling. This serves to explicitly opt-in to features which may break.
 
 use std::{fs, rc::Rc, sync::OnceLock};
 
@@ -134,8 +170,11 @@ pub struct Generator {
 
 impl Generator {
     /// Create a new [`Generator`].
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(plugin: Plugin) -> Self {
+        Self {
+            plugin,
+            ..Self::default()
+        }
     }
 
     /// Set the plugin.
@@ -144,19 +183,19 @@ impl Generator {
         self
     }
 
-    /// Set the kind of linking
+    /// Set the kind of linking (default: LinkingKind::Static)
     pub fn linking(&mut self, linking: LinkingKind) -> &mut Self {
         self.linking = linking;
         self
     }
 
-    /// Set the JS source compression
+    /// Set if JS source compression is enabled (default: false).
     pub fn source_compression(&mut self, source_compression: bool) -> &mut Self {
         self.source_compression = source_compression;
         self
     }
 
-    /// Set the wit options.
+    /// Set the wit options. (default: Empty WitOptions)
     pub fn wit_opts(&mut self, wit_opts: wit::WitOptions) -> &mut Self {
         self.wit_opts = wit_opts;
         self

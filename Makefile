@@ -19,6 +19,7 @@ plugin:
 
 build-test-plugin: cli
 	cargo build --package=javy-test-plugin --release --target=wasm32-wasip1
+	target/release/javy init-plugin target/wasm32-wasip1/release/test_plugin.wasm -o crates/codegen/test_plugin.wasm
 	target/release/javy init-plugin target/wasm32-wasip1/release/test_plugin.wasm -o crates/runner/test_plugin.wasm
 
 docs:
@@ -34,8 +35,8 @@ test-plugin-api:
 test-plugin:
 	CARGO_TARGET_WASM32_WASIP1_RUNNER="wasmtime" cargo test --package=javy-plugin --target=wasm32-wasip1 -- --nocapture
 
-test-codegen:
-	CARGO_PROFILE_RELEASE_LTO=off cargo hack test --package=javy-cli --release --each-feature -- --nocapture
+test-codegen: plugin build-test-plugin
+	CARGO_PROFILE_RELEASE_LTO=off cargo hack test --package=javy-codegen --release --each-feature -- --nocapture
 
 # Test in release mode to skip some debug assertions
 # Note: to make this faster, the engine should be optimized beforehand (wasm-strip + wasm-opt).
@@ -48,7 +49,7 @@ test-runner:
 
 test-wpt: cli
 	npm install --prefix wpt
-	npm test --prefix wpt 
+	npm test --prefix wpt
 
 tests: test-javy test-plugin-api test-plugin test-runner test-codegen test-cli test-wpt
 
@@ -72,6 +73,6 @@ fmt-cli:
 	cargo fmt --package=javy-cli -- --check
 	CARGO_PROFILE_RELEASE_LTO=off cargo clippy --package=javy-cli --release --all-targets -- -D warnings
 
-fmt-codegen: 
+fmt-codegen:
 	cargo fmt --package=javy-codegen -- --check
 	cargo clippy --package=javy-codegen --release --all-targets -- -D warnings

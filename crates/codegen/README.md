@@ -18,18 +18,18 @@ use std::path::Path;
 use javy_codegen::{Generator, LinkingKind, Plugin, JS};
 
 fn main() {
-  // Load your target Javascript.
+  /// Load your target Javascript.
   let js = JS::from_file(Path::new("example.js"));
 
-  // Load existing pre-initialized Javy plugin.
+  /// Load existing pre-initialized Javy plugin.
   let plugin = Plugin::new_from_path(Path::new("example-plugin.wasm"));
 
-  // Configure code generator.
+  /// Configure code generator.
   let mut generator = Generator::new();
   generator.plugin(plugin);
   generator.linking(LinkingKind::Static);
 
-  // Generate your WASM module.
-  let wasm = generator.generator(&js)?;
+  /// Generate your WASM module.
+  let wasm = generator.generate(&js)?;
 }
 ```
