@@ -81,13 +81,14 @@ jobs:
           cargo build --package=javy-test-plugin --release --target=wasm32-wasip1
           CARGO_PROFILE_RELEASE_LTO=off cargo build --package=javy-cli --release
           target/release/javy init-plugin target/wasm32-wasip1/release/test_plugin.wasm -o crates/runner/test_plugin.wasm
-          target/release/javy init-plugin target/wasm32-wasip1/release/test_plugin.wasm -o crates/codegen/test_plugin.wasm
 
       - name: Test CLI
         run: CARGO_PROFILE_RELEASE_LTO=off cargo test --package=javy-cli --release -- --nocapture
 
       - name: Test CodeGen
-        run: CARGO_PROFILE_RELEASE_LTO=off cargo hack test --package=javy-codegen --release --each-feature -- --nocapture
+        run: |
+          target/release/javy emit-plugin -o crates/codegen/default_plugin.wasm
+          CARGO_PROFILE_RELEASE_LTO=off cargo hack test --package=javy-codegen --release --each-feature -- --nocapture
 
       - name: Check benchmarks
         run: CARGO_PROFILE_RELEASE_LTO=off cargo check --package=javy-cli --release --benches

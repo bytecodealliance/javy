@@ -147,7 +147,7 @@ impl BytecodeMetadata {
     }
 }
 
-/// Generator used to produce valid WASM
+/// Generator used to produce valid Wasm
 /// binaries from JS.
 #[derive(Default, Clone)]
 pub struct Generator {
@@ -176,13 +176,7 @@ impl Generator {
         }
     }
 
-    /// Set the plugin.
-    pub fn plugin(&mut self, plugin: plugin::Plugin) -> &mut Self {
-        self.plugin = plugin;
-        self
-    }
-
-    /// Set the kind of linking (default: LinkingKind::Static)
+    /// Set the kind of linking (default: [`LinkingKind::Static`])
     pub fn linking(&mut self, linking: LinkingKind) -> &mut Self {
         self.linking = linking;
         self
@@ -194,7 +188,7 @@ impl Generator {
         self
     }
 
-    /// Set the wit options. (default: Empty WitOptions)
+    /// Set the wit options. (default: Empty [`WitOptions`])
     pub fn wit_opts(&mut self, wit_opts: wit::WitOptions) -> &mut Self {
         self.wit_opts = wit_opts;
         self

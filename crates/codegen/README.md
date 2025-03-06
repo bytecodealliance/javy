@@ -29,7 +29,7 @@ fn main() {
   generator.plugin(plugin);
   generator.linking(LinkingKind::Static);
 
-  // Generate your WASM module.
+  // Generate your Wasm module.
   let wasm = generator.generate(&js)?;
 }
 ```

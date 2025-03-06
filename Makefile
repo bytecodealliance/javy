@@ -19,7 +19,6 @@ plugin:
 
 build-test-plugin: cli
 	cargo build --package=javy-test-plugin --release --target=wasm32-wasip1
-	target/release/javy init-plugin target/wasm32-wasip1/release/test_plugin.wasm -o crates/codegen/test_plugin.wasm
 	target/release/javy init-plugin target/wasm32-wasip1/release/test_plugin.wasm -o crates/runner/test_plugin.wasm
 
 docs:
@@ -35,7 +34,8 @@ test-plugin-api:
 test-plugin:
 	CARGO_TARGET_WASM32_WASIP1_RUNNER="wasmtime" cargo test --package=javy-plugin --target=wasm32-wasip1 -- --nocapture
 
-test-codegen: plugin build-test-plugin
+test-codegen: cli
+	target/release/javy emit-plugin -o crates/codegen/default_plugin.wasm
 	CARGO_PROFILE_RELEASE_LTO=off cargo hack test --package=javy-codegen --release --each-feature -- --nocapture
 
 # Test in release mode to skip some debug assertions
