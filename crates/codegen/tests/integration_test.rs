@@ -14,7 +14,7 @@ fn test_empty() -> Result<()> {
             .as_path(),
     )?;
 
-    // Load existing pre-initialized Javy plugin.
+    // Load existing Javy plugin.
     let plugin = Plugin::new_from_path(
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("default_plugin.wasm"),
     )?;
