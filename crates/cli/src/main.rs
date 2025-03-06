@@ -42,7 +42,7 @@ fn main() -> Result<()> {
                 PLUGIN_MODULE
             };
 
-            let mut generator = Generator::new(Plugin::new(plugin_bytes.to_vec()));
+            let mut generator = Generator::new(Plugin::new(plugin_bytes.into()));
 
             if opts.dynamic {
                 generator

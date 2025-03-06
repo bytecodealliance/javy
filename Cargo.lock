@@ -584,9 +584,9 @@ dependencies = [
 
 [[package]]
 name = "convert_case"
-version = "0.8.0"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "baaaa0ecca5b51987b9423ccdc971514dd8b0bb7b4060b983d3664dad3f1f89f"
+checksum = "bb402b8d4c85569410425650ce3eddc7d698ed96d39a73f941b08fb63082f1e7"
 dependencies = [
  "unicode-segmentation",
 ]
@@ -1569,7 +1569,6 @@ version = "5.0.2"
 dependencies = [
  "anyhow",
  "clap",
- "convert_case 0.8.0",
  "criterion",
  "javy-codegen",
  "javy-runner",
@@ -1582,7 +1581,23 @@ dependencies = [
  "wasi-common",
  "wasm-opt",
  "wasmparser 0.226.0",
- "wasmprinter 0.226.0",
+ "wasmtime",
+ "wizer",
+]
+
+[[package]]
+name = "javy-codegen"
+version = "1.0.0-alpha.1"
+dependencies = [
+ "anyhow",
+ "brotli",
+ "convert_case 0.7.1",
+ "swc_core",
+ "tempfile",
+ "walrus",
+ "wasi-common",
+ "wasm-opt",
+ "wasmprinter 0.224.1",
  "wasmtime",
  "wasmtime-wasi",
  "wit-parser 0.212.0",
@@ -3550,6 +3565,17 @@ dependencies = [
 
 [[package]]
 name = "wasmparser"
+version = "0.224.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "04f17a5917c2ddd3819e84c661fae0d6ba29d7b9c1f0e96c708c65a9c4188e11"
+dependencies = [
+ "bitflags",
+ "indexmap 2.7.0",
+ "semver 1.0.23",
+]
+
+[[package]]
+name = "wasmparser"
 version = "0.226.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bc28600dcb2ba68d7e5f1c3ba4195c2bddc918c0243fd702d0b6dbd05689b681"
@@ -3574,13 +3600,13 @@ dependencies = [
 
 [[package]]
 name = "wasmprinter"
-version = "0.226.0"
+version = "0.224.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "753a0516fa6c01756ee861f36878dfd9875f273aea9409d9ea390a333c5bcdc2"
+checksum = "0095b53a3b09cbc2f90f789ea44aa1b17ecc2dad8b267e657c7391f3ded6293d"
 dependencies = [
  "anyhow",
  "termcolor",
- "wasmparser 0.226.0",
+ "wasmparser 0.224.1",
 ]
 
 [[package]]
