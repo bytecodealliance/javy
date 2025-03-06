@@ -18,7 +18,7 @@ wasmtime = { workspace = true }
 walrus = "0.23.3"
 wasm-opt = "0.116.1"
 tempfile = { workspace = true }
-clap = { version = "4.5.27", features = ["derive"] }
+clap = { version = "4.5.31", features = ["derive"] }
 serde = { workspace = true, default-features = false }
 serde_json = { workspace = true }
 javy-codegen = { path = "../codegen/", features = ["plugin_internal"] }
@@ -26,12 +26,14 @@ javy-codegen = { path = "../codegen/", features = ["plugin_internal"] }
 [dev-dependencies]
 criterion = "0.5"
 num-format = "0.4.4"
-wasmparser = "0.224.0"
+wasmparser = "0.226.0"
 javy-runner = { path = "../runner/" }
 javy-test-macros = { path = "../test-macros/" }
 
 [build-dependencies]
-anyhow = "1.0.95"
+anyhow = { workspace = true }
+tempfile = { workspace = true }
+wasm-opt = { workspace = true }
 wizer = { workspace = true }
 
 [[bench]]

@@ -82,7 +82,7 @@ end = "2024-10-03"
 criteria = "safe-to-deploy"
 user-id = 6825 # Dan Gohman (sunfishcode)
 start = "2020-12-11"
-end = "2024-07-25"
+end = "2026-03-03"
 
 [[trusted.cap-net-ext]]
 criteria = "safe-to-deploy"
@@ -94,7 +94,7 @@ end = "2025-01-03"
 criteria = "safe-to-deploy"
 user-id = 6825 # Dan Gohman (sunfishcode)
 start = "2020-08-07"
-end = "2024-07-25"
+end = "2026-03-03"
 
 [[trusted.cap-rand]]
 criteria = "safe-to-deploy"
@@ -106,13 +106,13 @@ end = "2025-01-03"
 criteria = "safe-to-deploy"
 user-id = 6825 # Dan Gohman (sunfishcode)
 start = "2020-06-25"
-end = "2024-07-25"
+end = "2026-03-03"
 
 [[trusted.cap-time-ext]]
 criteria = "safe-to-deploy"
 user-id = 6825 # Dan Gohman (sunfishcode)
 start = "2020-09-21"
-end = "2024-07-25"
+end = "2026-03-03"
 
 [[trusted.cc]]
 criteria = "safe-to-deploy"
@@ -286,7 +286,7 @@ end = "2026-01-07"
 criteria = "safe-to-deploy"
 user-id = 6825 # Dan Gohman (sunfishcode)
 start = "2021-11-09"
-end = "2024-07-25"
+end = "2026-03-03"
 
 [[trusted.io-lifetimes]]
 criteria = "safe-to-deploy"
@@ -382,7 +382,7 @@ end = "2024-07-12"
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-04-23"
-end = "2025-01-03"
+end = "2026-03-03"
 
 [[trusted.quickcheck]]
 criteria = "safe-to-deploy"
@@ -394,7 +394,7 @@ end = "2024-10-03"
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-04-09"
-end = "2025-01-03"
+end = "2026-03-03"
 
 [[trusted.rayon]]
 criteria = "safe-to-deploy"
@@ -526,7 +526,7 @@ end = "2025-01-03"
 criteria = "safe-to-deploy"
 user-id = 6825 # Dan Gohman (sunfishcode)
 start = "2019-03-06"
-end = "2024-07-25"
+end = "2026-03-03"
 
 [[trusted.termcolor]]
 criteria = "safe-to-deploy"
@@ -688,7 +688,7 @@ end = "2025-05-02"
 criteria = "safe-to-deploy"
 user-id = 73222 # wasmtime-publish
 start = "2023-08-21"
-end = "2025-01-03"
+end = "2026-03-03"
 
 [[trusted.web-sys]]
 criteria = "safe-to-deploy"
@@ -790,4 +790,4 @@ end = "2025-03-01"
 criteria = "safe-to-deploy"
 user-id = 696 # Nick Fitzgerald (fitzgen)
 start = "2021-01-07"
-end = "2025-01-02"
+end = "2026-03-03"

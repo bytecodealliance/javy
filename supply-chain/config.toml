@@ -39,6 +39,10 @@ criteria = "safe-to-deploy"
 version = "0.19.0"
 criteria = "safe-to-deploy"
 
+[[exemptions.addr2line]]
+version = "0.24.2"
+criteria = "safe-to-deploy"
+
 [[exemptions.ahash]]
 version = "0.8.11"
 criteria = "safe-to-deploy"
@@ -77,6 +81,10 @@ criteria = "safe-to-deploy"
 
 [[exemptions.better_scoped_tls]]
 version = "1.0.0"
+criteria = "safe-to-deploy"
+
+[[exemptions.bitflags]]
+version = "2.9.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.bitvec]]
@@ -132,7 +140,7 @@ version = "0.6.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.convert_case]]
-version = "0.7.1"
+version = "0.8.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.cpp_demangle]]
@@ -288,11 +296,11 @@ version = "0.26.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.gimli]]
-version = "0.28.1"
+version = "0.29.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.gimli]]
-version = "0.29.0"
+version = "0.31.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.half]]
@@ -384,7 +392,7 @@ version = "0.4.4"
 criteria = "safe-to-run"
 
 [[exemptions.object]]
-version = "0.36.1"
+version = "0.36.7"
 criteria = "safe-to-deploy"
 
 [[exemptions.once_cell]]
@@ -499,6 +507,10 @@ criteria = "safe-to-deploy"
 version = "0.6.1"
 criteria = "safe-to-deploy"
 
+[[exemptions.rustc-hash]]
+version = "2.1.1"
+criteria = "safe-to-deploy"
+
 [[exemptions.rustc_version]]
 version = "0.2.3"
 criteria = "safe-to-deploy"
@@ -547,10 +559,6 @@ criteria = "safe-to-deploy"
 version = "0.3.11"
 criteria = "safe-to-deploy"
 
-[[exemptions.slice-group-by]]
-version = "0.3.0"
-criteria = "safe-to-deploy"
-
 [[exemptions.smartstring]]
 version = "1.0.1"
 criteria = "safe-to-deploy"
@@ -561,10 +569,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.sourcemap]]
 version = "9.0.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.stable_deref_trait]]
-version = "1.2.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.stacker]]
@@ -628,7 +632,7 @@ version = "2.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.tempfile]]
-version = "3.16.0"
+version = "3.17.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.tinyvec_macros]]
@@ -645,6 +649,10 @@ criteria = "safe-to-deploy"
 
 [[exemptions.tracing-core]]
 version = "0.1.32"
+criteria = "safe-to-deploy"
+
+[[exemptions.trait-variant]]
+version = "0.1.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.triomphe]]
@@ -667,10 +675,6 @@ criteria = "safe-to-deploy"
 version = "1.2.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.unicode-width]]
-version = "0.1.13"
-criteria = "safe-to-deploy"
-
 [[exemptions.url]]
 version = "2.5.2"
 criteria = "safe-to-deploy"
@@ -680,7 +684,7 @@ version = "0.2.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.uuid]]
-version = "1.12.1"
+version = "1.15.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.value-trait]]

@@ -379,7 +379,7 @@ mod tests {
 
     #[test]
     fn js_config_from_config_values() -> Result<()> {
-        let plugin = CliPlugin::new(Plugin::new(PLUGIN_MODULE.to_vec()), PluginKind::Default);
+        let plugin = CliPlugin::new(Plugin::new(PLUGIN_MODULE.into()), PluginKind::Default);
 
         let group = JsConfig::from_group_values(&plugin, vec![])?;
         assert_eq!(group.get("javy-stream-io"), None);

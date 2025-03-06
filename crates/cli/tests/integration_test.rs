@@ -61,7 +61,7 @@ fn test_encoding(builder: &mut Builder) -> Result<()> {
 
     let (output, _, fuel_consumed) = run(&mut runner, "hello".as_bytes());
     assert_eq!("el".as_bytes(), output);
-    assert_fuel_consumed_within_threshold(258_197, fuel_consumed);
+    assert_fuel_consumed_within_threshold(252_723, fuel_consumed);
 
     let (output, _, _) = run(&mut runner, "invalid".as_bytes());
     assert_eq!("true".as_bytes(), output);

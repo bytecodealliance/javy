@@ -783,12 +783,10 @@ impl Runner {
         )?;
         let orig_ptr = 0;
         let orig_size = 0;
-        realloc_func
-            .call(
-                store.as_context_mut(),
-                (orig_ptr, orig_size, alignment, new_size),
-            )
-            .map_err(Into::into)
+        realloc_func.call(
+            store.as_context_mut(),
+            (orig_ptr, orig_size, alignment, new_size),
+        )
     }
 
     fn extract_store_data(
