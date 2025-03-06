@@ -1,5 +1,6 @@
 use anyhow::{anyhow, Result};
 use std::{
+    borrow::Cow,
     fs,
     io::{self},
     path::Path,
@@ -48,24 +49,24 @@ impl PluginKind {
 /// Represents any valid Javy plugin.
 #[derive(Clone, Debug, Default)]
 pub struct Plugin {
-    bytes: Vec<u8>,
+    bytes: Cow<'static, [u8]>,
 }
 
 impl Plugin {
     /// Constructs a new instance of Plugin.
-    pub fn new(bytes: Vec<u8>) -> Self {
+    pub fn new(bytes: Cow<'static, [u8]>) -> Self {
         Plugin { bytes }
     }
 
     /// Constructs a new instance of Plugin from a given path.
     pub fn new_from_path<P: AsRef<Path>>(path: P) -> io::Result<Self> {
         let bytes = fs::read(path)?;
-        Ok(Self::new(bytes))
+        Ok(Self::new(bytes.into()))
     }
 
     /// Returns the plugin Wasm module as a byte slice.
     pub fn as_bytes(&self) -> &[u8] {
-        self.bytes.as_slice()
+        &self.bytes
     }
 }
 
