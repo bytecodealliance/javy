@@ -25,16 +25,16 @@ start = "2023-03-16"
 end = "2025-07-02"
 
 [[trusted.anstyle]]
-criteria = "safe-to-deploy"
-user-id = 6743 # Ed Page (epage)
-start = "2022-05-18"
-end = "2025-07-02"
-
-[[trusted.anstyle]]
 criteria = "safe-to-run"
 user-id = 6743 # Ed Page (epage)
 start = "2022-05-18"
 end = "2024-10-26"
+
+[[trusted.anstyle]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2022-05-18"
+end = "2025-07-02"
 
 [[trusted.anstyle-parse]]
 criteria = "safe-to-deploy"
@@ -127,16 +127,16 @@ start = "2021-12-08"
 end = "2025-07-02"
 
 [[trusted.clap_builder]]
-criteria = "safe-to-deploy"
-user-id = 6743 # Ed Page (epage)
-start = "2023-03-28"
-end = "2025-07-02"
-
-[[trusted.clap_builder]]
 criteria = "safe-to-run"
 user-id = 6743 # Ed Page (epage)
 start = "2023-03-28"
 end = "2024-10-26"
+
+[[trusted.clap_builder]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2023-03-28"
+end = "2025-07-02"
 
 [[trusted.clap_derive]]
 criteria = "safe-to-deploy"
@@ -145,16 +145,16 @@ start = "2021-12-08"
 end = "2025-07-02"
 
 [[trusted.clap_lex]]
-criteria = "safe-to-deploy"
-user-id = 6743 # Ed Page (epage)
-start = "2022-04-15"
-end = "2025-07-02"
-
-[[trusted.clap_lex]]
 criteria = "safe-to-run"
 user-id = 6743 # Ed Page (epage)
 start = "2022-04-15"
 end = "2024-10-26"
+
+[[trusted.clap_lex]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2022-04-15"
+end = "2025-07-02"
 
 [[trusted.colorchoice]]
 criteria = "safe-to-deploy"
