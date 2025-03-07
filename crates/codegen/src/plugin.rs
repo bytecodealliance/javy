@@ -1,11 +1,5 @@
 use anyhow::{anyhow, Result};
-use std::{
-    borrow::Cow,
-    fs,
-    io::{self},
-    path::Path,
-    str,
-};
+use std::{borrow::Cow, fs, path::Path, str};
 
 use super::bytecode;
 
@@ -60,7 +54,7 @@ impl Plugin {
     }
 
     /// Constructs a new instance of Plugin from a given path.
-    pub fn new_from_path<P: AsRef<Path>>(path: P) -> io::Result<Self> {
+    pub fn new_from_path<P: AsRef<Path>>(path: P) -> Result<Self> {
         let bytes = fs::read(path)?;
         Ok(Self::new(bytes.into()))
     }
@@ -69,9 +63,7 @@ impl Plugin {
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes
     }
-}
 
-impl Plugin {
     /// Generate valid QuickJS bytecode from Javascript using a Plugin.
     pub(crate) fn compile_source(&self, js_source_code: &[u8]) -> Result<Vec<u8>> {
         bytecode::compile_source(self.as_bytes(), js_source_code)
