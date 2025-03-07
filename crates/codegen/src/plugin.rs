@@ -3,7 +3,7 @@ use std::{borrow::Cow, fs, path::Path, str};
 
 use super::bytecode;
 
-/// Represents the kind of a plugin.
+/// The kind of a plugin.
 // This is an internal detail of this module.
 #[derive(Default, PartialEq, Copy, Clone)]
 #[allow(dead_code)] // Suppresses warnings for feature-gated variants
@@ -16,7 +16,6 @@ pub(crate) enum PluginKind {
 
 impl PluginKind {
     /// Determine the import namespace of a provided plugin.
-    // This is an internal detail of this module.
     pub(crate) fn import_namespace(self, plugin: &Plugin) -> Result<String> {
         match self {
             PluginKind::V2 => Ok("javy_quickjs_provider_v2".to_string()),
@@ -41,30 +40,30 @@ impl PluginKind {
     }
 }
 
-/// Represents any valid Javy plugin.
+/// A Javy plugin.
 #[derive(Clone, Debug, Default)]
 pub struct Plugin {
     bytes: Cow<'static, [u8]>,
 }
 
 impl Plugin {
-    /// Constructs a new instance of Plugin.
+    /// Constructs a new [`Plugin`].
     pub fn new(bytes: Cow<'static, [u8]>) -> Self {
         Plugin { bytes }
     }
 
-    /// Constructs a new instance of Plugin from a given path.
+    /// Constructs a new [`Plugin`] from a given path.
     pub fn new_from_path<P: AsRef<Path>>(path: P) -> Result<Self> {
         let bytes = fs::read(path)?;
         Ok(Self::new(bytes.into()))
     }
 
-    /// Returns the Plugin as a byte slice.
+    /// Returns the [`Plugin`] as bytes
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes
     }
 
-    /// Generate valid QuickJS bytecode from Javascript using a Plugin.
+    /// Generate valid QuickJS bytecode from Javascript source code.
     pub(crate) fn compile_source(&self, js_source_code: &[u8]) -> Result<Vec<u8>> {
         bytecode::compile_source(self.as_bytes(), js_source_code)
     }
