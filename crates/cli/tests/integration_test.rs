@@ -10,7 +10,7 @@ use javy_test_macros::javy_cli_test;
 fn test_empty(builder: &mut Builder) -> Result<()> {
     let mut runner = builder.input("empty.js").build()?;
 
-    let (_, _, fuel_consumed) = run(&mut runner, &[]);
+    let (_, _, fuel_consumed) = run(&mut runner, vec![]);
     assert_fuel_consumed_within_threshold(22_590, fuel_consumed);
     Ok(())
 }
@@ -49,7 +49,7 @@ fn test_recursive_fib(builder: &mut Builder) -> Result<()> {
 fn test_str(builder: &mut Builder) -> Result<()> {
     let mut runner = builder.input("str.js").build()?;
 
-    let (output, _, fuel_consumed) = run(&mut runner, "hello".as_bytes());
+    let (output, _, fuel_consumed) = run(&mut runner, "hello".into());
     assert_eq!("world".as_bytes(), output);
     assert_fuel_consumed_within_threshold(146_027, fuel_consumed);
     Ok(())
@@ -59,17 +59,17 @@ fn test_str(builder: &mut Builder) -> Result<()> {
 fn test_encoding(builder: &mut Builder) -> Result<()> {
     let mut runner = builder.input("text-encoding.js").build()?;
 
-    let (output, _, fuel_consumed) = run(&mut runner, "hello".as_bytes());
+    let (output, _, fuel_consumed) = run(&mut runner, "hello".into());
     assert_eq!("el".as_bytes(), output);
     assert_fuel_consumed_within_threshold(252_723, fuel_consumed);
 
-    let (output, _, _) = run(&mut runner, "invalid".as_bytes());
+    let (output, _, _) = run(&mut runner, "invalid".into());
     assert_eq!("true".as_bytes(), output);
 
-    let (output, _, _) = run(&mut runner, "invalid_fatal".as_bytes());
+    let (output, _, _) = run(&mut runner, "invalid_fatal".into());
     assert_eq!("The encoded data was not valid utf-8".as_bytes(), output);
 
-    let (output, _, _) = run(&mut runner, "test".as_bytes());
+    let (output, _, _) = run(&mut runner, "test".into());
     assert_eq!("test2".as_bytes(), output);
     Ok(())
 }
@@ -78,7 +78,7 @@ fn test_encoding(builder: &mut Builder) -> Result<()> {
 fn test_console_log(builder: &mut Builder) -> Result<()> {
     let mut runner = builder.input("logging.js").build()?;
 
-    let (output, logs, fuel_consumed) = run(&mut runner, &[]);
+    let (output, logs, fuel_consumed) = run(&mut runner, vec![]);
     assert_eq!(b"hello world from console.log\n".to_vec(), output);
     assert_eq!("hello world from console.error\n", logs.as_str());
     assert_fuel_consumed_within_threshold(35_860, fuel_consumed);
@@ -89,7 +89,7 @@ fn test_console_log(builder: &mut Builder) -> Result<()> {
 fn test_using_plugin_with_static_build(builder: &mut Builder) -> Result<()> {
     let mut runner = builder.plugin(Plugin::User).input("plugin.js").build()?;
 
-    let result = runner.exec(&[]);
+    let result = runner.exec(vec![]);
     assert!(result.is_ok());
 
     Ok(())
@@ -115,7 +115,7 @@ fn test_using_plugin_with_static_build_fails_with_runtime_config(
 fn test_readme_script(builder: &mut Builder) -> Result<()> {
     let mut runner = builder.input("readme.js").build()?;
 
-    let (output, _, fuel_consumed) = run(&mut runner, r#"{ "n": 2, "bar": "baz" }"#.as_bytes());
+    let (output, _, fuel_consumed) = run(&mut runner, r#"{ "n": 2, "bar": "baz" }"#.into());
     assert_eq!(r#"{"foo":3,"newBar":"baz!"}"#.as_bytes(), output);
     assert_fuel_consumed_within_threshold(254_503, fuel_consumed);
     Ok(())
@@ -125,7 +125,7 @@ fn test_readme_script(builder: &mut Builder) -> Result<()> {
 fn test_promises_with_event_loop(builder: &mut Builder) -> Result<()> {
     let mut runner = builder.input("promise.js").event_loop(true).build()?;
 
-    let (output, _, _) = run(&mut runner, &[]);
+    let (output, _, _) = run(&mut runner, vec![]);
     assert_eq!("\"foo\"\"bar\"".as_bytes(), output);
     Ok(())
 }
@@ -135,7 +135,7 @@ fn test_promises_without_event_loop(builder: &mut Builder) -> Result<()> {
     use javy_runner::RunnerError;
 
     let mut runner = builder.input("promise.js").build()?;
-    let res = runner.exec(&[]);
+    let res = runner.exec(vec![]);
     let err = res.err().unwrap().downcast::<RunnerError>().unwrap();
     assert!(err.stderr.contains("Pending jobs in the event queue."));
 
@@ -148,7 +148,7 @@ fn test_promise_top_level_await(builder: &mut Builder) -> Result<()> {
         .input("top-level-await.js")
         .event_loop(true)
         .build()?;
-    let (out, _, _) = run(&mut runner, &[]);
+    let (out, _, _) = run(&mut runner, vec![]);
 
     assert_eq!("bar", String::from_utf8(out)?);
     Ok(())
@@ -161,10 +161,10 @@ fn test_exported_functions(builder: &mut Builder) -> Result<()> {
         .wit("exported-fn.wit")
         .world("exported-fn")
         .build()?;
-    let (_, logs, fuel_consumed) = run_fn(&mut runner, "foo", &[]);
+    let (_, logs, fuel_consumed) = run_fn(&mut runner, "foo", vec![]);
     assert_eq!("Hello from top-level\nHello from foo\n", logs);
     assert_fuel_consumed_within_threshold(61_404, fuel_consumed);
-    let (_, logs, _) = run_fn(&mut runner, "foo-bar", &[]);
+    let (_, logs, _) = run_fn(&mut runner, "foo-bar", vec![]);
     assert_eq!("Hello from top-level\nHello from fooBar\n", logs);
     Ok(())
 }
@@ -177,7 +177,7 @@ fn test_exported_promises(builder: &mut Builder) -> Result<()> {
         .world("exported-promise-fn")
         .event_loop(true)
         .build()?;
-    let (_, logs, _) = run_fn(&mut runner, "foo", &[]);
+    let (_, logs, _) = run_fn(&mut runner, "foo", vec![]);
     assert_eq!("Top-level\ninside foo\n", logs);
     Ok(())
 }
@@ -185,7 +185,7 @@ fn test_exported_promises(builder: &mut Builder) -> Result<()> {
 #[javy_cli_test]
 fn test_exported_functions_without_flag(builder: &mut Builder) -> Result<()> {
     let mut runner = builder.input("exported-fn.js").build()?;
-    let res = runner.exec_func("foo", &[]);
+    let res = runner.exec_func("foo", vec![]);
     assert_eq!(
         "failed to find function export `foo`",
         res.err().unwrap().to_string()
@@ -200,7 +200,7 @@ fn test_exported_function_without_semicolons(builder: &mut Builder) -> Result<()
         .wit("exported-fn-no-semicolon.wit")
         .world("exported-fn")
         .build()?;
-    run_fn(&mut runner, "foo", &[]);
+    run_fn(&mut runner, "foo", vec![]);
     Ok(())
 }
 
@@ -214,7 +214,7 @@ fn test_producers_section_present(builder: &mut Builder) -> Result<()> {
 #[javy_cli_test]
 fn test_error_handling(builder: &mut Builder) -> Result<()> {
     let mut runner = builder.input("error.js").build()?;
-    let result = runner.exec(&[]);
+    let result = runner.exec(vec![]);
     let err = result.err().unwrap().downcast::<RunnerError>().unwrap();
 
     let expected_log_output = "Error:2:9 error\n    at error (function.mjs:2:9)\n    at <anonymous> (function.mjs:5:1)\n\n";
@@ -226,8 +226,8 @@ fn test_error_handling(builder: &mut Builder) -> Result<()> {
 #[javy_cli_test]
 fn test_same_module_outputs_different_random_result(builder: &mut Builder) -> Result<()> {
     let mut runner = builder.input("random.js").build()?;
-    let (output, _, _) = runner.exec(&[]).unwrap();
-    let (output2, _, _) = runner.exec(&[]).unwrap();
+    let (output, _, _) = runner.exec(vec![]).unwrap();
+    let (output2, _, _) = runner.exec(vec![]).unwrap();
     // In theory these could be equal with a correct implementation but it's very unlikely.
     assert!(output != output2);
     // Don't check fuel consumed because fuel consumed can be different from run to run. See
@@ -243,7 +243,7 @@ fn test_exported_default_arrow_fn(builder: &mut Builder) -> Result<()> {
         .world("exported-arrow")
         .build()?;
 
-    let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", &[]);
+    let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", vec![]);
     assert_eq!(logs, "42\n");
     assert_fuel_consumed_within_threshold(39_004, fuel_consumed);
     Ok(())
@@ -256,7 +256,7 @@ fn test_exported_default_fn(builder: &mut Builder) -> Result<()> {
         .wit("exported-default-fn.wit")
         .world("exported-default")
         .build()?;
-    let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", &[]);
+    let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", vec![]);
     assert_eq!(logs, "42\n");
     assert_fuel_consumed_within_threshold(39_951, fuel_consumed);
     Ok(())
@@ -318,16 +318,16 @@ fn test_init_plugin() -> Result<()> {
 }
 
 fn run_with_u8s(r: &mut Runner, stdin: u8) -> (u8, String, u64) {
-    let (output, logs, fuel_consumed) = run(r, &stdin.to_le_bytes());
+    let (output, logs, fuel_consumed) = run(r, stdin.to_le_bytes().into());
     assert_eq!(1, output.len());
     (output[0], logs, fuel_consumed)
 }
 
-fn run(r: &mut Runner, stdin: &[u8]) -> (Vec<u8>, String, u64) {
+fn run(r: &mut Runner, stdin: Vec<u8>) -> (Vec<u8>, String, u64) {
     run_fn(r, "_start", stdin)
 }
 
-fn run_fn(r: &mut Runner, func: &str, stdin: &[u8]) -> (Vec<u8>, String, u64) {
+fn run_fn(r: &mut Runner, func: &str, stdin: Vec<u8>) -> (Vec<u8>, String, u64) {
     let (output, logs, fuel_consumed) = r.exec_func(func, stdin).unwrap();
     let logs = String::from_utf8(logs).unwrap();
     (output, logs, fuel_consumed)

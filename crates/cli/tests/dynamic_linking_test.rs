@@ -6,7 +6,7 @@ use javy_test_macros::javy_cli_test;
 pub fn test_dynamic_linking(builder: &mut Builder) -> Result<()> {
     let mut runner = builder.input("console.js").build()?;
 
-    let (_, logs, _) = runner.exec(&[])?;
+    let (_, logs, _) = runner.exec(vec![])?;
     assert_eq!("42\n", String::from_utf8(logs)?);
     Ok(())
 }
@@ -19,7 +19,7 @@ pub fn test_dynamic_linking_with_func(builder: &mut Builder) -> Result<()> {
         .world("foo-test")
         .build()?;
 
-    let (_, logs, _) = runner.exec_func("foo-bar", &[])?;
+    let (_, logs, _) = runner.exec_func("foo-bar", vec![])?;
 
     assert_eq!("Toplevel\nIn foo\n", String::from_utf8(logs)?);
     Ok(())
@@ -29,7 +29,7 @@ pub fn test_dynamic_linking_with_func(builder: &mut Builder) -> Result<()> {
 pub fn test_dynamic_linking_with_func_without_flag(builder: &mut Builder) -> Result<()> {
     let mut runner = builder.input("linking-with-func-without-flag.js").build()?;
 
-    let res = runner.exec_func("foo", &[]);
+    let res = runner.exec_func("foo", vec![]);
 
     assert_eq!(
         "failed to find function export `foo`",
@@ -46,7 +46,7 @@ fn test_errors_in_exported_functions_are_correctly_reported(builder: &mut Builde
         .world("foo-test")
         .build()?;
 
-    let res = runner.exec_func("foo", &[]);
+    let res = runner.exec_func("foo", vec![]);
 
     assert!(res
         .err()
@@ -86,7 +86,7 @@ pub fn test_dynamic_linking_with_arrow_fn(builder: &mut Builder) -> Result<()> {
         .world("exported-arrow")
         .build()?;
 
-    let (_, logs, _) = runner.exec_func("default", &[])?;
+    let (_, logs, _) = runner.exec_func("default", vec![])?;
 
     assert_eq!("42\n", String::from_utf8(logs)?);
     Ok(())
@@ -120,7 +120,7 @@ fn test_using_plugin_with_dynamic_works(builder: &mut Builder) -> Result<()> {
         .input("plugin.js")
         .build()?;
 
-    let result = runner.exec(&[]);
+    let result = runner.exec(vec![]);
     assert!(result.is_ok());
 
     Ok(())
