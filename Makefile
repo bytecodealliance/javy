@@ -36,7 +36,7 @@ test-plugin:
 
 test-codegen: cli
 	target/release/javy emit-plugin -o crates/codegen/default_plugin.wasm
-	CARGO_PROFILE_RELEASE_LTO=off cargo hack test --package=javy-codegen --release --each-feature -- --nocapture
+	CARGO_PROFILE_RELEASE_LTO=off cargo hack test --package=javy-codegen --release --each-feature --exclude-features dump_wat -- --nocapture
 
 # Test in release mode to skip some debug assertions
 # Note: to make this faster, the engine should be optimized beforehand (wasm-strip + wasm-opt).

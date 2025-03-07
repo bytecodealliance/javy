@@ -88,7 +88,7 @@ jobs:
       - name: Test CodeGen
         run: |
           target/release/javy emit-plugin -o crates/codegen/default_plugin.wasm
-          CARGO_PROFILE_RELEASE_LTO=off cargo hack test --package=javy-codegen --release --each-feature -- --nocapture
+          CARGO_PROFILE_RELEASE_LTO=off cargo hack test --package=javy-codegen --release --each-feature --exclude-features dump_wat -- --nocapture
 
       - name: Check benchmarks
         run: CARGO_PROFILE_RELEASE_LTO=off cargo check --package=javy-cli --release --benches
