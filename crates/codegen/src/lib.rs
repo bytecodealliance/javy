@@ -1,7 +1,7 @@
 //! WebAssembly Code Generation for JavaScript
 //!
-//! This module provides all the functionality to emit Wasm modules for
-//! a particular JavaScript program.
+//! This module provides functionality to emit Wasm modules which will run
+//! JavaScript source code with the QuickJS interpreter.
 //!
 //! Javy supports two main code generation paths:
 //!
@@ -41,32 +41,34 @@
 //! use javy_codegen::{Generator, LinkingKind, Plugin, JS};
 //!
 //! fn main() -> Result<(), Box<dyn std::error::Error>> {
-//!  // Load your target Javascript.
-//!  let js = JS::from_file(Path::new("example.js"))?;
+//!     // Load your target Javascript.
+//!     let js = JS::from_file(Path::new("example.js"))?;
 //!
-//!  // Load existing pre-initialized Javy plugin.
-//!  let plugin = Plugin::new_from_path(Path::new("example-plugin.wasm"))?;
+//!     // Load existing pre-initialized Javy plugin.
+//!     let plugin = Plugin::new_from_path(Path::new("example-plugin.wasm"))?;
 //!
-//!  // Configure code generator.
-//!  let mut generator = Generator::new(plugin);
-//!  generator.linking(LinkingKind::Static);
+//!     // Configure code generator.
+//!     let mut generator = Generator::new(plugin);
+//!     generator.linking(LinkingKind::Static);
 //!
-//!  // Generate your WASM module.
-//!  let wasm = generator.generate(&js);
+//!     // Generate your Wasm module.
+//!     let wasm = generator.generate(&js);
 //!
-//!  Ok(())
+//!     Ok(())
 //! }
 //! ```
 //!
 //! ## Core concepts
 //! * [`Generator`] - The main entry point for generating Wasm modules.
-//! * [`Plugin`] - Represents a pre-initialized Javy plugin.
-//! * [`JS`] - Represents a JavaScript bytecode.
+//! * [`Plugin`] - An initialized Javy plugin.
+//! * [`JS`] - JavaScript source code.
 //!
 //! ## Features
 //!
-//! * `plugin_internal` - Enables additional code generation options for internal use.
-//! >  Please note that this flag enables an unstable feature. The unstable API's exposed by this future may break in the future without notice.
+//! * `plugin_internal` - Enables additional code generation options for
+//!   internal use. Please note that this flag enables an unstable feature. The
+//!   unstable API's exposed by this future may break in the future without
+//!   notice.
 
 use std::{fs, rc::Rc, sync::OnceLock};
 
@@ -147,8 +149,7 @@ impl BytecodeMetadata {
     }
 }
 
-/// Generator used to produce valid Wasm
-/// binaries from JS.
+/// Generator used to produce Wasm binaries from JS source code.
 #[derive(Default, Clone)]
 pub struct Generator {
     /// Plugin to use.
@@ -558,7 +559,7 @@ impl Generator {
     //    (data (;0;) "\02\05\18function.mjs\06foo\0econsole\06log\06bar\0f\bc\03\00\01\00\00\be\03\00\00\0e\00\06\01\a0\01\00\00\00\03\01\01\1a\00\be\03\00\01\08\ea\05\c0\00\e1)8\e0\00\00\00B\e1\00\00\00\04\e2\00\00\00$\01\00)\bc\03\01\04\01\00\07\0a\0eC\06\01\be\03\00\00\00\03\00\00\13\008\e0\00\00\00B\e1\00\00\00\04\df\00\00\00$\01\00)\bc\03\01\02\03]")
     //    (data (;1;) "foo")
     //  )
-    /// Generate a valid WASM binary from JS.
+    /// Generate a Wasm module which will run the provided JS source code.
     pub fn generate(&mut self, js: &js::JS) -> Result<Vec<u8>> {
         if self.wit_opts.defined() {
             self.function_exports = exports::process_exports(

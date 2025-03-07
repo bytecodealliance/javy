@@ -26,21 +26,21 @@ use swc_core::{
 
 use crate::plugin::Plugin;
 
-/// A structure representing valid JS code.
+/// JS source code.
 #[derive(Clone, Debug)]
 pub struct JS {
     source_code: Rc<String>,
 }
 
 impl JS {
-    /// Generate a valid JS instance from a string containing JS.
+    /// Create [`JS`] from a string containing JS source code.
     pub fn from_string(source_code: String) -> JS {
         JS {
             source_code: Rc::new(source_code),
         }
     }
 
-    /// Generate a valid JS instance from a file containing JS.
+    /// Create [`JS`] from a file containing JS.
     pub fn from_file(path: &Path) -> Result<JS> {
         let mut input_file = File::open(path)
             .with_context(|| format!("Failed to open input file {}", path.display()))?;
@@ -49,7 +49,7 @@ impl JS {
         Ok(Self::from_string(String::from_utf8(contents)?))
     }
 
-    /// Get JS source code as bytes.
+    /// Get source code as bytes.
     pub fn as_bytes(&self) -> &[u8] {
         self.source_code.as_bytes()
     }

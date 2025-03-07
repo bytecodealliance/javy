@@ -6,7 +6,7 @@ This document is intended to provide an overview of the architecture of `javy`.
 
 ```mermaid
 flowchart TD
-  javy-cli --> wasm
+  javy-cli --> javy-codegen --> wasm
   subgraph wasm[plugin.wasm]
   javy-plugin --> javy-plugin-api
   javy-plugin-api --> javy
@@ -14,7 +14,8 @@ flowchart TD
   end
 ```
 
-We anticipate most changes will be to the `javy-cli` and `javy` crates.
+We anticipate most changes will be to the `javy-cli`, `javy-codegen`, and
+`javy` crates.
 
 ### `javy`
 
@@ -102,9 +103,9 @@ by a Cargo feature on a case-by-case basis.
 
 ### `javy-cli`
 
-The CLI for compiling JS to Wasm. This isn't intended to be a CLI that
-accommodates all uses for all users but rather to provide a useful base of
-functionality. 
+The CLI that drives the `javy-codegen` crate to compile JS to Wasm. This
+isn't intended to be a CLI that accommodates all uses for all users but
+rather to provide a useful base of functionality. 
 
 #### When to add a `cargo` feature
 
@@ -118,6 +119,10 @@ You should gate your feature with a cargo feature if your feature/change:
 - You want to have integration tests in the `javy-cli` crate that should only
   run when the `javy-plugin` crate is built with a non-default configuration (that
   is, with different cargo features enabled).
+
+### `javy-codegen`
+
+A Rust crate for compiling JS to Wasm.
 
 ### `javy-plugin`
 
