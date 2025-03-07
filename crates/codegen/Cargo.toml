@@ -1,0 +1,33 @@
+[package]
+name = "javy-codegen"
+version = "1.0.0-alpha.1"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Wasm generation library for use with Javy"
+homepage = "https://github.com/bytecodealliance/javy/tree/main/crates/codegen"
+repository = "https://github.com/bytecodealliance/javy/tree/main/crates/codegen"
+categories = ["wasm"]
+
+[features]
+plugin_internal = []
+dump_wat = ["dep:wasmprinter"]
+
+[dependencies]
+wizer = { workspace = true }
+anyhow = { workspace = true }
+brotli = "7.0.0"
+wasmprinter = { version = "0.224.0", optional = true }
+wasmtime = { workspace = true }
+wasmtime-wasi = { workspace = true }
+wasi-common = { workspace = true }
+walrus = "0.23.3"
+swc_core = { version = "10.7.0", features = [
+  "common_sourcemap",
+  "ecma_ast",
+  "ecma_parser",
+] }
+wit-parser = "0.212.0"
+convert_case = "0.8.0"
+wasm-opt = "0.116.1"
+tempfile = { workspace = true }

@@ -12,6 +12,7 @@ use super::bytecode;
 /// Represents the kind of a plugin.
 // This is an internal detail of this module.
 #[derive(Default, PartialEq, Copy, Clone)]
+#[allow(dead_code)] // Suppresses warnings for feature-gated variants
 pub(crate) enum PluginKind {
     #[default]
     User,
@@ -64,14 +65,14 @@ impl Plugin {
         Ok(Self::new(bytes.into()))
     }
 
-    /// Returns the plugin Wasm module as a byte slice.
+    /// Returns the Plugin as a byte slice.
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes
     }
 }
 
 impl Plugin {
-    /// Generate valid QuickJS bytecode using a Plugin.
+    /// Generate valid QuickJS bytecode from Javascript using a Plugin.
     pub(crate) fn compile_source(&self, js_source_code: &[u8]) -> Result<Vec<u8>> {
         bytecode::compile_source(self.as_bytes(), js_source_code)
     }

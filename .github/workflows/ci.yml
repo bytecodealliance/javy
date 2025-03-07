@@ -57,7 +57,7 @@ jobs:
       - name: Test
         env:
           CARGO_TARGET_WASM32_WASIP1_RUNNER: wasmtime --dir=.
-        run: cargo hack test --target=wasm32-wasip1 --workspace --exclude=javy-cli --exclude=javy-runner --exclude=javy-test-plugin --each-feature -- --nocapture
+        run: cargo hack test --target=wasm32-wasip1 --workspace --exclude=javy-cli --exclude=javy-codegen --exclude=javy-runner --exclude=javy-test-plugin --each-feature -- --nocapture
 
       - name: Test Runner
         run: cargo test --package=javy-runner
@@ -66,6 +66,7 @@ jobs:
         run: |
           cargo clippy --workspace \
           --exclude=javy-cli \
+          --exclude=javy-codegen \
           --exclude=javy-runner \
           --exclude=javy-fuzz \
           --target=wasm32-wasip1 --all-targets -- -D warnings
@@ -84,13 +85,23 @@ jobs:
       - name: Test CLI
         run: CARGO_PROFILE_RELEASE_LTO=off cargo test --package=javy-cli --release -- --nocapture
 
+      - name: Test CodeGen
+        run: |
+          target/release/javy emit-plugin -o crates/codegen/default_plugin.wasm
+          CARGO_PROFILE_RELEASE_LTO=off cargo hack test --package=javy-codegen --release --each-feature -- --nocapture
+
       - name: Check benchmarks
         run: CARGO_PROFILE_RELEASE_LTO=off cargo check --package=javy-cli --release --benches
 
-      - name: Lint
+      - name: Lint CLI
         run: |
           cargo fmt -- --check
           CARGO_PROFILE_RELEASE_LTO=off cargo clippy --package=javy-cli --release --all-targets -- -D warnings
+
+      - name: Lint CodeGen
+        run: |
+          cargo fmt -- --check
+          CARGO_PROFILE_RELEASE_LTO=off cargo hack clippy --package=javy-codegen --release --all-targets --each-feature -- -D warnings
 
       - name: WPT
         run: |

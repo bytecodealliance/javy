@@ -766,6 +766,12 @@ user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmparser]]
+version = "0.224.1"
+when = "2025-02-05"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wasmparser]]
 version = "0.226.0"
 when = "2025-02-19"
 user-id = 73222
@@ -773,6 +779,12 @@ user-login = "wasmtime-publish"
 
 [[publisher.wasmprinter]]
 version = "0.221.3"
+when = "2025-02-05"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wasmprinter]]
+version = "0.224.1"
 when = "2025-02-05"
 user-id = 73222
 user-login = "wasmtime-publish"
