@@ -499,8 +499,6 @@ impl Generator {
         }
     }
 
-    // Run the calling code with the `dump_wat` feature enabled to print the WAT to stdout
-    //
     // For the example generated WAT, the `bytecode_len` is 137
     // (module
     //    (type (;0;) (func))
@@ -582,21 +580,6 @@ impl Generator {
         }
 
         let wasm = self.postprocess(&mut module)?;
-        print_wat(&wasm)?;
         Ok(wasm)
     }
-}
-
-#[cfg(feature = "dump_wat")]
-fn print_wat(wasm_binary: &[u8]) -> Result<()> {
-    println!(
-        "Generated WAT: \n{}",
-        wasmprinter::print_bytes(wasm_binary)?
-    );
-    Ok(())
-}
-
-#[cfg(not(feature = "dump_wat"))]
-fn print_wat(_wasm_binary: &[u8]) -> Result<()> {
-    Ok(())
 }
