@@ -1,16 +1,15 @@
 use anyhow::{anyhow, bail, Result};
 use std::error::Error;
 use std::fmt::{self, Display, Formatter};
-use std::io::{self, Cursor, Write};
+use std::fs;
+use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::str;
-use std::{cmp, fs};
 use tempfile::TempDir;
-use wasi_common::pipe::{ReadPipe, WritePipe};
-use wasi_common::sync::WasiCtxBuilder;
-use wasi_common::WasiCtx;
 use wasmtime::{AsContextMut, Config, Engine, Instance, Linker, Module, OptLevel, Store};
+use wasmtime_wasi::pipe::{MemoryInputPipe, MemoryOutputPipe};
+use wasmtime_wasi::{preview1::WasiP1Ctx, WasiCtxBuilder};
 
 #[derive(Clone)]
 pub enum JavyCommand {
@@ -254,20 +253,20 @@ impl Display for RunnerError {
 }
 
 struct StoreContext {
-    wasi: Option<WasiCtx>,
-    logs: WritePipe<LogWriter>,
-    output: WritePipe<Cursor<Vec<u8>>>,
+    wasi: Option<WasiP1Ctx>,
+    logs: MemoryOutputPipe,
+    output: MemoryOutputPipe,
 }
 
 impl StoreContext {
-    fn new(capacity: usize, input: &[u8]) -> Self {
-        let output = WritePipe::new_in_memory();
-        let logs = WritePipe::new(LogWriter::new(capacity));
+    fn new(capacity: usize, input: Vec<u8>) -> Self {
+        let output = MemoryOutputPipe::new(usize::MAX);
+        let logs = MemoryOutputPipe::new(capacity);
         let wasi = WasiCtxBuilder::new()
-            .stdin(Box::new(ReadPipe::from(input)))
-            .stdout(Box::new(output.clone()))
-            .stderr(Box::new(logs.clone()))
-            .build();
+            .stdin(MemoryInputPipe::new(input))
+            .stdout(output.clone())
+            .stderr(logs.clone())
+            .build_p1();
 
         Self {
             wasi: Some(wasi),
@@ -646,24 +645,24 @@ impl Runner {
     fn setup_linker(engine: &Engine) -> Result<Linker<StoreContext>> {
         let mut linker = Linker::new(engine);
 
-        wasi_common::sync::add_to_linker(&mut linker, |ctx: &mut StoreContext| {
+        wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |ctx: &mut StoreContext| {
             ctx.wasi.as_mut().unwrap()
         })?;
 
         Ok(linker)
     }
 
-    fn setup_store(engine: &Engine, input: &[u8]) -> Result<Store<StoreContext>> {
+    fn setup_store(engine: &Engine, input: Vec<u8>) -> Result<Store<StoreContext>> {
         let mut store = Store::new(engine, StoreContext::new(usize::MAX, input));
         store.set_fuel(u64::MAX)?;
         Ok(store)
     }
 
-    pub fn exec(&mut self, input: &[u8]) -> Result<(Vec<u8>, Vec<u8>, u64)> {
+    pub fn exec(&mut self, input: Vec<u8>) -> Result<(Vec<u8>, Vec<u8>, u64)> {
         self.exec_func("_start", input)
     }
 
-    pub fn exec_func(&mut self, func: &str, input: &[u8]) -> Result<(Vec<u8>, Vec<u8>, u64)> {
+    pub fn exec_func(&mut self, func: &str, input: Vec<u8>) -> Result<(Vec<u8>, Vec<u8>, u64)> {
         let mut store = Self::setup_store(self.linker.engine(), input)?;
         let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
 
@@ -692,7 +691,7 @@ impl Runner {
         src: &str,
         use_exported_fn: UseExportedFn,
     ) -> Result<(Vec<u8>, Vec<u8>, u64)> {
-        let mut store = Self::setup_store(self.linker.engine(), &[])?;
+        let mut store = Self::setup_store(self.linker.engine(), vec![])?;
         let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
 
         let instance = self.linker.instantiate(store.as_context_mut(), &module)?;
@@ -801,12 +800,12 @@ impl Runner {
             .logs
             .try_into_inner()
             .expect("log stream reference still exists")
-            .buffer;
+            .to_vec();
         let output = store_context
             .output
             .try_into_inner()
             .expect("Output stream reference still exists")
-            .into_inner();
+            .to_vec();
 
         match call_result {
             Ok(_) => Ok((output, logs, fuel_consumed)),
@@ -817,34 +816,6 @@ impl Runner {
             }
             .into()),
         }
-    }
-}
-
-#[derive(Debug)]
-pub struct LogWriter {
-    pub buffer: Vec<u8>,
-    capacity: usize,
-}
-
-impl LogWriter {
-    fn new(capacity: usize) -> Self {
-        Self {
-            buffer: Default::default(),
-            capacity,
-        }
-    }
-}
-
-impl Write for LogWriter {
-    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
-        let available_capacity = self.capacity - self.buffer.len();
-        let amount_to_take = cmp::min(available_capacity, buf.len());
-        self.buffer.extend_from_slice(&buf[..amount_to_take]);
-        Ok(amount_to_take)
-    }
-
-    fn flush(&mut self) -> io::Result<()> {
-        Ok(())
     }
 }
 

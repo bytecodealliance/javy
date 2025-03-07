@@ -1640,7 +1640,6 @@ dependencies = [
  "anyhow",
  "tempfile",
  "uuid",
- "wasi-common",
  "wasmparser 0.226.0",
  "wasmtime",
  "wasmtime-wasi",
