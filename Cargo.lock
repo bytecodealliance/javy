@@ -1587,7 +1587,7 @@ dependencies = [
 
 [[package]]
 name = "javy-codegen"
-version = "1.0.0"
+version = "1.0.1-alpha.1"
 dependencies = [
  "anyhow",
  "brotli",
