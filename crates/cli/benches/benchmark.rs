@@ -2,12 +2,12 @@ use anyhow::{anyhow, bail, Result};
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use num_format::{Locale, ToFormattedString};
 use std::{fmt::Display, fs, path::Path, process::Command};
-use wasi_common::{
-    pipe::{ReadPipe, WritePipe},
-    sync::WasiCtxBuilder,
-    WasiCtx,
-};
 use wasmtime::{AsContextMut, Engine, Linker, Module, Store};
+use wasmtime_wasi::{
+    pipe::{MemoryInputPipe, MemoryOutputPipe},
+    preview1::WasiP1Ctx,
+    WasiCtxBuilder,
+};
 
 struct FunctionCase {
     name: String,
@@ -86,8 +86,8 @@ impl FunctionCase {
 
     pub fn run(
         &self,
-        linker: &mut Linker<WasiCtx>,
-        mut store: impl AsContextMut<Data = WasiCtx>,
+        linker: &mut Linker<WasiP1Ctx>,
+        mut store: impl AsContextMut<Data = WasiP1Ctx>,
     ) -> Result<()> {
         let js_module = match &self.precompiled_elf_bytes {
             Some(bytes) => unsafe { Module::deserialize(&self.engine, bytes) }?,
@@ -107,14 +107,14 @@ impl FunctionCase {
         Ok(())
     }
 
-    pub fn setup(&self) -> Result<(Linker<WasiCtx>, Store<WasiCtx>)> {
+    pub fn setup(&self) -> Result<(Linker<WasiP1Ctx>, Store<WasiP1Ctx>)> {
         let mut linker = Linker::new(&self.engine);
         let wasi = WasiCtxBuilder::new()
-            .stdin(Box::new(ReadPipe::from(&self.payload[..])))
-            .stdout(Box::new(WritePipe::new_in_memory()))
-            .stderr(Box::new(WritePipe::new_in_memory()))
-            .build();
-        wasi_common::sync::add_to_linker(&mut linker, |s| s).unwrap();
+            .stdin(MemoryInputPipe::new(self.payload.clone()))
+            .stdout(MemoryOutputPipe::new(usize::MAX))
+            .stderr(MemoryOutputPipe::new(usize::MAX))
+            .build_p1();
+        wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |s| s)?;
         let mut store = Store::new(&self.engine, wasi);
 
         if let Linking::Dynamic = self.linking {

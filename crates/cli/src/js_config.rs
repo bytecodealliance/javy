@@ -1,12 +1,8 @@
 use anyhow::Result;
 use serde::Deserialize;
-use std::{
-    collections::HashMap,
-    io::{Read, Seek},
-    str,
-};
-use wasi_common::{pipe::WritePipe, sync::WasiCtxBuilder};
+use std::{collections::HashMap, str};
 use wasmtime::{AsContextMut, Engine, Linker};
+use wasmtime_wasi::{pipe::MemoryOutputPipe, WasiCtxBuilder};
 
 use crate::{CliPlugin, PluginKind};
 
@@ -24,25 +20,19 @@ impl ConfigSchema {
                 let engine = Engine::default();
                 let module = wasmtime::Module::new(&engine, cli_plugin.as_plugin().as_bytes())?;
                 let mut linker = Linker::new(&engine);
-                wasi_common::sync::snapshots::preview_1::add_wasi_snapshot_preview1_to_linker(
-                    &mut linker,
-                    |s| s,
-                )?;
-                let stdout = WritePipe::new_in_memory();
+                wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |s| s)?;
+                let stdout = MemoryOutputPipe::new(usize::MAX);
                 let wasi = WasiCtxBuilder::new()
                     .inherit_stderr()
-                    .stdout(Box::new(stdout.clone()))
-                    .build();
+                    .stdout(stdout.clone())
+                    .build_p1();
                 let mut store = wasmtime::Store::new(&engine, wasi);
                 let instance = linker.instantiate(store.as_context_mut(), &module)?;
                 instance
                     .get_typed_func::<(), ()>(store.as_context_mut(), "config_schema")?
                     .call(store.as_context_mut(), ())?;
                 drop(store);
-                let mut config_json = vec![];
-                let mut cursor = stdout.try_into_inner().unwrap();
-                cursor.rewind()?;
-                cursor.read_to_end(&mut config_json)?;
+                let config_json = stdout.try_into_inner().unwrap().to_vec();
                 let config_schema = serde_json::from_slice::<ConfigSchema>(&config_json)?;
                 let mut configs = Vec::with_capacity(config_schema.supported_properties.len());
                 for config in config_schema.supported_properties {
