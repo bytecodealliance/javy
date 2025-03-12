@@ -12,6 +12,6 @@
     "license": "Apache-2.0",
     "dependencies": {
         "underscore": "^1.13.6",
-        "vite": "^5.4.7"
+        "vite": "^6.0.2"
     }
 }
