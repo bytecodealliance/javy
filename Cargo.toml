@@ -22,7 +22,6 @@ license = "Apache-2.0 WITH LLVM-exception"
 wizer = "8.0.0"
 wasmtime = "29"
 wasmtime-wasi = "29"
-wasi-common = "29"
 wasm-opt = "0.116.1"
 anyhow = "1.0"
 javy = { path = "crates/javy", version = "4.0.1-alpha.1" }

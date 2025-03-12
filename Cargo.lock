@@ -1718,10 +1718,10 @@ dependencies = [
  "serde_json",
  "tempfile",
  "walrus",
- "wasi-common",
  "wasm-opt",
  "wasmparser 0.226.0",
  "wasmtime",
+ "wasmtime-wasi",
  "wizer",
 ]
 
@@ -1735,7 +1735,6 @@ dependencies = [
  "swc_core",
  "tempfile",
  "walrus",
- "wasi-common",
  "wasm-opt",
  "wasmtime",
  "wasmtime-wasi",
@@ -3265,7 +3264,6 @@ version = "0.1.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3523ab5a71916ccf420eebdf5521fcef02141234bbc0b8a49f2fdc4544364ef"
 dependencies = [
- "log",
  "pin-project-lite",
  "tracing-attributes",
  "tracing-core",
@@ -3500,31 +3498,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "26816d2e1a4a36a2940b96c5296ce403917633dff8f3440e9b236ed6f6bacad2"
 dependencies = [
  "wit-bindgen-rt",
-]
-
-[[package]]
-name = "wasi-common"
-version = "29.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fe3101bd34deeb64225431f8b1b1793c87e7cad94383464878b3f90da6995977"
-dependencies = [
- "anyhow",
- "bitflags",
- "cap-fs-ext",
- "cap-rand",
- "cap-std",
- "cap-time-ext",
- "fs-set-times",
- "io-extras",
- "io-lifetimes",
- "log",
- "rustix",
- "system-interface",
- "thiserror",
- "tracing",
- "wasmtime",
- "wiggle",
- "windows-sys 0.59.0",
 ]
 
 [[package]]
