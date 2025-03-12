@@ -622,10 +622,6 @@ criteria = "safe-to-deploy"
 version = "3.17.1"
 criteria = "safe-to-deploy"
 
-[[exemptions.tinyvec_macros]]
-version = "0.1.1"
-criteria = "safe-to-deploy"
-
 [[exemptions.tracing]]
 version = "0.1.40"
 criteria = "safe-to-deploy"
@@ -660,10 +656,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.unicode-id-start]]
 version = "1.2.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.url]]
-version = "2.5.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.utf8parse]]
