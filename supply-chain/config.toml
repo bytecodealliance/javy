@@ -25,6 +25,9 @@ url = "https://raw.githubusercontent.com/mozilla/supply-chain/main/audits.toml"
 [policy.javy]
 audit-as-crates-io = false
 
+[policy.javy-codegen]
+audit-as-crates-io = false
+
 [policy.javy-plugin]
 audit-as-crates-io = false
 
@@ -81,10 +84,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.better_scoped_tls]]
 version = "1.0.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.bitflags]]
-version = "2.9.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.bitvec]]
@@ -283,20 +282,12 @@ criteria = "safe-to-deploy"
 version = "0.2.2"
 criteria = "safe-to-deploy"
 
-[[exemptions.getrandom]]
-version = "0.3.1"
-criteria = "safe-to-deploy"
-
 [[exemptions.getset]]
 version = "0.1.3"
 criteria = "safe-to-deploy"
 
 [[exemptions.gimli]]
 version = "0.26.2"
-criteria = "safe-to-deploy"
-
-[[exemptions.gimli]]
-version = "0.29.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.gimli]]
@@ -505,10 +496,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.rquickjs-sys]]
 version = "0.6.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.rustc-hash]]
-version = "2.1.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.rustc_version]]
