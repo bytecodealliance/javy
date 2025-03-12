@@ -1,8 +1,8 @@
 use anyhow::{bail, Result};
 use javy_runner::{Builder, Plugin, Runner, RunnerError};
 use std::{path::PathBuf, process::Command, str};
-use wasi_common::sync::WasiCtxBuilder;
 use wasmtime::{AsContextMut, Engine, Linker, Module, Store};
+use wasmtime_wasi::WasiCtxBuilder;
 
 use javy_test_macros::javy_cli_test;
 
@@ -271,8 +271,8 @@ fn test_init_plugin() -> Result<()> {
     // `compile-src` on this module should succeed.
     let engine = Engine::default();
     let mut linker = Linker::new(&engine);
-    wasi_common::sync::add_to_linker(&mut linker, |s| s)?;
-    let wasi = WasiCtxBuilder::new().build();
+    wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |s| s)?;
+    let wasi = WasiCtxBuilder::new().build_p1();
     let mut store = Store::new(&engine, wasi);
 
     let uninitialized_plugin = PathBuf::from(env!("CARGO_MANIFEST_DIR"))

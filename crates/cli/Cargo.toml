@@ -11,10 +11,10 @@ name = "javy"
 path = "src/main.rs"
 
 [dependencies]
-wasi-common = { workspace = true }
 wizer = { workspace = true }
 anyhow = { workspace = true }
 wasmtime = { workspace = true }
+wasmtime-wasi = { workspace = true }
 walrus = "0.23.3"
 wasm-opt = "0.116.1"
 tempfile = { workspace = true }
