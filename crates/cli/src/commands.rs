@@ -225,13 +225,49 @@ impl TryFrom<Vec<GroupOption<CodegenOption>>> for CodegenOptionGroup {
         let mut wit = None;
         let mut wit_world = None;
 
+        let mut dynamic_specified = false;
+        let mut wit_specified = false;
+        let mut wit_world_specified = false;
+        let mut source_compression_specified = false;
+        let mut plugin_specified = false;
+
         for option in value.iter().flat_map(|i| i.0.iter()) {
             match option {
-                CodegenOption::Dynamic(enabled) => options.dynamic = *enabled,
-                CodegenOption::Wit(path) => wit = Some(path),
-                CodegenOption::WitWorld(world) => wit_world = Some(world),
-                CodegenOption::SourceCompression(enabled) => options.source_compression = *enabled,
-                CodegenOption::Plugin(path) => options.plugin = Some(path.clone()),
+                CodegenOption::Dynamic(enabled) => {
+                    if dynamic_specified {
+                        bail!("dynamic can only be specified once");
+                    }
+                    options.dynamic = *enabled;
+                    dynamic_specified = true;
+                }
+                CodegenOption::Wit(path) => {
+                    if wit_specified {
+                        bail!("wit can only be specified once");
+                    }
+                    wit = Some(path);
+                    wit_specified = true;
+                }
+                CodegenOption::WitWorld(world) => {
+                    if wit_world_specified {
+                        bail!("wit-world can only be specified once");
+                    }
+                    wit_world = Some(world);
+                    wit_world_specified = true;
+                }
+                CodegenOption::SourceCompression(enabled) => {
+                    if source_compression_specified {
+                        bail!("source-compression can only be specified once");
+                    }
+                    options.source_compression = *enabled;
+                    source_compression_specified = true;
+                }
+                CodegenOption::Plugin(path) => {
+                    if plugin_specified {
+                        bail!("plugin can only be specified once");
+                    }
+                    options.plugin = Some(path.clone());
+                    plugin_specified = true;
+                }
             }
         }
 
@@ -345,6 +381,9 @@ impl JsConfig {
                 }
                 JsGroupValue::Option(JsGroupOption { name, enabled }) => {
                     if supported_names.contains(name.as_str()) {
+                        if config.contains_key(&name) {
+                            bail!("{name} can only be specified once");
+                        }
                         config.insert(name, enabled);
                     } else {
                         Cli::command()
@@ -499,5 +538,81 @@ mod tests {
         );
 
         Ok(())
+    }
+
+    #[test]
+    fn codegen_option_specified_twice_should_return_error() -> Result<()> {
+        let raw = vec![GroupOption(vec![
+            CodegenOption::Dynamic(true),
+            CodegenOption::Dynamic(false),
+        ])];
+        let result: Result<CodegenOptionGroup, Error> = raw.try_into();
+        assert_eq!(
+            result.err().unwrap().to_string(),
+            "dynamic can only be specified once"
+        );
+
+        let raw = vec![GroupOption(vec![
+            CodegenOption::Wit(PathBuf::from("file.wit")),
+            CodegenOption::Wit(PathBuf::from("file2.wit")),
+        ])];
+        let result: Result<CodegenOptionGroup, Error> = raw.try_into();
+        assert_eq!(
+            result.err().unwrap().to_string(),
+            "wit can only be specified once"
+        );
+
+        let raw = vec![GroupOption(vec![
+            CodegenOption::WitWorld("world".to_string()),
+            CodegenOption::WitWorld("world2".to_string()),
+        ])];
+        let result: Result<CodegenOptionGroup, Error> = raw.try_into();
+        assert_eq!(
+            result.err().unwrap().to_string(),
+            "wit-world can only be specified once"
+        );
+
+        let raw = vec![GroupOption(vec![
+            CodegenOption::SourceCompression(true),
+            CodegenOption::SourceCompression(false),
+        ])];
+        let result: Result<CodegenOptionGroup, Error> = raw.try_into();
+        assert_eq!(
+            result.err().unwrap().to_string(),
+            "source-compression can only be specified once"
+        );
+
+        let raw = vec![GroupOption(vec![
+            CodegenOption::Plugin(PathBuf::from("file.wasm")),
+            CodegenOption::Plugin(PathBuf::from("file2.wasm")),
+        ])];
+        let result: Result<CodegenOptionGroup, Error> = raw.try_into();
+        assert_eq!(
+            result.err().unwrap().to_string(),
+            "plugin can only be specified once"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn js_option_specified_twice_should_return_error() {
+        let plugin = CliPlugin::new(Plugin::new(PLUGIN_MODULE.into()), PluginKind::Default);
+        let result = JsConfig::from_group_values(
+            &plugin,
+            vec![
+                JsGroupValue::Option(JsGroupOption {
+                    name: "javy-stream-io".to_string(),
+                    enabled: false,
+                }),
+                JsGroupValue::Option(JsGroupOption {
+                    name: "javy-stream-io".to_string(),
+                    enabled: true,
+                }),
+            ],
+        );
+        assert_eq!(
+            result.err().unwrap().to_string(),
+            "javy-stream-io can only be specified once"
+        );
     }
 }
