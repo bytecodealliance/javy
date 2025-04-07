@@ -118,18 +118,6 @@ criteria = "safe-to-deploy"
 version = "1.0.106"
 criteria = "safe-to-deploy"
 
-[[exemptions.ciborium]]
-version = "0.2.2"
-criteria = "safe-to-run"
-
-[[exemptions.ciborium-io]]
-version = "0.2.2"
-criteria = "safe-to-run"
-
-[[exemptions.ciborium-ll]]
-version = "0.2.2"
-criteria = "safe-to-run"
-
 [[exemptions.clang-sys]]
 version = "1.8.1"
 criteria = "safe-to-deploy"
@@ -294,10 +282,6 @@ criteria = "safe-to-deploy"
 version = "0.31.1"
 criteria = "safe-to-deploy"
 
-[[exemptions.half]]
-version = "2.4.1"
-criteria = "safe-to-run"
-
 [[exemptions.halfbrown]]
 version = "0.2.5"
 criteria = "safe-to-deploy"
@@ -311,7 +295,7 @@ version = "0.5.9"
 criteria = "safe-to-deploy"
 
 [[exemptions.hstr]]
-version = "0.2.17"
+version = "1.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.iana-time-zone]]
@@ -474,10 +458,6 @@ criteria = "safe-to-deploy"
 version = "0.7.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.rand]]
-version = "0.8.5"
-criteria = "safe-to-deploy"
-
 [[exemptions.redox_users]]
 version = "0.4.5"
 criteria = "safe-to-deploy"
@@ -567,39 +547,39 @@ version = "1.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_allocator]]
-version = "2.0.0"
+version = "4.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_atoms]]
-version = "3.0.4"
+version = "5.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_common]]
-version = "5.0.0"
+version = "8.0.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_core]]
-version = "10.7.0"
+version = "16.10.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_ast]]
-version = "5.0.3"
+version = "8.1.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_parser]]
-version = "6.0.2"
+version = "10.0.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_transforms_base]]
-version = "7.1.1"
+version = "11.2.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_utils]]
-version = "7.0.4"
+version = "11.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_visit]]
-version = "5.0.0"
+version = "8.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_eq_ignore_macros]]
