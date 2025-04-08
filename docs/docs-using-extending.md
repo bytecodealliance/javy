@@ -27,26 +27,30 @@ javy-plugin-api = "2.0.0"
 And `src/lib.rs` should look like:
 
 ```rust
-use javy_plugin_api::{Config, import_namespace};
-use javy_plugin_api::javy::quickjs::prelude::Func;
+use javy_plugin_api::{import_namespace, javy::quickjs::prelude::Func, Config};
 
+// Set your plugin's import namespace.
 import_namespace!("my_plugin_name");
+
+// If you want to import a function from the host, here's how to do it.
+#[link(wasm_import_module = "some_other_namespace")]
+extern "C" {
+    fn imported_function();
+}
 
 #[export_name = "initialize_runtime"]
 pub extern "C" fn initialize_runtime() {
-    let mut config = Config::default();
-    config
-        .text_encoding(true)
-        .javy_stream_io(true);
-
+    let config = Config::default();
     javy_plugin_api::initialize_runtime(config, |runtime| {
-        runtime
-            .context()
-            .with(|ctx| {
-                ctx.globals()
-                    .set("isThisAPlugin", Func::from(|| "yes it is"))
-            })
-            .unwrap();
+        runtime.context().with(|ctx| {
+            // Creates a `plugin` variable on the global set to `true`.
+            ctx.globals().set("plugin", true).unwrap();
+            // Creates an `importedFunc` function on the global which will call
+            // the imported function.
+            ctx.globals()
+                .set("importedFunc", Func::from(|| unsafe { imported_function() }))
+                .unwrap();
+        });
         runtime
     })
     .unwrap();
