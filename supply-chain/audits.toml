@@ -550,7 +550,7 @@ end = "2025-01-03"
 criteria = "safe-to-deploy"
 user-id = 10 # Carl Lerche (carllerche)
 start = "2019-03-02"
-end = "2024-12-04"
+end = "2026-04-09"
 
 [[trusted.tokio]]
 criteria = "safe-to-deploy"
