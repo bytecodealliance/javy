@@ -351,7 +351,7 @@ version = "0.2.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.mio]]
-version = "0.8.11"
+version = "1.0.3"
 criteria = "safe-to-deploy"
 
 [[exemptions.new_debug_unreachable]]
