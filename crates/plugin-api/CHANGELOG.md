@@ -8,11 +8,13 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [3.1.0] - 2025-04-17
+
 ### Added
 
 - Added `messagepack` feature exposing javy/messagepack feature
 
-## [3.0.0] - 2025r-01-08
+## [3.0.0] - 2025-01-08
 
 ### Removed
 
