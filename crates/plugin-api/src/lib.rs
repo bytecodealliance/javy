@@ -32,6 +32,7 @@
 //!
 //! # Features
 //! * `json` - enables the `json` feature in the `javy` crate.
+//! * `messagepack` - enables the `messagepack` feature in the `javy` crate.
 
 // Allow these in this file because we only run this program single threaded
 // and we can safely reason about the accesses to the Javy Runtime. We also
