@@ -8,9 +8,13 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Added `messagepack` feature exposing javy/messagepack feature
+
 ## [3.0.0] - 2025r-01-08
 
-### Removed 
+### Removed
 
 - `javy` dependency updated to 4.0.0 which removes `javy_json` method on
   `javy_plugin_api::Config` and removes support for `Javy.JSON.fromStdin` and
@@ -18,7 +22,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [2.0.0] - 2024-11-27
 
-### Changed 
+### Changed
 
 - `initialize_runtime` accepts a `javy_plugin_api::Config` instead of a
   `javy_plugin_api::javy::Config`
