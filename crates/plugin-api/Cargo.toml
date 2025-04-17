@@ -1,6 +1,6 @@
 [package]
 name = "javy-plugin-api"
-version = "3.1.0"
+version = "3.1.1-alpha.1"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -11,7 +11,7 @@ categories = ["wasm"]
 
 [dependencies]
 anyhow = { workspace = true }
-javy = { version = "4.0.0", features = ["export_alloc_fns"] }
+javy = { workspace = true, features = ["export_alloc_fns"] }
 
 [features]
 json = ["javy/json"]
