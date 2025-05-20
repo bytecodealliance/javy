@@ -95,11 +95,11 @@ version = "0.10.4"
 criteria = "safe-to-deploy"
 
 [[exemptions.brotli]]
-version = "7.0.0"
+version = "8.0.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.brotli-decompressor]]
-version = "4.0.1"
+version = "5.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.bytes]]
