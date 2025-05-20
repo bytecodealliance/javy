@@ -44,8 +44,8 @@ user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.anyhow]]
-version = "1.0.97"
-when = "2025-03-03"
+version = "1.0.98"
+when = "2025-04-14"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -121,15 +121,15 @@ user-login = "emilio"
 user-name = "Emilio Cobos Álvarez"
 
 [[publisher.clap]]
-version = "4.5.35"
-when = "2025-04-01"
+version = "4.5.37"
+when = "2025-04-18"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.clap_builder]]
-version = "4.5.35"
-when = "2025-04-01"
+version = "4.5.37"
+when = "2025-04-18"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
@@ -405,8 +405,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.proc-macro2]]
-version = "1.0.94"
-when = "2025-03-03"
+version = "1.0.95"
+when = "2025-04-16"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -565,8 +565,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.syn]]
-version = "2.0.100"
-when = "2025-03-09"
+version = "2.0.101"
+when = "2025-04-26"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -773,8 +773,8 @@ user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmparser]]
-version = "0.228.0"
-when = "2025-04-01"
+version = "0.229.0"
+when = "2025-04-17"
 user-id = 73222
 user-login = "wasmtime-publish"
 

@@ -511,7 +511,7 @@ version = "0.7.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.simd-json]]
-version = "0.15.0"
+version = "0.15.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.simdutf8]]
