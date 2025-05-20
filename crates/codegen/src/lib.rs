@@ -166,6 +166,8 @@ pub struct Generator {
     plugin_kind: plugin::PluginKind,
     /// An optional JS runtime config provided as JSON bytes.
     js_runtime_config: Vec<u8>,
+    /// The version string to include in the producers custom section.
+    producer_version: Option<String>,
 }
 
 impl Generator {
@@ -223,6 +225,12 @@ impl Generator {
     /// Set the JS runtime configuration options to pass to the module.
     pub fn js_runtime_config(&mut self, js_runtime_config: Vec<u8>) -> &mut Self {
         self.js_runtime_config = js_runtime_config;
+        self
+    }
+
+    /// Sets the version string to use in the producers custom section.
+    pub fn producer_version(&mut self, producer_version: String) -> &mut Self {
+        self.producer_version = Some(producer_version);
         self
     }
 }
@@ -572,7 +580,12 @@ impl Generator {
         let bc_metadata = self.generate_main(&mut module, js, &identifiers)?;
         self.generate_exports(&mut module, &identifiers, &bc_metadata)?;
 
-        transform::add_producers_section(&mut module.producers);
+        transform::add_producers_section(
+            &mut module.producers,
+            self.producer_version
+                .as_deref()
+                .unwrap_or(env!("CARGO_PKG_VERSION")),
+        );
         if !self.source_compression {
             module.customs.add(SourceCodeSection::uncompressed(js)?);
         } else {

@@ -40,8 +40,8 @@ pub(crate) fn module_config() -> ModuleConfig {
     config
 }
 
-pub(crate) fn add_producers_section(producers: &mut ModuleProducers) {
+pub(crate) fn add_producers_section(producers: &mut ModuleProducers, version: &str) {
     producers.clear(); // removes Walrus and Rust
     producers.add_language("JavaScript", "ES2020");
-    producers.add_processed_by("Javy", env!("CARGO_PKG_VERSION"));
+    producers.add_processed_by("Javy", version);
 }
