@@ -8,5 +8,7 @@ rustflags = ["-C", "target-feature=+simd128"]
 # We want to ensure that all the MSVC dependencies are statically resolved and
 # included in the final CLI binary.
 # Ref: https://github.com/rust-lang/rust/pull/122268
+# Try to address issue with building Javy on Windows. See
+# https://github.com/bytecodealliance/javy/actions/runs/15140478653/job/42563437734#step:6:393.
 [target.x86_64-pc-windows-msvc]
-rustflags = ["-C", "target-feature=+crt-static"]
+rustflags = ["-C", "target-feature=+crt-static", "-Clink-arg=advapi32.lib"]
