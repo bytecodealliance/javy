@@ -61,6 +61,7 @@ fn main() -> Result<()> {
                 ))?)
                 .source_compression(!opts.no_source_compression)
                 .js_runtime_config(JsConfig::default().to_json()?);
+            set_producer_version(&mut generator);
 
             let wasm = generator.generate(&js)?;
 
@@ -91,6 +92,7 @@ fn main() -> Result<()> {
                 .wit_opts(codegen_opts.wit)
                 .source_compression(!codegen_opts.source_compression)
                 .js_runtime_config(js_opts.to_json()?);
+            set_producer_version(&mut generator);
 
             if codegen_opts.dynamic {
                 generator.linking(LinkingKind::Dynamic);
@@ -126,4 +128,8 @@ fn emit_plugin(opts: &EmitPluginCommandOpts) -> Result<()> {
     };
     file.write_all(PLUGIN_MODULE)?;
     Ok(())
+}
+
+fn set_producer_version(generator: &mut Generator) {
+    generator.producer_version(env!("CARGO_PKG_VERSION").to_string());
 }

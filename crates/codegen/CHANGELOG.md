@@ -8,6 +8,11 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `Generator` now has a `producer_version` method so the version in the
+  producers custom section can be set.
+
 ## [1.0.0] - 2025-03-10
 
 Initial release
