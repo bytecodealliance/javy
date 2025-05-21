@@ -86,6 +86,10 @@ criteria = "safe-to-deploy"
 version = "1.0.0"
 criteria = "safe-to-deploy"
 
+[[exemptions.bitflags]]
+version = "2.9.1"
+criteria = "safe-to-deploy"
+
 [[exemptions.bitvec]]
 version = "1.0.1"
 criteria = "safe-to-deploy"
@@ -139,7 +143,7 @@ version = "0.2.12"
 criteria = "safe-to-deploy"
 
 [[exemptions.criterion]]
-version = "0.3.6"
+version = "0.6.0"
 criteria = "safe-to-run"
 
 [[exemptions.criterion-plot]]
@@ -313,6 +317,10 @@ criteria = "safe-to-deploy"
 [[exemptions.itertools]]
 version = "0.10.3"
 criteria = "safe-to-deploy"
+
+[[exemptions.itertools]]
+version = "0.13.0"
+criteria = "safe-to-run"
 
 [[exemptions.jobserver]]
 version = "0.1.31"
@@ -511,7 +519,7 @@ version = "0.7.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.simd-json]]
-version = "0.15.0"
+version = "0.15.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.simdutf8]]
@@ -595,7 +603,7 @@ version = "2.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.tempfile]]
-version = "3.19.1"
+version = "3.20.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.tracing]]

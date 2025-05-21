@@ -18,15 +18,15 @@ wasmtime-wasi = { workspace = true }
 walrus = "0.23.3"
 wasm-opt = "0.116.1"
 tempfile = { workspace = true }
-clap = { version = "4.5.35", features = ["derive"] }
+clap = { version = "4.5.38", features = ["derive"] }
 serde = { workspace = true, default-features = false }
 serde_json = { workspace = true }
 javy-codegen = { path = "../codegen/", features = ["plugin_internal"] }
 
 [dev-dependencies]
-criterion = "0.5"
+criterion = "0.6"
 num-format = "0.4.4"
-wasmparser = "0.228.0"
+wasmparser = "0.230.0"
 javy-runner = { path = "../runner/" }
 javy-test-macros = { path = "../test-macros/" }
 
