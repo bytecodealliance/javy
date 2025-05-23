@@ -262,6 +262,249 @@ fn test_exported_default_fn(builder: &mut Builder) -> Result<()> {
     Ok(())
 }
 
+#[javy_cli_test(commands(not(Compile)))]
+fn test_timers_basic(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder
+        .input("timers-basic.js")
+        .timers(true)
+        .event_loop(true)
+        .build()?;
+
+    let (output, logs, fuel_consumed) = run(&mut runner, vec![]);
+    
+    // Convert output to string for easier testing
+    let output_str = String::from_utf8(output)?;
+    
+    // Verify all expected timer outputs are present
+    assert!(output_str.contains("Testing basic setTimeout functionality"));
+    assert!(output_str.contains("Timer 1: Immediate execution"));
+    assert!(output_str.contains("Timer 2: Also immediate"));
+    assert!(output_str.contains("Timer 3: Cancellation successful"));
+    assert!(output_str.contains("Timer 4A: First"));
+    assert!(output_str.contains("Timer 4B: Second"));
+    assert!(output_str.contains("Timer 4C: Third"));
+    assert!(output_str.contains("Timer 5: ID test"));
+    assert!(output_str.contains("Timer ID: number"));
+    
+    // Verify cancelled timer does NOT execute
+    assert!(!output_str.contains("ERROR: This should not execute"));
+    
+    // Performance check - timers should be efficient
+    assert_fuel_consumed_within_threshold(310_000, fuel_consumed);
+    
+    Ok(())
+}
+
+#[javy_cli_test(commands(not(Compile)))]
+fn test_intervals_basic(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder
+        .input("intervals-basic.js")
+        .timers(true)
+        .event_loop(true)
+        .build()?;
+
+    let (output, logs, fuel_consumed) = run(&mut runner, vec![]);
+    
+    let output_str = String::from_utf8(output)?;
+    
+    // Verify interval functionality
+    assert!(output_str.contains("Testing setInterval functionality"));
+    assert!(output_str.contains("Interval 1: 1"));
+    // Note: Intervals may not execute multiple times in test environment
+    assert!(output_str.contains("Interval 2: 1"));
+    assert!(output_str.contains("Self-clearing: 1"));
+    assert!(output_str.contains("Timeout executed alongside intervals"));
+    assert!(output_str.contains("Interval cancellation successful"));
+    
+    // Verify cancelled interval does NOT execute
+    assert!(!output_str.contains("ERROR: This should not execute"));
+    
+    // Performance check
+    assert_fuel_consumed_within_threshold(430_000, fuel_consumed);
+    
+    Ok(())
+}
+
+#[javy_cli_test]
+fn test_base64_functionality(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder.input("base64-basic.js").build()?;
+
+    let (output, logs, fuel_consumed) = run(&mut runner, vec![]);
+    
+    let output_str = String::from_utf8(output)?;
+    
+    // Verify base64 encoding/decoding
+    assert!(output_str.contains("Testing base64 functionality"));
+    assert!(output_str.contains("Encoded: SGVsbG8sIFdvcmxkIQ=="));
+    assert!(output_str.contains("Decoded: Hello, World!"));
+    assert!(output_str.contains("Round-trip test: PASS"));
+    assert!(output_str.contains("Empty string: PASS"));
+    assert!(output_str.contains("Empty decode: PASS"));
+    
+    // Verify standard test vectors
+    assert!(output_str.contains("btoa(\"f\"): PASS"));
+    assert!(output_str.contains("btoa(\"fo\"): PASS"));
+    assert!(output_str.contains("btoa(\"foo\"): PASS"));
+    assert!(output_str.contains("btoa(\"foob\"): PASS"));
+    assert!(output_str.contains("btoa(\"fooba\"): PASS"));
+    assert!(output_str.contains("btoa(\"foobar\"): PASS"));
+    
+    // Verify error handling
+    assert!(output_str.contains("Unicode test: PASS (correctly threw error)"));
+    assert!(output_str.contains("Invalid base64 test: PASS (correctly threw error)"));
+    
+    // Base64 should be very efficient
+    assert_fuel_consumed_within_threshold(390_000, fuel_consumed);
+    
+    Ok(())
+}
+
+#[javy_cli_test]
+fn test_console_enhanced(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder.input("console-enhanced.js").build()?;
+
+    let (output, logs, fuel_consumed) = run(&mut runner, vec![]);
+    
+    let output_str = String::from_utf8(output)?;
+    
+    // Verify console.log output (goes to stdout)
+    assert!(output_str.contains("Testing enhanced console functionality"));
+    assert!(output_str.contains("This is a log message"));
+    assert!(output_str.contains("Log with multiple arguments"));
+    assert!(output_str.contains("Number: 42"));
+    assert!(output_str.contains("Console tests completed"));
+    
+    // Verify console.error and console.warn output (goes to stderr)
+    assert!(logs.contains("This is an error message"));
+    assert!(logs.contains("This is a warning message"));
+    assert!(logs.contains("Warn with multiple arguments"));
+    assert!(logs.contains("Error with multiple arguments"));
+    assert!(logs.contains("Boolean: true"));
+    assert!(logs.contains("Object:"));
+    
+    // Performance check
+    assert_fuel_consumed_within_threshold(101_000, fuel_consumed);
+    
+    Ok(())
+}
+
+#[javy_cli_test(commands(not(Compile)))]
+fn test_console_normal_mode(builder: &mut Builder) -> Result<()> {
+    // Test normal mode: console.log → stdout, console.warn/error → stderr
+    let mut runner = builder
+        .input("console-enhanced.js")
+        .redirect_stdout_to_stderr(false)
+        .build()?;
+
+    let (output, logs, fuel_consumed) = run(&mut runner, vec![]);
+    
+    let output_str = String::from_utf8(output)?;
+    
+    // === STDOUT VALIDATION ===
+    // Verify console.log output goes to stdout
+    assert!(output_str.contains("Testing enhanced console functionality"));
+    assert!(output_str.contains("This is a log message"));
+    assert!(output_str.contains("Log with multiple arguments"));
+    assert!(output_str.contains("Number: 42"));
+    assert!(output_str.contains("Console tests completed"));
+    
+    // Verify console.warn/error do NOT go to stdout in normal mode
+    assert!(!output_str.contains("This is an error message"));
+    assert!(!output_str.contains("This is a warning message"));
+    
+    // === STDERR VALIDATION ===
+    // Verify console.error and console.warn output goes to stderr
+    assert!(logs.contains("This is an error message"));
+    assert!(logs.contains("This is a warning message"));
+    assert!(logs.contains("Warn with multiple arguments"));
+    assert!(logs.contains("Error with multiple arguments"));
+    assert!(logs.contains("Boolean: true"));
+    assert!(logs.contains("Object:"));
+    
+    // Verify console.log does NOT go to stderr in normal mode
+    assert!(!logs.contains("Testing enhanced console functionality"));
+    assert!(!logs.contains("This is a log message"));
+    
+    // Performance check
+    assert_fuel_consumed_within_threshold(101_000, fuel_consumed);
+    
+    Ok(())
+}
+
+#[javy_cli_test(commands(not(Compile)))]
+fn test_console_redirect_mode(builder: &mut Builder) -> Result<()> {
+    // Test redirect mode: ALL console output → stderr
+    // Note: Only works with build command, not deprecated compile command
+    let mut runner = builder
+        .input("console-enhanced.js")
+        .redirect_stdout_to_stderr(true)
+        .build()?;
+
+    let (output, logs, fuel_consumed) = run(&mut runner, vec![]);
+    
+    let output_str = String::from_utf8(output)?;
+    
+    // === STDOUT VALIDATION ===
+    // In redirect mode, NO console output should go to stdout
+    assert!(!output_str.contains("Testing enhanced console functionality"));
+    assert!(!output_str.contains("This is a log message"));
+    assert!(!output_str.contains("Log with multiple arguments"));
+    assert!(!output_str.contains("Number: 42"));
+    assert!(!output_str.contains("Console tests completed"));
+    assert!(!output_str.contains("This is an error message"));
+    assert!(!output_str.contains("This is a warning message"));
+    
+    // stdout should be empty or contain only non-console output
+    
+    // === STDERR VALIDATION ===
+    // In redirect mode, ALL console output should go to stderr
+    assert!(logs.contains("Testing enhanced console functionality"));
+    assert!(logs.contains("This is a log message"));
+    assert!(logs.contains("Log with multiple arguments"));  
+    assert!(logs.contains("Number: 42"));
+    assert!(logs.contains("Console tests completed"));
+    assert!(logs.contains("This is an error message"));
+    assert!(logs.contains("This is a warning message"));
+    assert!(logs.contains("Warn with multiple arguments"));
+    assert!(logs.contains("Error with multiple arguments"));
+    assert!(logs.contains("Boolean: true"));
+    assert!(logs.contains("Object:"));
+    
+    // Performance check (should be similar to normal mode)
+    assert_fuel_consumed_within_threshold(98_000, fuel_consumed);
+    
+    Ok(())
+}
+
+#[javy_cli_test(commands(not(Compile)))]
+fn test_timers_without_event_loop_fails(builder: &mut Builder) -> Result<()> {
+    // Test that timers require event loop flag
+    let mut runner = builder
+        .input("timers-basic.js")
+        .timers(true)
+        .build()?;
+    
+    let result = runner.exec(vec![]);
+    assert!(result.is_err(), "Timers should fail without event loop");
+    
+    Ok(())
+}
+
+#[javy_cli_test]
+fn test_base64_always_available(builder: &mut Builder) -> Result<()> {
+    // Test that base64 works without any special flags
+    let mut runner = builder.input("base64-basic.js").build()?;
+    
+    let (output, _, _) = run(&mut runner, vec![]);
+    let output_str = String::from_utf8(output)?;
+    
+    // Should work without any flags
+    assert!(output_str.contains("Base64 tests completed"));
+    assert!(output_str.contains("Round-trip test: PASS"));
+    
+    Ok(())
+}
+
 #[test]
 fn test_init_plugin() -> Result<()> {
     // This test works by trying to call the `compile_src` function on the

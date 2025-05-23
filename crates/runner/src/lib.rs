@@ -80,6 +80,10 @@ pub struct Builder {
     text_encoding: Option<bool>,
     /// Whether to enable the event loop.
     event_loop: Option<bool>,
+    /// Whether to enable the timer APIs.
+    timers: Option<bool>,
+    /// Whether to redirect stdout to stderr.
+    redirect_stdout_to_stderr: Option<bool>,
     built: bool,
     /// Preload the module at path, using the given instance name.
     preload: Option<(String, PathBuf)>,
@@ -105,6 +109,8 @@ impl Default for Builder {
             simd_json_builtins: None,
             text_encoding: None,
             event_loop: None,
+            timers: None,
+            redirect_stdout_to_stderr: None,
             plugin: Plugin::Default,
         }
     }
@@ -161,6 +167,16 @@ impl Builder {
         self
     }
 
+    pub fn timers(&mut self, enabled: bool) -> &mut Self {
+        self.timers = Some(enabled);
+        self
+    }
+
+    pub fn redirect_stdout_to_stderr(&mut self, enabled: bool) -> &mut Self {
+        self.redirect_stdout_to_stderr = Some(enabled);
+        self
+    }
+
     pub fn command(&mut self, command: JavyCommand) -> &mut Self {
         self.command = command;
         self
@@ -192,6 +208,8 @@ impl Builder {
             simd_json_builtins,
             text_encoding,
             event_loop,
+            timers,
+            redirect_stdout_to_stderr,
             built: _,
             preload,
             command,
@@ -218,6 +236,8 @@ impl Builder {
                 simd_json_builtins,
                 text_encoding,
                 event_loop,
+                timers,
+                redirect_stdout_to_stderr,
                 preload,
                 plugin,
             ),
@@ -293,6 +313,8 @@ impl Runner {
         override_json_parse_and_stringify: Option<bool>,
         text_encoding: Option<bool>,
         event_loop: Option<bool>,
+        timers: Option<bool>,
+        redirect_stdout_to_stderr: Option<bool>,
         preload: Option<(String, PathBuf)>,
         plugin: Plugin,
     ) -> Result<Self> {
@@ -313,6 +335,8 @@ impl Runner {
             &override_json_parse_and_stringify,
             &text_encoding,
             &event_loop,
+            &timers,
+            &redirect_stdout_to_stderr,
             &plugin,
         );
 
@@ -540,6 +564,8 @@ impl Runner {
         simd_json_builtins: &Option<bool>,
         text_encoding: &Option<bool>,
         event_loop: &Option<bool>,
+        timers: &Option<bool>,
+        redirect_stdout_to_stderr: &Option<bool>,
         plugin: &Plugin,
     ) -> Vec<String> {
         let mut args = vec![
@@ -585,6 +611,16 @@ impl Runner {
         if let Some(enabled) = *event_loop {
             args.push("-J".to_string());
             args.push(format!("event-loop={}", if enabled { "y" } else { "n" }));
+        }
+
+        if let Some(enabled) = *timers {
+            args.push("-J".to_string());
+            args.push(format!("timers={}", if enabled { "y" } else { "n" }));
+        }
+
+        if let Some(enabled) = *redirect_stdout_to_stderr {
+            args.push("-J".to_string());
+            args.push(format!("redirect-stdout-to-stderr={}", if enabled { "y" } else { "n" }));
         }
 
         if matches!(plugin, Plugin::User | Plugin::DefaultAsUser) {
