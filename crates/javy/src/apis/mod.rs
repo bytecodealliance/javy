@@ -49,11 +49,17 @@
 //! Provides an implementation of `Javy.IO.readSync` and `Javy.IO.writeSync`.
 //! Disabled by default.
 //!
+//! ### `Base64`
+//!
+//! Provides implementations of `btoa` and `atob` for base64 encoding and decoding.
+//! Always available.
+//!
 //! ###  `JSON`
 //! Provides an efficient implementation of JSON functions based on [`simd-json`](https://crates.io/crates/simd-json/0.13.10)
 //! and [`serde_json`](https://crates.io/crates/serde_json)
 //!
 //! Disabled by default.
+pub(crate) mod base64;
 pub(crate) mod console;
 #[cfg(feature = "json")]
 pub(crate) mod json;
