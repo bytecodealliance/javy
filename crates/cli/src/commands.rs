@@ -90,9 +90,9 @@ const RUNTIME_CONFIG_ARG_LONG: &str = "javascript";
 
 #[derive(Debug, Parser)]
 pub struct BuildCommandOpts {
-    #[arg(value_name = "INPUT", required = true)]
+    #[arg(value_name = "INPUT")]
     /// Path of the JavaScript input file.
-    pub input: PathBuf,
+    pub input: Option<PathBuf>,
 
     #[arg(short, default_value = "index.wasm")]
     /// Desired path of the WebAssembly output file.
@@ -291,14 +291,14 @@ impl TryFrom<Vec<GroupOption<CodegenOption>>> for CodegenOptionGroup {
 
 /// A runtime config group value.
 #[derive(Debug, Clone)]
-pub(super) enum JsGroupValue {
+pub enum JsGroupValue {
     Option(JsGroupOption),
     Help,
 }
 
 /// A runtime config group option.
 #[derive(Debug, Clone)]
-pub(super) struct JsGroupOption {
+pub struct JsGroupOption {
     /// The property name used for the option.
     name: String,
     /// Whether the config is enabled or not.
@@ -306,7 +306,7 @@ pub(super) struct JsGroupOption {
 }
 
 #[derive(Debug, Clone)]
-pub(super) struct JsGroupOptionParser;
+pub struct JsGroupOptionParser;
 
 impl ValueParserFactory for JsGroupValue {
     type Parser = JsGroupOptionParser;
@@ -328,6 +328,9 @@ impl TypedValueParser for JsGroupOptionParser {
         let val = StringValueParser::new().parse_ref(cmd, arg, value)?;
 
         if val == "help" {
+            // We need to display help immediately and exit, but we don't have access to
+            // the plugin here to get the supported properties. We'll need to handle this
+            // differently by still returning Help and letting the caller handle it.
             return Ok(JsGroupValue::Help);
         }
 
