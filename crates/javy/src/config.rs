@@ -174,7 +174,7 @@ impl Config {
         self
     }
 
-    /// Configures whether timer APIs (`setTimeout`, `clearTimeout`) will be available.
+    /// Configures whether timer APIs (`setTimeout`, `clearTimeout`, `setInterval`, `clearInterval`) will be available.
     /// Disabled by default.
     pub fn timers(&mut self, enable: bool) -> &mut Self {
         self.intrinsics.set(JSIntrinsics::TIMERS, enable);

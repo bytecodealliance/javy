@@ -16,7 +16,7 @@ impl Config {
         self
     }
 
-    /// Whether to enable timer APIs (`setTimeout`, `clearTimeout`).
+    /// Whether to enable timer APIs (`setTimeout`, `clearTimeout`, `setInterval`, `clearInterval`).
     pub fn timers(&mut self, enabled: bool) -> &mut Self {
         self.runtime_config.timers(enabled);
         self
