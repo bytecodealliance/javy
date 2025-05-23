@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.4-workato.2] - 2025-05-23
+
+### Added
+
+- **Base64 Encoding/Decoding APIs**: Implemented browser-standard base64 functions
+  - `btoa(string)` - Encodes binary string to base64 with Latin1 validation
+  - `atob(base64String)` - Decodes base64 to binary string with whitespace tolerance
+- **Always Available**: Base64 APIs are enabled by default (no configuration flags required)
+- **Browser-Standard Behavior**: Full HTML5 specification compliance
+  - Proper Latin1 character range validation (0-255)
+  - Automatic whitespace filtering in `atob()`
+  - Correct error handling for invalid inputs
+- **Pure Rust Implementation**: Zero external dependencies with comprehensive test coverage
+
+### Changed
+
+- Base64 APIs are now core functionality like `console.log` (no `-J` flag needed)
+- Enhanced developer experience with immediately available encoding/decoding
+
 ## [5.0.4-workato.1] - 2025-05-23
 
 ### Added

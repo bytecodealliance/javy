@@ -22,3 +22,6 @@ tests/target/*.wasm
 
 .idea
 .vscode
+
+# Local documentation files
+FACTS.md

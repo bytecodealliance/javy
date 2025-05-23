@@ -3,7 +3,7 @@ use super::from_js_error;
 #[cfg(feature = "json")]
 use crate::apis::json;
 use crate::{
-    apis::{console, random, stream_io, text_encoding, timers},
+    apis::{base64, console, random, stream_io, text_encoding, timers},
     config::{JSIntrinsics, JavyIntrinsics},
     Config,
 };
@@ -138,6 +138,10 @@ impl Runtime {
                 text_encoding::register(ctx.clone())
                     .expect("registering TextEncoding APIs to succeed");
             }
+
+            // Base64 APIs are always available
+            base64::register(ctx.clone())
+                .expect("registering base64 APIs to succeed");
 
             if cfg.redirect_stdout_to_stderr {
                 console::register(ctx.clone(), stderr(), stderr())

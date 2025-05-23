@@ -1,6 +1,6 @@
 [package]
 name = "javy"
-version = "4.0.1-workato.1"
+version = "4.0.1-workato.2"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
