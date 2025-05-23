@@ -1683,7 +1683,7 @@ dependencies = [
 
 [[package]]
 name = "javy"
-version = "4.0.1-workato.2"
+version = "4.0.1-workato.3"
 dependencies = [
  "anyhow",
  "bitflags",
