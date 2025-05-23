@@ -60,3 +60,4 @@ pub(crate) mod json;
 pub(crate) mod random;
 pub(crate) mod stream_io;
 pub(crate) mod text_encoding;
+pub(crate) mod timers;

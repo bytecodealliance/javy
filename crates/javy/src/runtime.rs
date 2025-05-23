@@ -3,7 +3,7 @@ use super::from_js_error;
 #[cfg(feature = "json")]
 use crate::apis::json;
 use crate::{
-    apis::{console, random, stream_io, text_encoding},
+    apis::{console, random, stream_io, text_encoding, timers},
     config::{JSIntrinsics, JavyIntrinsics},
     Config,
 };
@@ -39,15 +39,18 @@ pub struct Runtime {
     /// The inner QuickJS runtime representation.
     // Read above on the usage of `ManuallyDrop`.
     inner: ManuallyDrop<QRuntime>,
+    /// Whether timers are enabled
+    timers_enabled: bool,
 }
 
 impl Runtime {
     /// Creates a new [Runtime].
     pub fn new(config: Config) -> Result<Self> {
         let rt = ManuallyDrop::new(QRuntime::new()?);
+        let timers_enabled = config.intrinsics.contains(JSIntrinsics::TIMERS);
 
         let context = Self::build_from_config(&rt, config)?;
-        Ok(Self { inner: rt, context })
+        Ok(Self { inner: rt, context, timers_enabled })
     }
 
     fn build_from_config(rt: &QRuntime, cfg: Config) -> Result<ManuallyDrop<Context>> {
@@ -148,6 +151,11 @@ impl Runtime {
                 stream_io::register(ctx.clone())
                     .expect("registering StreamIO functions to succeed");
             }
+
+            if intrinsics.contains(JSIntrinsics::TIMERS) {
+                timers::register(ctx.clone())
+                    .expect("registering timer APIs to succeed");
+            }
         });
 
         Ok(ManuallyDrop::new(context))
@@ -160,6 +168,15 @@ impl Runtime {
 
     /// Resolves all the pending jobs in the queue.
     pub fn resolve_pending_jobs(&self) -> Result<()> {
+        // Process timers if enabled
+        self.context.with(|ctx| {
+            if self.has_timers_enabled() {
+                timers::process_timers(ctx.clone()).unwrap_or_else(|e| {
+                    eprintln!("Timer processing error: {}", e);
+                });
+            }
+        });
+
         if self.inner.is_job_pending() {
             loop {
                 let result = self.inner.execute_pending_job();
@@ -178,7 +195,19 @@ impl Runtime {
 
     /// Returns true if there are pending jobs in the queue.
     pub fn has_pending_jobs(&self) -> bool {
-        self.inner.is_job_pending()
+        let has_js_jobs = self.inner.is_job_pending();
+        let has_timer_jobs = if self.has_timers_enabled() {
+            timers::has_pending_timers()
+        } else {
+            false
+        };
+        
+        has_js_jobs || has_timer_jobs
+    }
+
+    /// Returns true if timers are enabled for this runtime.
+    pub fn has_timers_enabled(&self) -> bool {
+        self.timers_enabled
     }
 
     /// Compiles the given module to bytecode.

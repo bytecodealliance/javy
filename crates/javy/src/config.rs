@@ -19,6 +19,7 @@ bitflags! {
         const OPERATORS = 1 << 12;
         const BIGNUM_EXTENSION = 1 << 13;
         const TEXT_ENCODING = 1 << 14;
+        const TIMERS = 1 << 15;
     }
 }
 
@@ -170,6 +171,13 @@ impl Config {
     /// be available. NB: This is partial implementation.
     pub fn text_encoding(&mut self, enable: bool) -> &mut Self {
         self.intrinsics.set(JSIntrinsics::TEXT_ENCODING, enable);
+        self
+    }
+
+    /// Configures whether timer APIs (`setTimeout`, `clearTimeout`, `setInterval`, `clearInterval`) will be available.
+    /// Disabled by default.
+    pub fn timers(&mut self, enable: bool) -> &mut Self {
+        self.intrinsics.set(JSIntrinsics::TIMERS, enable);
         self
     }
 

@@ -24,6 +24,8 @@ runtime_config! {
         text_encoding: Option<bool>,
         /// Whether to enable the event loop.
         event_loop: Option<bool>,
+        /// Whether to enable timer APIs (`setTimeout`, `clearTimeout`, `setInterval`, `clearInterval`).
+        timers: Option<bool>,
     }
 }
 
@@ -44,6 +46,9 @@ impl SharedConfig {
         }
         if let Some(enable) = self.event_loop {
             config.event_loop(enable);
+        }
+        if let Some(enable) = self.timers {
+            config.timers(enable);
         }
     }
 }
