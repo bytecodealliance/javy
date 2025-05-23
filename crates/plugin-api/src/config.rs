@@ -15,6 +15,12 @@ impl Config {
         self.event_loop = enabled;
         self
     }
+
+    /// Whether to enable timer APIs (`setTimeout`, `clearTimeout`).
+    pub fn timers(&mut self, enabled: bool) -> &mut Self {
+        self.runtime_config.timers(enabled);
+        self
+    }
 }
 
 impl Deref for Config {
