@@ -13,7 +13,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "5.0.4-workato.2"
+version = "5.0.4-workato.3"
 authors = ["The Javy Project Developers"]
 edition = "2021"
 license = "Apache-2.0 WITH LLVM-exception"
@@ -24,7 +24,7 @@ wasmtime = "29"
 wasmtime-wasi = "29"
 wasm-opt = "0.116.1"
 anyhow = "1.0"
-javy = { path = "crates/javy", version = "4.0.1-workato.2" }
+javy = { path = "crates/javy", version = "4.0.1-workato.3" }
 tempfile = "3.20.0"
 uuid = { version = "1.16", features = ["v4"] }
 serde = { version = "1.0", default-features = false }

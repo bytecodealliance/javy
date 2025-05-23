@@ -26,6 +26,8 @@ runtime_config! {
         event_loop: Option<bool>,
         /// Whether to enable timer APIs (`setTimeout`, `clearTimeout`, `setInterval`, `clearInterval`).
         timers: Option<bool>,
+        /// Whether to redirect console.log output to stderr instead of stdout.
+        redirect_stdout_to_stderr: Option<bool>,
     }
 }
 
@@ -49,6 +51,9 @@ impl SharedConfig {
         }
         if let Some(enable) = self.timers {
             config.timers(enable);
+        }
+        if let Some(enable) = self.redirect_stdout_to_stderr {
+            config.redirect_stdout_to_stderr(enable);
         }
     }
 }

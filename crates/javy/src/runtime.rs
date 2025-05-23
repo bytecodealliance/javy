@@ -144,10 +144,10 @@ impl Runtime {
                 .expect("registering base64 APIs to succeed");
 
             if cfg.redirect_stdout_to_stderr {
-                console::register(ctx.clone(), stderr(), stderr())
+                console::register(ctx.clone(), stderr(), stderr(), stderr())
                     .expect("registering console to succeed");
             } else {
-                console::register(ctx.clone(), stdout(), stderr())
+                console::register(ctx.clone(), stdout(), stderr(), stderr())
                     .expect("registering console to succeed");
             }
 
