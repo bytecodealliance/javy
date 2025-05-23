@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.4-workato.4] - 2025-05-23
+
+### Fixed
+
+- **CLI Help Without Dummy File**: Fixed `-J help` to work without requiring a dummy JavaScript file
+  - **Previous Behavior**: Required `javy build -J help dummy.js` with any file path
+  - **New Behavior**: Simply run `javy build -J help` directly  
+  - **Technical Implementation**: Made input file argument optional with early help detection
+  - **Backward Compatibility**: All existing functionality preserved, error handling intact
+  - **Developer Experience**: Removes inconvenient requirement for dummy files when accessing help
+
+### Technical Details
+
+- **CLI Contract Preserved**: No changes to CLI-plugin communication interface
+- **Error Handling**: Still validates input file requirement when help is not requested
+- **Type Visibility**: Made necessary types public to enable help detection in main.rs
+- **Testing Verified**: Comprehensive testing confirms normal build functionality unchanged
+
 ## [5.0.4-workato.3] - 2025-05-23
 
 ### Added
