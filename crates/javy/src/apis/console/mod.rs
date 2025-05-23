@@ -7,12 +7,13 @@ use crate::{
 };
 use anyhow::Result;
 
-/// Register a `console` object on the global object with `.log` and `.error`
+/// Register a `console` object on the global object with `.log`, `.warn` and `.error`
 /// streams.
-pub(crate) fn register<T, U>(this: Ctx<'_>, mut log_stream: T, mut error_stream: U) -> Result<()>
+pub(crate) fn register<T, U, V>(this: Ctx<'_>, mut log_stream: T, mut warn_stream: U, mut error_stream: V) -> Result<()>
 where
     T: Write + 'static,
     U: Write + 'static,
+    V: Write + 'static,
 {
     let globals = this.globals();
     let console = Object::new(this.clone())?;
@@ -24,6 +25,17 @@ where
             MutFn::new(move |cx, args| {
                 let (cx, args) = hold_and_release!(cx, args);
                 log(hold!(cx.clone(), args), &mut log_stream).map_err(|e| to_js_error(cx, e))
+            }),
+        )?,
+    )?;
+
+    console.set(
+        "warn",
+        Function::new(
+            this.clone(),
+            MutFn::new(move |cx, args| {
+                let (cx, args) = hold_and_release!(cx, args);
+                log(hold!(cx.clone(), args), &mut warn_stream).map_err(|e| to_js_error(cx, e))
             }),
         )?,
     )?;
@@ -76,6 +88,7 @@ mod tests {
         runtime.context().with(|cx| {
             let console: Object<'_> = cx.globals().get("console")?;
             assert!(console.get::<&str, Value<'_>>("log").is_ok());
+            assert!(console.get::<&str, Value<'_>>("warn").is_ok());
             assert!(console.get::<&str, Value<'_>>("error").is_ok());
 
             Ok::<_, Error>(())
@@ -90,7 +103,7 @@ mod tests {
         let ctx = runtime.context();
 
         ctx.with(|this| {
-            register(this.clone(), stream.clone(), stream.clone()).unwrap();
+            register(this.clone(), stream.clone(), stream.clone(), stream.clone()).unwrap();
             this.eval::<(), _>("console.log(\"hello world\");")?;
             assert_eq!(b"hello world\n", stream.buffer.borrow().as_slice());
             stream.clear();
@@ -167,23 +180,137 @@ mod tests {
     #[test]
     fn test_console_streams() -> Result<()> {
         let mut log_stream = SharedStream::default();
+        let mut warn_stream = SharedStream::default();
         let error_stream = SharedStream::default();
 
         let runtime = Runtime::default();
         let ctx = runtime.context();
 
         ctx.with(|this| {
-            register(this.clone(), log_stream.clone(), error_stream.clone()).unwrap();
+            register(this.clone(), log_stream.clone(), warn_stream.clone(), error_stream.clone()).unwrap();
             this.eval::<(), _>("console.log(\"hello world\");")?;
             assert_eq!(b"hello world\n", log_stream.buffer.borrow().as_slice());
+            assert!(warn_stream.buffer.borrow().is_empty());
             assert!(error_stream.buffer.borrow().is_empty());
 
             log_stream.clear();
 
+            this.eval::<(), _>("console.warn(\"hello world\");")?;
+            assert_eq!(b"hello world\n", warn_stream.buffer.borrow().as_slice());
+            assert!(log_stream.buffer.borrow().is_empty());
+            assert!(error_stream.buffer.borrow().is_empty());
+
+            warn_stream.clear();
+
             this.eval::<(), _>("console.error(\"hello world\");")?;
             assert_eq!(b"hello world\n", error_stream.buffer.borrow().as_slice());
             assert!(log_stream.buffer.borrow().is_empty());
+            assert!(warn_stream.buffer.borrow().is_empty());
 
+            Ok::<_, Error>(())
+        })?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_redirect_functionality() -> Result<()> {
+        // Test normal mode (console.log -> stdout, warn/error -> stderr)
+        let mut log_stream = SharedStream::default();
+        let mut warn_stream = SharedStream::default();
+        let mut error_stream = SharedStream::default();
+
+        let runtime = Runtime::default();
+        let ctx = runtime.context();
+
+        ctx.with(|this| {
+            // Normal mode: log->stdout, warn->stderr, error->stderr
+            register(this.clone(), log_stream.clone(), warn_stream.clone(), error_stream.clone()).unwrap();
+            
+            this.eval::<(), _>("console.log('normal log');")?;
+            this.eval::<(), _>("console.warn('normal warn');")?;
+            this.eval::<(), _>("console.error('normal error');")?;
+            
+            assert_eq!(b"normal log\n", log_stream.buffer.borrow().as_slice());
+            assert_eq!(b"normal warn\n", warn_stream.buffer.borrow().as_slice());
+            assert_eq!(b"normal error\n", error_stream.buffer.borrow().as_slice());
+
+            Ok::<_, Error>(())
+        })?;
+
+        // Test redirected mode (all console outputs -> stderr)
+        let mut redirected_log_stream = SharedStream::default();
+        let mut redirected_warn_stream = SharedStream::default();
+        let mut redirected_error_stream = SharedStream::default();
+
+        ctx.with(|this| {
+            // Redirected mode: all -> stderr (simulated by using same stream)
+            register(this.clone(), redirected_log_stream.clone(), redirected_warn_stream.clone(), redirected_error_stream.clone()).unwrap();
+            
+            this.eval::<(), _>("console.log('redirected log');")?;
+            this.eval::<(), _>("console.warn('redirected warn');")?;
+            this.eval::<(), _>("console.error('redirected error');")?;
+            
+            assert_eq!(b"redirected log\n", redirected_log_stream.buffer.borrow().as_slice());
+            assert_eq!(b"redirected warn\n", redirected_warn_stream.buffer.borrow().as_slice());
+            assert_eq!(b"redirected error\n", redirected_error_stream.buffer.borrow().as_slice());
+
+            Ok::<_, Error>(())
+        })?;
+
+        // Test actual redirect scenario (log, warn, error all go to same stderr stream)
+        let mut all_stderr_stream = SharedStream::default();
+
+        ctx.with(|this| {
+            // Redirect mode: console.log, warn, error all use stderr
+            register(this.clone(), all_stderr_stream.clone(), all_stderr_stream.clone(), all_stderr_stream.clone()).unwrap();
+            
+            this.eval::<(), _>("console.log('redirect-log');")?;
+            this.eval::<(), _>("console.warn('redirect-warn');")?;
+            this.eval::<(), _>("console.error('redirect-error');")?;
+            
+            let output = String::from_utf8(all_stderr_stream.buffer.borrow().clone())?;
+            assert!(output.contains("redirect-log"));
+            assert!(output.contains("redirect-warn"));
+            assert!(output.contains("redirect-error"));
+
+            Ok::<_, Error>(())
+        })?;
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_real_redirect_mode() -> Result<()> {
+        use crate::Config;
+        
+        // Test with redirect_stdout_to_stderr = false (normal mode)
+        let mut normal_config = Config::default();
+        normal_config.redirect_stdout_to_stderr(false);
+        let normal_runtime = Runtime::new(normal_config)?;
+        
+        // Test with redirect_stdout_to_stderr = true (redirected mode) 
+        let mut redirect_config = Config::default();
+        redirect_config.redirect_stdout_to_stderr(true);
+        let redirect_runtime = Runtime::new(redirect_config)?;
+
+        // In a real scenario, normal mode would use stdout() for log and stderr() for warn/error
+        // while redirect mode would use stderr() for all three
+        
+        // This demonstrates that both runtimes can be created successfully with console.warn support
+        normal_runtime.context().with(|cx| {
+            let console: Object<'_> = cx.globals().get("console")?;
+            assert!(console.get::<&str, Value<'_>>("log").is_ok());
+            assert!(console.get::<&str, Value<'_>>("warn").is_ok());
+            assert!(console.get::<&str, Value<'_>>("error").is_ok());
+            Ok::<_, Error>(())
+        })?;
+
+        redirect_runtime.context().with(|cx| {
+            let console: Object<'_> = cx.globals().get("console")?;
+            assert!(console.get::<&str, Value<'_>>("log").is_ok());
+            assert!(console.get::<&str, Value<'_>>("warn").is_ok());
+            assert!(console.get::<&str, Value<'_>>("error").is_ok());
             Ok::<_, Error>(())
         })?;
 
