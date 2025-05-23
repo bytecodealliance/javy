@@ -3,7 +3,7 @@ mod js_config;
 mod option;
 mod plugin;
 
-use crate::commands::{Cli, Command, EmitPluginCommandOpts};
+use crate::commands::{Cli, Command, EmitPluginCommandOpts, JsGroupValue};
 use anyhow::Result;
 use clap::Parser;
 
@@ -69,7 +69,6 @@ fn main() -> Result<()> {
             Ok(())
         }
         Command::Build(opts) => {
-            let js = JS::from_file(&opts.input)?;
             let codegen_opts: CodegenOptionGroup = opts.codegen.clone().try_into()?;
 
             // Always assume the default plugin if no plugin is provided.
@@ -78,6 +77,22 @@ fn main() -> Result<()> {
                 None => CliPlugin::new(Plugin::new(PLUGIN_MODULE.into()), PluginKind::Default),
             };
 
+            // Check for help in JavaScript options before reading input file
+            for js_value in &opts.js {
+                if matches!(js_value, JsGroupValue::Help) {
+                    let _js_opts = JsConfig::from_group_values(&cli_plugin, opts.js.clone())?;
+                    // The from_group_values function will handle the help display and exit
+                    // This line should never be reached due to the exit in from_group_values
+                    unreachable!("Help should have caused an exit");
+                }
+            }
+
+            // Now require input file if we're not showing help
+            let input_path = opts.input.clone().ok_or_else(|| {
+                anyhow::anyhow!("The following required arguments were not provided: <INPUT>")
+            })?;
+
+            let js = JS::from_file(&input_path)?;
             let js_opts = JsConfig::from_group_values(&cli_plugin, opts.js.clone())?;
 
             let mut generator = Generator::new(cli_plugin.into_plugin());
