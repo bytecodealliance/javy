@@ -646,7 +646,7 @@ end = "2025-05-02"
 criteria = "safe-to-deploy"
 user-id = 73222 # wasmtime-publish
 start = "2024-02-15"
-end = "2025-03-01"
+end = "2026-06-02"
 
 [[trusted.wasmprinter]]
 criteria = "safe-to-deploy"
