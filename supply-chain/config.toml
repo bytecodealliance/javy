@@ -282,10 +282,6 @@ criteria = "safe-to-deploy"
 version = "0.26.2"
 criteria = "safe-to-deploy"
 
-[[exemptions.gimli]]
-version = "0.31.1"
-criteria = "safe-to-deploy"
-
 [[exemptions.halfbrown]]
 version = "0.3.0"
 criteria = "safe-to-deploy"
@@ -321,10 +317,6 @@ criteria = "safe-to-deploy"
 [[exemptions.itertools]]
 version = "0.10.3"
 criteria = "safe-to-deploy"
-
-[[exemptions.itertools]]
-version = "0.13.0"
-criteria = "safe-to-run"
 
 [[exemptions.jobserver]]
 version = "0.1.24"
@@ -655,7 +647,7 @@ version = "0.2.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.uuid]]
-version = "1.16.0"
+version = "1.17.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.value-trait]]

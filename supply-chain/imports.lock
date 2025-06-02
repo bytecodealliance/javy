@@ -121,15 +121,15 @@ user-login = "emilio"
 user-name = "Emilio Cobos Álvarez"
 
 [[publisher.clap]]
-version = "4.5.38"
-when = "2025-05-11"
+version = "4.5.39"
+when = "2025-05-27"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.clap_builder]]
-version = "4.5.38"
-when = "2025-05-11"
+version = "4.5.39"
+when = "2025-05-27"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
@@ -766,8 +766,8 @@ user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmparser]]
-version = "0.230.0"
-when = "2025-05-05"
+version = "0.232.0"
+when = "2025-05-27"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -1534,6 +1534,18 @@ serialization support. All logic is trivial: either unit conversion, or
 hash-consing to support de-duplication required by the format.
 """
 
+[[audits.bytecode-alliance.audits.gimli]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.29.0 -> 0.31.0"
+notes = "Various updates here and there, nothing too major, what you'd expect from a DWARF parsing crate."
+
+[[audits.bytecode-alliance.audits.gimli]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.31.0 -> 0.31.1"
+notes = "No fundmanetally new `unsafe` code, some small refactoring of existing code. Lots of changes in tests, not as many changes in the rest of the crate. More dwarf!"
+
 [[audits.bytecode-alliance.audits.hashbrown]]
 who = "Chris Fallin <chris@cfallin.org>"
 criteria = "safe-to-deploy"
@@ -1579,6 +1591,15 @@ delta = "0.10.5 -> 0.12.1"
 notes = """
 Minimal `unsafe` usage. Few blocks that existed looked reasonable. Does what it
 says on the tin: lots of iterators.
+"""
+
+[[audits.bytecode-alliance.audits.itertools]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.12.1 -> 0.14.0"
+notes = """
+Lots of new iterators and shuffling some things around. Some new unsafe code but
+it's well-documented and well-tested. Nothing suspicious.
 """
 
 [[audits.bytecode-alliance.audits.ittapi]]
@@ -2118,6 +2139,12 @@ delta = "0.2.12 -> 0.2.14"
 who = "David Cook <dcook@divviup.org>"
 criteria = "safe-to-deploy"
 delta = "0.2.14 -> 0.2.15"
+
+[[audits.isrg.audits.itertools]]
+who = "Tim Geoghegan <timg@divviup.org>"
+criteria = "safe-to-run"
+delta = "0.14.0 -> 0.13.0"
+notes = "This *downgrade* only removes `unsafe` code."
 
 [[audits.isrg.audits.num-integer]]
 who = "David Cook <dcook@divviup.org>"
