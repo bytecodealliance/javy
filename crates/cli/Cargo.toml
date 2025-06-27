@@ -11,12 +11,10 @@ name = "javy"
 path = "src/main.rs"
 
 [dependencies]
-wizer = { workspace = true }
 anyhow = { workspace = true }
 wasmtime = { workspace = true }
 wasmtime-wasi = { workspace = true }
 walrus = "0.23.3"
-wasm-opt = "0.116.1"
 tempfile = { workspace = true }
 clap = { version = "4.5.39", features = ["derive"] }
 serde = { workspace = true, default-features = false }
@@ -33,8 +31,6 @@ javy-test-macros = { path = "../test-macros/" }
 [build-dependencies]
 anyhow = { workspace = true }
 tempfile = { workspace = true }
-wasm-opt = { workspace = true }
-wizer = { workspace = true }
 
 [[bench]]
 name = "benchmark"

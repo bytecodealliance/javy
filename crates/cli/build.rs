@@ -1,6 +1,5 @@
 use std::env;
 use std::fs;
-use std::io::{Read, Write};
 
 use std::path::{Path, PathBuf};
 
@@ -28,12 +27,6 @@ fn stub_plugin_for_clippy() -> Result<()> {
     Ok(())
 }
 
-fn read_file(path: impl AsRef<Path>) -> Result<Vec<u8>> {
-    let mut buf: Vec<u8> = vec![];
-    fs::File::open(path.as_ref())?.read_to_end(&mut buf)?;
-    Ok(buf)
-}
-
 // Copy the plugin binary build from the `plugin` crate
 fn copy_plugin() -> Result<()> {
     let cargo_manifest_dir = env::var("CARGO_MANIFEST_DIR")?;
@@ -45,24 +38,9 @@ fn copy_plugin() -> Result<()> {
         .join("target/wasm32-wasip1/release");
     let plugin_path = module_path.join("plugin.wasm");
 
-    // Re-encode overlong indexes before running Wizer.
-    let tempdir = tempfile::tempdir()?;
-    let out_wasmopt_path = tempdir.path().join("out_temp.wasm");
-    wasm_opt::OptimizationOptions::new_opt_level_3() // Aggressively optimize for speed.
-        .shrink_level(wasm_opt::ShrinkLevel::Level0) // Don't optimize for size at the expense of performance.
-        .debug_info(false)
-        .run(&plugin_path, &out_wasmopt_path)?;
-
     let plugin_wizened_path = module_path.join("plugin_wizened.wasm");
 
-    let mut wizer = wizer::Wizer::new();
-    let wizened = wizer
-        .init_func("initialize_runtime")
-        .keep_init_func(true) // Necessary for static codegen.
-        .allow_wasi(true)?
-        .wasm_bulk_memory(true)
-        .run(read_file(&out_wasmopt_path)?.as_slice())?;
-    fs::File::create(&plugin_wizened_path)?.write_all(&wizened)?;
+    fs::copy(&plugin_path, &plugin_wizened_path)?;
 
     println!("cargo:rerun-if-changed={}", plugin_path.to_str().unwrap());
     println!("cargo:rerun-if-changed=build.rs");

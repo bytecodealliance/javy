@@ -49,6 +49,7 @@ pub use javy;
 
 mod config;
 mod namespace;
+mod plugin_definition;
 
 const FUNCTION_MODULE_NAME: &str = "function.mjs";
 
@@ -64,22 +65,18 @@ static EVENT_LOOP_ERR: &str = r#"
             "#;
 
 /// Initializes the Javy runtime.
-pub fn initialize_runtime<F>(config: Config, modify_runtime: F) -> Result<()>
+pub fn initialize_runtime<F, G>(config: F, modify_runtime: G) -> Result<()>
 where
-    F: FnOnce(Runtime) -> Runtime,
+    F: FnOnce() -> Config,
+    G: FnOnce(Runtime) -> Runtime,
 {
-    let runtime = Runtime::new(config.runtime_config).unwrap();
-    let runtime = modify_runtime(runtime);
     unsafe {
-        RUNTIME.take(); // Allow re-initializing.
-        RUNTIME
-            .set(runtime)
-            // `unwrap` requires error `T` to implement `Debug` but `set`
-            // returns the `javy::Runtime` on error and `javy::Runtime` does not
-            // implement `Debug`.
-            .map_err(|_| anyhow!("Could not pre-initialize javy::Runtime"))
-            .unwrap();
-        EVENT_LOOP_ENABLED = config.event_loop;
+        RUNTIME.get_or_init(|| {
+            let config = config();
+            let runtime = Runtime::new(config.runtime_config).unwrap();
+            let runtime = modify_runtime(runtime);
+            runtime
+        })
     };
     Ok(())
 }
@@ -97,7 +94,6 @@ where
 /// # Safety
 ///
 /// * `js_src_ptr` must reference a valid array of unsigned bytes of `js_src_len` length
-#[export_name = "compile_src"]
 pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -> *const u32 {
     // Use initialized runtime when compiling because certain runtime
     // configurations can cause different bytecode to be emitted.
@@ -136,7 +132,6 @@ pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -
 ///   length.
 /// * If `fn_name_ptr` is not 0, it must reference a UTF-8 string with
 ///   `fn_name_len` byte length.
-#[export_name = "invoke"]
 pub unsafe extern "C" fn invoke(
     bytecode_ptr: *const u8,
     bytecode_len: usize,

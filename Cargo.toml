@@ -19,10 +19,8 @@ edition = "2021"
 license = "Apache-2.0 WITH LLVM-exception"
 
 [workspace.dependencies]
-wizer = "9.0.0"
 wasmtime = "31"
 wasmtime-wasi = "31"
-wasm-opt = "0.116.1"
 anyhow = "1.0"
 javy = { path = "crates/javy", version = "4.0.1-alpha.1" }
 tempfile = "3.20.0"

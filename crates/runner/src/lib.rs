@@ -679,8 +679,16 @@ impl Runner {
         // Allow unknown imports for statically linked `test-plugin`.
         self.linker.define_unknown_imports_as_traps(&module)?;
         let instance = self.linker.instantiate(store.as_context_mut(), &module)?;
+
+        // Runtime initialization is around 3,847,297 instructions.
+        let initialize_runtime =
+            instance.get_typed_func::<(), ()>(store.as_context_mut(), "initialize_runtime");
+        if let Ok(initialize_runtime) = initialize_runtime {
+            initialize_runtime.call(store.as_context_mut(), ())?;
+        }
         let run = instance.get_typed_func::<(), ()>(store.as_context_mut(), func)?;
 
+        store.set_fuel(u64::MAX)?;
         let res = run.call(store.as_context_mut(), ());
 
         self.extract_store_data(res, store)
