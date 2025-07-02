@@ -163,7 +163,7 @@ where
 
         for val in val.split(',') {
             opts.push(T::parse(val).map_err(|e| {
-                clap::Error::raw(clap::error::ErrorKind::InvalidValue, format!("{}", e))
+                clap::Error::raw(clap::error::ErrorKind::InvalidValue, format!("{e}"))
             })?)
         }
 

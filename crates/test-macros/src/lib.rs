@@ -128,7 +128,7 @@ fn gen_tests(
             let name = path.file_stem().unwrap().to_str().unwrap();
             let name = name.replace('.', "_");
             let name = name.replace('-', "_");
-            let test_name = Ident::new(&format!("test_{}_{}", prefix, name), Span::call_site());
+            let test_name = Ident::new(&format!("test_{prefix}_{name}"), Span::call_site());
             let ignore = ignore(&test_name.to_string());
 
             let attrs = if ignore {
