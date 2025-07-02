@@ -352,9 +352,6 @@ fn assert_fuel_consumed_within_threshold(target_fuel: u64, fuel_consumed: u64) {
 
     assert!(
         percentage_difference <= threshold,
-        "fuel_consumed ({}) was not within {:.2}% of the target_fuel value ({})",
-        fuel_consumed,
-        threshold,
-        target_fuel
+        "fuel_consumed ({fuel_consumed}) was not within {threshold:.2}% of the target_fuel value ({target_fuel})",
     );
 }
