@@ -1,0 +1,12 @@
+package bytecodealliance:javy-plugin;
+
+interface javy-plugin-exports {
+    compile-src: func(src: list<u8>) -> list<u8>;
+    initialize-runtime: func();
+    invoke: func(bytecode: list<u8>, function: option<string>);
+    config-schema: func() -> list<u8>;
+}
+
+world javy-default-plugin {
+    export javy-plugin-exports;
+}

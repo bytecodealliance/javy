@@ -14,3 +14,7 @@ anyhow = { workspace = true }
 javy-plugin-api = { path = "../plugin-api", features = ["json"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
+wit-bindgen-rt = "0.43.0"
+
+[package.metadata.component]
+package = "bytecodealliance:javy-plugin"

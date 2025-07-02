@@ -1,10 +1,27 @@
 use anyhow::Result;
 use serde::Deserialize;
 use std::{collections::HashMap, str};
-use wasmtime::{AsContextMut, Engine, Linker};
+use wasmtime::{
+    component::{bindgen, Linker},
+    AsContextMut, Engine,
+};
 use wasmtime_wasi::{pipe::MemoryOutputPipe, WasiCtxBuilder};
 
 use crate::{CliPlugin, PluginKind};
+
+bindgen!({
+    inline: r#"
+package bytecodealliance:javy-plugin;
+
+interface javy-plugin-exports {
+    config-schema: func() -> list<u8>;
+}
+
+world javy {
+    export javy-plugin-exports;
+}
+    "#
+});
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -18,21 +35,22 @@ impl ConfigSchema {
             PluginKind::User => Ok(None),
             PluginKind::Default => {
                 let engine = Engine::default();
-                let module = wasmtime::Module::new(&engine, cli_plugin.as_plugin().as_bytes())?;
+                let component = wasmtime::component::Component::new(
+                    &engine,
+                    cli_plugin.as_plugin().as_bytes(),
+                )?;
                 let mut linker = Linker::new(&engine);
-                wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |s| s)?;
+                wasmtime_wasi::add_to_linker_sync(&mut linker)?;
                 let stdout = MemoryOutputPipe::new(usize::MAX);
                 let wasi = WasiCtxBuilder::new()
                     .inherit_stderr()
                     .stdout(stdout.clone())
                     .build_p1();
                 let mut store = wasmtime::Store::new(&engine, wasi);
-                let instance = linker.instantiate(store.as_context_mut(), &module)?;
-                instance
-                    .get_typed_func::<(), ()>(store.as_context_mut(), "config_schema")?
-                    .call(store.as_context_mut(), ())?;
-                drop(store);
-                let config_json = stdout.try_into_inner().unwrap().to_vec();
+                let instance = Javy::instantiate(store.as_context_mut(), &component, &linker)?;
+                let config_json = instance
+                    .bytecodealliance_javy_plugin_javy_plugin_exports()
+                    .call_config_schema(store.as_context_mut())?;
                 let config_schema = serde_json::from_slice::<ConfigSchema>(&config_json)?;
                 let mut configs = Vec::with_capacity(config_schema.supported_properties.len());
                 for config in config_schema.supported_properties {

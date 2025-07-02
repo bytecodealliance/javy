@@ -3,7 +3,6 @@
 use anyhow::Result;
 use javy_plugin_api::Config;
 use serde::Deserialize;
-use std::io::{stdout, Write};
 
 mod runtime_config;
 
@@ -48,14 +47,9 @@ impl SharedConfig {
     }
 }
 
-#[export_name = "config_schema"]
-pub fn config_schema() {
-    stdout()
-        .write_all(
-            serde_json::to_string(&SharedConfig::config_schema())
-                .unwrap()
-                .as_bytes(),
-        )
-        .unwrap();
-    stdout().flush().unwrap();
+pub fn config_schema() -> Vec<u8> {
+    serde_json::to_string(&SharedConfig::config_schema())
+        .unwrap()
+        .as_bytes()
+        .to_vec()
 }

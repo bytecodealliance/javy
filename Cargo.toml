@@ -19,7 +19,7 @@ edition = "2021"
 license = "Apache-2.0 WITH LLVM-exception"
 
 [workspace.dependencies]
-wasmtime = "31"
+wasmtime = { version = "31" }
 wasmtime-wasi = "31"
 anyhow = "1.0"
 javy = { path = "crates/javy", version = "4.0.1-alpha.1" }

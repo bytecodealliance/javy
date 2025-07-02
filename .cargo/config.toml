@@ -2,7 +2,7 @@
 # Cargo doesn't read directives in individual crates when invoking build
 # commands from the workspace root, hence adding it at the workspace root.
 # https://doc.rust-lang.org/cargo/reference/config.html
-[target.wasm32-wasip1]
+[target.wasm32-wasip2]
 rustflags = ["-C", "target-feature=+simd128"]
 
 # We want to ensure that all the MSVC dependencies are statically resolved and

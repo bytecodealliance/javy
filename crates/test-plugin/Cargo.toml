@@ -12,3 +12,7 @@ crate-type = ["cdylib"]
 [dependencies]
 anyhow = { workspace = true }
 javy-plugin-api = { path = "../plugin-api", features = ["json"] }
+wit-bindgen-rt = "0.43.0"
+
+[package.metadata.component]
+package = "bytecodealliance:javy-plugin"

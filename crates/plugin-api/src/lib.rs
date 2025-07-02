@@ -43,7 +43,7 @@ pub use config::Config;
 use javy::quickjs::{self, Ctx, Error as JSError, Function, Module, Value};
 use javy::{from_js_error, Runtime};
 use std::cell::OnceCell;
-use std::{process, slice, str};
+use std::{process, str};
 
 pub use javy;
 
@@ -52,8 +52,6 @@ mod namespace;
 mod plugin_definition;
 
 const FUNCTION_MODULE_NAME: &str = "function.mjs";
-
-static mut COMPILE_SRC_RET_AREA: [u32; 2] = [0; 2];
 
 static mut RUNTIME: OnceCell<Runtime> = OnceCell::new();
 static mut EVENT_LOOP_ENABLED: bool = false;
@@ -94,7 +92,7 @@ where
 /// # Safety
 ///
 /// * `js_src_ptr` must reference a valid array of unsigned bytes of `js_src_len` length
-pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -> *const u32 {
+pub fn compile_src(js_src: &[u8]) -> Vec<u8> {
     // Use initialized runtime when compiling because certain runtime
     // configurations can cause different bytecode to be emitted.
     //
@@ -109,18 +107,9 @@ pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -
     // Setting `config.bignum_extension` to `true` will produce different
     // bytecode than if it were set to `false`.
     let runtime = unsafe { RUNTIME.get().unwrap() };
-    let js_src = str::from_utf8(slice::from_raw_parts(js_src_ptr, js_src_len)).unwrap();
-
-    let bytecode = runtime
-        .compile_to_bytecode(FUNCTION_MODULE_NAME, js_src)
-        .unwrap();
-
-    // We need the bytecode buffer to live longer than this function so it can be read from memory
-    let len = bytecode.len();
-    let bytecode_ptr = Box::leak(bytecode.into_boxed_slice()).as_ptr();
-    COMPILE_SRC_RET_AREA[0] = bytecode_ptr as u32;
-    COMPILE_SRC_RET_AREA[1] = len.try_into().unwrap();
-    COMPILE_SRC_RET_AREA.as_ptr()
+    runtime
+        .compile_to_bytecode(FUNCTION_MODULE_NAME, &String::from_utf8_lossy(js_src))
+        .unwrap()
 }
 
 /// Evaluates QuickJS bytecode and optionally invokes exported JS function with
@@ -132,21 +121,7 @@ pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -
 ///   length.
 /// * If `fn_name_ptr` is not 0, it must reference a UTF-8 string with
 ///   `fn_name_len` byte length.
-pub unsafe extern "C" fn invoke(
-    bytecode_ptr: *const u8,
-    bytecode_len: usize,
-    fn_name_ptr: *const u8,
-    fn_name_len: usize,
-) {
-    let bytecode = slice::from_raw_parts(bytecode_ptr, bytecode_len);
-    let fn_name = if !fn_name_ptr.is_null() && fn_name_len != 0 {
-        Some(str::from_utf8_unchecked(slice::from_raw_parts(
-            fn_name_ptr,
-            fn_name_len,
-        )))
-    } else {
-        None
-    };
+pub fn invoke(bytecode: &[u8], fn_name: Option<&str>) {
     run_bytecode(bytecode, fn_name);
 }
 

@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Result};
+use anyhow::{bail, Result};
 use std::error::Error;
 use std::fmt::{self, Display, Formatter};
 use std::fs;
@@ -7,7 +7,10 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::str;
 use tempfile::TempDir;
-use wasmtime::{AsContextMut, Config, Engine, Instance, Linker, Module, OptLevel, Store};
+use wasmtime::component::Component;
+use wasmtime::{
+    component::Linker, AsContextMut, Config, Engine, Instance, Module, OptLevel, Store,
+};
 use wasmtime_wasi::pipe::{MemoryInputPipe, MemoryOutputPipe};
 use wasmtime_wasi::{preview1::WasiP1Ctx, WasiCtxBuilder};
 
@@ -52,7 +55,7 @@ impl Plugin {
                 .join("..")
                 .join("..")
                 .join("target")
-                .join("wasm32-wasip1")
+                .join("wasm32-wasip2")
                 .join("release")
                 .join("plugin_wizened.wasm"),
         }
@@ -417,105 +420,105 @@ impl Runner {
         })
     }
 
-    pub fn ensure_expected_imports(&self, expect_eval_bytecode: bool) -> Result<()> {
-        let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
-        let instance_name = self.plugin.namespace();
+    // pub fn ensure_expected_imports(&self, expect_eval_bytecode: bool) -> Result<()> {
+    //     let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
+    //     let instance_name = self.plugin.namespace();
 
-        let imports = module
-            .imports()
-            .filter(|i| i.module() == instance_name)
-            .collect::<Vec<_>>();
-        let expected_import_count = if expect_eval_bytecode { 4 } else { 3 };
-        if imports.len() != expected_import_count {
-            bail!("Dynamically linked modules should have exactly {expected_import_count} imports for {instance_name}");
-        }
+    //     let imports = module
+    //         .imports()
+    //         .filter(|i| i.module() == instance_name)
+    //         .collect::<Vec<_>>();
+    //     let expected_import_count = if expect_eval_bytecode { 4 } else { 3 };
+    //     if imports.len() != expected_import_count {
+    //         bail!("Dynamically linked modules should have exactly {expected_import_count} imports for {instance_name}");
+    //     }
 
-        let realloc = imports
-            .iter()
-            .find(|i| i.name() == "canonical_abi_realloc")
-            .ok_or_else(|| anyhow!("Should have canonical_abi_realloc import"))?;
-        let ty = realloc.ty();
-        let f = ty.unwrap_func();
-        if !f.params().all(|p| p.is_i32()) || f.params().len() != 4 {
-            bail!("canonical_abi_realloc should accept 4 i32s as parameters");
-        }
-        if !f.results().all(|p| p.is_i32()) || f.results().len() != 1 {
-            bail!("canonical_abi_realloc should return 1 i32 as a result");
-        }
+    //     let realloc = imports
+    //         .iter()
+    //         .find(|i| i.name() == "canonical_abi_realloc")
+    //         .ok_or_else(|| anyhow!("Should have canonical_abi_realloc import"))?;
+    //     let ty = realloc.ty();
+    //     let f = ty.unwrap_func();
+    //     if !f.params().all(|p| p.is_i32()) || f.params().len() != 4 {
+    //         bail!("canonical_abi_realloc should accept 4 i32s as parameters");
+    //     }
+    //     if !f.results().all(|p| p.is_i32()) || f.results().len() != 1 {
+    //         bail!("canonical_abi_realloc should return 1 i32 as a result");
+    //     }
 
-        imports
-            .iter()
-            .find(|i| i.name() == "memory" && i.ty().memory().is_some())
-            .ok_or_else(|| anyhow!("Should have memory import named memory"))?;
+    //     imports
+    //         .iter()
+    //         .find(|i| i.name() == "memory" && i.ty().memory().is_some())
+    //         .ok_or_else(|| anyhow!("Should have memory import named memory"))?;
 
-        if expect_eval_bytecode {
-            let eval_bytecode = imports
-                .iter()
-                .find(|i| i.name() == "eval_bytecode")
-                .ok_or_else(|| anyhow!("Should have eval_bytecode import"))?;
-            let ty = eval_bytecode.ty();
-            let f = ty.unwrap_func();
-            if !f.params().all(|p| p.is_i32()) || f.params().len() != 2 {
-                bail!("eval_bytecode should accept 2 i32s as parameters");
-            }
-            if f.results().len() != 0 {
-                bail!("eval_bytecode should return no results");
-            }
-        }
+    //     if expect_eval_bytecode {
+    //         let eval_bytecode = imports
+    //             .iter()
+    //             .find(|i| i.name() == "eval_bytecode")
+    //             .ok_or_else(|| anyhow!("Should have eval_bytecode import"))?;
+    //         let ty = eval_bytecode.ty();
+    //         let f = ty.unwrap_func();
+    //         if !f.params().all(|p| p.is_i32()) || f.params().len() != 2 {
+    //             bail!("eval_bytecode should accept 2 i32s as parameters");
+    //         }
+    //         if f.results().len() != 0 {
+    //             bail!("eval_bytecode should return no results");
+    //         }
+    //     }
 
-        let invoke = imports
-            .iter()
-            .find(|i| i.name() == "invoke")
-            .ok_or_else(|| anyhow!("Should have invoke import"))?;
-        let ty = invoke.ty();
-        let f = ty.unwrap_func();
-        if !f.params().all(|p| p.is_i32()) || f.params().len() != 4 {
-            bail!("invoke should accept 4 i32s as parameters");
-        }
-        if f.results().len() != 0 {
-            bail!("invoke should return no results");
-        }
+    //     let invoke = imports
+    //         .iter()
+    //         .find(|i| i.name() == "invoke")
+    //         .ok_or_else(|| anyhow!("Should have invoke import"))?;
+    //     let ty = invoke.ty();
+    //     let f = ty.unwrap_func();
+    //     if !f.params().all(|p| p.is_i32()) || f.params().len() != 4 {
+    //         bail!("invoke should accept 4 i32s as parameters");
+    //     }
+    //     if f.results().len() != 0 {
+    //         bail!("invoke should return no results");
+    //     }
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
-    pub fn assert_producers(&self) -> Result<()> {
-        let producers_section = wasmparser::Parser::new(0)
-            .parse_all(&self.wasm)
-            .find_map(|payload| {
-                if let Ok(wasmparser::Payload::CustomSection(c)) = payload {
-                    if let wasmparser::KnownCustom::Producers(r) = c.as_known() {
-                        return Some(r);
-                    }
-                }
-                None
-            })
-            .expect("Should have producers custom section");
-        let fields = producers_section
-            .into_iter()
-            .collect::<Result<Vec<_>, _>>()?;
+    // pub fn assert_producers(&self) -> Result<()> {
+    //     let producers_section = wasmparser::Parser::new(0)
+    //         .parse_all(&self.wasm)
+    //         .find_map(|payload| {
+    //             if let Ok(wasmparser::Payload::CustomSection(c)) = payload {
+    //                 if let wasmparser::KnownCustom::Producers(r) = c.as_known() {
+    //                     return Some(r);
+    //                 }
+    //             }
+    //             None
+    //         })
+    //         .expect("Should have producers custom section");
+    //     let fields = producers_section
+    //         .into_iter()
+    //         .collect::<Result<Vec<_>, _>>()?;
 
-        assert_eq!(2, fields.len());
+    //     assert_eq!(2, fields.len());
 
-        let language_field = &fields[0];
-        assert_eq!("language", language_field.name);
-        assert_eq!(1, language_field.values.count());
-        let language_value = language_field.values.clone().into_iter().next().unwrap()?;
-        assert_eq!("JavaScript", language_value.name);
-        assert_eq!("ES2020", language_value.version);
+    //     let language_field = &fields[0];
+    //     assert_eq!("language", language_field.name);
+    //     assert_eq!(1, language_field.values.count());
+    //     let language_value = language_field.values.clone().into_iter().next().unwrap()?;
+    //     assert_eq!("JavaScript", language_value.name);
+    //     assert_eq!("ES2020", language_value.version);
 
-        let processed_by_field = &fields[1];
-        assert_eq!("processed-by", processed_by_field.name);
-        assert_eq!(1, processed_by_field.values.count());
-        let processed_by_value = processed_by_field
-            .values
-            .clone()
-            .into_iter()
-            .next()
-            .unwrap()?;
-        assert_eq!("Javy", processed_by_value.name);
-        Ok(())
-    }
+    //     let processed_by_field = &fields[1];
+    //     assert_eq!("processed-by", processed_by_field.name);
+    //     assert_eq!(1, processed_by_field.values.count());
+    //     let processed_by_value = processed_by_field
+    //         .values
+    //         .clone()
+    //         .into_iter()
+    //         .next()
+    //         .unwrap()?;
+    //     assert_eq!("Javy", processed_by_value.name);
+    //     Ok(())
+    // }
 
     fn out_wasm(dir: &TempDir) -> PathBuf {
         let name = format!("{}.wasm", uuid::Uuid::new_v4());
@@ -645,7 +648,7 @@ impl Runner {
     fn setup_linker(engine: &Engine) -> Result<Linker<StoreContext>> {
         let mut linker = Linker::new(engine);
 
-        wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |ctx: &mut StoreContext| {
+        wasmtime_wasi::add_to_linker_sync(&mut linker, |ctx: &mut StoreContext| {
             ctx.wasi.as_mut().unwrap()
         })?;
 
@@ -700,7 +703,7 @@ impl Runner {
         use_exported_fn: UseExportedFn,
     ) -> Result<(Vec<u8>, Vec<u8>, u64)> {
         let mut store = Self::setup_store(self.linker.engine(), vec![])?;
-        let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
+        let component = Component::from_binary(self.linker.engine(), &self.wasm)?;
 
         let instance = self.linker.instantiate(store.as_context_mut(), &module)?;
 

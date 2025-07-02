@@ -1,12 +1,36 @@
-use std::io::{self, Read};
-
 use javy_plugin_api::javy::Runtime;
-use javy_plugin_api::{import_namespace, javy_plugin, Config};
-use shared_config::SharedConfig;
+use javy_plugin_api::{import_namespace, Config};
 
+use crate::bindings::exports::bytecodealliance::javy_plugin::javy_plugin_exports::Guest;
+
+mod bindings;
 mod shared_config;
 
 import_namespace!("javy_quickjs_provider_v3");
+
+struct Component;
+
+impl Guest for Component {
+    fn compile_src(src: Vec<u8>) -> Vec<u8> {
+        javy_plugin_api::initialize_runtime(config, modify_runtime).unwrap();
+        javy_plugin_api::compile_src(&src)
+    }
+
+    fn initialize_runtime() -> () {
+        javy_plugin_api::initialize_runtime(config, modify_runtime).unwrap();
+    }
+
+    fn invoke(bytecode: Vec<u8>, function: Option<String>) -> () {
+        javy_plugin_api::initialize_runtime(config, modify_runtime).unwrap();
+        javy_plugin_api::invoke(&bytecode, function.as_deref())
+    }
+
+    fn config_schema() -> Vec<u8> {
+        shared_config::config_schema()
+    }
+}
+
+bindings::export!(Component with_types_in bindings);
 
 fn config() -> Config {
     // Read shared config JSON in from stdin.
@@ -36,7 +60,7 @@ fn modify_runtime(runtime: Runtime) -> Runtime {
     runtime
 }
 
-javy_plugin!(config, modify_runtime);
+// javy_plugin!(config, modify_runtime);
 
 /// Evaluates QuickJS bytecode
 ///
