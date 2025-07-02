@@ -86,10 +86,6 @@ criteria = "safe-to-deploy"
 version = "1.0.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.bitflags]]
-version = "2.9.1"
-criteria = "safe-to-deploy"
-
 [[exemptions.bitvec]]
 version = "1.0.1"
 criteria = "safe-to-deploy"
@@ -320,10 +316,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.jobserver]]
 version = "0.1.24"
-criteria = "safe-to-deploy"
-
-[[exemptions.js-sys]]
-version = "0.3.77"
 criteria = "safe-to-deploy"
 
 [[exemptions.lazycell]]
@@ -646,10 +638,6 @@ criteria = "safe-to-deploy"
 version = "1.2.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.utf8parse]]
-version = "0.2.2"
-criteria = "safe-to-deploy"
-
 [[exemptions.uuid]]
 version = "1.17.0"
 criteria = "safe-to-deploy"
@@ -672,14 +660,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.walrus-macro]]
 version = "0.22.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.wasm-bindgen]]
-version = "0.2.100"
-criteria = "safe-to-deploy"
-
-[[exemptions.wasm-bindgen-macro]]
-version = "0.2.100"
 criteria = "safe-to-deploy"
 
 [[exemptions.wasm-opt]]
