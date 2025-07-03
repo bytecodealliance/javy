@@ -8,11 +8,10 @@ use std::process::Command;
 use std::str;
 use tempfile::TempDir;
 use wasmtime::component::Component;
-use wasmtime::{
-    component::Linker, AsContextMut, Config, Engine, Instance, Module, OptLevel, Store,
-};
+use wasmtime::{component::Linker, AsContextMut, Config, Engine, Instance, OptLevel, Store};
 use wasmtime_wasi::pipe::{MemoryInputPipe, MemoryOutputPipe};
-use wasmtime_wasi::{preview1::WasiP1Ctx, WasiCtxBuilder};
+use wasmtime_wasi::WasiCtxBuilder;
+use wasmtime_wasi::{IoView, ResourceTable, WasiCtx, WasiView};
 
 #[derive(Clone)]
 pub enum JavyCommand {
@@ -84,8 +83,8 @@ pub struct Builder {
     /// Whether to enable the event loop.
     event_loop: Option<bool>,
     built: bool,
-    /// Preload the module at path, using the given instance name.
-    preload: Option<(String, PathBuf)>,
+    /// Make this dynamic.
+    dynamic: bool,
     /// Whether to use the `compile` or `build` command.
     command: JavyCommand,
     /// The javy plugin.
@@ -102,7 +101,7 @@ impl Default for Builder {
             bin_path: "javy".into(),
             root: Default::default(),
             built: false,
-            preload: None,
+            dynamic: false,
             command: JavyCommand::Build,
             javy_stream_io: None,
             simd_json_builtins: None,
@@ -139,8 +138,8 @@ impl Builder {
         self
     }
 
-    pub fn preload(&mut self, ns: String, wasm: impl Into<PathBuf>) -> &mut Self {
-        self.preload = Some((ns, wasm.into()));
+    pub fn dynamic(&mut self, dynamic: bool) -> &mut Self {
+        self.dynamic = dynamic;
         self
     }
 
@@ -196,7 +195,7 @@ impl Builder {
             text_encoding,
             event_loop,
             built: _,
-            preload,
+            dynamic,
             command,
             plugin,
         } = std::mem::take(self);
@@ -205,8 +204,8 @@ impl Builder {
 
         match command {
             JavyCommand::Compile => {
-                if let Some(preload) = preload {
-                    Runner::compile_dynamic(bin_path, root, input, wit, world, preload, plugin)
+                if dynamic {
+                    Runner::compile_dynamic(bin_path, root, input, wit, world, plugin)
                 } else {
                     Runner::compile_static(bin_path, root, input, wit, world, plugin)
                 }
@@ -221,7 +220,7 @@ impl Builder {
                 simd_json_builtins,
                 text_encoding,
                 event_loop,
-                preload,
+                dynamic,
                 plugin,
             ),
         }
@@ -232,7 +231,8 @@ pub struct Runner {
     pub wasm: Vec<u8>,
     linker: Linker<StoreContext>,
     initial_fuel: u64,
-    preload: Option<(String, Vec<u8>)>,
+    // preload: Option<(String, Vec<u8>)>,
+    dynamic: bool,
     plugin: Plugin,
 }
 
@@ -256,7 +256,8 @@ impl Display for RunnerError {
 }
 
 struct StoreContext {
-    wasi: Option<WasiP1Ctx>,
+    wasi: Option<WasiCtx>,
+    resource_table: ResourceTable,
     logs: MemoryOutputPipe,
     output: MemoryOutputPipe,
 }
@@ -269,13 +270,26 @@ impl StoreContext {
             .stdin(MemoryInputPipe::new(input))
             .stdout(output.clone())
             .stderr(logs.clone())
-            .build_p1();
+            .build();
 
         Self {
             wasi: Some(wasi),
+            resource_table: ResourceTable::new(),
             output,
             logs,
         }
+    }
+}
+
+impl WasiView for StoreContext {
+    fn ctx(&mut self) -> &mut wasmtime_wasi::WasiCtx {
+        self.wasi.as_mut().unwrap()
+    }
+}
+
+impl IoView for StoreContext {
+    fn table(&mut self) -> &mut wasmtime_wasi::ResourceTable {
+        &mut self.resource_table
     }
 }
 
@@ -296,7 +310,7 @@ impl Runner {
         override_json_parse_and_stringify: Option<bool>,
         text_encoding: Option<bool>,
         event_loop: Option<bool>,
-        preload: Option<(String, PathBuf)>,
+        dynamic: bool,
         plugin: Plugin,
     ) -> Result<Self> {
         // This directory is unique and will automatically get deleted
@@ -311,7 +325,7 @@ impl Runner {
             &wasm_file,
             &wit_file,
             &world,
-            preload.is_some(),
+            dynamic,
             &javy_stream_io,
             &override_json_parse_and_stringify,
             &text_encoding,
@@ -326,19 +340,12 @@ impl Runner {
         let engine = Self::setup_engine();
         let linker = Self::setup_linker(&engine)?;
 
-        let preload = preload
-            .map(|(name, path)| {
-                let module = fs::read(path)?;
-                Ok::<(String, Vec<u8>), anyhow::Error>((name, module))
-            })
-            .transpose()?;
-
         Ok(Self {
             wasm,
             linker,
             initial_fuel: u64::MAX,
-            preload,
-            plugin: Plugin::Default,
+            dynamic,
+            plugin,
         })
     }
 
@@ -370,7 +377,7 @@ impl Runner {
             wasm,
             linker,
             initial_fuel: u64::MAX,
-            preload: None,
+            dynamic: false,
             plugin,
         })
     }
@@ -381,7 +388,6 @@ impl Runner {
         source: impl AsRef<Path>,
         wit: Option<PathBuf>,
         world: Option<String>,
-        preload: (String, PathBuf),
         plugin: Plugin,
     ) -> Result<Self> {
         let tempdir = tempfile::tempdir()?;
@@ -395,7 +401,6 @@ impl Runner {
         Self::exec_command(bin, root, args)?;
 
         let wasm = fs::read(&wasm_file)?;
-        let preload_module = fs::read(&preload.1)?;
 
         let engine = Self::setup_engine();
         let linker = Self::setup_linker(&engine)?;
@@ -404,21 +409,21 @@ impl Runner {
             wasm,
             linker,
             initial_fuel: u64::MAX,
-            preload: Some((preload.0, preload_module)),
+            dynamic: true,
             plugin,
         })
     }
 
-    pub fn with_dylib(wasm: Vec<u8>) -> Result<Self> {
-        let engine = Self::setup_engine();
-        Ok(Self {
-            wasm,
-            linker: Self::setup_linker(&engine)?,
-            initial_fuel: u64::MAX,
-            preload: None,
-            plugin: Plugin::Default,
-        })
-    }
+    // pub fn with_dylib(wasm: Vec<u8>) -> Result<Self> {
+    //     let engine = Self::setup_engine();
+    //     Ok(Self {
+    //         wasm,
+    //         linker: Self::setup_linker(&engine)?,
+    //         initial_fuel: u64::MAX,
+    //         preload: None,
+    //         plugin: Plugin::Default,
+    //     })
+    // }
 
     // pub fn ensure_expected_imports(&self, expect_eval_bytecode: bool) -> Result<()> {
     //     let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
@@ -648,9 +653,7 @@ impl Runner {
     fn setup_linker(engine: &Engine) -> Result<Linker<StoreContext>> {
         let mut linker = Linker::new(engine);
 
-        wasmtime_wasi::add_to_linker_sync(&mut linker, |ctx: &mut StoreContext| {
-            ctx.wasi.as_mut().unwrap()
-        })?;
+        wasmtime_wasi::add_to_linker_sync(&mut linker)?;
 
         Ok(linker)
     }
@@ -667,21 +670,26 @@ impl Runner {
 
     pub fn exec_func(&mut self, func: &str, input: Vec<u8>) -> Result<(Vec<u8>, Vec<u8>, u64)> {
         let mut store = Self::setup_store(self.linker.engine(), input)?;
-        let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
+        let component = Component::from_binary(self.linker.engine(), &self.wasm)?;
 
-        if let Some((name, bytes)) = &self.preload {
-            let module = Module::from_binary(self.linker.engine(), bytes)?;
+        if self.dynamic {
+            let component =
+                Component::from_binary(self.linker.engine(), &fs::read(self.plugin.path())?)?;
             // Allow unknown imports for dynamically linked `test-plugin`.
-            self.linker.define_unknown_imports_as_traps(&module)?;
-            let instance = self.linker.instantiate(store.as_context_mut(), &module)?;
+            self.linker.define_unknown_imports_as_traps(&component)?;
+            let instance = self
+                .linker
+                .instantiate(store.as_context_mut(), &component)?;
             self.linker.allow_shadowing(true);
-            self.linker
-                .instance(store.as_context_mut(), name, instance)?;
+            // self.linker
+            //     .instance(store.as_context_mut(), name, instance)?;
         }
 
         // Allow unknown imports for statically linked `test-plugin`.
-        self.linker.define_unknown_imports_as_traps(&module)?;
-        let instance = self.linker.instantiate(store.as_context_mut(), &module)?;
+        self.linker.define_unknown_imports_as_traps(&component)?;
+        let instance = self
+            .linker
+            .instantiate(store.as_context_mut(), &component)?;
 
         // Runtime initialization is around 3,847,297 instructions.
         let initialize_runtime =
@@ -697,34 +705,34 @@ impl Runner {
         self.extract_store_data(res, store)
     }
 
-    pub fn exec_through_dylib(
-        &mut self,
-        src: &str,
-        use_exported_fn: UseExportedFn,
-    ) -> Result<(Vec<u8>, Vec<u8>, u64)> {
-        let mut store = Self::setup_store(self.linker.engine(), vec![])?;
-        let component = Component::from_binary(self.linker.engine(), &self.wasm)?;
+    // pub fn exec_through_dylib(
+    //     &mut self,
+    //     src: &str,
+    //     use_exported_fn: UseExportedFn,
+    // ) -> Result<(Vec<u8>, Vec<u8>, u64)> {
+    //     let mut store = Self::setup_store(self.linker.engine(), vec![])?;
+    //     let component = Component::from_binary(self.linker.engine(), &self.wasm)?;
 
-        let instance = self.linker.instantiate(store.as_context_mut(), &module)?;
+    //     let instance = self.linker.instantiate(store.as_context_mut(), &module)?;
 
-        let (bc_ptr, bc_len) = Self::compile(src.as_bytes(), store.as_context_mut(), &instance)?;
-        let res = match use_exported_fn {
-            UseExportedFn::EvalBytecode => instance
-                .get_typed_func::<(u32, u32), ()>(store.as_context_mut(), "eval_bytecode")?
-                .call(store.as_context_mut(), (bc_ptr, bc_len)),
-            UseExportedFn::Invoke(func) => {
-                let (fn_ptr, fn_len) = match func {
-                    Some(func) => Self::copy_func_name(func, &instance, store.as_context_mut())?,
-                    None => (0, 0),
-                };
-                instance
-                    .get_typed_func::<(u32, u32, u32, u32), ()>(store.as_context_mut(), "invoke")?
-                    .call(store.as_context_mut(), (bc_ptr, bc_len, fn_ptr, fn_len))
-            }
-        };
+    //     let (bc_ptr, bc_len) = Self::compile(src.as_bytes(), store.as_context_mut(), &instance)?;
+    //     let res = match use_exported_fn {
+    //         UseExportedFn::EvalBytecode => instance
+    //             .get_typed_func::<(u32, u32), ()>(store.as_context_mut(), "eval_bytecode")?
+    //             .call(store.as_context_mut(), (bc_ptr, bc_len)),
+    //         UseExportedFn::Invoke(func) => {
+    //             let (fn_ptr, fn_len) = match func {
+    //                 Some(func) => Self::copy_func_name(func, &instance, store.as_context_mut())?,
+    //                 None => (0, 0),
+    //             };
+    //             instance
+    //                 .get_typed_func::<(u32, u32, u32, u32), ()>(store.as_context_mut(), "invoke")?
+    //                 .call(store.as_context_mut(), (bc_ptr, bc_len, fn_ptr, fn_len))
+    //         }
+    //     };
 
-        self.extract_store_data(res, store)
-    }
+    //     self.extract_store_data(res, store)
+    // }
 
     fn copy_func_name(
         name: &str,

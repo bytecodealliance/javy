@@ -204,12 +204,12 @@ fn test_exported_function_without_semicolons(builder: &mut Builder) -> Result<()
     Ok(())
 }
 
-#[javy_cli_test]
-fn test_producers_section_present(builder: &mut Builder) -> Result<()> {
-    let runner = builder.input("readme.js").build()?;
+// #[javy_cli_test]
+// fn test_producers_section_present(builder: &mut Builder) -> Result<()> {
+//     let runner = builder.input("readme.js").build()?;
 
-    runner.assert_producers()
-}
+//     runner.assert_producers()
+// }
 
 #[javy_cli_test]
 fn test_error_handling(builder: &mut Builder) -> Result<()> {

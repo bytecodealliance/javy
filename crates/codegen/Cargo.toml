@@ -26,3 +26,4 @@ swc_core = { version = "16.10.0", features = [
 wit-parser = "0.212.0"
 convert_case = "0.8.0"
 tempfile = { workspace = true }
+wasmparser = "0.235.0"

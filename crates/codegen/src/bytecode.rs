@@ -3,33 +3,57 @@ use wasmtime::{
     component::{bindgen, Component, Linker},
     AsContextMut, Engine, Store,
 };
-use wasmtime_wasi::WasiCtxBuilder;
+use wasmtime_wasi::{IoView, ResourceTable, WasiCtx, WasiCtxBuilder, WasiView};
 
 bindgen!({
     inline: r#"
-package bytecodealliance:javy;
+package bytecodealliance:javy-plugin;
 
-interface javy-funcs {
+interface javy-plugin-exports {
     compile-src: func(bytecode: list<u8>) -> list<u8>;
 }
 
 world javy {
-    export javy-funcs;
+    export javy-plugin-exports;
 }
     "#
 });
+
+struct Wrapper {
+    wasi: WasiCtx,
+    resource_table: ResourceTable,
+}
+
+impl WasiView for Wrapper {
+    fn ctx(&mut self) -> &mut WasiCtx {
+        &mut self.wasi
+    }
+}
+
+impl IoView for Wrapper {
+    fn table(&mut self) -> &mut ResourceTable {
+        &mut self.resource_table
+    }
+}
 
 pub(crate) fn compile_source(plugin_bytes: &[u8], js_source_code: &[u8]) -> Result<Vec<u8>> {
     let engine = Engine::default();
     let component = Component::new(&engine, plugin_bytes)?;
     let mut linker = Linker::new(&engine);
     wasmtime_wasi::add_to_linker_sync(&mut linker)?;
-    linker.define_unknown_imports_as_traps(&component)?;
-    let wasi = WasiCtxBuilder::new().inherit_stderr().build_p1();
-    let mut store = Store::new(&engine, wasi);
+    // Error: map entry `wasi:cli/environment@0.2.3` defined twice
+    // linker.define_unknown_imports_as_traps(&component)?;
+    let wasi = WasiCtxBuilder::new().inherit_stderr().build();
+    let mut store = Store::new(
+        &engine,
+        Wrapper {
+            wasi,
+            resource_table: ResourceTable::new(),
+        },
+    );
     let instance = Javy::instantiate(store.as_context_mut(), &component, &linker)?;
     let bytecode = instance
-        .bytecodealliance_javy_javy_funcs()
+        .bytecodealliance_javy_plugin_javy_plugin_exports()
         .call_compile_src(store.as_context_mut(), js_source_code)?;
     Ok(bytecode)
 }
