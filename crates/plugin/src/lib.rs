@@ -62,16 +62,16 @@ fn modify_runtime(runtime: Runtime) -> Runtime {
 
 // javy_plugin!(config, modify_runtime);
 
-/// Evaluates QuickJS bytecode
-///
-/// # Safety
-///
-/// * `bytecode_ptr` must reference a valid array of unsigned bytes of `bytecode_len` length
-// This will be removed as soon as we stop emitting calls to it in dynamically
-// linked modules.
-#[export_name = "eval_bytecode"]
-pub unsafe extern "C" fn eval_bytecode(bytecode_ptr: *const u8, bytecode_len: usize) {
-    let bytecode = std::slice::from_raw_parts(bytecode_ptr, bytecode_len);
-    javy_plugin_api::initialize_runtime(config, modify_runtime).unwrap();
-    javy_plugin_api::run_bytecode(bytecode, None);
-}
+// /// Evaluates QuickJS bytecode
+// ///
+// /// # Safety
+// ///
+// /// * `bytecode_ptr` must reference a valid array of unsigned bytes of `bytecode_len` length
+// // This will be removed as soon as we stop emitting calls to it in dynamically
+// // linked modules.
+// #[export_name = "eval_bytecode"]
+// pub unsafe extern "C" fn eval_bytecode(bytecode_ptr: *const u8, bytecode_len: usize) {
+//     let bytecode = std::slice::from_raw_parts(bytecode_ptr, bytecode_len);
+//     javy_plugin_api::initialize_runtime(config, modify_runtime).unwrap();
+//     javy_plugin_api::run_bytecode(bytecode, None);
+// }
