@@ -291,18 +291,16 @@ fn expand_cli_tests(test_config: &CliTestConfig, func: syn::ItemFn) -> Result<To
             if command_name == "Compile" {
                 quote! {
                     let plugin = javy_runner::Plugin::V2;
-                    // builder.preload(
-                    //     plugin.namespace().into(),
-                    //     plugin.path(),
-                    // );
-                    builder.dynamic(true);
+                    builder.preload(
+                        plugin.namespace().into(),
+                        plugin.path(),
+                    );
                     builder.plugin(plugin);
                 }
             } else {
                 quote! {
                     let plugin = javy_runner::Plugin::DefaultAsUser;
-                    // builder.preload(plugin.namespace().into(), plugin.path());
-                    builder.dynamic(true);
+                    builder.preload(plugin.namespace().into(), plugin.path());
                     builder.plugin(plugin);
                 }
             }

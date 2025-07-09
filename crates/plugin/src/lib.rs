@@ -1,7 +1,10 @@
+use std::io::{self, Read};
+
 use javy_plugin_api::javy::Runtime;
 use javy_plugin_api::{import_namespace, Config};
 
 use crate::bindings::exports::bytecodealliance::javy_plugin::javy_plugin_exports::Guest;
+use crate::shared_config::SharedConfig;
 
 mod bindings;
 mod shared_config;
@@ -44,15 +47,15 @@ fn config() -> Config {
         .javy_stream_io(true)
         .simd_json_builtins(true);
 
-    // let mut config_bytes = vec![];
-    // let shared_config = match io::stdin().read_to_end(&mut config_bytes) {
-    //     Ok(0) => None,
-    //     Ok(_) => Some(SharedConfig::parse_from_json(&config_bytes).unwrap()),
-    //     Err(e) => panic!("Error reading from stdin: {e}"),
-    // };
-    // if let Some(shared_config) = shared_config {
-    //     shared_config.apply_to_config(&mut config);
-    // }
+    let mut config_bytes = vec![];
+    let shared_config = match io::stdin().read_to_end(&mut config_bytes) {
+        Ok(0) => None,
+        Ok(_) => Some(SharedConfig::parse_from_json(&config_bytes).unwrap()),
+        Err(e) => panic!("Error reading from stdin: {e}"),
+    };
+    if let Some(shared_config) = shared_config {
+        shared_config.apply_to_config(&mut config);
+    }
     config
 }
 

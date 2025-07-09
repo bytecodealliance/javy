@@ -1,8 +1,6 @@
-use anyhow::{bail, Result};
+use anyhow::Result;
 use javy_runner::{Builder, Plugin, Runner, RunnerError};
-use std::{path::PathBuf, process::Command, str};
-use wasmtime::{AsContextMut, Engine, Linker, Module, Store};
-use wasmtime_wasi::WasiCtxBuilder;
+use std::str;
 
 use javy_test_macros::javy_cli_test;
 
@@ -21,7 +19,7 @@ fn test_identity(builder: &mut Builder) -> Result<()> {
 
     let (output, _, fuel_consumed) = run_with_u8s(&mut runner, 42);
     assert_eq!(42, output);
-    assert_fuel_consumed_within_threshold(48_156, fuel_consumed);
+    assert_fuel_consumed_within_threshold(46_674, fuel_consumed);
     Ok(())
 }
 
@@ -41,7 +39,7 @@ fn test_recursive_fib(builder: &mut Builder) -> Result<()> {
 
     let (output, _, fuel_consumed) = run_with_u8s(&mut runner, 5);
     assert_eq!(8, output);
-    assert_fuel_consumed_within_threshold(70_517, fuel_consumed);
+    assert_fuel_consumed_within_threshold(68_187, fuel_consumed);
     Ok(())
 }
 
@@ -51,7 +49,7 @@ fn test_str(builder: &mut Builder) -> Result<()> {
 
     let (output, _, fuel_consumed) = run(&mut runner, "hello".into());
     assert_eq!("world".as_bytes(), output);
-    assert_fuel_consumed_within_threshold(148_988, fuel_consumed);
+    assert_fuel_consumed_within_threshold(144_943, fuel_consumed);
     Ok(())
 }
 
@@ -61,7 +59,7 @@ fn test_encoding(builder: &mut Builder) -> Result<()> {
 
     let (output, _, fuel_consumed) = run(&mut runner, "hello".into());
     assert_eq!("el".as_bytes(), output);
-    assert_fuel_consumed_within_threshold(260_446, fuel_consumed);
+    assert_fuel_consumed_within_threshold(253_050, fuel_consumed);
 
     let (output, _, _) = run(&mut runner, "invalid".into());
     assert_eq!("true".as_bytes(), output);
@@ -81,7 +79,7 @@ fn test_console_log(builder: &mut Builder) -> Result<()> {
     let (output, logs, fuel_consumed) = run(&mut runner, vec![]);
     assert_eq!(b"hello world from console.log\n".to_vec(), output);
     assert_eq!("hello world from console.error\n", logs.as_str());
-    assert_fuel_consumed_within_threshold(36_312, fuel_consumed);
+    assert_fuel_consumed_within_threshold(35_200, fuel_consumed);
     Ok(())
 }
 
@@ -258,7 +256,7 @@ fn test_exported_default_fn(builder: &mut Builder) -> Result<()> {
         .build()?;
     let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", vec![]);
     assert_eq!(logs, "42\n");
-    assert_fuel_consumed_within_threshold(40_557, fuel_consumed);
+    assert_fuel_consumed_within_threshold(39_661, fuel_consumed);
     Ok(())
 }
 

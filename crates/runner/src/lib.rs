@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{anyhow, bail, Result};
 use std::error::Error;
 use std::fmt::{self, Display, Formatter};
 use std::fs;
@@ -7,11 +7,9 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::str;
 use tempfile::TempDir;
-use wasmtime::component::Component;
-use wasmtime::{component::Linker, AsContextMut, Config, Engine, Instance, OptLevel, Store};
+use wasmtime::{AsContextMut, Config, Engine, Instance, Linker, Module, OptLevel, Store};
 use wasmtime_wasi::pipe::{MemoryInputPipe, MemoryOutputPipe};
-use wasmtime_wasi::WasiCtxBuilder;
-use wasmtime_wasi::{IoView, ResourceTable, WasiCtx, WasiView};
+use wasmtime_wasi::{preview1::WasiP1Ctx, WasiCtxBuilder};
 
 #[derive(Clone)]
 pub enum JavyCommand {
@@ -19,7 +17,7 @@ pub enum JavyCommand {
     Compile,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum Plugin {
     V2,
     Default,
@@ -34,8 +32,10 @@ impl Plugin {
             Self::V2 => "javy_quickjs_provider_v2",
             // Could try and derive this but not going to for now since tests
             // will break if it changes.
-            Self::Default | Self::DefaultAsUser => "javy_quickjs_provider_v3",
-            Self::User { .. } => "test_plugin",
+            Self::Default | Self::DefaultAsUser => {
+                "bytecodealliance:javy-plugin/javy-plugin-exports"
+            }
+            Self::User { .. } => "bytecodealliance:javy-plugin/javy-plugin-exports", // FIXME: this value should not have to be the same as the default namespace
         }
     }
 
@@ -83,8 +83,8 @@ pub struct Builder {
     /// Whether to enable the event loop.
     event_loop: Option<bool>,
     built: bool,
-    /// Make this dynamic.
-    dynamic: bool,
+    /// Preload the module at path, using the given instance name.
+    preload: Option<(String, PathBuf)>,
     /// Whether to use the `compile` or `build` command.
     command: JavyCommand,
     /// The javy plugin.
@@ -101,7 +101,7 @@ impl Default for Builder {
             bin_path: "javy".into(),
             root: Default::default(),
             built: false,
-            dynamic: false,
+            preload: None,
             command: JavyCommand::Build,
             javy_stream_io: None,
             simd_json_builtins: None,
@@ -138,8 +138,8 @@ impl Builder {
         self
     }
 
-    pub fn dynamic(&mut self, dynamic: bool) -> &mut Self {
-        self.dynamic = dynamic;
+    pub fn preload(&mut self, ns: String, wasm: impl Into<PathBuf>) -> &mut Self {
+        self.preload = Some((ns, wasm.into()));
         self
     }
 
@@ -195,7 +195,7 @@ impl Builder {
             text_encoding,
             event_loop,
             built: _,
-            dynamic,
+            preload,
             command,
             plugin,
         } = std::mem::take(self);
@@ -204,8 +204,8 @@ impl Builder {
 
         match command {
             JavyCommand::Compile => {
-                if dynamic {
-                    Runner::compile_dynamic(bin_path, root, input, wit, world, plugin)
+                if let Some(preload) = preload {
+                    Runner::compile_dynamic(bin_path, root, input, wit, world, preload, plugin)
                 } else {
                     Runner::compile_static(bin_path, root, input, wit, world, plugin)
                 }
@@ -220,7 +220,7 @@ impl Builder {
                 simd_json_builtins,
                 text_encoding,
                 event_loop,
-                dynamic,
+                preload,
                 plugin,
             ),
         }
@@ -231,8 +231,7 @@ pub struct Runner {
     pub wasm: Vec<u8>,
     linker: Linker<StoreContext>,
     initial_fuel: u64,
-    // preload: Option<(String, Vec<u8>)>,
-    dynamic: bool,
+    preload: Option<(String, Vec<u8>)>,
     plugin: Plugin,
 }
 
@@ -256,8 +255,7 @@ impl Display for RunnerError {
 }
 
 struct StoreContext {
-    wasi: Option<WasiCtx>,
-    resource_table: ResourceTable,
+    wasi: Option<WasiP1Ctx>,
     logs: MemoryOutputPipe,
     output: MemoryOutputPipe,
 }
@@ -270,26 +268,13 @@ impl StoreContext {
             .stdin(MemoryInputPipe::new(input))
             .stdout(output.clone())
             .stderr(logs.clone())
-            .build();
+            .build_p1();
 
         Self {
             wasi: Some(wasi),
-            resource_table: ResourceTable::new(),
             output,
             logs,
         }
-    }
-}
-
-impl WasiView for StoreContext {
-    fn ctx(&mut self) -> &mut wasmtime_wasi::WasiCtx {
-        self.wasi.as_mut().unwrap()
-    }
-}
-
-impl IoView for StoreContext {
-    fn table(&mut self) -> &mut wasmtime_wasi::ResourceTable {
-        &mut self.resource_table
     }
 }
 
@@ -310,7 +295,7 @@ impl Runner {
         override_json_parse_and_stringify: Option<bool>,
         text_encoding: Option<bool>,
         event_loop: Option<bool>,
-        dynamic: bool,
+        preload: Option<(String, PathBuf)>,
         plugin: Plugin,
     ) -> Result<Self> {
         // This directory is unique and will automatically get deleted
@@ -325,7 +310,7 @@ impl Runner {
             &wasm_file,
             &wit_file,
             &world,
-            dynamic,
+            preload.is_some(),
             &javy_stream_io,
             &override_json_parse_and_stringify,
             &text_encoding,
@@ -340,12 +325,19 @@ impl Runner {
         let engine = Self::setup_engine();
         let linker = Self::setup_linker(&engine)?;
 
+        let preload = preload
+            .map(|(name, path)| {
+                let module = fs::read(path)?;
+                Ok::<(String, Vec<u8>), anyhow::Error>((name, module))
+            })
+            .transpose()?;
+
         Ok(Self {
             wasm,
             linker,
             initial_fuel: u64::MAX,
-            dynamic,
-            plugin,
+            preload,
+            plugin: Plugin::Default,
         })
     }
 
@@ -377,7 +369,7 @@ impl Runner {
             wasm,
             linker,
             initial_fuel: u64::MAX,
-            dynamic: false,
+            preload: None,
             plugin,
         })
     }
@@ -388,6 +380,7 @@ impl Runner {
         source: impl AsRef<Path>,
         wit: Option<PathBuf>,
         world: Option<String>,
+        preload: (String, PathBuf),
         plugin: Plugin,
     ) -> Result<Self> {
         let tempdir = tempfile::tempdir()?;
@@ -401,6 +394,7 @@ impl Runner {
         Self::exec_command(bin, root, args)?;
 
         let wasm = fs::read(&wasm_file)?;
+        let preload_module = fs::read(&preload.1)?;
 
         let engine = Self::setup_engine();
         let linker = Self::setup_linker(&engine)?;
@@ -409,121 +403,121 @@ impl Runner {
             wasm,
             linker,
             initial_fuel: u64::MAX,
-            dynamic: true,
+            preload: Some((preload.0, preload_module)),
             plugin,
         })
     }
 
-    // pub fn with_dylib(wasm: Vec<u8>) -> Result<Self> {
-    //     let engine = Self::setup_engine();
-    //     Ok(Self {
-    //         wasm,
-    //         linker: Self::setup_linker(&engine)?,
-    //         initial_fuel: u64::MAX,
-    //         preload: None,
-    //         plugin: Plugin::Default,
-    //     })
-    // }
+    pub fn with_dylib(wasm: Vec<u8>) -> Result<Self> {
+        let engine = Self::setup_engine();
+        Ok(Self {
+            wasm,
+            linker: Self::setup_linker(&engine)?,
+            initial_fuel: u64::MAX,
+            preload: None,
+            plugin: Plugin::Default,
+        })
+    }
 
-    // pub fn ensure_expected_imports(&self, expect_eval_bytecode: bool) -> Result<()> {
-    //     let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
-    //     let instance_name = self.plugin.namespace();
+    pub fn ensure_expected_imports(&self, expect_eval_bytecode: bool) -> Result<()> {
+        let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
+        let instance_name = self.plugin.namespace();
 
-    //     let imports = module
-    //         .imports()
-    //         .filter(|i| i.module() == instance_name)
-    //         .collect::<Vec<_>>();
-    //     let expected_import_count = if expect_eval_bytecode { 4 } else { 3 };
-    //     if imports.len() != expected_import_count {
-    //         bail!("Dynamically linked modules should have exactly {expected_import_count} imports for {instance_name}");
-    //     }
+        let imports = module
+            .imports()
+            .filter(|i| i.module() == instance_name)
+            .collect::<Vec<_>>();
+        let expected_import_count = if expect_eval_bytecode { 4 } else { 3 };
+        if imports.len() != expected_import_count {
+            bail!("Dynamically linked modules should have exactly {expected_import_count} imports for {instance_name}");
+        }
 
-    //     let realloc = imports
-    //         .iter()
-    //         .find(|i| i.name() == "canonical_abi_realloc")
-    //         .ok_or_else(|| anyhow!("Should have canonical_abi_realloc import"))?;
-    //     let ty = realloc.ty();
-    //     let f = ty.unwrap_func();
-    //     if !f.params().all(|p| p.is_i32()) || f.params().len() != 4 {
-    //         bail!("canonical_abi_realloc should accept 4 i32s as parameters");
-    //     }
-    //     if !f.results().all(|p| p.is_i32()) || f.results().len() != 1 {
-    //         bail!("canonical_abi_realloc should return 1 i32 as a result");
-    //     }
+        let realloc = imports
+            .iter()
+            .find(|i| i.name() == "canonical_abi_realloc")
+            .ok_or_else(|| anyhow!("Should have canonical_abi_realloc import"))?;
+        let ty = realloc.ty();
+        let f = ty.unwrap_func();
+        if !f.params().all(|p| p.is_i32()) || f.params().len() != 4 {
+            bail!("canonical_abi_realloc should accept 4 i32s as parameters");
+        }
+        if !f.results().all(|p| p.is_i32()) || f.results().len() != 1 {
+            bail!("canonical_abi_realloc should return 1 i32 as a result");
+        }
 
-    //     imports
-    //         .iter()
-    //         .find(|i| i.name() == "memory" && i.ty().memory().is_some())
-    //         .ok_or_else(|| anyhow!("Should have memory import named memory"))?;
+        imports
+            .iter()
+            .find(|i| i.name() == "memory" && i.ty().memory().is_some())
+            .ok_or_else(|| anyhow!("Should have memory import named memory"))?;
 
-    //     if expect_eval_bytecode {
-    //         let eval_bytecode = imports
-    //             .iter()
-    //             .find(|i| i.name() == "eval_bytecode")
-    //             .ok_or_else(|| anyhow!("Should have eval_bytecode import"))?;
-    //         let ty = eval_bytecode.ty();
-    //         let f = ty.unwrap_func();
-    //         if !f.params().all(|p| p.is_i32()) || f.params().len() != 2 {
-    //             bail!("eval_bytecode should accept 2 i32s as parameters");
-    //         }
-    //         if f.results().len() != 0 {
-    //             bail!("eval_bytecode should return no results");
-    //         }
-    //     }
+        if expect_eval_bytecode {
+            let eval_bytecode = imports
+                .iter()
+                .find(|i| i.name() == "eval_bytecode")
+                .ok_or_else(|| anyhow!("Should have eval_bytecode import"))?;
+            let ty = eval_bytecode.ty();
+            let f = ty.unwrap_func();
+            if !f.params().all(|p| p.is_i32()) || f.params().len() != 2 {
+                bail!("eval_bytecode should accept 2 i32s as parameters");
+            }
+            if f.results().len() != 0 {
+                bail!("eval_bytecode should return no results");
+            }
+        }
 
-    //     let invoke = imports
-    //         .iter()
-    //         .find(|i| i.name() == "invoke")
-    //         .ok_or_else(|| anyhow!("Should have invoke import"))?;
-    //     let ty = invoke.ty();
-    //     let f = ty.unwrap_func();
-    //     if !f.params().all(|p| p.is_i32()) || f.params().len() != 4 {
-    //         bail!("invoke should accept 4 i32s as parameters");
-    //     }
-    //     if f.results().len() != 0 {
-    //         bail!("invoke should return no results");
-    //     }
+        let invoke = imports
+            .iter()
+            .find(|i| i.name() == "invoke")
+            .ok_or_else(|| anyhow!("Should have invoke import"))?;
+        let ty = invoke.ty();
+        let f = ty.unwrap_func();
+        if !f.params().all(|p| p.is_i32()) || f.params().len() != 4 {
+            bail!("invoke should accept 4 i32s as parameters");
+        }
+        if f.results().len() != 0 {
+            bail!("invoke should return no results");
+        }
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 
-    // pub fn assert_producers(&self) -> Result<()> {
-    //     let producers_section = wasmparser::Parser::new(0)
-    //         .parse_all(&self.wasm)
-    //         .find_map(|payload| {
-    //             if let Ok(wasmparser::Payload::CustomSection(c)) = payload {
-    //                 if let wasmparser::KnownCustom::Producers(r) = c.as_known() {
-    //                     return Some(r);
-    //                 }
-    //             }
-    //             None
-    //         })
-    //         .expect("Should have producers custom section");
-    //     let fields = producers_section
-    //         .into_iter()
-    //         .collect::<Result<Vec<_>, _>>()?;
+    pub fn assert_producers(&self) -> Result<()> {
+        let producers_section = wasmparser::Parser::new(0)
+            .parse_all(&self.wasm)
+            .find_map(|payload| {
+                if let Ok(wasmparser::Payload::CustomSection(c)) = payload {
+                    if let wasmparser::KnownCustom::Producers(r) = c.as_known() {
+                        return Some(r);
+                    }
+                }
+                None
+            })
+            .expect("Should have producers custom section");
+        let fields = producers_section
+            .into_iter()
+            .collect::<Result<Vec<_>, _>>()?;
 
-    //     assert_eq!(2, fields.len());
+        assert_eq!(2, fields.len());
 
-    //     let language_field = &fields[0];
-    //     assert_eq!("language", language_field.name);
-    //     assert_eq!(1, language_field.values.count());
-    //     let language_value = language_field.values.clone().into_iter().next().unwrap()?;
-    //     assert_eq!("JavaScript", language_value.name);
-    //     assert_eq!("ES2020", language_value.version);
+        let language_field = &fields[0];
+        assert_eq!("language", language_field.name);
+        assert_eq!(1, language_field.values.count());
+        let language_value = language_field.values.clone().into_iter().next().unwrap()?;
+        assert_eq!("JavaScript", language_value.name);
+        assert_eq!("ES2020", language_value.version);
 
-    //     let processed_by_field = &fields[1];
-    //     assert_eq!("processed-by", processed_by_field.name);
-    //     assert_eq!(1, processed_by_field.values.count());
-    //     let processed_by_value = processed_by_field
-    //         .values
-    //         .clone()
-    //         .into_iter()
-    //         .next()
-    //         .unwrap()?;
-    //     assert_eq!("Javy", processed_by_value.name);
-    //     Ok(())
-    // }
+        let processed_by_field = &fields[1];
+        assert_eq!("processed-by", processed_by_field.name);
+        assert_eq!(1, processed_by_field.values.count());
+        let processed_by_value = processed_by_field
+            .values
+            .clone()
+            .into_iter()
+            .next()
+            .unwrap()?;
+        assert_eq!("Javy", processed_by_value.name);
+        Ok(())
+    }
 
     fn out_wasm(dir: &TempDir) -> PathBuf {
         let name = format!("{}.wasm", uuid::Uuid::new_v4());
@@ -653,7 +647,9 @@ impl Runner {
     fn setup_linker(engine: &Engine) -> Result<Linker<StoreContext>> {
         let mut linker = Linker::new(engine);
 
-        wasmtime_wasi::add_to_linker_sync(&mut linker)?;
+        wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |ctx: &mut StoreContext| {
+            ctx.wasi.as_mut().unwrap()
+        })?;
 
         Ok(linker)
     }
@@ -670,69 +666,56 @@ impl Runner {
 
     pub fn exec_func(&mut self, func: &str, input: Vec<u8>) -> Result<(Vec<u8>, Vec<u8>, u64)> {
         let mut store = Self::setup_store(self.linker.engine(), input)?;
-        let component = Component::from_binary(self.linker.engine(), &self.wasm)?;
+        let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
 
-        if self.dynamic {
-            let component =
-                Component::from_binary(self.linker.engine(), &fs::read(self.plugin.path())?)?;
+        if let Some((name, bytes)) = &self.preload {
+            let module = Module::from_binary(self.linker.engine(), bytes)?;
             // Allow unknown imports for dynamically linked `test-plugin`.
-            self.linker.define_unknown_imports_as_traps(&component)?;
-            let instance = self
-                .linker
-                .instantiate(store.as_context_mut(), &component)?;
+            self.linker.define_unknown_imports_as_traps(&module)?;
+            let instance = self.linker.instantiate(store.as_context_mut(), &module)?;
             self.linker.allow_shadowing(true);
-            // self.linker
-            //     .instance(store.as_context_mut(), name, instance)?;
+            self.linker
+                .instance(store.as_context_mut(), name, instance)?;
         }
 
         // Allow unknown imports for statically linked `test-plugin`.
-        self.linker.define_unknown_imports_as_traps(&component)?;
-        let instance = self
-            .linker
-            .instantiate(store.as_context_mut(), &component)?;
-
-        // Runtime initialization is around 3,847,297 instructions.
-        let initialize_runtime =
-            instance.get_typed_func::<(), ()>(store.as_context_mut(), "initialize_runtime");
-        if let Ok(initialize_runtime) = initialize_runtime {
-            initialize_runtime.call(store.as_context_mut(), ())?;
-        }
+        self.linker.define_unknown_imports_as_traps(&module)?;
+        let instance = self.linker.instantiate(store.as_context_mut(), &module)?;
         let run = instance.get_typed_func::<(), ()>(store.as_context_mut(), func)?;
 
-        store.set_fuel(u64::MAX)?;
         let res = run.call(store.as_context_mut(), ());
 
         self.extract_store_data(res, store)
     }
 
-    // pub fn exec_through_dylib(
-    //     &mut self,
-    //     src: &str,
-    //     use_exported_fn: UseExportedFn,
-    // ) -> Result<(Vec<u8>, Vec<u8>, u64)> {
-    //     let mut store = Self::setup_store(self.linker.engine(), vec![])?;
-    //     let component = Component::from_binary(self.linker.engine(), &self.wasm)?;
+    pub fn exec_through_dylib(
+        &mut self,
+        src: &str,
+        use_exported_fn: UseExportedFn,
+    ) -> Result<(Vec<u8>, Vec<u8>, u64)> {
+        let mut store = Self::setup_store(self.linker.engine(), vec![])?;
+        let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
 
-    //     let instance = self.linker.instantiate(store.as_context_mut(), &module)?;
+        let instance = self.linker.instantiate(store.as_context_mut(), &module)?;
 
-    //     let (bc_ptr, bc_len) = Self::compile(src.as_bytes(), store.as_context_mut(), &instance)?;
-    //     let res = match use_exported_fn {
-    //         UseExportedFn::EvalBytecode => instance
-    //             .get_typed_func::<(u32, u32), ()>(store.as_context_mut(), "eval_bytecode")?
-    //             .call(store.as_context_mut(), (bc_ptr, bc_len)),
-    //         UseExportedFn::Invoke(func) => {
-    //             let (fn_ptr, fn_len) = match func {
-    //                 Some(func) => Self::copy_func_name(func, &instance, store.as_context_mut())?,
-    //                 None => (0, 0),
-    //             };
-    //             instance
-    //                 .get_typed_func::<(u32, u32, u32, u32), ()>(store.as_context_mut(), "invoke")?
-    //                 .call(store.as_context_mut(), (bc_ptr, bc_len, fn_ptr, fn_len))
-    //         }
-    //     };
+        let (bc_ptr, bc_len) = Self::compile(src.as_bytes(), store.as_context_mut(), &instance)?;
+        let res = match use_exported_fn {
+            UseExportedFn::EvalBytecode => instance
+                .get_typed_func::<(u32, u32), ()>(store.as_context_mut(), "eval_bytecode")?
+                .call(store.as_context_mut(), (bc_ptr, bc_len)),
+            UseExportedFn::Invoke(func) => {
+                let (fn_ptr, fn_len) = match func {
+                    Some(func) => Self::copy_func_name(func, &instance, store.as_context_mut())?,
+                    None => (0, 0),
+                };
+                instance
+                    .get_typed_func::<(u32, u32, u32, u32), ()>(store.as_context_mut(), "invoke")?
+                    .call(store.as_context_mut(), (bc_ptr, bc_len, fn_ptr, fn_len))
+            }
+        };
 
-    //     self.extract_store_data(res, store)
-    // }
+        self.extract_store_data(res, store)
+    }
 
     fn copy_func_name(
         name: &str,
@@ -766,8 +749,10 @@ impl Runner {
         let memory = instance
             .get_memory(store.as_context_mut(), "memory")
             .unwrap();
-        let compile_src_func =
-            instance.get_typed_func::<(u32, u32), u32>(store.as_context_mut(), "compile_src")?;
+        let compile_src_func = instance.get_typed_func::<(u32, u32), u32>(
+            store.as_context_mut(),
+            "bytecodealliance:javy-plugin/javy-plugin-exports#compile_src",
+        )?;
 
         let js_src_ptr = Self::allocate_memory(
             instance,
@@ -795,10 +780,8 @@ impl Runner {
         alignment: u32,
         new_size: u32,
     ) -> Result<u32> {
-        let realloc_func = instance.get_typed_func::<(u32, u32, u32, u32), u32>(
-            store.as_context_mut(),
-            "canonical_abi_realloc",
-        )?;
+        let realloc_func = instance
+            .get_typed_func::<(u32, u32, u32, u32), u32>(store.as_context_mut(), "cabi_realloc")?;
         let orig_ptr = 0;
         let orig_size = 0;
         realloc_func.call(

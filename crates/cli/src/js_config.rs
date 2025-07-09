@@ -1,27 +1,10 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use serde::Deserialize;
 use std::{collections::HashMap, str};
-use wasmtime::{
-    component::{bindgen, Linker},
-    AsContextMut, Engine,
-};
+use wasmtime::{AsContext, AsContextMut, Engine, Linker};
 use wasmtime_wasi::{pipe::MemoryOutputPipe, WasiCtxBuilder};
 
 use crate::{CliPlugin, PluginKind};
-
-bindgen!({
-    inline: r#"
-package bytecodealliance:javy-plugin;
-
-interface javy-plugin-exports {
-    config-schema: func() -> list<u8>;
-}
-
-world javy {
-    export javy-plugin-exports;
-}
-    "#
-});
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -35,22 +18,32 @@ impl ConfigSchema {
             PluginKind::User => Ok(None),
             PluginKind::Default => {
                 let engine = Engine::default();
-                let component = wasmtime::component::Component::new(
-                    &engine,
-                    cli_plugin.as_plugin().as_bytes(),
-                )?;
+                let module = wasmtime::Module::new(&engine, cli_plugin.as_plugin().as_bytes())?;
                 let mut linker = Linker::new(&engine);
-                wasmtime_wasi::add_to_linker_sync(&mut linker)?;
+                wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |s| s)?;
                 let stdout = MemoryOutputPipe::new(usize::MAX);
                 let wasi = WasiCtxBuilder::new()
                     .inherit_stderr()
                     .stdout(stdout.clone())
                     .build_p1();
                 let mut store = wasmtime::Store::new(&engine, wasi);
-                let instance = Javy::instantiate(store.as_context_mut(), &component, &linker)?;
-                let config_json = instance
-                    .bytecodealliance_javy_plugin_javy_plugin_exports()
-                    .call_config_schema(store.as_context_mut())?;
+                let instance = linker.instantiate(store.as_context_mut(), &module)?;
+                let ret_area = instance
+                    .get_typed_func::<(), i32>(
+                        store.as_context_mut(),
+                        "bytecodealliance:javy-plugin/javy-plugin-exports#config-schema",
+                    )?
+                    .call(store.as_context_mut(), ())?;
+                let memory = instance
+                    .get_memory(store.as_context_mut(), "memory")
+                    .ok_or_else(|| anyhow!("Missing memory export"))?;
+                let mut buf = [0; 8];
+                memory.read(store.as_context(), ret_area as usize, &mut buf)?;
+                let offset = u32::from_le_bytes(buf[0..4].try_into().unwrap());
+                let len = u32::from_le_bytes(buf[4..8].try_into().unwrap());
+                let mut config_json = vec![0; len as usize];
+                memory.read(store.as_context(), offset as usize, &mut config_json)?;
+                drop(store);
                 let config_schema = serde_json::from_slice::<ConfigSchema>(&config_json)?;
                 let mut configs = Vec::with_capacity(config_schema.supported_properties.len());
                 for config in config_schema.supported_properties {

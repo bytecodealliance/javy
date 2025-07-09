@@ -40,7 +40,10 @@ fn copy_plugin() -> Result<()> {
 
     let plugin_wizened_path = module_path.join("plugin_wizened.wasm");
 
-    fs::copy(&plugin_path, &plugin_wizened_path)?;
+    let module_bytes = javy_plugin_processing::extract_core_module(&fs::read(&plugin_path)?)?;
+    let module_bytes = javy_plugin_processing::optimize_module(&module_bytes)?;
+    let module_bytes = javy_plugin_processing::preinitialize_module(&module_bytes)?;
+    fs::write(&plugin_wizened_path, module_bytes)?;
 
     println!("cargo:rerun-if-changed={}", plugin_path.to_str().unwrap());
     println!("cargo:rerun-if-changed=build.rs");

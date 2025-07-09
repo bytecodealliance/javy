@@ -1,0 +1,27 @@
+[package]
+name = "javy-plugin-processing"
+version = "1.0.0-alpha.1"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Extraction and initialization for Javy plugins"
+homepage = "https://github.com/bytecodealliance/javy/tree/main/crates/javy-plugin-processing"
+repository = "https://github.com/bytecodealliance/javy/tree/main/crates/javy-plugin-processing"
+categories = ["wasm"]
+
+[lib]
+
+[[bin]]
+name = "javy-plugin-processing"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+clap = { workspace = true }
+tempfile = { workspace = true }
+walrus = { workspace = true }
+wasm-opt = "0.116.1"
+wasmparser = "0.220"
+wasmtime = { workspace = true }
+wasmtime-wasi = { workspace = true }
+wizer = "9.0.0"

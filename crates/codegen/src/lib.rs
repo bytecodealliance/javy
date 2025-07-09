@@ -254,9 +254,18 @@ impl Generator {
     pub(crate) fn resolve_identifiers(&self, module: &mut Module) -> Result<Identifiers> {
         match self.linking {
             LinkingKind::Static => {
-                let canonical_abi_realloc_fn = module.exports.get_func("canonical_abi_realloc")?;
+                let canonical_abi_realloc_fn =
+                    module.exports.get_func(if self.plugin_kind.is_v2() {
+                        "canonical_abi_realloc"
+                    } else {
+                        "cabi_realloc"
+                    })?;
                 let eval_bytecode = module.exports.get_func("eval_bytecode").ok();
-                let invoke = module.exports.get_func("invoke")?;
+                let invoke = module.exports.get_func(if self.plugin_kind.is_v2() {
+                    "invoke"
+                } else {
+                    "bytecodealliance:javy-plugin/javy-plugin-exports#invoke"
+                })?;
                 let ExportItem::Memory(memory) = module
                     .exports
                     .iter()
@@ -286,7 +295,11 @@ impl Generator {
                 );
                 let (canonical_abi_realloc_fn_id, _) = module.add_import_func(
                     &import_namespace,
-                    "canonical_abi_realloc",
+                    if self.plugin_kind.is_v2() {
+                        "canonical_abi_realloc"
+                    } else {
+                        "cabi_realloc"
+                    },
                     canonical_abi_realloc_type,
                 );
 
@@ -309,11 +322,20 @@ impl Generator {
                 };
 
                 let invoke_type = module.types.add(
-                    &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
+                    &[
+                        ValType::I32,
+                        ValType::I32,
+                        ValType::I32,
+                        ValType::I32,
+                        ValType::I32,
+                    ],
                     &[],
                 );
-                let (invoke_fn_id, _) =
-                    module.add_import_func(&import_namespace, "invoke", invoke_type);
+                let (invoke_fn_id, _) = module.add_import_func(
+                    &import_namespace,
+                    &format!("{import_namespace}#invoke"),
+                    invoke_type,
+                );
 
                 let (memory_id, _) = module.add_import_memory(
                     &import_namespace,
@@ -380,6 +402,7 @@ impl Generator {
             instructions
                 .local_get(bytecode_ptr_local) // ptr to bytecode
                 .i32_const(bytecode_len)
+                .i32_const(0) // set option discriminator to none
                 .i32_const(0) // set function name ptr to null
                 .i32_const(0) // set function name len to 0
                 .call(imports.invoke);
@@ -437,6 +460,7 @@ impl Generator {
                     // Call invoke.
                     .local_get(bc_metadata.ptr)
                     .i32_const(bc_metadata.len)
+                    .i32_const(1) // set function name option discriminator to some
                     .local_get(fn_name_ptr_local)
                     .i32_const(js_export_len)
                     .call(identifiers.invoke);
@@ -452,18 +476,19 @@ impl Generator {
         match self.linking {
             LinkingKind::Static => {
                 // Remove no longer necessary exports.
-                module.exports.remove("canonical_abi_realloc")?;
+                module.exports.remove("cabi_realloc")?;
 
                 // Only internal plugins expose eval_bytecode function.
-                if matches!(
-                    self.plugin_kind,
-                    plugin::PluginKind::Default | plugin::PluginKind::V2
-                ) {
+                if matches!(self.plugin_kind, plugin::PluginKind::V2) {
                     module.exports.remove("eval_bytecode")?;
                 }
 
-                module.exports.remove("invoke")?;
-                module.exports.remove("compile_src")?;
+                module
+                    .exports
+                    .remove("bytecodealliance:javy-plugin/javy-plugin-exports#invoke")?;
+                module
+                    .exports
+                    .remove("bytecodealliance:javy-plugin/javy-plugin-exports#compile-src")?;
 
                 Ok(module.emit_wasm())
             }

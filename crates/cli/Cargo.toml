@@ -14,12 +14,13 @@ path = "src/main.rs"
 anyhow = { workspace = true }
 wasmtime = { workspace = true }
 wasmtime-wasi = { workspace = true }
-walrus = "0.23.3"
+walrus = { workspace = true }
 tempfile = { workspace = true }
-clap = { version = "4.5.39", features = ["derive"] }
+clap = { workspace = true }
 serde = { workspace = true, default-features = false }
 serde_json = { workspace = true }
 javy-codegen = { path = "../codegen/", features = ["plugin_internal"] }
+javy-plugin-processing = { path = "../plugin-processing" }
 
 [dev-dependencies]
 criterion = "0.6"
@@ -30,6 +31,7 @@ javy-test-macros = { path = "../test-macros/" }
 
 [build-dependencies]
 anyhow = { workspace = true }
+javy-plugin-processing = { path = "../plugin-processing" }
 tempfile = { workspace = true }
 
 [[bench]]

@@ -16,9 +16,12 @@ cli: plugin
 
 plugin:
 	cargo build --package=javy-plugin --release --target=wasm32-wasip2 --features=$(PLUGIN_FEATURES)
+	cargo run --package=javy-plugin-processing -- target/wasm32-wasip2/release/plugin.wasm target/wasm32-wasip2/release/plugin_wizened.wasm
 
 build-test-plugin: cli
 	cargo component build --package=javy-test-plugin --release
+# cargo component emits output to the WASI p1 target
+	cargo run --package=javy-plugin-processing -- target/wasm32-wasip1/release/test_plugin.wasm crates/runner/test_plugin.wasm
 # cargo build --package=javy-test-plugin --release --target=wasm32-wasip2
 
 docs:

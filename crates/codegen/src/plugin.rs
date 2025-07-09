@@ -6,7 +6,7 @@ use super::bytecode;
 
 /// The kind of a plugin.
 // This is an internal detail of this module.
-#[derive(Default, PartialEq, Copy, Clone)]
+#[derive(Debug, Default, PartialEq, Copy, Clone)]
 #[allow(dead_code)] // Suppresses warnings for feature-gated variants
 pub(crate) enum PluginKind {
     #[default]
@@ -41,6 +41,10 @@ impl PluginKind {
             }
         }
     }
+
+    pub(crate) fn is_v2(self) -> bool {
+        PluginKind::V2 == self
+    }
 }
 
 /// A Javy plugin.
@@ -68,6 +72,22 @@ impl Plugin {
 
     /// Generate valid QuickJS bytecode from Javascript source code.
     pub(crate) fn compile_source(&self, js_source_code: &[u8]) -> Result<Vec<u8>> {
-        bytecode::compile_source(self.as_bytes(), js_source_code)
+        bytecode::compile_source(self, js_source_code)
+    }
+
+    pub fn is_component(&self) -> Result<bool> {
+        if self.bytes.len() < 8 {
+            bail!("Plugin is not a valid Wasm module or component");
+        }
+
+        let version =
+            u32::from_le_bytes([self.bytes[4], self.bytes[5], self.bytes[6], self.bytes[7]]);
+        if version == 1 {
+            Ok(false)
+        } else if version == 0x0D {
+            Ok(true)
+        } else {
+            bail!("Plugin is not a valid Wasm module or component");
+        }
     }
 }
