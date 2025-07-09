@@ -19,7 +19,7 @@ fn test_identity(builder: &mut Builder) -> Result<()> {
 
     let (output, _, fuel_consumed) = run_with_u8s(&mut runner, 42);
     assert_eq!(42, output);
-    assert_fuel_consumed_within_threshold(46_674, fuel_consumed);
+    assert_fuel_consumed_within_threshold(46_797, fuel_consumed);
     Ok(())
 }
 
@@ -39,7 +39,7 @@ fn test_recursive_fib(builder: &mut Builder) -> Result<()> {
 
     let (output, _, fuel_consumed) = run_with_u8s(&mut runner, 5);
     assert_eq!(8, output);
-    assert_fuel_consumed_within_threshold(68_187, fuel_consumed);
+    assert_fuel_consumed_within_threshold(67_869, fuel_consumed);
     Ok(())
 }
 
@@ -49,7 +49,7 @@ fn test_str(builder: &mut Builder) -> Result<()> {
 
     let (output, _, fuel_consumed) = run(&mut runner, "hello".into());
     assert_eq!("world".as_bytes(), output);
-    assert_fuel_consumed_within_threshold(144_943, fuel_consumed);
+    assert_fuel_consumed_within_threshold(146_027, fuel_consumed);
     Ok(())
 }
 
@@ -59,7 +59,7 @@ fn test_encoding(builder: &mut Builder) -> Result<()> {
 
     let (output, _, fuel_consumed) = run(&mut runner, "hello".into());
     assert_eq!("el".as_bytes(), output);
-    assert_fuel_consumed_within_threshold(253_050, fuel_consumed);
+    assert_fuel_consumed_within_threshold(252_723, fuel_consumed);
 
     let (output, _, _) = run(&mut runner, "invalid".into());
     assert_eq!("true".as_bytes(), output);
@@ -79,7 +79,7 @@ fn test_console_log(builder: &mut Builder) -> Result<()> {
     let (output, logs, fuel_consumed) = run(&mut runner, vec![]);
     assert_eq!(b"hello world from console.log\n".to_vec(), output);
     assert_eq!("hello world from console.error\n", logs.as_str());
-    assert_fuel_consumed_within_threshold(35_200, fuel_consumed);
+    assert_fuel_consumed_within_threshold(34_983, fuel_consumed);
     Ok(())
 }
 
@@ -119,38 +119,38 @@ fn test_readme_script(builder: &mut Builder) -> Result<()> {
     Ok(())
 }
 
-// #[javy_cli_test(commands(not(Compile)))]
-// fn test_promises_with_event_loop(builder: &mut Builder) -> Result<()> {
-//     let mut runner = builder.input("promise.js").event_loop(true).build()?;
+#[javy_cli_test(commands(not(Compile)))]
+fn test_promises_with_event_loop(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder.input("promise.js").event_loop(true).build()?;
 
-//     let (output, _, _) = run(&mut runner, vec![]);
-//     assert_eq!("\"foo\"\"bar\"".as_bytes(), output);
-//     Ok(())
-// }
+    let (output, _, _) = run(&mut runner, vec![]);
+    assert_eq!("\"foo\"\"bar\"".as_bytes(), output);
+    Ok(())
+}
 
-// #[javy_cli_test]
-// fn test_promises_without_event_loop(builder: &mut Builder) -> Result<()> {
-//     use javy_runner::RunnerError;
+#[javy_cli_test]
+fn test_promises_without_event_loop(builder: &mut Builder) -> Result<()> {
+    use javy_runner::RunnerError;
 
-//     let mut runner = builder.input("promise.js").build()?;
-//     let res = runner.exec(vec![]);
-//     let err = res.err().unwrap().downcast::<RunnerError>().unwrap();
-//     assert!(err.stderr.contains("Pending jobs in the event queue."));
+    let mut runner = builder.input("promise.js").build()?;
+    let res = runner.exec(vec![]);
+    let err = res.err().unwrap().downcast::<RunnerError>().unwrap();
+    assert!(err.stderr.contains("Pending jobs in the event queue."));
 
-//     Ok(())
-// }
+    Ok(())
+}
 
-// #[javy_cli_test(commands(not(Compile)))]
-// fn test_promise_top_level_await(builder: &mut Builder) -> Result<()> {
-//     let mut runner = builder
-//         .input("top-level-await.js")
-//         .event_loop(true)
-//         .build()?;
-//     let (out, _, _) = run(&mut runner, vec![]);
+#[javy_cli_test(commands(not(Compile)))]
+fn test_promise_top_level_await(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder
+        .input("top-level-await.js")
+        .event_loop(true)
+        .build()?;
+    let (out, _, _) = run(&mut runner, vec![]);
 
-//     assert_eq!("bar", String::from_utf8(out)?);
-//     Ok(())
-// }
+    assert_eq!("bar", String::from_utf8(out)?);
+    Ok(())
+}
 
 #[javy_cli_test]
 fn test_exported_functions(builder: &mut Builder) -> Result<()> {
@@ -161,24 +161,24 @@ fn test_exported_functions(builder: &mut Builder) -> Result<()> {
         .build()?;
     let (_, logs, fuel_consumed) = run_fn(&mut runner, "foo", vec![]);
     assert_eq!("Hello from top-level\nHello from foo\n", logs);
-    assert_fuel_consumed_within_threshold(61_975, fuel_consumed);
+    assert_fuel_consumed_within_threshold(59_981, fuel_consumed);
     let (_, logs, _) = run_fn(&mut runner, "foo-bar", vec![]);
     assert_eq!("Hello from top-level\nHello from fooBar\n", logs);
     Ok(())
 }
 
-// #[javy_cli_test(commands(not(Compile)))]
-// fn test_exported_promises(builder: &mut Builder) -> Result<()> {
-//     let mut runner = builder
-//         .input("exported-promise-fn.js")
-//         .wit("exported-promise-fn.wit")
-//         .world("exported-promise-fn")
-//         .event_loop(true)
-//         .build()?;
-//     let (_, logs, _) = run_fn(&mut runner, "foo", vec![]);
-//     assert_eq!("Top-level\ninside foo\n", logs);
-//     Ok(())
-// }
+#[javy_cli_test(commands(not(Compile)))]
+fn test_exported_promises(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder
+        .input("exported-promise-fn.js")
+        .wit("exported-promise-fn.wit")
+        .world("exported-promise-fn")
+        .event_loop(true)
+        .build()?;
+    let (_, logs, _) = run_fn(&mut runner, "foo", vec![]);
+    assert_eq!("Top-level\ninside foo\n", logs);
+    Ok(())
+}
 
 #[javy_cli_test]
 fn test_exported_functions_without_flag(builder: &mut Builder) -> Result<()> {
@@ -256,7 +256,7 @@ fn test_exported_default_fn(builder: &mut Builder) -> Result<()> {
         .build()?;
     let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", vec![]);
     assert_eq!(logs, "42\n");
-    assert_fuel_consumed_within_threshold(39_661, fuel_consumed);
+    assert_fuel_consumed_within_threshold(39_147, fuel_consumed);
     Ok(())
 }
 

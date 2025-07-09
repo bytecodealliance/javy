@@ -70,7 +70,7 @@
 //!   unstable API's exposed by this future may break in the future without
 //!   notice.
 
-use std::sync::OnceLock;
+use std::{rc::Rc, sync::OnceLock};
 
 pub(crate) mod bytecode;
 pub(crate) mod exports;
@@ -88,9 +88,11 @@ use transform::SourceCodeSection;
 use walrus::{
     DataId, DataKind, ExportItem, FunctionBuilder, FunctionId, LocalId, MemoryId, Module, ValType,
 };
-use wasmtime_wasi::pipe::MemoryInputPipe;
+use wasmtime::Linker;
+use wasmtime_wasi::{pipe::MemoryInputPipe, WasiCtxBuilder};
 
 use anyhow::Result;
+use wizer::{StoreData, Wizer};
 
 static STDIN_PIPE: OnceLock<MemoryInputPipe> = OnceLock::new();
 
@@ -243,7 +245,35 @@ impl Generator {
                 STDIN_PIPE
                     .set(MemoryInputPipe::new(self.js_runtime_config.clone()))
                     .unwrap();
-                config.parse(self.plugin.as_bytes())?
+                let wasm = Wizer::new()
+                    .init_func(
+                        "bytecodealliance:javy-plugin/javy-plugin-exports#initialize-runtime",
+                    )
+                    .make_linker(Some(Rc::new(move |engine| {
+                        let mut linker = Linker::new(engine);
+                        wasmtime_wasi::preview1::add_to_linker_sync(
+                            &mut linker,
+                            move |cx: &mut StoreData| {
+                                if cx.wasi_ctx.is_none() {
+                                    // The underlying buffer backing the pipe is an Arc
+                                    // so the cloning should be fast.
+                                    let config = STDIN_PIPE.get().unwrap().clone();
+                                    cx.wasi_ctx = Some(
+                                        WasiCtxBuilder::new()
+                                            .stdin(config)
+                                            .inherit_stdout()
+                                            .inherit_stderr()
+                                            .build_p1(),
+                                    );
+                                }
+                                cx.wasi_ctx.as_mut().unwrap()
+                            },
+                        )?;
+                        Ok(linker)
+                    })))?
+                    .wasm_bulk_memory(true)
+                    .run(self.plugin.as_bytes())?;
+                config.parse(&wasm)?
             }
             LinkingKind::Dynamic => Module::with_config(config),
         };

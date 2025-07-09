@@ -24,4 +24,4 @@ wasm-opt = "0.116.1"
 wasmparser = "0.220"
 wasmtime = { workspace = true }
 wasmtime-wasi = { workspace = true }
-wizer = "9.0.0"
+wizer = { workspace = true }

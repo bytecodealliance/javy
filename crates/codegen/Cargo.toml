@@ -13,6 +13,7 @@ categories = ["wasm"]
 plugin_internal = []
 
 [dependencies]
+wizer = { workspace = true }
 anyhow = { workspace = true }
 brotli = "8.0.1"
 wasmtime = { workspace = true }

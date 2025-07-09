@@ -20,6 +20,7 @@ edition = "2021"
 license = "Apache-2.0 WITH LLVM-exception"
 
 [workspace.dependencies]
+wizer = "9.0.0"
 wasmtime = { version = "31" }
 wasmtime-wasi = "31"
 anyhow = "1.0"
