@@ -54,7 +54,7 @@ impl Plugin {
                 .join("..")
                 .join("..")
                 .join("target")
-                .join("wasm32-wasip2")
+                .join("wasm32-wasip1")
                 .join("release")
                 .join("plugin_wizened.wasm"),
         }
