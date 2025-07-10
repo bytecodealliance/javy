@@ -11,7 +11,10 @@ crate-type = ["cdylib"]
 
 [dependencies]
 anyhow = { workspace = true }
-javy-plugin-api = { path = "../plugin-api", features = ["json"] }
+javy-plugin-api = { path = "../plugin-api", features = [
+    "internal_api",
+    "json",
+] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 wit-bindgen-rt = "0.43.0"

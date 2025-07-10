@@ -20,7 +20,7 @@ impl Guest for Component {
     }
 
     fn initialize_runtime() -> () {
-        javy_plugin_api::initialize_runtime(config, modify_runtime).unwrap();
+        javy_plugin_api::reinitialize_runtime(config, modify_runtime).unwrap();
     }
 
     fn invoke(bytecode: Vec<u8>, function: Option<String>) -> () {

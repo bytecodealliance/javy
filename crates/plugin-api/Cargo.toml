@@ -15,5 +15,6 @@ anyhow = { workspace = true }
 javy = { workspace = true }
 
 [features]
+internal_api = []
 json = ["javy/json"]
 messagepack = ["javy/messagepack"]

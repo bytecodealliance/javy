@@ -73,8 +73,28 @@ where
             let config = config();
             let runtime = Runtime::new(config.runtime_config).unwrap();
             let runtime = modify_runtime(runtime);
+            EVENT_LOOP_ENABLED = config.event_loop;
             runtime
         })
+    };
+    Ok(())
+}
+
+#[cfg(feature = "internal_api")]
+/// Reinitializes the Javy runtime.
+// Only used by default plugin.
+pub fn reinitialize_runtime<F, G>(config: F, modify_runtime: G) -> Result<()>
+where
+    F: FnOnce() -> Config,
+    G: FnOnce(Runtime) -> Runtime,
+{
+    let config = config();
+    let runtime = Runtime::new(config.runtime_config).unwrap();
+    let runtime = modify_runtime(runtime);
+    unsafe {
+        RUNTIME.take();
+        RUNTIME.set(runtime).unwrap_or_else(|_| unreachable!());
+        EVENT_LOOP_ENABLED = config.event_loop;
     };
     Ok(())
 }
