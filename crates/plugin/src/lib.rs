@@ -3,40 +3,44 @@ use std::io::{self, Read};
 use javy_plugin_api::javy::Runtime;
 use javy_plugin_api::{import_namespace, Config};
 
-use crate::bindings::exports::bytecodealliance::javy_plugin::javy_plugin_exports::Guest;
-use crate::bindings::Guest as RootGuest;
+use crate::exports::bytecodealliance::javy_plugin::javy_plugin_exports;
 use crate::shared_config::SharedConfig;
 
-mod bindings;
 mod shared_config;
 
 import_namespace!("javy_quickjs_provider_v3");
 
+wit_bindgen::generate!({ world: "javy-default-plugin" });
+
 struct Component;
 
-impl RootGuest for Component {
+impl Guest for Component {
+    #[allow(async_fn_in_trait)]
     fn config_schema() -> Vec<u8> {
         shared_config::config_schema()
     }
 }
 
-impl Guest for Component {
+impl javy_plugin_exports::Guest for Component {
+    #[allow(async_fn_in_trait)]
     fn compile_src(src: Vec<u8>) -> Vec<u8> {
         javy_plugin_api::initialize_runtime(config, modify_runtime).unwrap();
         javy_plugin_api::compile_src(&src)
     }
 
+    #[allow(async_fn_in_trait)]
     fn initialize_runtime() -> () {
         javy_plugin_api::reinitialize_runtime(config, modify_runtime).unwrap();
     }
 
+    #[allow(async_fn_in_trait)]
     fn invoke(bytecode: Vec<u8>, function: Option<String>) -> () {
         javy_plugin_api::initialize_runtime(config, modify_runtime).unwrap();
         javy_plugin_api::invoke(&bytecode, function.as_deref())
     }
 }
 
-bindings::export!(Component with_types_in bindings);
+export!(Component);
 
 fn config() -> Config {
     // Read shared config JSON in from stdin.
