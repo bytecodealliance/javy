@@ -4,6 +4,7 @@ use javy_plugin_api::javy::Runtime;
 use javy_plugin_api::{import_namespace, Config};
 
 use crate::bindings::exports::bytecodealliance::javy_plugin::javy_plugin_exports::Guest;
+use crate::bindings::Guest as RootGuest;
 use crate::shared_config::SharedConfig;
 
 mod bindings;
@@ -12,6 +13,12 @@ mod shared_config;
 import_namespace!("javy_quickjs_provider_v3");
 
 struct Component;
+
+impl RootGuest for Component {
+    fn config_schema() -> Vec<u8> {
+        shared_config::config_schema()
+    }
+}
 
 impl Guest for Component {
     fn compile_src(src: Vec<u8>) -> Vec<u8> {
@@ -26,10 +33,6 @@ impl Guest for Component {
     fn invoke(bytecode: Vec<u8>, function: Option<String>) -> () {
         javy_plugin_api::initialize_runtime(config, modify_runtime).unwrap();
         javy_plugin_api::invoke(&bytecode, function.as_deref())
-    }
-
-    fn config_schema() -> Vec<u8> {
-        shared_config::config_schema()
     }
 }
 

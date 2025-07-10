@@ -29,10 +29,7 @@ impl ConfigSchema {
                 let mut store = wasmtime::Store::new(&engine, wasi);
                 let instance = linker.instantiate(store.as_context_mut(), &module)?;
                 let ret_area = instance
-                    .get_typed_func::<(), i32>(
-                        store.as_context_mut(),
-                        "bytecodealliance:javy-plugin/javy-plugin-exports#config-schema",
-                    )?
+                    .get_typed_func::<(), i32>(store.as_context_mut(), "config-schema")?
                     .call(store.as_context_mut(), ())?;
                 let memory = instance
                     .get_memory(store.as_context_mut(), "memory")
