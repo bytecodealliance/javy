@@ -1,14 +1,15 @@
 use std::io::{self, Read};
 
 use javy_plugin_api::javy::Runtime;
-use javy_plugin_api::{import_namespace, Config};
+use javy_plugin_api::Config;
 
+use crate::exports::bytecodealliance::javy_default_plugin::invoker;
 use crate::exports::bytecodealliance::javy_plugin::javy_plugin_exports;
 use crate::shared_config::SharedConfig;
 
 mod shared_config;
 
-import_namespace!("javy_quickjs_provider_v3");
+// import_namespace!("javy_quickjs_provider_v3");
 
 wit_bindgen::generate!({ world: "javy-default-plugin", generate_all });
 
@@ -18,6 +19,14 @@ impl Guest for Component {
     #[allow(async_fn_in_trait)]
     fn config_schema() -> Vec<u8> {
         shared_config::config_schema()
+    }
+}
+
+impl invoker::Guest for Component {
+    #[allow(async_fn_in_trait)]
+    fn invoke(bytecode: Vec<u8>, function: Option<String>) -> () {
+        javy_plugin_api::initialize_runtime(config, modify_runtime).unwrap();
+        javy_plugin_api::invoke(&bytecode, function.as_deref())
     }
 }
 
@@ -31,12 +40,6 @@ impl javy_plugin_exports::Guest for Component {
     #[allow(async_fn_in_trait)]
     fn initialize_runtime() -> () {
         javy_plugin_api::reinitialize_runtime(config, modify_runtime).unwrap();
-    }
-
-    #[allow(async_fn_in_trait)]
-    fn invoke(bytecode: Vec<u8>, function: Option<String>) -> () {
-        javy_plugin_api::initialize_runtime(config, modify_runtime).unwrap();
-        javy_plugin_api::invoke(&bytecode, function.as_deref())
     }
 }
 

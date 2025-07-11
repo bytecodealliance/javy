@@ -7,7 +7,10 @@ use javy_plugin_api::{
     Config,
 };
 
-use crate::exports::bytecodealliance::javy_plugin::javy_plugin_exports::Guest;
+use crate::exports::bytecodealliance::{
+    javy_plugin::javy_plugin_exports::{self},
+    javy_test_plugin::invoker,
+};
 
 wit_bindgen::generate!({ world: "javy-test-plugin", generate_all });
 
@@ -34,7 +37,7 @@ fn modify_runtime(runtime: Runtime) -> Runtime {
 
 struct Component;
 
-impl Guest for Component {
+impl javy_plugin_exports::Guest for Component {
     fn compile_src(src: Vec<u8>) -> Vec<u8> {
         javy_plugin_api::initialize_runtime(config, modify_runtime).unwrap();
         javy_plugin_api::compile_src(&src)
@@ -43,7 +46,9 @@ impl Guest for Component {
     fn initialize_runtime() -> () {
         javy_plugin_api::initialize_runtime(config, modify_runtime).unwrap();
     }
+}
 
+impl invoker::Guest for Component {
     fn invoke(bytecode: Vec<u8>, function: Option<String>) -> () {
         javy_plugin_api::initialize_runtime(config, modify_runtime).unwrap();
         javy_plugin_api::invoke(&bytecode, function.as_deref())

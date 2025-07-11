@@ -48,8 +48,6 @@ use std::{process, str};
 pub use javy;
 
 mod config;
-mod namespace;
-mod plugin_definition;
 
 const FUNCTION_MODULE_NAME: &str = "function.mjs";
 

@@ -1,7 +1,11 @@
 package bytecodealliance:javy-default-plugin@1.0.0;
 
+interface invoker {
+    invoke: func(bytecode: list<u8>, function: option<string>);
+}
 
 world javy-default-plugin {
     export bytecodealliance:javy-plugin/javy-plugin-exports@1.0.0;
+    export invoker;
     export config-schema: func() -> list<u8>;
 }
