@@ -2,19 +2,16 @@
 //! to validate a plugin is actually used when it should be.
 
 use javy_plugin_api::{
-    import_namespace,
     javy::{quickjs::prelude::Func, Runtime},
     Config,
 };
 
 use crate::exports::bytecodealliance::{
     javy_plugin::javy_plugin_exports::{self},
-    javy_test_plugin::invoker,
+    javy_test_plugin::invokable,
 };
 
 wit_bindgen::generate!({ world: "javy-test-plugin", generate_all });
-
-import_namespace!("test_plugin");
 
 fn config() -> Config {
     Config::default()
@@ -48,7 +45,7 @@ impl javy_plugin_exports::Guest for Component {
     }
 }
 
-impl invoker::Guest for Component {
+impl invokable::Guest for Component {
     fn invoke(bytecode: Vec<u8>, function: Option<String>) -> () {
         javy_plugin_api::initialize_runtime(config, modify_runtime).unwrap();
         javy_plugin_api::invoke(&bytecode, function.as_deref())

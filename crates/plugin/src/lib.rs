@@ -3,7 +3,7 @@ use std::io::{self, Read};
 use javy_plugin_api::javy::Runtime;
 use javy_plugin_api::Config;
 
-use crate::exports::bytecodealliance::javy_default_plugin::invoker;
+use crate::exports::bytecodealliance::javy_default_plugin::invokable;
 use crate::exports::bytecodealliance::javy_plugin::javy_plugin_exports;
 use crate::shared_config::SharedConfig;
 
@@ -22,7 +22,7 @@ impl Guest for Component {
     }
 }
 
-impl invoker::Guest for Component {
+impl invokable::Guest for Component {
     #[allow(async_fn_in_trait)]
     fn invoke(bytecode: Vec<u8>, function: Option<String>) -> () {
         javy_plugin_api::initialize_runtime(config, modify_runtime).unwrap();

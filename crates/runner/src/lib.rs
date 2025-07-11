@@ -33,9 +33,9 @@ impl Plugin {
             // Could try and derive this but not going to for now since tests
             // will break if it changes.
             Self::Default | Self::DefaultAsUser => {
-                "bytecodealliance:javy-default-plugin/invoker@1.0.0"
+                "bytecodealliance:javy-default-plugin/invokable@1.0.0"
             }
-            Self::User { .. } => "bytecodealliance:javy-test-plugin/invoker@1.0.0",
+            Self::User { .. } => "bytecodealliance:javy-test-plugin/invokable@1.0.0",
         }
     }
 
