@@ -7,9 +7,9 @@ use javy_plugin_api::{
     Config,
 };
 
-use crate::bindings::exports::bytecodealliance::javy_plugin::javy_plugin_exports::Guest;
+use crate::exports::bytecodealliance::javy_plugin::javy_plugin_exports::Guest;
 
-mod bindings;
+wit_bindgen::generate!({ world: "javy-plugin" });
 
 import_namespace!("test_plugin");
 
@@ -24,7 +24,7 @@ fn modify_runtime(runtime: Runtime) -> Runtime {
             .set(
                 "func",
                 Func::from(|| {
-                    bindings::bytecodealliance::javy_plugin::imported_functions::imported_function()
+                    crate::bytecodealliance::javy_plugin::imported_functions::imported_function();
                 }),
             )
             .unwrap();
@@ -50,4 +50,4 @@ impl Guest for Component {
     }
 }
 
-bindings::export!(Component with_types_in bindings);
+export!(Component);

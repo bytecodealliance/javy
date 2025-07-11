@@ -1875,7 +1875,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "javy-plugin-api",
- "wit-bindgen-rt 0.43.0",
+ "wit-bindgen",
 ]
 
 [[package]]
