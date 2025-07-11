@@ -247,7 +247,7 @@ impl Generator {
                     .unwrap();
                 let wasm = Wizer::new()
                     .init_func(
-                        "bytecodealliance:javy-plugin/javy-plugin-exports#initialize-runtime",
+                        "bytecodealliance:javy-plugin/javy-plugin-exports@1.0.0#initialize-runtime",
                     )
                     .make_linker(Some(Rc::new(move |engine| {
                         let mut linker = Linker::new(engine);
@@ -294,7 +294,7 @@ impl Generator {
                 let invoke = module.exports.get_func(if self.plugin_kind.is_v2() {
                     "invoke"
                 } else {
-                    "bytecodealliance:javy-plugin/javy-plugin-exports#invoke"
+                    "bytecodealliance:javy-plugin/javy-plugin-exports@1.0.0#invoke"
                 })?;
                 let ExportItem::Memory(memory) = module
                     .exports
@@ -515,10 +515,10 @@ impl Generator {
 
                 module
                     .exports
-                    .remove("bytecodealliance:javy-plugin/javy-plugin-exports#invoke")?;
+                    .remove("bytecodealliance:javy-plugin/javy-plugin-exports@1.0.0#invoke")?;
                 module
                     .exports
-                    .remove("bytecodealliance:javy-plugin/javy-plugin-exports#compile-src")?;
+                    .remove("bytecodealliance:javy-plugin/javy-plugin-exports@1.0.0#compile-src")?;
 
                 Ok(module.emit_wasm())
             }

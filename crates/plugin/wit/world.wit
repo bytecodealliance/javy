@@ -1,12 +1,7 @@
-package bytecodealliance:javy-plugin;
+package bytecodealliance:javy-default-plugin@1.0.0;
 
-interface javy-plugin-exports {
-    compile-src: func(src: list<u8>) -> list<u8>;
-    initialize-runtime: func();
-    invoke: func(bytecode: list<u8>, function: option<string>);
-}
 
 world javy-default-plugin {
-    export javy-plugin-exports;
+    export bytecodealliance:javy-plugin/javy-plugin-exports@1.0.0;
     export config-schema: func() -> list<u8>;
 }

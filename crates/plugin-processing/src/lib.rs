@@ -24,7 +24,7 @@ pub fn extract_core_module(component_bytes: &[u8]) -> Result<Vec<u8>> {
                             for export in exports {
                                 let export = export?;
                                 if export.name
-                                    == "bytecodealliance:javy-plugin/javy-plugin-exports#invoke"
+                                    == "bytecodealliance:javy-plugin/javy-plugin-exports@1.0.0#invoke"
                                 {
                                     extract_this_module = true;
                                     break;
@@ -83,7 +83,7 @@ pub fn preinitialize_module(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
     let mut wizer = Wizer::new();
     let owned_wasm_bytes = wasm_bytes.to_vec();
     wizer
-        .init_func("bytecodealliance:javy-plugin/javy-plugin-exports#initialize-runtime")
+        .init_func("bytecodealliance:javy-plugin/javy-plugin-exports@1.0.0#initialize-runtime")
         .keep_init_func(true)
         .make_linker(Some(Rc::new(move |engine| {
             let mut linker = Linker::new(engine);

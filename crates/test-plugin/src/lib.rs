@@ -9,7 +9,7 @@ use javy_plugin_api::{
 
 use crate::exports::bytecodealliance::javy_plugin::javy_plugin_exports::Guest;
 
-wit_bindgen::generate!({ world: "javy-plugin" });
+wit_bindgen::generate!({ world: "javy-test-plugin", generate_all });
 
 import_namespace!("test_plugin");
 
@@ -24,7 +24,7 @@ fn modify_runtime(runtime: Runtime) -> Runtime {
             .set(
                 "func",
                 Func::from(|| {
-                    crate::bytecodealliance::javy_plugin::imported_functions::imported_function();
+                    crate::imported_function();
                 }),
             )
             .unwrap();

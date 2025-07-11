@@ -10,7 +10,7 @@ mod shared_config;
 
 import_namespace!("javy_quickjs_provider_v3");
 
-wit_bindgen::generate!({ world: "javy-default-plugin" });
+wit_bindgen::generate!({ world: "javy-default-plugin", generate_all });
 
 struct Component;
 
