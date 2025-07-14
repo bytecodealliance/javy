@@ -1,8 +1,6 @@
 #[macro_export]
 macro_rules! javy_plugin {
-    ($namespace:literal, $component:ident, $config:expr, $modify_runtime:expr) => {
-        javy_plugin_api::import_namespace!($namespace);
-
+    ($component:ident, $config:expr, $modify_runtime:expr) => {
         impl crate::exports::bytecodealliance::javy_plugin::javy_plugin_exports::Guest
             for $component
         {
