@@ -9,35 +9,27 @@ use crate::shared_config::SharedConfig;
 
 mod shared_config;
 
-// import_namespace!("javy_quickjs_provider_v3");
-
 wit_bindgen::generate!({ world: "javy-default-plugin", generate_all });
 
 struct Component;
 
 impl Guest for Component {
-    #[allow(async_fn_in_trait)]
     fn config_schema() -> Vec<u8> {
         shared_config::config_schema()
     }
 }
 
 impl invokable::Guest for Component {
-    #[allow(async_fn_in_trait)]
     fn invoke(bytecode: Vec<u8>, function: Option<String>) -> () {
-        javy_plugin_api::initialize_runtime(config, modify_runtime).unwrap();
         javy_plugin_api::invoke(&bytecode, function.as_deref())
     }
 }
 
 impl javy_plugin_exports::Guest for Component {
-    #[allow(async_fn_in_trait)]
     fn compile_src(src: Vec<u8>) -> Vec<u8> {
-        javy_plugin_api::initialize_runtime(config, modify_runtime).unwrap();
         javy_plugin_api::compile_src(&src)
     }
 
-    #[allow(async_fn_in_trait)]
     fn initialize_runtime() -> () {
         javy_plugin_api::reinitialize_runtime(config, modify_runtime).unwrap();
     }
@@ -72,19 +64,3 @@ fn config() -> Config {
 fn modify_runtime(runtime: Runtime) -> Runtime {
     runtime
 }
-
-// javy_plugin!(config, modify_runtime);
-
-// /// Evaluates QuickJS bytecode
-// ///
-// /// # Safety
-// ///
-// /// * `bytecode_ptr` must reference a valid array of unsigned bytes of `bytecode_len` length
-// // This will be removed as soon as we stop emitting calls to it in dynamically
-// // linked modules.
-// #[export_name = "eval_bytecode"]
-// pub unsafe extern "C" fn eval_bytecode(bytecode_ptr: *const u8, bytecode_len: usize) {
-//     let bytecode = std::slice::from_raw_parts(bytecode_ptr, bytecode_len);
-//     javy_plugin_api::initialize_runtime(config, modify_runtime).unwrap();
-//     javy_plugin_api::run_bytecode(bytecode, None);
-// }
