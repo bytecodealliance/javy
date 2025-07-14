@@ -1,7 +1,11 @@
 package bytecodealliance:javy-test-plugin@1.0.0;
 
+interface invokable {
+    invoke: func(bytecode: list<u8>, function: option<string>);
+}
+
 world javy-test-plugin {
     export bytecodealliance:javy-plugin/javy-plugin-exports@1.0.0;
-    export invoke: func(bytecode: list<u8>, function: option<string>);
+    export invokable;
     import imported-function: func();
 }

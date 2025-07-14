@@ -2,14 +2,11 @@
 //! to validate a plugin is actually used when it should be.
 
 use javy_plugin_api::{
-    import_namespace,
     javy::{quickjs::prelude::Func, Runtime},
     javy_plugin, Config,
 };
 
 wit_bindgen::generate!({ world: "javy-test-plugin", generate_all });
-
-import_namespace!("javy-test-plugin@1");
 
 fn config() -> Config {
     Config::default()
@@ -32,6 +29,11 @@ fn modify_runtime(runtime: Runtime) -> Runtime {
 
 struct Component;
 
-javy_plugin!(Component, Guest, config, modify_runtime);
+javy_plugin!(
+    Component,
+    crate::exports::bytecodealliance::javy_test_plugin::invokable::Guest,
+    config,
+    modify_runtime
+);
 
 export!(Component);
