@@ -32,10 +32,8 @@ impl Plugin {
             Self::V2 => "javy_quickjs_provider_v2",
             // Could try and derive this but not going to for now since tests
             // will break if it changes.
-            Self::Default | Self::DefaultAsUser => {
-                "bytecodealliance:javy-default-plugin/invokable@1.0.0"
-            }
-            Self::User { .. } => "bytecodealliance:javy-test-plugin/invokable@1.0.0",
+            Self::Default | Self::DefaultAsUser => "javy-default-plugin@1",
+            Self::User { .. } => "javy-test-plugin@1",
         }
     }
 
