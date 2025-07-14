@@ -22,6 +22,7 @@ pub enum Plugin {
     V2,
     Default,
     User,
+    Component,
     /// Pass the default plugin on the CLI as a user plugin.
     DefaultAsUser,
 }
@@ -33,7 +34,7 @@ impl Plugin {
             // Could try and derive this but not going to for now since tests
             // will break if it changes.
             Self::Default | Self::DefaultAsUser => "javy-default-plugin@1",
-            Self::User { .. } => "javy-test-plugin@1",
+            Self::User { .. } | Self::Component => "javy-test-plugin@1",
         }
     }
 
@@ -48,6 +49,7 @@ impl Plugin {
                 .join("src")
                 .join("javy_quickjs_provider_v2.wasm"),
             Self::User => root.join("test_plugin.wasm"),
+            Self::Component => root.join("test_component_plugin.wasm"),
             Self::Default | Self::DefaultAsUser => root
                 .join("..")
                 .join("..")
@@ -55,6 +57,13 @@ impl Plugin {
                 .join("wasm32-wasip2")
                 .join("release")
                 .join("plugin_wizened.wasm"),
+        }
+    }
+
+    pub fn requires_plugin_flag(&self) -> bool {
+        match self {
+            Plugin::V2 | Plugin::Default => false,
+            Plugin::User | Plugin::Component | Plugin::DefaultAsUser => true,
         }
     }
 }
@@ -587,7 +596,7 @@ impl Runner {
             args.push(format!("event-loop={}", if enabled { "y" } else { "n" }));
         }
 
-        if matches!(plugin, Plugin::User | Plugin::DefaultAsUser) {
+        if plugin.requires_plugin_flag() {
             args.push("-C".to_string());
             args.push(format!("plugin={}", plugin.path().to_str().unwrap()));
         }

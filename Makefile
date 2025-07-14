@@ -21,6 +21,7 @@ plugin:
 build-test-plugin: cli
 	cargo build --package=javy-test-plugin --target=wasm32-wasip2 --release
 	cargo run --package=javy-plugin-processing -- target/wasm32-wasip2/release/test_plugin.wasm crates/runner/test_plugin.wasm
+	cp target/wasm32-wasip2/release/test_plugin.wasm crates/runner/test_component_plugin.wasm
 
 docs:
 	cargo doc --package=javy-cli --open
