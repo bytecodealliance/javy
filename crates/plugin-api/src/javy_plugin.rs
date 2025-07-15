@@ -1,6 +1,6 @@
 #[macro_export]
 macro_rules! javy_plugin {
-    ($component:ident, $invokable_trait:path, $config:expr, $modify_runtime:expr) => {
+    ($component:ident, $config:expr, $modify_runtime:expr) => {
         impl crate::exports::bytecodealliance::javy_plugin::javy_plugin_exports::Guest
             for $component
         {
@@ -14,7 +14,7 @@ macro_rules! javy_plugin {
             }
         }
 
-        impl $invokable_trait for $component {
+        impl Guest for $component {
             fn invoke(bytecode: Vec<u8>, function: Option<String>) -> () {
                 javy_plugin_api::initialize_runtime($config, $modify_runtime).unwrap();
                 javy_plugin_api::invoke(&bytecode, function.as_deref())

@@ -32,6 +32,6 @@ fn modify_runtime(runtime: Runtime) -> Runtime {
 
 struct Component;
 
-javy_plugin!(Component, Guest, config, modify_runtime);
+javy_plugin!(Component, config, modify_runtime);
 
 export!(Component);
