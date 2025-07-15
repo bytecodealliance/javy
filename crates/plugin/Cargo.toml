@@ -17,4 +17,4 @@ javy-plugin-api = { path = "../plugin-api", features = [
 ] }
 serde = { workspace = true }
 serde_json = { workspace = true }
-wit-bindgen = "0.43.0"
+wit-bindgen = { workspace = true }

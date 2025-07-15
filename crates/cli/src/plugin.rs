@@ -49,7 +49,10 @@ impl<'a> UninitializedPlugin<'a> {
 
     /// Initializes the plugin.
     pub(crate) fn initialize(&self) -> Result<Vec<u8>> {
-        Ok(self.bytes.to_vec())
+        let bytes = javy_plugin_processing::extract_core_module(self.bytes)?;
+        let bytes = javy_plugin_processing::optimize_module(&bytes)?;
+        let bytes = javy_plugin_processing::preinitialize_module(&bytes)?;
+        Ok(bytes)
     }
 
     fn validate(plugin_bytes: &'a [u8]) -> Result<()> {
@@ -62,7 +65,7 @@ impl<'a> UninitializedPlugin<'a> {
         }
         if let Err(err) = Self::validate_exported_func(
             &module,
-            "compile_src",
+            "compile-src",
             &[ValType::I32, ValType::I32],
             &[ValType::I32],
         ) {
@@ -71,7 +74,13 @@ impl<'a> UninitializedPlugin<'a> {
         if let Err(err) = Self::validate_exported_func(
             &module,
             "invoke",
-            &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
+            &[
+                ValType::I32,
+                ValType::I32,
+                ValType::I32,
+                ValType::I32,
+                ValType::I32,
+            ],
             &[],
         ) {
             errors.push(err);
@@ -140,7 +149,7 @@ mod tests {
             error.to_string(),
             "Problems with module: missing export for function named \
             `initialize_runtime`, missing export for function named \
-            `compile_src`, missing export for function named `invoke`, \
+            `compile-src`, missing export for function named `invoke`, \
             missing exported memory named `memory`, missing custom section \
             named `import_namespace`"
         );

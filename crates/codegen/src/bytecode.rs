@@ -1,84 +1,20 @@
 use anyhow::{anyhow, Result};
-use wasmtime::{
-    component::{bindgen, Component, Linker},
-    AsContextMut, Engine, Instance, Memory, Module, Store,
-};
-use wasmtime_wasi::{
-    preview1::WasiP1Ctx, IoView, ResourceTable, WasiCtx, WasiCtxBuilder, WasiView,
-};
+use wasmtime::{AsContextMut, Engine, Instance, Linker, Memory, Module, Store};
+use wasmtime_wasi::{preview1::WasiP1Ctx, WasiCtxBuilder};
 
-use crate::Plugin;
-
-bindgen!({
-    inline: r#"
-package bytecodealliance:javy-plugin;
-
-interface javy-plugin-exports {
-    compile-src: func(bytecode: list<u8>) -> list<u8>;
-}
-
-world javy {
-    export javy-plugin-exports;
-}
-    "#
-});
-
-struct Wrapper {
-    wasi: WasiCtx,
-    resource_table: ResourceTable,
-}
-
-impl WasiView for Wrapper {
-    fn ctx(&mut self) -> &mut WasiCtx {
-        &mut self.wasi
-    }
-}
-
-impl IoView for Wrapper {
-    fn table(&mut self) -> &mut ResourceTable {
-        &mut self.resource_table
-    }
-}
-
-pub(crate) fn compile_source(plugin: &Plugin, js_source_code: &[u8]) -> Result<Vec<u8>> {
-    let engine = Engine::default();
-    if plugin.is_component()? {
-        let component = Component::new(&engine, plugin.as_bytes())?;
-        let mut linker = Linker::new(&engine);
-        wasmtime_wasi::add_to_linker_sync(&mut linker)?;
-        // Error: map entry `wasi:cli/environment@0.2.3` defined twice
-        // linker.define_unknown_imports_as_traps(&component)?;
-        let wasi = WasiCtxBuilder::new().inherit_stderr().build();
-        let mut store = Store::new(
-            &engine,
-            Wrapper {
-                wasi,
-                resource_table: ResourceTable::new(),
-            },
-        );
-        let instance = Javy::instantiate(store.as_context_mut(), &component, &linker)?;
-        let bytecode = instance
-            .bytecodealliance_javy_plugin_javy_plugin_exports()
-            .call_compile_src(store.as_context_mut(), js_source_code)?;
-        Ok(bytecode)
-    } else {
-        let (mut store, instance, memory) = create_wasm_env(plugin.as_bytes())?;
-        let (js_src_ptr, js_src_len) = copy_source_code_into_instance(
-            js_source_code,
-            store.as_context_mut(),
-            &instance,
-            &memory,
-        )?;
-        let ret_ptr = call_compile(js_src_ptr, js_src_len, store.as_context_mut(), &instance)?;
-        let bytecode = copy_bytecode_from_instance(ret_ptr, store.as_context_mut(), &memory)?;
-        Ok(bytecode)
-    }
+pub(crate) fn compile_source(plugin_bytes: &[u8], js_source_code: &[u8]) -> Result<Vec<u8>> {
+    let (mut store, instance, memory) = create_wasm_env(plugin_bytes)?;
+    let (js_src_ptr, js_src_len) =
+        copy_source_code_into_instance(js_source_code, store.as_context_mut(), &instance, &memory)?;
+    let ret_ptr = call_compile(js_src_ptr, js_src_len, store.as_context_mut(), &instance)?;
+    let bytecode = copy_bytecode_from_instance(ret_ptr, store.as_context_mut(), &memory)?;
+    Ok(bytecode)
 }
 
 fn create_wasm_env(plugin_bytes: &[u8]) -> Result<(Store<WasiP1Ctx>, Instance, Memory)> {
     let engine = Engine::default();
     let module = Module::new(&engine, plugin_bytes)?;
-    let mut linker = wasmtime::Linker::new(&engine);
+    let mut linker = Linker::new(&engine);
     wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |s| s)?;
     linker.define_unknown_imports_as_traps(&module)?;
     let wasi = WasiCtxBuilder::new().inherit_stderr().build_p1();

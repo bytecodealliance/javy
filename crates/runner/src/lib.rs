@@ -17,12 +17,11 @@ pub enum JavyCommand {
     Compile,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Plugin {
     V2,
     Default,
     User,
-    Component,
     /// Pass the default plugin on the CLI as a user plugin.
     DefaultAsUser,
 }
@@ -33,8 +32,8 @@ impl Plugin {
             Self::V2 => "javy_quickjs_provider_v2",
             // Could try and derive this but not going to for now since tests
             // will break if it changes.
-            Self::Default | Self::DefaultAsUser => "javy-default-plugin@1",
-            Self::User { .. } | Self::Component => "javy-test-plugin@1",
+            Self::Default | Self::DefaultAsUser => "javy-default-plugin-v1",
+            Self::User { .. } => "test-plugin",
         }
     }
 
@@ -49,7 +48,6 @@ impl Plugin {
                 .join("src")
                 .join("javy_quickjs_provider_v2.wasm"),
             Self::User => root.join("test_plugin.wasm"),
-            Self::Component => root.join("test_component_plugin.wasm"),
             Self::Default | Self::DefaultAsUser => root
                 .join("..")
                 .join("..")
@@ -57,13 +55,6 @@ impl Plugin {
                 .join("wasm32-wasip2")
                 .join("release")
                 .join("plugin_wizened.wasm"),
-        }
-    }
-
-    pub fn requires_plugin_flag(&self) -> bool {
-        match self {
-            Plugin::V2 | Plugin::Default => false,
-            Plugin::User | Plugin::Component | Plugin::DefaultAsUser => true,
         }
     }
 }
@@ -596,7 +587,7 @@ impl Runner {
             args.push(format!("event-loop={}", if enabled { "y" } else { "n" }));
         }
 
-        if plugin.requires_plugin_flag() {
+        if matches!(plugin, Plugin::User | Plugin::DefaultAsUser) {
             args.push("-C".to_string());
             args.push(format!("plugin={}", plugin.path().to_str().unwrap()));
         }
@@ -758,7 +749,7 @@ impl Runner {
             .unwrap();
         let compile_src_func = instance.get_typed_func::<(u32, u32), u32>(
             store.as_context_mut(),
-            "bytecodealliance:javy-plugin/javy-plugin-exports#compile_src",
+            "bytecodealliance:javy-plugin/javy-plugin-exports#compile-src",
         )?;
 
         let js_src_ptr = Self::allocate_memory(
