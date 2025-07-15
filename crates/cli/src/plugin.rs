@@ -60,7 +60,7 @@ impl<'a> UninitializedPlugin<'a> {
 
         let module = walrus::Module::from_buffer(plugin_bytes)?;
 
-        if let Err(err) = Self::validate_exported_func(&module, "initialize_runtime", &[], &[]) {
+        if let Err(err) = Self::validate_exported_func(&module, "initialize-runtime", &[], &[]) {
             errors.push(err);
         }
         if let Err(err) = Self::validate_exported_func(
@@ -148,7 +148,7 @@ mod tests {
         assert_eq!(
             error.to_string(),
             "Problems with module: missing export for function named \
-            `initialize_runtime`, missing export for function named \
+            `initialize-runtime`, missing export for function named \
             `compile-src`, missing export for function named `invoke`, \
             missing exported memory named `memory`, missing custom section \
             named `import_namespace`"
@@ -161,12 +161,12 @@ mod tests {
         let mut module = walrus::Module::with_config(ModuleConfig::default());
         let initialize_runtime = FunctionBuilder::new(&mut module.types, &[ValType::I32], &[])
             .finish(vec![], &mut module.funcs);
-        module.exports.add("initialize_runtime", initialize_runtime);
+        module.exports.add("initialize-runtime", initialize_runtime);
 
         let plugin_bytes = module.emit_wasm();
         let error = UninitializedPlugin::new(&plugin_bytes).err().unwrap();
         let expected_part_of_error =
-            "Problems with module: type for function `initialize_runtime` is incorrect,";
+            "Problems with module: type for function `initialize-runtime` is incorrect,";
         if !error.to_string().contains(expected_part_of_error) {
             panic!("Expected error to contain '{expected_part_of_error}' but it did not. Full error is: '{error}'");
         }
@@ -179,12 +179,12 @@ mod tests {
         let mut initialize_runtime = FunctionBuilder::new(&mut module.types, &[], &[ValType::I32]);
         initialize_runtime.func_body().i32_const(0);
         let initialize_runtime = initialize_runtime.finish(vec![], &mut module.funcs);
-        module.exports.add("initialize_runtime", initialize_runtime);
+        module.exports.add("initialize-runtime", initialize_runtime);
 
         let plugin_bytes = module.emit_wasm();
         let error = UninitializedPlugin::new(&plugin_bytes).err().unwrap();
         let expected_part_of_error =
-            "Problems with module: type for function `initialize_runtime` is incorrect,";
+            "Problems with module: type for function `initialize-runtime` is incorrect,";
         if !error.to_string().contains(expected_part_of_error) {
             panic!("Expected error to contain '{expected_part_of_error}' but it did not. Full error is: '{error}'");
         }

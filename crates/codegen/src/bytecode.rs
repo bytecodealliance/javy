@@ -60,10 +60,8 @@ fn call_compile(
     mut store: impl AsContextMut,
     instance: &Instance,
 ) -> Result<u32> {
-    let compile_src_fn = instance.get_typed_func::<(u32, u32), u32>(
-        store.as_context_mut(),
-        "bytecodealliance:javy-plugin/javy-plugin-exports@1.0.0#compile-src",
-    )?;
+    let compile_src_fn =
+        instance.get_typed_func::<(u32, u32), u32>(store.as_context_mut(), "compile-src")?;
     let ret_ptr = compile_src_fn
         .call(store.as_context_mut(), (js_src_ptr, js_src_len))
         .map_err(|_| anyhow!("JS compilation failed"))?;

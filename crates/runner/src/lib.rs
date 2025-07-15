@@ -747,10 +747,8 @@ impl Runner {
         let memory = instance
             .get_memory(store.as_context_mut(), "memory")
             .unwrap();
-        let compile_src_func = instance.get_typed_func::<(u32, u32), u32>(
-            store.as_context_mut(),
-            "bytecodealliance:javy-plugin/javy-plugin-exports#compile-src",
-        )?;
+        let compile_src_func =
+            instance.get_typed_func::<(u32, u32), u32>(store.as_context_mut(), "compile-src")?;
 
         let js_src_ptr = Self::allocate_memory(
             instance,

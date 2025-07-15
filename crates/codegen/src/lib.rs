@@ -241,14 +241,12 @@ impl Generator {
         let config = transform::module_config();
         let module = match &self.linking {
             LinkingKind::Static => {
-                // Copy config JSON into stdin for `initialize_runtime` function.
+                // Copy config JSON into stdin for `initialize-runtime` function.
                 STDIN_PIPE
                     .set(MemoryInputPipe::new(self.js_runtime_config.clone()))
                     .unwrap();
                 let wasm = Wizer::new()
-                    .init_func(
-                        "bytecodealliance:javy-plugin/javy-plugin-exports@1.0.0#initialize-runtime",
-                    )
+                    .init_func("initialize-runtime")
                     .make_linker(Some(Rc::new(move |engine| {
                         let mut linker = Linker::new(engine);
                         wasmtime_wasi::preview1::add_to_linker_sync(
@@ -507,9 +505,7 @@ impl Generator {
                 }
 
                 module.exports.remove("invoke")?;
-                module
-                    .exports
-                    .remove("bytecodealliance:javy-plugin/javy-plugin-exports@1.0.0#compile-src")?;
+                module.exports.remove("compile-src")?;
 
                 Ok(module.emit_wasm())
             }

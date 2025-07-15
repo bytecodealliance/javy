@@ -1,7 +1,8 @@
 package bytecodealliance:javy-test-plugin@1.0.0;
 
 world javy-test-plugin {
-    export bytecodealliance:javy-plugin/javy-plugin-exports@1.0.0;
+    export compile-src: func(src: list<u8>) -> list<u8>;
+    export initialize-runtime: func();
     export invoke: func(bytecode: list<u8>, function: option<string>);
     import imported-function: func();
 }

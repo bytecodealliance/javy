@@ -3,7 +3,6 @@ use std::io::{self, Read};
 use javy_plugin_api::javy::Runtime;
 use javy_plugin_api::{import_namespace, Config};
 
-use crate::exports::bytecodealliance::javy_plugin::javy_plugin_exports;
 use crate::shared_config::SharedConfig;
 
 mod shared_config;
@@ -22,9 +21,7 @@ impl Guest for Component {
     fn invoke(bytecode: Vec<u8>, function: Option<String>) -> () {
         javy_plugin_api::invoke(&bytecode, function.as_deref())
     }
-}
 
-impl javy_plugin_exports::Guest for Component {
     fn compile_src(src: Vec<u8>) -> Vec<u8> {
         javy_plugin_api::compile_src(&src)
     }

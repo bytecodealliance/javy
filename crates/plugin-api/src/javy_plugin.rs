@@ -3,9 +3,7 @@ macro_rules! javy_plugin {
     ($namespace:literal, $component:ident, $config:expr, $modify_runtime:expr) => {
         javy_plugin_api::import_namespace!($namespace);
 
-        impl crate::exports::bytecodealliance::javy_plugin::javy_plugin_exports::Guest
-            for $component
-        {
+        impl Guest for $component {
             fn compile_src(src: Vec<u8>) -> Vec<u8> {
                 javy_plugin_api::initialize_runtime($config, $modify_runtime).unwrap();
                 javy_plugin_api::compile_src(&src)
@@ -14,9 +12,7 @@ macro_rules! javy_plugin {
             fn initialize_runtime() -> () {
                 javy_plugin_api::initialize_runtime($config, $modify_runtime).unwrap();
             }
-        }
 
-        impl Guest for $component {
             fn invoke(bytecode: Vec<u8>, function: Option<String>) -> () {
                 javy_plugin_api::initialize_runtime($config, $modify_runtime).unwrap();
                 javy_plugin_api::invoke(&bytecode, function.as_deref())
