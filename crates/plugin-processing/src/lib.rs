@@ -1,6 +1,6 @@
 use anyhow::Result;
 use std::{fs, rc::Rc};
-use walrus::{CustomSection, FunctionId, ImportKind};
+use walrus::{FunctionId, ImportKind};
 use wasmparser::{Parser, Payload};
 use wasmtime::Module;
 use wasmtime_wasi::WasiCtxBuilder;
@@ -17,14 +17,14 @@ pub fn extract_core_module(component_bytes: &[u8]) -> Result<Vec<u8>> {
                 ..
             } => {
                 let module_bytes = &component_bytes[unchecked_range.start..unchecked_range.end];
-                let mut import_namespace = None;
+                let mut extract_this_module = false;
                 for payload in parser.parse_all(module_bytes) {
                     match payload? {
                         Payload::ExportSection(exports) => {
                             for export in exports {
                                 let export = export?;
-                                import_namespace = export.name.strip_suffix("#invoke");
-                                if import_namespace.is_some() {
+                                if export.name == "invoke" {
+                                    extract_this_module = true;
                                     break;
                                 }
                             }
@@ -32,10 +32,8 @@ pub fn extract_core_module(component_bytes: &[u8]) -> Result<Vec<u8>> {
                         _ => continue,
                     }
                 }
-                if let Some(import_namespace) = import_namespace {
+                if extract_this_module {
                     let module_bytes = strip_wasi_p2_imports(module_bytes)?;
-                    let module_bytes =
-                        add_import_namespace(&module_bytes, import_namespace.to_string())?;
                     return Ok(module_bytes);
                 }
             }
@@ -66,35 +64,6 @@ fn strip_wasi_p2_imports(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
             builder.func_body().unreachable();
         })?;
     }
-    Ok(module.emit_wasm())
-}
-
-#[derive(Debug)]
-struct ImportNamespaceCustomSection {
-    namespace: String,
-}
-
-impl ImportNamespaceCustomSection {
-    fn new(namespace: String) -> Self {
-        Self { namespace }
-    }
-}
-
-impl CustomSection for ImportNamespaceCustomSection {
-    fn name(&self) -> &str {
-        "import_namespace"
-    }
-
-    fn data(&self, _ids_to_indices: &walrus::IdsToIndices) -> std::borrow::Cow<[u8]> {
-        std::borrow::Cow::Borrowed(self.namespace.as_bytes())
-    }
-}
-
-fn add_import_namespace(wasm_bytes: &[u8], import_namespace: String) -> Result<Vec<u8>> {
-    let mut module = walrus::Module::from_buffer(wasm_bytes)?;
-    module
-        .customs
-        .add(ImportNamespaceCustomSection::new(import_namespace));
     Ok(module.emit_wasm())
 }
 

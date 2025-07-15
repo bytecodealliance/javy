@@ -49,6 +49,7 @@ pub use javy;
 
 mod config;
 mod javy_plugin;
+mod namespace;
 
 const FUNCTION_MODULE_NAME: &str = "function.mjs";
 

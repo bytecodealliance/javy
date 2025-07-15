@@ -70,7 +70,7 @@
 //!   unstable API's exposed by this future may break in the future without
 //!   notice.
 
-use std::{borrow::Cow, rc::Rc, sync::OnceLock};
+use std::{rc::Rc, sync::OnceLock};
 
 pub(crate) mod bytecode;
 pub(crate) mod exports;
@@ -291,12 +291,7 @@ impl Generator {
                         "cabi_realloc"
                     })?;
                 let eval_bytecode = module.exports.get_func("eval_bytecode").ok();
-                let invoke = module.exports.get_func(if self.plugin_kind.is_v2() {
-                    Cow::Borrowed("invoke")
-                } else {
-                    let import_namespace = self.plugin_kind.import_namespace(&self.plugin)?;
-                    Cow::Owned(format!("{import_namespace}#invoke"))
-                })?;
+                let invoke = module.exports.get_func("invoke")?;
                 let ExportItem::Memory(memory) = module
                     .exports
                     .iter()
@@ -362,11 +357,8 @@ impl Generator {
                     ],
                     &[],
                 );
-                let (invoke_fn_id, _) = module.add_import_func(
-                    &import_namespace,
-                    &format!("{import_namespace}#invoke"),
-                    invoke_type,
-                );
+                let (invoke_fn_id, _) =
+                    module.add_import_func(&import_namespace, "invoke", invoke_type);
 
                 let (memory_id, _) = module.add_import_memory(
                     &import_namespace,
@@ -514,10 +506,7 @@ impl Generator {
                     module.exports.remove("eval_bytecode")?;
                 }
 
-                let import_namespace = self.plugin_kind.import_namespace(&self.plugin)?;
-                module
-                    .exports
-                    .remove(format!("{import_namespace}#invoke"))?;
+                module.exports.remove("invoke")?;
                 module
                     .exports
                     .remove("bytecodealliance:javy-plugin/javy-plugin-exports@1.0.0#compile-src")?;
