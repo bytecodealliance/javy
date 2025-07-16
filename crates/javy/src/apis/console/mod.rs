@@ -190,7 +190,7 @@ mod tests {
         Ok(())
     }
 
-    #[derive(Clone)]
+    #[derive(Debug, Clone)]
     struct SharedStream {
         buffer: Rc<RefCell<Vec<u8>>>,
         capacity: usize,

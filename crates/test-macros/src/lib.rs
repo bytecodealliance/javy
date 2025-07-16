@@ -17,6 +17,7 @@ use quote::quote;
 use std::{env, path::PathBuf};
 use syn::{meta::ParseNestedMeta, parse_macro_input, Ident, LitBool, LitStr, Result, ReturnType};
 
+#[derive(Debug)]
 struct Config262 {
     root: PathBuf,
 }
@@ -178,6 +179,7 @@ fn gen_tests(
     }
 }
 
+#[derive(Debug)]
 struct CliTestConfig {
     /// Root directory to load test scripts from, relative to the crate's
     /// directory (i.e., `CARGO_MANIFEST_DIR`)

@@ -11,13 +11,13 @@ use wasmtime::{AsContextMut, Config, Engine, Instance, Linker, Module, OptLevel,
 use wasmtime_wasi::pipe::{MemoryInputPipe, MemoryOutputPipe};
 use wasmtime_wasi::{preview1::WasiP1Ctx, WasiCtxBuilder};
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum JavyCommand {
     Build,
     Compile,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum Plugin {
     V2,
     Default,
@@ -59,7 +59,7 @@ impl Plugin {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Builder {
     /// The JS source.
     input: PathBuf,
@@ -276,6 +276,7 @@ impl StoreContext {
     }
 }
 
+#[derive(Debug)]
 pub enum UseExportedFn {
     EvalBytecode,
     Invoke(Option<&'static str>),

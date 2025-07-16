@@ -9,6 +9,7 @@ pub const QUICKJS_PROVIDER_V2_MODULE: &[u8] = include_bytes!("./javy_quickjs_pro
 
 /// Represents the kind of a plugin.
 // This is an internal detail of this module.
+#[derive(Debug)]
 pub(crate) enum PluginKind {
     User,
     Default,
@@ -17,6 +18,7 @@ pub(crate) enum PluginKind {
 /// Represents a Plugin as well as it's kind
 /// for use within the Javy CLI crate.
 // This is an internal detail of this module.
+#[derive(Debug)]
 pub(crate) struct CliPlugin {
     pub(crate) plugin: Plugin,
     pub(crate) kind: PluginKind,
@@ -37,6 +39,7 @@ impl CliPlugin {
 }
 
 /// A validated but uninitialized plugin.
+#[derive(Debug)]
 pub(crate) struct UninitializedPlugin<'a> {
     bytes: &'a [u8],
 }
