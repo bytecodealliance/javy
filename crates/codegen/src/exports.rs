@@ -7,7 +7,7 @@ use crate::wit;
 
 pub(crate) type Exports = Vec<Export>;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub(crate) struct Export {
     pub wit: String,
     pub js: String,

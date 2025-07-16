@@ -97,7 +97,7 @@ use anyhow::Result;
 static STDIN_PIPE: OnceLock<MemoryInputPipe> = OnceLock::new();
 
 /// The kind of linking to use.
-#[derive(Clone, Default)]
+#[derive(Debug, Clone, Default)]
 pub enum LinkingKind {
     #[default]
     /// Static linking
@@ -108,6 +108,7 @@ pub enum LinkingKind {
 
 /// Identifiers used by the generated module.
 // This is an internal detail of this module.
+#[derive(Debug)]
 pub(crate) struct Identifiers {
     canonical_abi_realloc: FunctionId,
     eval_bytecode: Option<FunctionId>,
@@ -133,6 +134,7 @@ impl Identifiers {
 
 /// Helper struct to keep track of bytecode metadata.
 // This is an internal detail of this module.
+#[derive(Debug)]
 pub(crate) struct BytecodeMetadata {
     ptr: LocalId,
     len: i32,
@@ -150,7 +152,7 @@ impl BytecodeMetadata {
 }
 
 /// Generator used to produce Wasm binaries from JS source code.
-#[derive(Default, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct Generator {
     /// Plugin to use.
     pub(crate) plugin: plugin::Plugin,

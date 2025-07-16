@@ -3,6 +3,7 @@ use bitflags::bitflags;
 
 bitflags! {
     /// Flags to represent available JavaScript features.
+    #[derive(Debug)]
     pub(crate) struct JSIntrinsics: u32  {
         const DATE = 1;
         const EVAL = 1 << 1;
@@ -35,6 +36,7 @@ bitflags! {
     /// users to extend the runtime with non-standard functionality directly
     /// from the CLI, at this point many, if not most, of these APIs will be
     /// moved out.
+    #[derive(Debug)]
     pub(crate) struct JavyIntrinsics: u32 {
         const STREAM_IO = 1;
     }
@@ -44,6 +46,7 @@ bitflags! {
 ///
 /// These are the global configuration options to create a [`Runtime`](crate::Runtime),
 /// and customize its behavior.
+#[derive(Debug)]
 pub struct Config {
     /// JavaScript features.
     pub(crate) intrinsics: JSIntrinsics,

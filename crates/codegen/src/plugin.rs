@@ -5,7 +5,7 @@ use super::bytecode;
 
 /// The kind of a plugin.
 // This is an internal detail of this module.
-#[derive(Default, PartialEq, Copy, Clone)]
+#[derive(Debug, Default, PartialEq, Copy, Clone)]
 #[allow(dead_code)] // Suppresses warnings for feature-gated variants
 pub(crate) enum PluginKind {
     #[default]

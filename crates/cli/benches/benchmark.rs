@@ -211,12 +211,13 @@ fn execute_javy(index_js: &Path, wasm: &Path, linking: &Linking) -> Result<()> {
     Ok(())
 }
 
+#[derive(Debug)]
 enum Compilation {
     AheadOfTime,
     JustInTime,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 enum Linking {
     Static,
     Dynamic,
