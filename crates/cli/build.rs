@@ -1,7 +1,5 @@
 use std::env;
 use std::fs;
-use std::io::{Read, Write};
-
 use std::path::{Path, PathBuf};
 
 use anyhow::Result;
@@ -28,12 +26,6 @@ fn stub_plugin_for_clippy() -> Result<()> {
     Ok(())
 }
 
-fn read_file(path: impl AsRef<Path>) -> Result<Vec<u8>> {
-    let mut buf: Vec<u8> = vec![];
-    fs::File::open(path.as_ref())?.read_to_end(&mut buf)?;
-    Ok(buf)
-}
-
 // Copy the plugin binary build from the `plugin` crate
 fn copy_plugin() -> Result<()> {
     let cargo_manifest_dir = env::var("CARGO_MANIFEST_DIR")?;
@@ -44,34 +36,17 @@ fn copy_plugin() -> Result<()> {
         .unwrap()
         .join("target/wasm32-wasip1/release");
     let plugin_path = module_path.join("plugin.wasm");
-
-    // Re-encode overlong indexes before running Wizer.
-    let tempdir = tempfile::tempdir()?;
-    let out_wasmopt_path = tempdir.path().join("out_temp.wasm");
-    wasm_opt::OptimizationOptions::new_opt_level_3() // Aggressively optimize for speed.
-        .shrink_level(wasm_opt::ShrinkLevel::Level0) // Don't optimize for size at the expense of performance.
-        .debug_info(false)
-        .run(&plugin_path, &out_wasmopt_path)?;
-
     let plugin_wizened_path = module_path.join("plugin_wizened.wasm");
 
-    let mut wizer = wizer::Wizer::new();
-    let wizened = wizer
-        .init_func("initialize_runtime")
-        .keep_init_func(true) // Necessary for static codegen.
-        .allow_wasi(true)?
-        .wasm_bulk_memory(true)
-        .run(read_file(&out_wasmopt_path)?.as_slice())?;
-    fs::File::create(&plugin_wizened_path)?.write_all(&wizened)?;
+    let initialized_plugin = javy_plugin_processing::initialize_plugin(&fs::read(&plugin_path)?)?;
+    fs::write(&plugin_wizened_path, &initialized_plugin)?;
 
     println!("cargo:rerun-if-changed={}", plugin_path.to_str().unwrap());
     println!("cargo:rerun-if-changed=build.rs");
 
-    if plugin_wizened_path.exists() {
-        let out_dir = env::var("OUT_DIR")?;
-        let copied_plugin_path = Path::new(&out_dir).join("plugin.wasm");
+    let out_dir = env::var("OUT_DIR")?;
+    let copied_plugin_path = Path::new(&out_dir).join("plugin.wasm");
 
-        fs::copy(&plugin_wizened_path, copied_plugin_path)?;
-    }
+    fs::copy(&plugin_wizened_path, copied_plugin_path)?;
     Ok(())
 }

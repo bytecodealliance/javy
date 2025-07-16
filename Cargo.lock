@@ -1728,6 +1728,7 @@ dependencies = [
  "clap",
  "criterion",
  "javy-codegen",
+ "javy-plugin-processing",
  "javy-runner",
  "javy-test-macros",
  "num-format",
@@ -1739,7 +1740,6 @@ dependencies = [
  "wasmparser 0.235.0",
  "wasmtime",
  "wasmtime-wasi",
- "wizer",
 ]
 
 [[package]]
@@ -1786,6 +1786,18 @@ version = "3.1.1-alpha.1"
 dependencies = [
  "anyhow",
  "javy",
+]
+
+[[package]]
+name = "javy-plugin-processing"
+version = "5.0.4"
+dependencies = [
+ "anyhow",
+ "clap",
+ "tempfile",
+ "wasm-opt",
+ "wasmtime-wasi",
+ "wizer",
 ]
 
 [[package]]

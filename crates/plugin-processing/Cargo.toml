@@ -1,0 +1,18 @@
+[package]
+name = "javy-plugin-processing"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Logic for initializing Javy plugins"
+homepage = "https://github.com/bytecodealliance/javy/tree/main/crates/plugin-processing"
+repository = "https://github.com/bytecodealliance/javy/tree/main/crates/plugin-processing"
+categories = ["wasm"]
+
+[dependencies]
+anyhow = { workspace = true }
+clap = { workspace = true }
+tempfile = { workspace = true }
+wasm-opt = { workspace = true }
+wasmtime-wasi = { workspace = true }
+wizer = { workspace = true }

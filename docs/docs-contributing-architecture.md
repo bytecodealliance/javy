@@ -124,6 +124,11 @@ You should gate your feature with a cargo feature if your feature/change:
 
 A Rust crate for compiling JS to Wasm.
 
+### `javy-plugin-processing`
+
+Contains the logic for initializing a Javy plugin. Used to build the default
+plugin and also be the Javy CLI for its plugin initialization logic.
+
 ### `javy-plugin`
 
 Gets compiled to `plugin.wasm` for use by the CLI and in environments for

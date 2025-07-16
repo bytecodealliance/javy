@@ -1,8 +1,7 @@
 use anyhow::{bail, Result};
 use javy_codegen::Plugin;
-use std::{fs, str};
+use std::str;
 use walrus::{ExportItem, ValType};
-use wizer::Wizer;
 
 pub const PLUGIN_MODULE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/plugin.wasm"));
 pub const QUICKJS_PROVIDER_V2_MODULE: &[u8] = include_bytes!("./javy_quickjs_provider_v2.wasm");
@@ -50,27 +49,7 @@ impl<'a> UninitializedPlugin<'a> {
 
     /// Initializes the plugin.
     pub(crate) fn initialize(&self) -> Result<Vec<u8>> {
-        // Need to re-encode overlong indexes before running Wizer.
-        let wasm_opted_plugin = Self::run_wasm_opt(self.bytes)?;
-
-        Wizer::new()
-            .allow_wasi(true)?
-            .init_func("initialize_runtime")
-            .keep_init_func(true)
-            .wasm_bulk_memory(true)
-            .run(&wasm_opted_plugin)
-    }
-
-    fn run_wasm_opt(plugin: &[u8]) -> Result<Vec<u8>> {
-        let tempdir = tempfile::tempdir()?;
-        let in_tempfile_path = tempdir.path().join("in_temp.wasm");
-        let out_tempfile_path = tempdir.path().join("out_temp.wasm");
-        fs::write(&in_tempfile_path, plugin)?;
-        wasm_opt::OptimizationOptions::new_opt_level_3() // Aggressively optimize for speed.
-            .shrink_level(wasm_opt::ShrinkLevel::Level0) // Don't optimize for size at the expense of performance.
-            .debug_info(false)
-            .run(&in_tempfile_path, &out_tempfile_path)?;
-        Ok(fs::read(out_tempfile_path)?)
+        javy_plugin_processing::initialize_plugin(self.bytes)
     }
 
     fn validate(plugin_bytes: &'a [u8]) -> Result<()> {
