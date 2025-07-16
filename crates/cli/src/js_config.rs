@@ -1,8 +1,8 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use serde::Deserialize;
 use std::{collections::HashMap, str};
-use wasmtime::{AsContextMut, Engine, Linker};
-use wasmtime_wasi::{pipe::MemoryOutputPipe, WasiCtxBuilder};
+use wasmtime::{AsContext, AsContextMut, Engine, Linker};
+use wasmtime_wasi::WasiCtxBuilder;
 
 use crate::{CliPlugin, PluginKind};
 
@@ -21,18 +21,23 @@ impl ConfigSchema {
                 let module = wasmtime::Module::new(&engine, cli_plugin.as_plugin().as_bytes())?;
                 let mut linker = Linker::new(&engine);
                 wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |s| s)?;
-                let stdout = MemoryOutputPipe::new(usize::MAX);
-                let wasi = WasiCtxBuilder::new()
-                    .inherit_stderr()
-                    .stdout(stdout.clone())
-                    .build_p1();
+                let wasi = WasiCtxBuilder::new().inherit_stderr().build_p1();
                 let mut store = wasmtime::Store::new(&engine, wasi);
                 let instance = linker.instantiate(store.as_context_mut(), &module)?;
-                instance
-                    .get_typed_func::<(), ()>(store.as_context_mut(), "config_schema")?
+
+                let ret_area = instance
+                    .get_typed_func::<(), i32>(store.as_context_mut(), "config-schema")?
                     .call(store.as_context_mut(), ())?;
-                drop(store);
-                let config_json = stdout.try_into_inner().unwrap().to_vec();
+                let memory = instance
+                    .get_memory(store.as_context_mut(), "memory")
+                    .ok_or_else(|| anyhow!("Missing memory export"))?;
+                let mut buf = [0; 8];
+                memory.read(store.as_context(), ret_area as usize, &mut buf)?;
+                let offset = u32::from_le_bytes(buf[0..4].try_into().unwrap());
+                let len = u32::from_le_bytes(buf[4..8].try_into().unwrap());
+                let mut config_json = vec![0; len as usize];
+                memory.read(store.as_context(), offset as usize, &mut config_json)?;
+
                 let config_schema = serde_json::from_slice::<ConfigSchema>(&config_json)?;
                 let mut configs = Vec::with_capacity(config_schema.supported_properties.len());
                 for config in config_schema.supported_properties {
