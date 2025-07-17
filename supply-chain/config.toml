@@ -34,6 +34,9 @@ audit-as-crates-io = false
 [policy.javy-plugin-api]
 audit-as-crates-io = false
 
+[policy.javy-plugin-processing]
+audit-as-crates-io = false
+
 [[exemptions.Inflector]]
 version = "0.11.4"
 criteria = "safe-to-deploy"

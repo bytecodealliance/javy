@@ -26,5 +26,5 @@ swc_core = { version = "16.10.0", features = [
 ] }
 wit-parser = "0.212.0"
 convert_case = "0.8.0"
-wasm-opt = "0.116.1"
+wasm-opt = { workspace = true }
 tempfile = { workspace = true }

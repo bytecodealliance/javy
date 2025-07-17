@@ -5,6 +5,7 @@ members = [
   "crates/javy",
   "crates/plugin",
   "crates/plugin-api",
+  "crates/plugin-processing",
   "crates/test-macros",
   "crates/test-plugin",
   "crates/runner",
@@ -19,6 +20,7 @@ edition = "2021"
 license = "Apache-2.0 WITH LLVM-exception"
 
 [workspace.dependencies]
+clap = { version = "4.5.40", features = ["derive"] }
 wizer = "9.0.0"
 wasmtime = "31"
 wasmtime-wasi = "31"
