@@ -52,7 +52,9 @@ mod namespace;
 
 const FUNCTION_MODULE_NAME: &str = "function.mjs";
 
-static mut COMPILE_SRC_RET_AREA: [u32; 2] = [0; 2];
+thread_local! {
+    static COMPILE_SRC_RET_AREA: OnceCell<[u32; 2]> = const { OnceCell::new() }
+}
 
 static mut RUNTIME: OnceCell<Runtime> = OnceCell::new();
 static mut EVENT_LOOP_ENABLED: bool = false;
@@ -122,9 +124,10 @@ pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -
     // We need the bytecode buffer to live longer than this function so it can be read from memory
     let len = bytecode.len();
     let bytecode_ptr = Box::leak(bytecode.into_boxed_slice()).as_ptr();
-    COMPILE_SRC_RET_AREA[0] = bytecode_ptr as u32;
-    COMPILE_SRC_RET_AREA[1] = len.try_into().unwrap();
-    COMPILE_SRC_RET_AREA.as_ptr()
+    COMPILE_SRC_RET_AREA.with(|ret_area| {
+        ret_area.set([bytecode_ptr as u32, len as u32]).unwrap();
+        ret_area.get().unwrap().as_ptr()
+    })
 }
 
 /// Evaluates QuickJS bytecode and optionally invokes exported JS function with
