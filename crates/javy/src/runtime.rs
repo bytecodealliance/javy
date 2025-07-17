@@ -13,10 +13,7 @@ use rquickjs::{
     context::{intrinsic, Intrinsic},
     Context, Module, Runtime as QRuntime,
 };
-use std::{
-    io::{stderr, stdout},
-    mem::ManuallyDrop,
-};
+use std::mem::ManuallyDrop;
 
 /// A JavaScript Runtime.
 ///
@@ -136,13 +133,8 @@ impl Runtime {
                     .expect("registering TextEncoding APIs to succeed");
             }
 
-            if cfg.redirect_stdout_to_stderr {
-                console::register(ctx.clone(), stderr(), stderr())
-                    .expect("registering console to succeed");
-            } else {
-                console::register(ctx.clone(), stdout(), stderr())
-                    .expect("registering console to succeed");
-            }
+            console::register(ctx.clone(), cfg.log_stream, cfg.err_stream)
+                .expect("registering console to succeed");
 
             if javy_intrinsics.contains(JavyIntrinsics::STREAM_IO) {
                 stream_io::register(ctx.clone())
