@@ -1,13 +1,18 @@
 //! APIs and data structures for receiving runtime configuration from the Javy CLI.
 
+use std::cell::OnceCell;
+
 use anyhow::Result;
 use javy_plugin_api::Config;
 use serde::Deserialize;
-use std::io::{stdout, Write};
 
 mod runtime_config;
 
 use crate::runtime_config;
+
+thread_local! {
+    static CONFIG_RET_AREA: OnceCell<[u32; 2]> = const { OnceCell::new() };
+}
 
 runtime_config! {
     #[derive(Debug, Default, Deserialize)]
@@ -48,14 +53,17 @@ impl SharedConfig {
     }
 }
 
-#[export_name = "config_schema"]
-pub fn config_schema() {
-    stdout()
-        .write_all(
-            serde_json::to_string(&SharedConfig::config_schema())
-                .unwrap()
-                .as_bytes(),
-        )
-        .unwrap();
-    stdout().flush().unwrap();
+#[export_name = "config-schema"]
+pub fn config_schema() -> *const u32 {
+    let schema = serde_json::to_string(&SharedConfig::config_schema())
+        .unwrap()
+        .into_bytes();
+    let len = schema.len();
+    // Leak the config schema. This should be fine since the Wasm instance will
+    // be torn down right after by the Javy CLI.
+    let bytecode_ptr = Box::leak(schema.into_boxed_slice()).as_ptr();
+    CONFIG_RET_AREA.with(|v| {
+        v.set([bytecode_ptr as u32, len as u32]).unwrap();
+        v.get().unwrap().as_ptr()
+    })
 }
