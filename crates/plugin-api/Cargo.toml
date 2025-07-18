@@ -11,8 +11,9 @@ categories = ["wasm"]
 
 [dependencies]
 anyhow = { workspace = true }
-javy = { workspace = true, features = ["export_alloc_fns"] }
+javy = { workspace = true }
 
 [features]
+internal_api = []
 json = ["javy/json"]
 messagepack = ["javy/messagepack"]

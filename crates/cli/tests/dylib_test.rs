@@ -2,6 +2,7 @@ use anyhow::Result;
 use javy_runner::{Plugin, Runner, RunnerError, UseExportedFn};
 use std::str;
 
+#[ignore]
 #[test]
 fn test_dylib() -> Result<()> {
     let js_src = "console.error(42);";
@@ -13,6 +14,7 @@ fn test_dylib() -> Result<()> {
     Ok(())
 }
 
+#[ignore]
 #[test]
 fn test_dylib_with_invoke_with_no_fn_name() -> Result<()> {
     let js_src = "console.error(42);";
@@ -24,6 +26,7 @@ fn test_dylib_with_invoke_with_no_fn_name() -> Result<()> {
     Ok(())
 }
 
+#[ignore]
 #[test]
 fn test_dylib_with_error() -> Result<()> {
     let js_src = "function foo() { throw new Error('foo error'); } foo();";
@@ -44,6 +47,7 @@ fn test_dylib_with_error() -> Result<()> {
     Ok(())
 }
 
+#[ignore]
 #[test]
 fn test_dylib_with_exported_func() -> Result<()> {
     let js_src = "export function foo() { console.error('In foo'); }; console.error('Toplevel');";

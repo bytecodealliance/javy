@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use std::{borrow::Cow, fs, path::Path, str};
+use std::{borrow::Cow, fs, path::Path};
 
 use super::bytecode;
 
