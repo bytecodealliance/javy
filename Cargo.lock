@@ -1827,7 +1827,7 @@ dependencies = [
  "tempfile",
  "walrus",
  "wasm-opt",
- "wasmparser 0.220.1",
+ "wasmparser 0.235.0",
  "wasmtime",
  "wasmtime-wasi",
  "wizer",
@@ -3771,20 +3771,6 @@ name = "wasmparser"
 version = "0.214.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5309c1090e3e84dad0d382f42064e9933fdaedb87e468cc239f0eabea73ddcb6"
-dependencies = [
- "ahash",
- "bitflags",
- "hashbrown 0.14.5",
- "indexmap 2.7.0",
- "semver 1.0.23",
- "serde",
-]
-
-[[package]]
-name = "wasmparser"
-version = "0.220.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8d07b6a3b550fefa1a914b6d54fc175dd11c3392da11eee604e6ffc759805d25"
 dependencies = [
  "ahash",
  "bitflags",

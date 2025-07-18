@@ -286,11 +286,13 @@ impl Generator {
         match self.linking {
             LinkingKind::Static => {
                 let canonical_abi_realloc_fn =
-                    module.exports.get_func(if self.plugin_kind.is_v2() {
-                        "canonical_abi_realloc"
-                    } else {
-                        "cabi_realloc"
-                    })?;
+                    module
+                        .exports
+                        .get_func(if self.plugin_kind == PluginKind::V2 {
+                            "canonical_abi_realloc"
+                        } else {
+                            "cabi_realloc"
+                        })?;
                 let eval_bytecode = module.exports.get_func("eval_bytecode").ok();
                 let invoke = module.exports.get_func("invoke")?;
                 let ExportItem::Memory(memory) = module
@@ -322,7 +324,7 @@ impl Generator {
                 );
                 let (canonical_abi_realloc_fn_id, _) = module.add_import_func(
                     &import_namespace,
-                    if self.plugin_kind.is_v2() {
+                    if self.plugin_kind == PluginKind::V2 {
                         "canonical_abi_realloc"
                     } else {
                         "cabi_realloc"

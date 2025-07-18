@@ -1,6 +1,8 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use javy_runner::{Builder, Plugin, Runner, RunnerError};
-use std::str;
+use std::{path::PathBuf, process::Command, str};
+use wasmtime::{AsContextMut, Engine, Linker, Module, Store};
+use wasmtime_wasi::WasiCtxBuilder;
 
 use javy_test_macros::javy_cli_test;
 
@@ -260,60 +262,61 @@ fn test_exported_default_fn(builder: &mut Builder) -> Result<()> {
     Ok(())
 }
 
-// #[test]
-// fn test_init_plugin() -> Result<()> {
-//     // This test works by trying to call the `compile_src` function on the
-//     // default plugin. The unwizened version should fail because the
-//     // underlying Javy runtime has not been initialized yet. Using `init-plugin` on
-//     // the unwizened plugin should initialize the runtime so calling
-//     // `compile-src` on this module should succeed.
-//     let engine = Engine::default();
-//     let mut linker = Linker::new(&engine);
-//     wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |s| s)?;
-//     let wasi = WasiCtxBuilder::new().build_p1();
-//     let mut store = Store::new(&engine, wasi);
+#[ignore]
+#[test]
+fn test_init_plugin() -> Result<()> {
+    // This test works by trying to call the `compile_src` function on the
+    // default plugin. The unwizened version should fail because the
+    // underlying Javy runtime has not been initialized yet. Using `init-plugin` on
+    // the unwizened plugin should initialize the runtime so calling
+    // `compile-src` on this module should succeed.
+    let engine = Engine::default();
+    let mut linker = Linker::new(&engine);
+    wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |s| s)?;
+    let wasi = WasiCtxBuilder::new().build_p1();
+    let mut store = Store::new(&engine, wasi);
 
-//     let uninitialized_plugin = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-//         .join("..")
-//         .join("..")
-//         .join(
-//             std::path::Path::new("target")
-//                 .join("wasm32-wasip1")
-//                 .join("release")
-//                 .join("plugin.wasm"),
-//         );
+    let uninitialized_plugin = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("..")
+        .join(
+            std::path::Path::new("target")
+                .join("wasm32-wasip1")
+                .join("release")
+                .join("plugin.wasm"),
+        );
 
-//     // Check that plugin is in fact uninitialized at this point.
-//     let module = Module::from_file(&engine, &uninitialized_plugin)?;
-//     let instance = linker.instantiate(store.as_context_mut(), &module)?;
-//     let result = instance
-//         .get_typed_func::<(i32, i32), i32>(store.as_context_mut(), "compile_src")?
-//         .call(store.as_context_mut(), (0, 0));
-//     // This should fail because the runtime is uninitialized.
-//     assert!(result.is_err());
+    // Check that plugin is in fact uninitialized at this point.
+    let module = Module::from_file(&engine, &uninitialized_plugin)?;
+    let instance = linker.instantiate(store.as_context_mut(), &module)?;
+    let result = instance
+        .get_typed_func::<(i32, i32), i32>(store.as_context_mut(), "compile_src")?
+        .call(store.as_context_mut(), (0, 0));
+    // This should fail because the runtime is uninitialized.
+    assert!(result.is_err());
 
-//     // Initialize the plugin.
-//     let output = Command::new(env!("CARGO_BIN_EXE_javy"))
-//         .arg("init-plugin")
-//         .arg(uninitialized_plugin.to_str().unwrap())
-//         .output()?;
-//     if !output.status.success() {
-//         bail!(
-//             "Running init-command failed with output {}",
-//             str::from_utf8(&output.stderr)?,
-//         );
-//     }
-//     let initialized_plugin = output.stdout;
+    // Initialize the plugin.
+    let output = Command::new(env!("CARGO_BIN_EXE_javy"))
+        .arg("init-plugin")
+        .arg(uninitialized_plugin.to_str().unwrap())
+        .output()?;
+    if !output.status.success() {
+        bail!(
+            "Running init-command failed with output {}",
+            str::from_utf8(&output.stderr)?,
+        );
+    }
+    let initialized_plugin = output.stdout;
 
-//     // Check the plugin is initialized and runs.
-//     let module = Module::new(&engine, &initialized_plugin)?;
-//     let instance = linker.instantiate(store.as_context_mut(), &module)?;
-//     // This should succeed because the runtime is initialized.
-//     instance
-//         .get_typed_func::<(i32, i32), i32>(store.as_context_mut(), "compile_src")?
-//         .call(store.as_context_mut(), (0, 0))?;
-//     Ok(())
-// }
+    // Check the plugin is initialized and runs.
+    let module = Module::new(&engine, &initialized_plugin)?;
+    let instance = linker.instantiate(store.as_context_mut(), &module)?;
+    // This should succeed because the runtime is initialized.
+    instance
+        .get_typed_func::<(i32, i32), i32>(store.as_context_mut(), "compile_src")?
+        .call(store.as_context_mut(), (0, 0))?;
+    Ok(())
+}
 
 fn run_with_u8s(r: &mut Runner, stdin: u8) -> (u8, String, u64) {
     let (output, logs, fuel_consumed) = run(r, stdin.to_le_bytes().into());

@@ -28,4 +28,4 @@ wit-parser = "0.212.0"
 convert_case = "0.8.0"
 wasm-opt = { workspace = true }
 tempfile = { workspace = true }
-wasmparser = "0.235.0"
+wasmparser = { workspace = true }

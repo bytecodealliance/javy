@@ -8,13 +8,14 @@ use wizer::{wasmtime::Module, Linker, Wizer};
 /// Extract core module, then run wasm-opt and Wizer to initialize a plugin.
 pub fn initialize_plugin(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
     let wasm_bytes = extract_core_module(wasm_bytes)?;
+    let wasm_bytes = strip_wasi_p2_imports(&wasm_bytes)?;
     // Re-encode overlong indexes with wasm-opt before running Wizer.
     let wasm_bytes = optimize_module(&wasm_bytes)?;
     let wasm_bytes = preinitialize_module(&wasm_bytes)?;
     Ok(wasm_bytes)
 }
 
-pub fn extract_core_module(component_bytes: &[u8]) -> Result<Vec<u8>> {
+fn extract_core_module(component_bytes: &[u8]) -> Result<Vec<u8>> {
     let parser = Parser::new(0);
 
     for payload in parser.parse_all(component_bytes) {
@@ -41,8 +42,7 @@ pub fn extract_core_module(component_bytes: &[u8]) -> Result<Vec<u8>> {
                     }
                 }
                 if extract_this_module {
-                    let module_bytes = strip_wasi_p2_imports(module_bytes)?;
-                    return Ok(module_bytes);
+                    return Ok(module_bytes.to_vec());
                 }
             }
             _ => {}
@@ -88,7 +88,7 @@ fn optimize_module(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
     Ok(optimized_wasm_bytes)
 }
 
-pub fn preinitialize_module(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
+fn preinitialize_module(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
     let mut wizer = Wizer::new();
     let owned_wasm_bytes = wasm_bytes.to_vec();
     wizer

@@ -38,10 +38,6 @@ impl PluginKind {
             }
         }
     }
-
-    pub(crate) fn is_v2(self) -> bool {
-        PluginKind::V2 == self
-    }
 }
 
 /// A Javy plugin.
