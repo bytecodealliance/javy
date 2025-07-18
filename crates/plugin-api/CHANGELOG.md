@@ -8,6 +8,11 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `javy` dependency updated to 4.1.0 which adds `log_stream` and `err_stream`
+  methods to `Config`.
+
 ## [3.1.0] - 2025-04-17
 
 ### Added

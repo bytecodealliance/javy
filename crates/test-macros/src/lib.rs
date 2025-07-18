@@ -17,6 +17,7 @@ use quote::quote;
 use std::{env, path::PathBuf};
 use syn::{meta::ParseNestedMeta, parse_macro_input, Ident, LitBool, LitStr, Result, ReturnType};
 
+#[derive(Debug)]
 struct Config262 {
     root: PathBuf,
 }
@@ -128,7 +129,7 @@ fn gen_tests(
             let name = path.file_stem().unwrap().to_str().unwrap();
             let name = name.replace('.', "_");
             let name = name.replace('-', "_");
-            let test_name = Ident::new(&format!("test_{}_{}", prefix, name), Span::call_site());
+            let test_name = Ident::new(&format!("test_{prefix}_{name}"), Span::call_site());
             let ignore = ignore(&test_name.to_string());
 
             let attrs = if ignore {
@@ -178,6 +179,7 @@ fn gen_tests(
     }
 }
 
+#[derive(Debug)]
 struct CliTestConfig {
     /// Root directory to load test scripts from, relative to the crate's
     /// directory (i.e., `CARGO_MANIFEST_DIR`)

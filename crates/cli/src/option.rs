@@ -17,14 +17,14 @@ pub struct OptionMeta {
 }
 
 pub fn fmt_help(cmd: &str, short: &str, meta: &[OptionMeta]) {
-    println!("Available options for {}", cmd);
+    println!("Available options for {cmd}");
     for opt in meta {
         println!();
-        print!("-{:<3}", short);
+        print!("-{short:<3}");
         print!("{:>3}", opt.name);
         println!("{}", opt.help);
         for line in opt.doc.split('\n') {
-            print!("{}", line);
+            print!("{line}");
         }
         println!();
     }

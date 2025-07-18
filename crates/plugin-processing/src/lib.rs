@@ -2,9 +2,17 @@ use anyhow::Result;
 use std::{fs, rc::Rc};
 use walrus::{FunctionId, ImportKind};
 use wasmparser::{Parser, Payload};
-use wasmtime::Module;
 use wasmtime_wasi::WasiCtxBuilder;
-use wizer::{Linker, Wizer};
+use wizer::{wasmtime::Module, Linker, Wizer};
+
+/// Extract core module, then run wasm-opt and Wizer to initialize a plugin.
+pub fn initialize_plugin(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
+    let wasm_bytes = extract_core_module(wasm_bytes)?;
+    // Re-encode overlong indexes with wasm-opt before running Wizer.
+    let wasm_bytes = optimize_module(&wasm_bytes)?;
+    let wasm_bytes = preinitialize_module(&wasm_bytes)?;
+    Ok(wasm_bytes)
+}
 
 pub fn extract_core_module(component_bytes: &[u8]) -> Result<Vec<u8>> {
     let parser = Parser::new(0);
@@ -67,12 +75,15 @@ fn strip_wasi_p2_imports(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
     Ok(module.emit_wasm())
 }
 
-pub fn optimize_module(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
+fn optimize_module(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
     let temp_dir = tempfile::tempdir()?;
     let infile = temp_dir.path().join("infile.wasm");
     fs::write(&infile, wasm_bytes)?;
     let outfile = temp_dir.path().join("outfile.wasm");
-    wasm_opt::OptimizationOptions::new_opt_level_4().run(&infile, &outfile)?;
+    wasm_opt::OptimizationOptions::new_opt_level_3() // Aggressively optimize for speed.
+        .shrink_level(wasm_opt::ShrinkLevel::Level0) // Don't optimize for size at the expense of performance.
+        .debug_info(false)
+        .run(&infile, &outfile)?;
     let optimized_wasm_bytes = fs::read(outfile)?;
     Ok(optimized_wasm_bytes)
 }

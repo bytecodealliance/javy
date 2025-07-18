@@ -1,8 +1,14 @@
+use std::{
+    fmt::Debug,
+    io::{self, Write},
+};
+
 use anyhow::{bail, Result};
 use bitflags::bitflags;
 
 bitflags! {
     /// Flags to represent available JavaScript features.
+    #[derive(Debug)]
     pub(crate) struct JSIntrinsics: u32  {
         const DATE = 1;
         const EVAL = 1 << 1;
@@ -35,6 +41,7 @@ bitflags! {
     /// users to extend the runtime with non-standard functionality directly
     /// from the CLI, at this point many, if not most, of these APIs will be
     /// moved out.
+    #[derive(Debug)]
     pub(crate) struct JavyIntrinsics: u32 {
         const STREAM_IO = 1;
     }
@@ -49,9 +56,6 @@ pub struct Config {
     pub(crate) intrinsics: JSIntrinsics,
     /// Intrinsics exposed through the `Javy` namespace.
     pub(crate) javy_intrinsics: JavyIntrinsics,
-    /// Whether to use a custom console implementation provided by Javy,
-    /// that redirects stdout to stderr.
-    pub(crate) redirect_stdout_to_stderr: bool,
     /// Whether to override the implementation of JSON.parse and JSON.stringify
     /// with a Rust implementation that uses a combination for Serde transcoding
     /// serde_json and simd_json.
@@ -66,6 +70,10 @@ pub struct Config {
     /// The limit on the max size of stack the runtime will use. Default is
     /// 256 * 1024.
     pub(crate) max_stack_size: usize,
+    /// The stream to use for calls to `console.log`.
+    pub(crate) log_stream: Box<dyn Write>,
+    /// The stream to use for calls to `console.error`.
+    pub(crate) err_stream: Box<dyn Write>,
 }
 
 impl Default for Config {
@@ -76,11 +84,12 @@ impl Default for Config {
         Self {
             intrinsics,
             javy_intrinsics: JavyIntrinsics::empty(),
-            redirect_stdout_to_stderr: false,
             simd_json_builtins: false,
             gc_threshold: usize::MAX,
             memory_limit: usize::MAX,
             max_stack_size: 256 * 1024, // from rquickjs
+            log_stream: Box::new(std::io::stdout()),
+            err_stream: Box::new(std::io::stderr()),
         }
     }
 }
@@ -183,7 +192,11 @@ impl Config {
     /// Enables whether the output of console.log will be redirected to
     /// `stderr`.
     pub fn redirect_stdout_to_stderr(&mut self, enable: bool) -> &mut Self {
-        self.redirect_stdout_to_stderr = enable;
+        self.log_stream = if enable {
+            Box::new(io::stderr())
+        } else {
+            Box::new(io::stdout())
+        };
         self
     }
 
@@ -217,6 +230,18 @@ impl Config {
     /// 256 * 1024.
     pub fn max_stack_size(&mut self, bytes: usize) -> &mut Self {
         self.max_stack_size = bytes;
+        self
+    }
+
+    /// The stream to use for calls to `console.log`.
+    pub fn log_stream(&mut self, stream: Box<dyn Write>) -> &mut Self {
+        self.log_stream = stream;
+        self
+    }
+
+    /// The stream to use for calls to `console.error`.
+    pub fn err_stream(&mut self, stream: Box<dyn Write>) -> &mut Self {
+        self.err_stream = stream;
         self
     }
 

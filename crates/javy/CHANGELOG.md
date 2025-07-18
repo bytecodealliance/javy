@@ -8,6 +8,11 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `Config` now supports setting a `log_stream` and `err_stream` to configure
+  the destinations for `console.log` and `console.err`.
+
 ## [4.0.0] - 2025-01-08
 
 ### Removed

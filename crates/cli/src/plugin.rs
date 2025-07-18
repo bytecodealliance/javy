@@ -8,6 +8,7 @@ pub const QUICKJS_PROVIDER_V2_MODULE: &[u8] = include_bytes!("./javy_quickjs_pro
 
 /// Represents the kind of a plugin.
 // This is an internal detail of this module.
+#[derive(Debug)]
 pub(crate) enum PluginKind {
     User,
     Default,
@@ -16,6 +17,7 @@ pub(crate) enum PluginKind {
 /// Represents a Plugin as well as it's kind
 /// for use within the Javy CLI crate.
 // This is an internal detail of this module.
+#[derive(Debug)]
 pub(crate) struct CliPlugin {
     pub(crate) plugin: Plugin,
     pub(crate) kind: PluginKind,
@@ -36,6 +38,7 @@ impl CliPlugin {
 }
 
 /// A validated but uninitialized plugin.
+#[derive(Debug)]
 pub(crate) struct UninitializedPlugin<'a> {
     bytes: &'a [u8],
 }
@@ -49,10 +52,7 @@ impl<'a> UninitializedPlugin<'a> {
 
     /// Initializes the plugin.
     pub(crate) fn initialize(&self) -> Result<Vec<u8>> {
-        let bytes = javy_plugin_processing::extract_core_module(self.bytes)?;
-        let bytes = javy_plugin_processing::optimize_module(&bytes)?;
-        let bytes = javy_plugin_processing::preinitialize_module(&bytes)?;
-        Ok(bytes)
+        javy_plugin_processing::initialize_plugin(self.bytes)
     }
 
     fn validate(plugin_bytes: &'a [u8]) -> Result<()> {

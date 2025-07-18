@@ -2,7 +2,7 @@ use anyhow::{anyhow, Result};
 use serde::Deserialize;
 use std::{collections::HashMap, str};
 use wasmtime::{AsContext, AsContextMut, Engine, Linker};
-use wasmtime_wasi::{pipe::MemoryOutputPipe, WasiCtxBuilder};
+use wasmtime_wasi::WasiCtxBuilder;
 
 use crate::{CliPlugin, PluginKind};
 
@@ -21,13 +21,10 @@ impl ConfigSchema {
                 let module = wasmtime::Module::new(&engine, cli_plugin.as_plugin().as_bytes())?;
                 let mut linker = Linker::new(&engine);
                 wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |s| s)?;
-                let stdout = MemoryOutputPipe::new(usize::MAX);
-                let wasi = WasiCtxBuilder::new()
-                    .inherit_stderr()
-                    .stdout(stdout.clone())
-                    .build_p1();
+                let wasi = WasiCtxBuilder::new().inherit_stderr().build_p1();
                 let mut store = wasmtime::Store::new(&engine, wasi);
                 let instance = linker.instantiate(store.as_context_mut(), &module)?;
+
                 let ret_area = instance
                     .get_typed_func::<(), i32>(store.as_context_mut(), "config-schema")?
                     .call(store.as_context_mut(), ())?;
@@ -40,7 +37,7 @@ impl ConfigSchema {
                 let len = u32::from_le_bytes(buf[4..8].try_into().unwrap());
                 let mut config_json = vec![0; len as usize];
                 memory.read(store.as_context(), offset as usize, &mut config_json)?;
-                drop(store);
+
                 let config_schema = serde_json::from_slice::<ConfigSchema>(&config_json)?;
                 let mut configs = Vec::with_capacity(config_schema.supported_properties.len());
                 for config in config_schema.supported_properties {

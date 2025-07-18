@@ -1,6 +1,5 @@
 use std::env;
 use std::fs;
-
 use std::path::{Path, PathBuf};
 
 use anyhow::Result;
@@ -37,22 +36,17 @@ fn copy_plugin() -> Result<()> {
         .unwrap()
         .join("target/wasm32-wasip2/release");
     let plugin_path = module_path.join("plugin.wasm");
-
     let plugin_wizened_path = module_path.join("plugin_wizened.wasm");
 
-    let module_bytes = javy_plugin_processing::extract_core_module(&fs::read(&plugin_path)?)?;
-    let module_bytes = javy_plugin_processing::optimize_module(&module_bytes)?;
-    let module_bytes = javy_plugin_processing::preinitialize_module(&module_bytes)?;
-    fs::write(&plugin_wizened_path, module_bytes)?;
+    let initialized_plugin = javy_plugin_processing::initialize_plugin(&fs::read(&plugin_path)?)?;
+    fs::write(&plugin_wizened_path, &initialized_plugin)?;
 
     println!("cargo:rerun-if-changed={}", plugin_path.to_str().unwrap());
     println!("cargo:rerun-if-changed=build.rs");
 
-    if plugin_wizened_path.exists() {
-        let out_dir = env::var("OUT_DIR")?;
-        let copied_plugin_path = Path::new(&out_dir).join("plugin.wasm");
+    let out_dir = env::var("OUT_DIR")?;
+    let copied_plugin_path = Path::new(&out_dir).join("plugin.wasm");
 
-        fs::copy(&plugin_wizened_path, copied_plugin_path)?;
-    }
+    fs::copy(&plugin_wizened_path, copied_plugin_path)?;
     Ok(())
 }

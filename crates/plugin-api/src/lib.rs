@@ -53,6 +53,10 @@ mod namespace;
 
 const FUNCTION_MODULE_NAME: &str = "function.mjs";
 
+thread_local! {
+    static COMPILE_SRC_RET_AREA: OnceCell<[u32; 2]> = const { OnceCell::new() }
+}
+
 static mut RUNTIME: OnceCell<Runtime> = OnceCell::new();
 static mut EVENT_LOOP_ENABLED: bool = false;
 

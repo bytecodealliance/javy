@@ -1,12 +1,12 @@
 [package]
 name = "javy-plugin-api"
-version = "3.1.1-alpha.1"
+version = "3.2.0-alpha.1"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
 description = "APIs for Javy plugins"
-homepage = "https://github.com/bytecodealliance/javy/tree/main/crates/javy-plugin-api"
-repository = "https://github.com/bytecodealliance/javy/tree/main/crates/javy-plugin-api"
+homepage = "https://github.com/bytecodealliance/javy/tree/main/crates/plugin-api"
+repository = "https://github.com/bytecodealliance/javy/tree/main/crates/plugin-api"
 categories = ["wasm"]
 
 [dependencies]

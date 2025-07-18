@@ -15,8 +15,8 @@ cli: plugin
 	CARGO_PROFILE_RELEASE_LTO=off cargo build --package=javy-cli --release
 
 plugin:
-	cargo build --package=javy-plugin --target=wasm32-wasip2 --release --features=$(PLUGIN_FEATURES)
-	cargo run --package=javy-plugin-processing -- target/wasm32-wasip2/release/plugin.wasm target/wasm32-wasip2/release/plugin_wizened.wasm
+	cargo build --package=javy-plugin --release --target=wasm32-wasip2 --features=$(PLUGIN_FEATURES)
+	cargo run --package=javy-plugin-processing target/wasm32-wasip2/release/plugin.wasm target/wasm32-wasip2/release/plugin_wizened.wasm
 
 build-test-plugin: cli
 	cargo build --package=javy-test-plugin --target=wasm32-wasip2 --release
@@ -36,6 +36,9 @@ test-plugin-api:
 test-plugin:
 	CARGO_TARGET_WASM32_WASIP2_RUNNER="wasmtime" cargo test --package=javy-plugin --target=wasm32-wasip2 -- --nocapture
 
+test-plugin-processing:
+	cargo test --package=javy-plugin-processing -- --nocapture
+
 test-codegen: cli
 	target/release/javy emit-plugin -o crates/codegen/default_plugin.wasm
 	CARGO_PROFILE_RELEASE_LTO=off cargo hack test --package=javy-codegen --release --each-feature -- --nocapture
@@ -53,9 +56,9 @@ test-wpt: cli
 	npm install --prefix wpt
 	npm test --prefix wpt
 
-tests: test-javy test-plugin-api test-plugin test-runner test-codegen test-cli test-wpt
+tests: test-javy test-plugin-api test-plugin test-plugin-processing test-runner test-codegen test-cli test-wpt
 
-fmt: fmt-javy fmt-plugin-api fmt-plugin fmt-cli fmt-codegen
+fmt: fmt-javy fmt-plugin-api fmt-plugin fmt-plugin-processing fmt-cli fmt-codegen
 
 fmt-javy:
 	cargo fmt --package=javy -- --check
@@ -68,6 +71,10 @@ fmt-plugin-api:
 fmt-plugin:
 	cargo fmt --package=javy-plugin -- --check
 	cargo clippy --package=javy-plugin --target=wasm32-wasip2 --all-targets -- -D warnings
+
+fmt-plugin-processing:
+	cargo fmt --package=javy-plugin-processing -- --check
+	cargo clippy --package=javy-plugin-processing --all-targets -- -D warnings
 
 # Use `--release` on CLI clippy to align with `test-cli`.
 # This reduces the size of the target directory which improves CI stability.

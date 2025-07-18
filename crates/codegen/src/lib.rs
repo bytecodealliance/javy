@@ -83,6 +83,7 @@ pub(crate) mod wit;
 pub use crate::js::JS;
 pub use crate::plugin::Plugin;
 pub use crate::wit::WitOptions;
+use crate::{exports::Exports, plugin::PluginKind};
 
 use transform::SourceCodeSection;
 use walrus::{
@@ -97,7 +98,7 @@ use wizer::{StoreData, Wizer};
 static STDIN_PIPE: OnceLock<MemoryInputPipe> = OnceLock::new();
 
 /// The kind of linking to use.
-#[derive(Clone, Default)]
+#[derive(Debug, Clone, Default)]
 pub enum LinkingKind {
     #[default]
     /// Static linking
@@ -108,6 +109,7 @@ pub enum LinkingKind {
 
 /// Identifiers used by the generated module.
 // This is an internal detail of this module.
+#[derive(Debug)]
 pub(crate) struct Identifiers {
     canonical_abi_realloc: FunctionId,
     eval_bytecode: Option<FunctionId>,
@@ -133,6 +135,7 @@ impl Identifiers {
 
 /// Helper struct to keep track of bytecode metadata.
 // This is an internal detail of this module.
+#[derive(Debug)]
 pub(crate) struct BytecodeMetadata {
     ptr: LocalId,
     len: i32,
@@ -150,20 +153,20 @@ impl BytecodeMetadata {
 }
 
 /// Generator used to produce Wasm binaries from JS source code.
-#[derive(Default, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct Generator {
     /// Plugin to use.
-    pub(crate) plugin: plugin::Plugin,
+    pub(crate) plugin: Plugin,
     /// What kind of linking to use when generating a module.
     pub(crate) linking: LinkingKind,
     /// Whether to embed the compressed JS source in the generated module.
     pub(crate) source_compression: bool,
     /// WIT options for code generation.
-    pub(crate) wit_opts: wit::WitOptions,
+    pub(crate) wit_opts: WitOptions,
     /// JavaScript function exports.
-    pub(crate) function_exports: exports::Exports,
+    pub(crate) function_exports: Exports,
     /// The kind of plugin a generator will link.
-    plugin_kind: plugin::PluginKind,
+    plugin_kind: PluginKind,
     /// An optional JS runtime config provided as JSON bytes.
     js_runtime_config: Vec<u8>,
     /// The version string to include in the producers custom section.
@@ -201,9 +204,9 @@ impl Generator {
     /// Set true if linking with a default plugin module.
     pub fn linking_default_plugin(&mut self, value: bool) -> &mut Self {
         self.plugin_kind = if value {
-            plugin::PluginKind::Default
+            PluginKind::Default
         } else {
-            plugin::PluginKind::User
+            PluginKind::User
         };
 
         self
@@ -213,9 +216,9 @@ impl Generator {
     /// Set true if linking with a V2 plugin module.
     pub fn linking_v2_plugin(&mut self, value: bool) -> &mut Self {
         self.plugin_kind = if value {
-            plugin::PluginKind::V2
+            PluginKind::V2
         } else {
-            plugin::PluginKind::User
+            PluginKind::User
         };
 
         self
@@ -331,18 +334,16 @@ impl Generator {
                 // User plugins also won't have an `eval_bytecode` function to
                 // import. We want to remove `eval_bytecode` from the default
                 // plugin so we don't want to emit more uses of it.
-                let eval_bytecode_fn_id = match self.plugin_kind {
-                    plugin::PluginKind::V2 => {
-                        let eval_bytecode_type =
-                            module.types.add(&[ValType::I32, ValType::I32], &[]);
-                        let (eval_bytecode_fn_id, _) = module.add_import_func(
-                            &import_namespace,
-                            "eval_bytecode",
-                            eval_bytecode_type,
-                        );
-                        Some(eval_bytecode_fn_id)
-                    }
-                    _ => None,
+                let eval_bytecode_fn_id = if self.plugin_kind == PluginKind::V2 {
+                    let eval_bytecode_type = module.types.add(&[ValType::I32, ValType::I32], &[]);
+                    let (eval_bytecode_fn_id, _) = module.add_import_func(
+                        &import_namespace,
+                        "eval_bytecode",
+                        eval_bytecode_type,
+                    );
+                    Some(eval_bytecode_fn_id)
+                } else {
+                    None
                 };
 
                 let invoke_type = module.types.add(
@@ -417,7 +418,7 @@ impl Generator {
             // support calling `invoke` with a null function. The default
             // plugin and user plugins do accept null functions.
             assert!(
-                !matches!(self.plugin_kind, plugin::PluginKind::V2),
+                self.plugin_kind != PluginKind::V2,
                 "Using invoke with null function not supported for v2 plugin"
             );
             instructions
@@ -500,7 +501,7 @@ impl Generator {
                 module.exports.remove("cabi_realloc")?;
 
                 // Only internal plugins expose eval_bytecode function.
-                if matches!(self.plugin_kind, plugin::PluginKind::V2) {
+                if self.plugin_kind == PluginKind::V2 {
                     module.exports.remove("eval_bytecode")?;
                 }
 

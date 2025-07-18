@@ -1,5 +1,7 @@
 //! APIs and data structures for receiving runtime configuration from the Javy CLI.
 
+use std::cell::OnceCell;
+
 use anyhow::Result;
 use javy_plugin_api::Config;
 use serde::Deserialize;
@@ -7,6 +9,10 @@ use serde::Deserialize;
 mod runtime_config;
 
 use crate::runtime_config;
+
+thread_local! {
+    static CONFIG_RET_AREA: OnceCell<[u32; 2]> = const { OnceCell::new() };
+}
 
 runtime_config! {
     #[derive(Debug, Default, Deserialize)]
