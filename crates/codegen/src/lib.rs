@@ -92,7 +92,7 @@ use walrus::{
 use wasmtime_wasi::{pipe::MemoryInputPipe, WasiCtxBuilder};
 
 use anyhow::Result;
-use wizer::{Linker, StoreData, Wizer};
+use wizer::{Linker, Wizer};
 
 static STDIN_PIPE: OnceLock<MemoryInputPipe> = OnceLock::new();
 

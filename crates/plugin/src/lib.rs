@@ -18,7 +18,7 @@ impl Guest for Component {
         shared_config::config_schema()
     }
 
-    fn invoke(bytecode: Vec<u8>, function: Option<String>) -> () {
+    fn invoke(bytecode: Vec<u8>, function: Option<String>) {
         javy_plugin_api::invoke(&bytecode, function.as_deref())
     }
 
@@ -26,7 +26,7 @@ impl Guest for Component {
         javy_plugin_api::compile_src(&src)
     }
 
-    fn initialize_runtime() -> () {
+    fn initialize_runtime() {
         javy_plugin_api::reinitialize_runtime(config, modify_runtime).unwrap();
     }
 }

@@ -19,33 +19,30 @@ fn extract_core_module(component_bytes: &[u8]) -> Result<Vec<u8>> {
     let parser = Parser::new(0);
 
     for payload in parser.parse_all(component_bytes) {
-        match payload? {
-            Payload::ModuleSection {
-                parser,
-                unchecked_range,
-                ..
-            } => {
-                let module_bytes = &component_bytes[unchecked_range.start..unchecked_range.end];
-                let mut extract_this_module = false;
-                for payload in parser.parse_all(module_bytes) {
-                    match payload? {
-                        Payload::ExportSection(exports) => {
-                            for export in exports {
-                                let export = export?;
-                                if export.name == "invoke" {
-                                    extract_this_module = true;
-                                    break;
-                                }
+        if let Payload::ModuleSection {
+            parser,
+            unchecked_range,
+        } = payload?
+        {
+            let module_bytes = &component_bytes[unchecked_range.start..unchecked_range.end];
+            let mut extract_this_module = false;
+            for payload in parser.parse_all(module_bytes) {
+                match payload? {
+                    Payload::ExportSection(exports) => {
+                        for export in exports {
+                            let export = export?;
+                            if export.name == "invoke" {
+                                extract_this_module = true;
+                                break;
                             }
                         }
-                        _ => continue,
                     }
-                }
-                if extract_this_module {
-                    return Ok(module_bytes.to_vec());
+                    _ => continue,
                 }
             }
-            _ => {}
+            if extract_this_module {
+                return Ok(module_bytes.to_vec());
+            }
         }
     }
 
