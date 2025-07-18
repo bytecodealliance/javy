@@ -17,7 +17,7 @@ fn test_dylib() -> Result<()> {
 #[ignore]
 #[test]
 fn test_dylib_with_invoke_with_no_fn_name() -> Result<()> {
-    let js_src = "console.error(43);";
+    let js_src = "console.error(42);";
     let mut runner = Runner::with_dylib(plugin_module()?)?;
 
     let (_, logs, _) = runner.exec_through_dylib(js_src, UseExportedFn::Invoke(None))?;
