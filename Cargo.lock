@@ -1703,7 +1703,7 @@ dependencies = [
 
 [[package]]
 name = "javy"
-version = "4.1.0-alpha.1"
+version = "4.1.0"
 dependencies = [
  "anyhow",
  "bitflags",
@@ -1782,7 +1782,7 @@ dependencies = [
 
 [[package]]
 name = "javy-plugin-api"
-version = "3.2.0-alpha.1"
+version = "3.2.0"
 dependencies = [
  "anyhow",
  "javy",

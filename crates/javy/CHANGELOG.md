@@ -8,6 +8,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [4.1.0] - 2025-07-24
+
 ### Added
 
 - `Config` now supports setting a `log_stream` and `err_stream` to configure
