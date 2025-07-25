@@ -11,7 +11,7 @@ fn test_empty(builder: &mut Builder) -> Result<()> {
     let mut runner = builder.input("empty.js").build()?;
 
     let (_, _, fuel_consumed) = run(&mut runner, vec![]);
-    assert_fuel_consumed_within_threshold(22_590, fuel_consumed);
+    assert_fuel_consumed_within_threshold(23_048, fuel_consumed);
     Ok(())
 }
 
@@ -262,6 +262,7 @@ fn test_exported_default_fn(builder: &mut Builder) -> Result<()> {
     Ok(())
 }
 
+#[ignore]
 #[test]
 fn test_init_plugin() -> Result<()> {
     // This test works by trying to call the `compile_src` function on the

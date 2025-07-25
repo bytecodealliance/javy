@@ -1,16 +1,39 @@
+use std::io::{self, Read};
+
+use javy_plugin_api::javy::Runtime;
 use javy_plugin_api::{import_namespace, Config};
-use shared_config::SharedConfig;
-use std::io;
-use std::io::Read;
-use std::slice;
+
+use crate::shared_config::SharedConfig;
 
 mod shared_config;
 
-import_namespace!("javy_quickjs_provider_v3");
+wit_bindgen::generate!({ world: "javy-default-plugin", generate_all });
 
-/// Used by Wizer to preinitialize the module.
-#[export_name = "initialize_runtime"]
-pub extern "C" fn initialize_runtime() {
+import_namespace!("javy-default-plugin-v1");
+
+struct Component;
+
+impl Guest for Component {
+    fn config_schema() -> Vec<u8> {
+        shared_config::config_schema()
+    }
+
+    fn invoke(bytecode: Vec<u8>, function: Option<String>) {
+        javy_plugin_api::invoke(&bytecode, function.as_deref())
+    }
+
+    fn compile_src(src: Vec<u8>) -> Vec<u8> {
+        javy_plugin_api::compile_src(&src)
+    }
+
+    fn initialize_runtime() {
+        javy_plugin_api::reinitialize_runtime(config, modify_runtime).unwrap();
+    }
+}
+
+export!(Component);
+
+fn config() -> Config {
     // Read shared config JSON in from stdin.
     // Using stdin instead of an environment variable because the value set for
     // an environment variable will persist as the value set for that environment
@@ -31,19 +54,9 @@ pub extern "C" fn initialize_runtime() {
     if let Some(shared_config) = shared_config {
         shared_config.apply_to_config(&mut config);
     }
-
-    javy_plugin_api::initialize_runtime(config, |runtime| runtime).unwrap();
+    config
 }
 
-/// Evaluates QuickJS bytecode
-///
-/// # Safety
-///
-/// * `bytecode_ptr` must reference a valid array of unsigned bytes of `bytecode_len` length
-// This will be removed as soon as we stop emitting calls to it in dynamically
-// linked modules.
-#[export_name = "eval_bytecode"]
-pub unsafe extern "C" fn eval_bytecode(bytecode_ptr: *const u8, bytecode_len: usize) {
-    let bytecode = slice::from_raw_parts(bytecode_ptr, bytecode_len);
-    javy_plugin_api::run_bytecode(bytecode, None);
+fn modify_runtime(runtime: Runtime) -> Runtime {
+    runtime
 }

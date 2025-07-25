@@ -32,8 +32,8 @@ impl Plugin {
             Self::V2 => "javy_quickjs_provider_v2",
             // Could try and derive this but not going to for now since tests
             // will break if it changes.
-            Self::Default | Self::DefaultAsUser => "javy_quickjs_provider_v3",
-            Self::User { .. } => "test_plugin",
+            Self::Default | Self::DefaultAsUser => "javy-default-plugin-v1",
+            Self::User { .. } => "test-plugin",
         }
     }
 
@@ -52,7 +52,7 @@ impl Plugin {
                 .join("..")
                 .join("..")
                 .join("target")
-                .join("wasm32-wasip1")
+                .join("wasm32-wasip2")
                 .join("release")
                 .join("plugin_wizened.wasm"),
         }
@@ -749,7 +749,7 @@ impl Runner {
             .get_memory(store.as_context_mut(), "memory")
             .unwrap();
         let compile_src_func =
-            instance.get_typed_func::<(u32, u32), u32>(store.as_context_mut(), "compile_src")?;
+            instance.get_typed_func::<(u32, u32), u32>(store.as_context_mut(), "compile-src")?;
 
         let js_src_ptr = Self::allocate_memory(
             instance,
@@ -777,10 +777,8 @@ impl Runner {
         alignment: u32,
         new_size: u32,
     ) -> Result<u32> {
-        let realloc_func = instance.get_typed_func::<(u32, u32, u32, u32), u32>(
-            store.as_context_mut(),
-            "canonical_abi_realloc",
-        )?;
+        let realloc_func = instance
+            .get_typed_func::<(u32, u32, u32, u32), u32>(store.as_context_mut(), "cabi_realloc")?;
         let orig_ptr = 0;
         let orig_size = 0;
         realloc_func.call(

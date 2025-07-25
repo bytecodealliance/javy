@@ -32,10 +32,8 @@ fn copy_source_code_into_instance(
     instance: &Instance,
     memory: &Memory,
 ) -> Result<(u32, u32)> {
-    let realloc_fn = instance.get_typed_func::<(u32, u32, u32, u32), u32>(
-        store.as_context_mut(),
-        "canonical_abi_realloc",
-    )?;
+    let realloc_fn = instance
+        .get_typed_func::<(u32, u32, u32, u32), u32>(store.as_context_mut(), "cabi_realloc")?;
     let js_src_len = js_source_code.len().try_into()?;
 
     let original_ptr = 0;
@@ -63,7 +61,7 @@ fn call_compile(
     instance: &Instance,
 ) -> Result<u32> {
     let compile_src_fn =
-        instance.get_typed_func::<(u32, u32), u32>(store.as_context_mut(), "compile_src")?;
+        instance.get_typed_func::<(u32, u32), u32>(store.as_context_mut(), "compile-src")?;
     let ret_ptr = compile_src_fn
         .call(store.as_context_mut(), (js_src_ptr, js_src_len))
         .map_err(|_| anyhow!("JS compilation failed"))?;

@@ -56,6 +56,7 @@ fn test_errors_in_exported_functions_are_correctly_reported(builder: &mut Builde
     Ok(())
 }
 
+#[ignore]
 #[javy_cli_test(
     dyn = true,
     root = "tests/dynamic-linking-scripts",

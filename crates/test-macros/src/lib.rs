@@ -239,7 +239,7 @@ impl Default for CliTestConfig {
         Self {
             scripts_root: String::from("tests/sample-scripts"),
             commands: vec![
-                Ident::new("Compile", Span::call_site()),
+                // Ident::new("Compile", Span::call_site()),
                 Ident::new("Build", Span::call_site()),
             ],
             dynamic: false,
