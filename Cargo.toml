@@ -26,7 +26,7 @@ wasmtime = "31"
 wasmtime-wasi = "31"
 wasm-opt = "0.116.1"
 anyhow = "1.0"
-javy = { path = "crates/javy", version = "4.1.0" }
+javy = { path = "crates/javy", version = "4.1.1-alpha.1" }
 tempfile = "3.20.0"
 uuid = { version = "1.17", features = ["v4"] }
 serde = { version = "1.0", default-features = false }
