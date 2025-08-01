@@ -23,9 +23,9 @@ javy-codegen = { path = "../codegen/", features = ["plugin_internal"] }
 javy-plugin-processing = { path = "../plugin-processing" }
 
 [dev-dependencies]
-criterion = "0.6"
+criterion = "0.7"
 num-format = "0.4.4"
-wasmparser = "0.235.0"
+wasmparser = "0.236.0"
 javy-runner = { path = "../runner/" }
 javy-test-macros = { path = "../test-macros/" }
 
