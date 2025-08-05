@@ -20,7 +20,7 @@ edition = "2021"
 license = "Apache-2.0 WITH LLVM-exception"
 
 [workspace.dependencies]
-clap = { version = "4.5.40", features = ["derive"] }
+clap = { version = "4.5.42", features = ["derive"] }
 wizer = "9.0.0"
 wasmtime = "31"
 wasmtime-wasi = "31"

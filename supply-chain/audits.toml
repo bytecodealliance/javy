@@ -124,7 +124,7 @@ end = "2025-03-01"
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2021-12-08"
-end = "2025-07-02"
+end = "2026-08-05"
 
 [[trusted.clap_builder]]
 criteria = "safe-to-run"
@@ -136,13 +136,13 @@ end = "2024-10-26"
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2023-03-28"
-end = "2025-07-02"
+end = "2026-08-05"
 
 [[trusted.clap_derive]]
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2021-12-08"
-end = "2025-07-02"
+end = "2026-08-05"
 
 [[trusted.clap_lex]]
 criteria = "safe-to-run"
