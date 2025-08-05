@@ -14,7 +14,7 @@ path = "src/main.rs"
 anyhow = { workspace = true }
 wasmtime = { workspace = true }
 wasmtime-wasi = { workspace = true }
-walrus = "0.23.3"
+walrus = { workspace = true }
 tempfile = { workspace = true }
 clap = { workspace = true }
 serde = { workspace = true, default-features = false }

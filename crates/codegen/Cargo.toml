@@ -18,7 +18,7 @@ anyhow = { workspace = true }
 brotli = "8.0.1"
 wasmtime = { workspace = true }
 wasmtime-wasi = { workspace = true }
-walrus = "0.23.3"
+walrus = { workspace = true }
 swc_core = { version = "16.10.0", features = [
   "common_sourcemap",
   "ecma_ast",
