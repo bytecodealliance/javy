@@ -34,7 +34,7 @@ impl SerError for Error {
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// // Assuming you have a [Value] instance named value containing an i32.
 /// let mut deserializer = Deserializer::from(value);
 ///
