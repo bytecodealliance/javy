@@ -29,7 +29,7 @@ impl CustomSection for SourceCodeSection {
         "javy_source"
     }
 
-    fn data(&self, _ids_to_indices: &IdsToIndices) -> Cow<[u8]> {
+    fn data(&self, _ids_to_indices: &IdsToIndices) -> Cow<'_, [u8]> {
         (&self.source_code).into()
     }
 }

@@ -18,29 +18,38 @@ Refer to the [crate level documentation](https://docs.rs/javy) to learn more.
 Example usage:
 
 ```rust
-use anyhow::anyhow;
-use javy::{Runtime, from_js_error};
-let runtime = Runtime::default();
-let context = runtime.context();
+use anyhow::Result;
+use javy::quickjs::{
+   function::{MutFn, Rest},
+   Ctx, Function, Value
+};
+use javy::{from_js_error, Runtime};
 
-context.with(|cx| {
-    let globals = this.globals();
-    globals.set(
-        "print_hello",
-        Function::new(
-            this.clone(),
-            MutFn::new(move |_, _| {
-                println!("Hello, world!");
-            }),
-        )?,
-    )?;
- });
+fn main() -> Result<()> {
+    let runtime = Runtime::default();
+    let context = runtime.context();
 
-context.with(|cx| {
-    cx.eval_with_options(Default::default(), "print_hello();")
-         .map_err(|e| from_js_error(cx.clone(), e))
-         .map(|_| ())
-});
+    context.with(|cx| {
+        let globals = cx.globals();
+        globals.set(
+            "print_hello",
+            Function::new(
+                cx.clone(),
+                MutFn::new(|_: Ctx<'_>, _: Rest<Value<'_>>| {
+                    println!("Hello, world!");
+                }),
+            )?,
+        )
+    })?;
+
+    context.with(|cx| {
+        cx.eval_with_options("print_hello();", Default::default())
+            .map_err(|e| from_js_error(cx.clone(), e))
+            .map(|_: ()| ())
+    })?;
+
+    Ok(())
+}
 ```
 
 ## Publishing to crates.io

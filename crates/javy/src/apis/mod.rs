@@ -5,21 +5,23 @@
 //! Example usage:
 //! ```rust
 //!
-//! use javy::{Runtime, from_js_error};
-//! use javy_apis::RuntimeExt;
+//! use javy::{Config, Runtime, from_js_error};
 //! use anyhow::Result;
 //!
 //! fn main() -> Result<()> {
 //!     let mut config = Config::default();
-//!     config.text_decoding(true);
-//!     let runtime = Runtime::new(config);
+//!     config.text_encoding(true);
+//!     let runtime = Runtime::new(config)?;
 //!     let context = runtime.context();
 //!     context.with(|cx| {
-//!         cx.eval_with_options(Default::default(), r#
-//!           "console.log(new TextEncdoder().decode(""))
-//!         "#)
-//!         .map_err(|e| to_js_error(cx.clone(), e))?
-//!     });
+//!         cx.eval_with_options::<(), _>(
+//!             r#"
+//!                 console.log(new TextEncoder().encode(""))
+//!             "#,
+//!             Default::default()
+//!         )
+//!         .map_err(|e| from_js_error(cx.clone(), e))
+//!     })?;
 //!     Ok(())
 //! }
 //!

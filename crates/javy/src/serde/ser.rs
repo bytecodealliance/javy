@@ -9,7 +9,7 @@ use serde::{ser, ser::Error as SerError, Serialize};
 /// This struct is responsible for converting Rust types into [Value] using the Serde
 /// serialization framework.
 ///
-/// ```
+/// ```ignore
 /// // Assuming you have [`Ctx`] instance named context
 /// let serializer = Serializer::from_context(context)?;
 /// let value: Value = serializer.serialize_u32(42)?;
