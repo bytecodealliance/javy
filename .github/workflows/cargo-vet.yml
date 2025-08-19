@@ -22,6 +22,6 @@ jobs:
       - name: Add the tool cache directory to the search path
         run: echo "${{ runner.tool_cache }}/cargo-vet/bin" >> $GITHUB_PATH
       - name: Ensure that the tool cache is populated with the cargo-vet binary
-        run: cargo install --root ${{ runner.tool_cache }}/cargo-vet --version ${{ env.CARGO_VET_VERSION }} cargo-vet
+        run: cargo install --root ${{ runner.tool_cache }}/cargo-vet --version ${{ env.CARGO_VET_VERSION }} --locked cargo-vet
       - name: Invoke cargo-vet
         run: cargo vet --locked
