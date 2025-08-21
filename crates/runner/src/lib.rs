@@ -57,6 +57,13 @@ impl Plugin {
                 .join("plugin_wizened.wasm"),
         }
     }
+
+    pub fn needs_plugin_arg(&self) -> bool {
+        match self {
+            Self::V2 | Self::Default => false,
+            Self::User | Self::DefaultAsUser => true,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -588,7 +595,7 @@ impl Runner {
             args.push(format!("event-loop={}", if enabled { "y" } else { "n" }));
         }
 
-        if matches!(plugin, Plugin::User | Plugin::DefaultAsUser) {
+        if plugin.needs_plugin_arg() {
             args.push("-C".to_string());
             args.push(format!("plugin={}", plugin.path().to_str().unwrap()));
         }
