@@ -13,6 +13,11 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 - `Generator` now has a `producer_version` method so the version in the
   producers custom section can be set.
 
+### Changed
+
+- `Plugin::new` now validates the bytes are a valid plugin and returns a
+  result.
+
 ## [1.0.0] - 2025-03-10
 
 Initial release

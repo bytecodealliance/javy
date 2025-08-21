@@ -1735,7 +1735,7 @@ dependencies = [
 
 [[package]]
 name = "javy-codegen"
-version = "1.1.0-alpha.1"
+version = "2.0.0-alpha.1"
 dependencies = [
  "anyhow",
  "brotli",
@@ -1744,6 +1744,7 @@ dependencies = [
  "tempfile",
  "walrus",
  "wasm-opt",
+ "wasmparser 0.236.0",
  "wasmtime",
  "wasmtime-wasi",
  "wit-parser 0.212.0",

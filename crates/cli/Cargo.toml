@@ -25,7 +25,7 @@ javy-plugin-processing = { path = "../plugin-processing" }
 [dev-dependencies]
 criterion = "0.7"
 num-format = "0.4.4"
-wasmparser = "0.236.0"
+wasmparser = { workspace = true }
 javy-runner = { path = "../runner/" }
 javy-test-macros = { path = "../test-macros/" }
 

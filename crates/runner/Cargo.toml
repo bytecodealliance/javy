@@ -12,4 +12,4 @@ wasmtime-wasi = { workspace = true }
 anyhow = { workspace = true }
 tempfile = { workspace = true }
 uuid = { workspace = true }
-wasmparser = "0.236.0"
+wasmparser = { workspace = true }

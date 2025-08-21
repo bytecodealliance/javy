@@ -36,13 +36,13 @@ fn main() -> Result<()> {
 
             let js = JS::from_file(&opts.input)?;
 
-            let plugin_bytes = if opts.dynamic {
-                QUICKJS_PROVIDER_V2_MODULE
+            let plugin = if opts.dynamic {
+                Plugin::new_javy_quickjs_v2_plugin(QUICKJS_PROVIDER_V2_MODULE)
             } else {
-                PLUGIN_MODULE
+                Plugin::new(PLUGIN_MODULE.into())?
             };
 
-            let mut generator = Generator::new(Plugin::new(plugin_bytes.into()));
+            let mut generator = Generator::new(plugin);
 
             if opts.dynamic {
                 generator
@@ -75,7 +75,7 @@ fn main() -> Result<()> {
             // Always assume the default plugin if no plugin is provided.
             let cli_plugin = match &codegen_opts.plugin {
                 Some(path) => CliPlugin::new(Plugin::new_from_path(path)?, PluginKind::User),
-                None => CliPlugin::new(Plugin::new(PLUGIN_MODULE.into()), PluginKind::Default),
+                None => CliPlugin::new(Plugin::new(PLUGIN_MODULE.into())?, PluginKind::Default),
             };
 
             let js_opts = JsConfig::from_group_values(&cli_plugin, opts.js.clone())?;
