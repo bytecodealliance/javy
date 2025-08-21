@@ -24,8 +24,6 @@ use swc_core::{
     },
 };
 
-use crate::plugin::Plugin;
-
 /// JS source code.
 #[derive(Clone, Debug)]
 pub struct JS {
@@ -52,11 +50,6 @@ impl JS {
     /// Get source code as bytes.
     pub fn as_bytes(&self) -> &[u8] {
         self.source_code.as_bytes()
-    }
-
-    /// Compiles a JavaScript source to bytecode using a QuickJS plugin.
-    pub(crate) fn compile(&self, plugin: &Plugin) -> Result<Vec<u8>> {
-        plugin.compile_source(self.source_code.as_bytes())
     }
 
     /// Get Brotli compressed JS source code as bytes.
