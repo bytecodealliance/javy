@@ -1,24 +1,13 @@
 use anyhow::Result;
-use javy_runner::{Plugin, Runner, RunnerError, UseExportedFn};
+use javy_runner::{Plugin, Runner, RunnerError};
 use std::str;
 
 #[test]
-fn test_dylib() -> Result<()> {
+fn test_dylib_with_no_fn_name() -> Result<()> {
     let js_src = "console.error(42);";
     let mut runner = Runner::with_dylib(plugin_module()?)?;
 
-    let (_, logs, _) = runner.exec_through_dylib(js_src, UseExportedFn::EvalBytecode)?;
-    assert_eq!("42\n", str::from_utf8(&logs)?);
-
-    Ok(())
-}
-
-#[test]
-fn test_dylib_with_invoke_with_no_fn_name() -> Result<()> {
-    let js_src = "console.error(42);";
-    let mut runner = Runner::with_dylib(plugin_module()?)?;
-
-    let (_, logs, _) = runner.exec_through_dylib(js_src, UseExportedFn::Invoke(None))?;
+    let (_, logs, _) = runner.exec_through_dylib(js_src, None)?;
     assert_eq!("42\n", str::from_utf8(&logs)?);
 
     Ok(())
@@ -30,7 +19,7 @@ fn test_dylib_with_error() -> Result<()> {
 
     let mut runner = Runner::with_dylib(plugin_module()?)?;
 
-    let res = runner.exec_through_dylib(js_src, UseExportedFn::EvalBytecode);
+    let res = runner.exec_through_dylib(js_src, None);
 
     assert!(res.is_err());
 
@@ -50,7 +39,7 @@ fn test_dylib_with_exported_func() -> Result<()> {
 
     let mut runner = Runner::with_dylib(plugin_module()?)?;
 
-    let (_, logs, _) = runner.exec_through_dylib(js_src, UseExportedFn::Invoke(Some("foo")))?;
+    let (_, logs, _) = runner.exec_through_dylib(js_src, Some("foo"))?;
     assert_eq!("Toplevel\nIn foo\n", str::from_utf8(&logs)?);
 
     Ok(())

@@ -32,7 +32,7 @@ impl Plugin {
             Self::V2 => "javy_quickjs_provider_v2",
             // Could try and derive this but not going to for now since tests
             // will break if it changes.
-            Self::Default | Self::DefaultAsUser => "javy_quickjs_provider_v3",
+            Self::Default | Self::DefaultAsUser => "javy_quickjs_provider_v4",
             Self::User { .. } => "test_plugin",
         }
     }
@@ -274,12 +274,6 @@ impl StoreContext {
             logs,
         }
     }
-}
-
-#[derive(Debug)]
-pub enum UseExportedFn {
-    EvalBytecode,
-    Invoke(Option<&'static str>),
 }
 
 impl Runner {
@@ -690,7 +684,7 @@ impl Runner {
     pub fn exec_through_dylib(
         &mut self,
         src: &str,
-        use_exported_fn: UseExportedFn,
+        func: Option<&str>,
     ) -> Result<(Vec<u8>, Vec<u8>, u64)> {
         let mut store = Self::setup_store(self.linker.engine(), vec![])?;
         let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
@@ -698,20 +692,13 @@ impl Runner {
         let instance = self.linker.instantiate(store.as_context_mut(), &module)?;
 
         let (bc_ptr, bc_len) = Self::compile(src.as_bytes(), store.as_context_mut(), &instance)?;
-        let res = match use_exported_fn {
-            UseExportedFn::EvalBytecode => instance
-                .get_typed_func::<(u32, u32), ()>(store.as_context_mut(), "eval_bytecode")?
-                .call(store.as_context_mut(), (bc_ptr, bc_len)),
-            UseExportedFn::Invoke(func) => {
-                let (fn_ptr, fn_len) = match func {
-                    Some(func) => Self::copy_func_name(func, &instance, store.as_context_mut())?,
-                    None => (0, 0),
-                };
-                instance
-                    .get_typed_func::<(u32, u32, u32, u32), ()>(store.as_context_mut(), "invoke")?
-                    .call(store.as_context_mut(), (bc_ptr, bc_len, fn_ptr, fn_len))
-            }
+        let (fn_ptr, fn_len) = match func {
+            Some(func) => Self::copy_func_name(func, &instance, store.as_context_mut())?,
+            None => (0, 0),
         };
+        let res = instance
+            .get_typed_func::<(u32, u32, u32, u32), ()>(store.as_context_mut(), "invoke")?
+            .call(store.as_context_mut(), (bc_ptr, bc_len, fn_ptr, fn_len));
 
         self.extract_store_data(res, store)
     }
