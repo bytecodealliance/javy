@@ -1,6 +1,6 @@
 [package]
 name = "javy-codegen"
-version = "1.1.0-alpha.1"
+version = "2.0.0-alpha.1"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -28,3 +28,4 @@ wit-parser = "0.212.0"
 convert_case = "0.8.0"
 wasm-opt = { workspace = true }
 tempfile = { workspace = true }
+wasmparser = { workspace = true }

@@ -418,7 +418,7 @@ mod tests {
 
     #[test]
     fn js_config_from_config_values() -> Result<()> {
-        let plugin = CliPlugin::new(Plugin::new(PLUGIN_MODULE.into()), PluginKind::Default);
+        let plugin = CliPlugin::new(Plugin::new(PLUGIN_MODULE.into())?, PluginKind::Default);
 
         let group = JsConfig::from_group_values(&plugin, vec![])?;
         assert_eq!(group.get("javy-stream-io"), None);
@@ -595,8 +595,8 @@ mod tests {
     }
 
     #[test]
-    fn js_option_specified_twice_should_return_error() {
-        let plugin = CliPlugin::new(Plugin::new(PLUGIN_MODULE.into()), PluginKind::Default);
+    fn js_option_specified_twice_should_return_error() -> Result<()> {
+        let plugin = CliPlugin::new(Plugin::new(PLUGIN_MODULE.into())?, PluginKind::Default);
         let result = JsConfig::from_group_values(
             &plugin,
             vec![
@@ -614,5 +614,6 @@ mod tests {
             result.err().unwrap().to_string(),
             "javy-stream-io can only be specified once"
         );
+        Ok(())
     }
 }
