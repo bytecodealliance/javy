@@ -1,8 +1,6 @@
 use anyhow::{anyhow, Result};
 use std::{borrow::Cow, fs, path::Path, str};
 
-use super::bytecode;
-
 /// The kind of a plugin.
 // This is an internal detail of this module.
 #[derive(Debug, Default, PartialEq, Copy, Clone)]
@@ -61,10 +59,5 @@ impl Plugin {
     /// Returns the [`Plugin`] as bytes
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes
-    }
-
-    /// Generate valid QuickJS bytecode from Javascript source code.
-    pub(crate) fn compile_source(&self, js_source_code: &[u8]) -> Result<Vec<u8>> {
-        bytecode::compile_source(self.as_bytes(), js_source_code)
     }
 }

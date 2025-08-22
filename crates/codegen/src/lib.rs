@@ -366,7 +366,7 @@ impl Generator {
         js: &js::JS,
         imports: &Identifiers,
     ) -> Result<BytecodeMetadata> {
-        let bytecode = js.compile(&self.plugin)?;
+        let bytecode = bytecode::compile_source(self.plugin.as_bytes(), js.as_bytes())?;
         let bytecode_len: i32 = bytecode.len().try_into()?;
         let bytecode_data = module.data.add(DataKind::Passive, bytecode);
 
