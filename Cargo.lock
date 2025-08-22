@@ -1716,6 +1716,7 @@ name = "javy-cli"
 version = "5.0.4"
 dependencies = [
  "anyhow",
+ "brotli",
  "clap",
  "criterion",
  "javy-codegen",
