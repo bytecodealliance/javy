@@ -88,6 +88,8 @@ pub struct Builder {
     /// The javy plugin.
     /// Used for import validation purposes only.
     plugin: Plugin,
+    /// Whether to compress the source code.
+    compress_source_code: Option<bool>,
 }
 
 impl Default for Builder {
@@ -106,6 +108,7 @@ impl Default for Builder {
             text_encoding: None,
             event_loop: None,
             plugin: Plugin::Default,
+            compress_source_code: None,
         }
     }
 }
@@ -171,6 +174,11 @@ impl Builder {
         self
     }
 
+    pub fn compress_source_code(&mut self, enabled: bool) -> &mut Self {
+        self.compress_source_code = Some(enabled);
+        self
+    }
+
     pub fn build(&mut self) -> Result<Runner> {
         if self.built {
             bail!("Builder already used to build a runner")
@@ -196,6 +204,7 @@ impl Builder {
             preload,
             command,
             plugin,
+            compress_source_code,
         } = std::mem::take(self);
 
         self.built = true;
@@ -203,9 +212,26 @@ impl Builder {
         match command {
             JavyCommand::Compile => {
                 if let Some(preload) = preload {
-                    Runner::compile_dynamic(bin_path, root, input, wit, world, preload, plugin)
+                    Runner::compile_dynamic(
+                        bin_path,
+                        root,
+                        input,
+                        wit,
+                        world,
+                        preload,
+                        plugin,
+                        compress_source_code,
+                    )
                 } else {
-                    Runner::compile_static(bin_path, root, input, wit, world, plugin)
+                    Runner::compile_static(
+                        bin_path,
+                        root,
+                        input,
+                        wit,
+                        world,
+                        plugin,
+                        compress_source_code,
+                    )
                 }
             }
             JavyCommand::Build => Runner::build(
@@ -220,6 +246,7 @@ impl Builder {
                 event_loop,
                 preload,
                 plugin,
+                compress_source_code,
             ),
         }
     }
@@ -290,6 +317,7 @@ impl Runner {
         event_loop: Option<bool>,
         preload: Option<(String, PathBuf)>,
         plugin: Plugin,
+        compress_source_code: Option<bool>,
     ) -> Result<Self> {
         // This directory is unique and will automatically get deleted
         // when `tempdir` goes out of scope.
@@ -309,6 +337,7 @@ impl Runner {
             &text_encoding,
             &event_loop,
             &plugin,
+            &compress_source_code,
         );
 
         Self::exec_command(bin, root, args)?;
@@ -341,6 +370,7 @@ impl Runner {
         wit: Option<PathBuf>,
         world: Option<String>,
         plugin: Plugin,
+        compress_source_code: Option<bool>,
     ) -> Result<Self> {
         // This directory is unique and will automatically get deleted
         // when `tempdir` goes out of scope.
@@ -349,7 +379,13 @@ impl Runner {
         let js_file = root.join(source);
         let wit_file = wit.map(|p| root.join(p));
 
-        let args = Self::base_compile_args(&js_file, &wasm_file, &wit_file, &world);
+        let args = Self::base_compile_args(
+            &js_file,
+            &wasm_file,
+            &wit_file,
+            &world,
+            &compress_source_code,
+        );
 
         Self::exec_command(bin, root, args)?;
 
@@ -367,6 +403,7 @@ impl Runner {
         })
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn compile_dynamic(
         bin: String,
         root: PathBuf,
@@ -375,13 +412,20 @@ impl Runner {
         world: Option<String>,
         preload: (String, PathBuf),
         plugin: Plugin,
+        compress_source_code: Option<bool>,
     ) -> Result<Self> {
         let tempdir = tempfile::tempdir()?;
         let wasm_file = Self::out_wasm(&tempdir);
         let js_file = root.join(source);
         let wit_file = wit.map(|p| root.join(p));
 
-        let mut args = Self::base_compile_args(&js_file, &wasm_file, &wit_file, &world);
+        let mut args = Self::base_compile_args(
+            &js_file,
+            &wasm_file,
+            &wit_file,
+            &world,
+            &compress_source_code,
+        );
         args.push("-d".to_string());
 
         Self::exec_command(bin, root, args)?;
@@ -512,6 +556,19 @@ impl Runner {
         Ok(())
     }
 
+    pub fn javy_source_custom_section(&self) -> Option<&[u8]> {
+        wasmparser::Parser::new(0)
+            .parse_all(&self.wasm)
+            .find_map(|payload| {
+                if let Ok(wasmparser::Payload::CustomSection(c)) = payload {
+                    if c.name() == "javy_source" {
+                        return Some(c.data());
+                    }
+                }
+                None
+            })
+    }
+
     fn out_wasm(dir: &TempDir) -> PathBuf {
         let name = format!("{}.wasm", uuid::Uuid::new_v4());
         let file = dir.path().join(name);
@@ -536,6 +593,7 @@ impl Runner {
         text_encoding: &Option<bool>,
         event_loop: &Option<bool>,
         plugin: &Plugin,
+        compress_source_code: &Option<bool>,
     ) -> Vec<String> {
         let mut args = vec![
             "build".to_string(),
@@ -587,6 +645,14 @@ impl Runner {
             args.push(format!("plugin={}", plugin.path().to_str().unwrap()));
         }
 
+        if let Some(enabled) = *compress_source_code {
+            args.push("-C".into());
+            args.push(format!(
+                "source-compression={}",
+                if enabled { "y" } else { "n" }
+            ));
+        }
+
         args
     }
 
@@ -595,6 +661,7 @@ impl Runner {
         out: &Path,
         wit: &Option<PathBuf>,
         world: &Option<String>,
+        compress_source_code: &Option<bool>,
     ) -> Vec<String> {
         let mut args = vec![
             "compile".to_string(),
@@ -608,6 +675,10 @@ impl Runner {
             args.push(wit.to_str().unwrap().to_string());
             args.push("-n".to_string());
             args.push(world.to_string());
+        }
+
+        if let Some(false) = compress_source_code {
+            args.push("--no-source-compression".into());
         }
 
         args

@@ -1,6 +1,6 @@
 use anyhow::{bail, Result};
 use javy_runner::{Builder, Plugin, Runner, RunnerError};
-use std::{path::PathBuf, process::Command, str};
+use std::{io::Read, path::PathBuf, process::Command, str};
 use wasmtime::{AsContextMut, Engine, Linker, Module, Store};
 use wasmtime_wasi::WasiCtxBuilder;
 
@@ -259,6 +259,45 @@ fn test_exported_default_fn(builder: &mut Builder) -> Result<()> {
     let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", vec![]);
     assert_eq!(logs, "42\n");
     assert_fuel_consumed_within_threshold(39_147, fuel_consumed);
+    Ok(())
+}
+
+#[javy_cli_test]
+fn test_source_code_compression_default(builder: &mut Builder) -> Result<()> {
+    let runner = builder.build()?;
+    let javy_source = runner
+        .javy_source_custom_section()
+        .expect("Should have javy_source custom section");
+    let mut decompressor = brotli::Decompressor::new(javy_source, 4096);
+    let mut javy_source = vec![];
+    let res = decompressor.read_to_end(&mut javy_source);
+    assert!(res.is_ok());
+    Ok(())
+}
+
+#[javy_cli_test]
+fn test_source_code_compression_enabled(builder: &mut Builder) -> Result<()> {
+    let runner = builder.compress_source_code(true).build()?;
+    let javy_source = runner
+        .javy_source_custom_section()
+        .expect("Should have javy_source custom section");
+    let mut decompressor = brotli::Decompressor::new(javy_source, 4096);
+    let mut javy_source = vec![];
+    let res = decompressor.read_to_end(&mut javy_source);
+    assert!(res.is_ok());
+    Ok(())
+}
+
+#[javy_cli_test]
+fn test_source_code_compression_disabled(builder: &mut Builder) -> Result<()> {
+    let runner = builder.compress_source_code(false).build()?;
+    let javy_source = runner
+        .javy_source_custom_section()
+        .expect("Should have javy_source custom section");
+    let mut decompressor = brotli::Decompressor::new(javy_source, 4096);
+    let mut javy_source = vec![];
+    let res = decompressor.read_to_end(&mut javy_source);
+    assert!(res.is_err());
     Ok(())
 }
 
