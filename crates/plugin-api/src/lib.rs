@@ -158,13 +158,7 @@ pub unsafe extern "C" fn invoke(
     run_bytecode(bytecode, fn_name);
 }
 
-/// Evaluate the given bytecode.
-///
-/// Deprecated for use outside of this crate.
-///
-/// Evaluating also prepares (or "instantiates") the state of the JavaScript
-/// engine given all the information encoded in the bytecode.
-pub fn run_bytecode(bytecode: &[u8], fn_name: Option<&str>) {
+fn run_bytecode(bytecode: &[u8], fn_name: Option<&str>) {
     let runtime = unsafe { RUNTIME.get() }.unwrap();
     runtime
         .context()

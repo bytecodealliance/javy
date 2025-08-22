@@ -283,7 +283,6 @@ impl Generator {
         match self.linking {
             LinkingKind::Static => {
                 let canonical_abi_realloc_fn = module.exports.get_func("canonical_abi_realloc")?;
-                let eval_bytecode = module.exports.get_func("eval_bytecode").ok();
                 let invoke = module.exports.get_func("invoke")?;
                 let ExportItem::Memory(memory) = module
                     .exports
@@ -296,7 +295,7 @@ impl Generator {
                 };
                 Ok(Identifiers::new(
                     canonical_abi_realloc_fn,
-                    eval_bytecode,
+                    None,
                     invoke,
                     memory,
                 ))
@@ -319,9 +318,8 @@ impl Generator {
                 );
 
                 // User plugins can use `invoke` with a null function name.
-                // User plugins also won't have an `eval_bytecode` function to
-                // import. We want to remove `eval_bytecode` from the default
-                // plugin so we don't want to emit more uses of it.
+                // Non-v2 plugins also won't have an `eval_bytecode` function to
+                // import.
                 let eval_bytecode_fn_id = if self.plugin_kind == PluginKind::V2 {
                     let eval_bytecode_type = module.types.add(&[ValType::I32, ValType::I32], &[]);
                     let (eval_bytecode_fn_id, _) = module.add_import_func(
@@ -480,8 +478,8 @@ impl Generator {
                 // Remove no longer necessary exports.
                 module.exports.remove("canonical_abi_realloc")?;
 
-                // Only internal plugins expose eval_bytecode function.
-                if self.plugin_kind == PluginKind::Default || self.plugin_kind == PluginKind::V2 {
+                // Only v2 plugin exposes eval_bytecode function.
+                if self.plugin_kind == PluginKind::V2 {
                     module.exports.remove("eval_bytecode")?;
                 }
 

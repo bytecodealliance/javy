@@ -2,11 +2,10 @@ use javy_plugin_api::{import_namespace, Config};
 use shared_config::SharedConfig;
 use std::io;
 use std::io::Read;
-use std::slice;
 
 mod shared_config;
 
-import_namespace!("javy_quickjs_provider_v3");
+import_namespace!("javy_quickjs_provider_v4");
 
 /// Used by Wizer to preinitialize the module.
 #[export_name = "initialize_runtime"]
@@ -33,17 +32,4 @@ pub extern "C" fn initialize_runtime() {
     }
 
     javy_plugin_api::initialize_runtime(config, |runtime| runtime).unwrap();
-}
-
-/// Evaluates QuickJS bytecode
-///
-/// # Safety
-///
-/// * `bytecode_ptr` must reference a valid array of unsigned bytes of `bytecode_len` length
-// This will be removed as soon as we stop emitting calls to it in dynamically
-// linked modules.
-#[export_name = "eval_bytecode"]
-pub unsafe extern "C" fn eval_bytecode(bytecode_ptr: *const u8, bytecode_len: usize) {
-    let bytecode = slice::from_raw_parts(bytecode_ptr, bytecode_len);
-    javy_plugin_api::run_bytecode(bytecode, None);
 }
