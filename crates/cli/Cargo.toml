@@ -23,6 +23,7 @@ javy-codegen = { path = "../codegen/", features = ["plugin_internal"] }
 javy-plugin-processing = { path = "../plugin-processing" }
 
 [dev-dependencies]
+brotli = { workspace = true }
 criterion = "0.7"
 num-format = "0.4.4"
 wasmparser = { workspace = true }

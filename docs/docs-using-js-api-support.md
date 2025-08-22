@@ -26,7 +26,3 @@ functionality:
 
 * `IO`: provides `readSync` and `writeSync`, analogous to [Node's `fs`
   API](https://nodejs.org/api/fs.html).
-
-* `JSON`: provides `fromStdin()` and `toStdout()`. Which are helpers to read or
-  write from and to a file descriptor when working with `JSON`.
-

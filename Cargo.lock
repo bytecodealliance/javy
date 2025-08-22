@@ -1716,6 +1716,7 @@ name = "javy-cli"
 version = "5.0.4"
 dependencies = [
  "anyhow",
+ "brotli",
  "clap",
  "criterion",
  "javy-codegen",
@@ -1774,7 +1775,7 @@ dependencies = [
 
 [[package]]
 name = "javy-plugin-api"
-version = "3.2.1-alpha.1"
+version = "4.0.0-alpha.1"
 dependencies = [
  "anyhow",
  "javy",

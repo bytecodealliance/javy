@@ -158,7 +158,7 @@ async function runJavy(pluginModule, embeddedModule, input) {
       wasi.getImportObject(),
     );
     const instance = await WebAssembly.instantiate(embeddedModule, {
-      javy_quickjs_provider_v3: pluginInstance.exports,
+      javy_quickjs_provider_v4: pluginInstance.exports,
     });
 
     // Javy plugin is a WASI reactor see https://github.com/WebAssembly/WASI/blob/main/legacy/application-abi.md?plain=1

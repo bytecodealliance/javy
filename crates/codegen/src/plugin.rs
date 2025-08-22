@@ -3,8 +3,6 @@ use std::{borrow::Cow, fs, path::Path, str};
 use walrus::{ExportItem, ValType};
 use wasmparser::Parser;
 
-use super::bytecode;
-
 /// The kind of a plugin.
 // This is an internal detail of this module.
 #[derive(Debug, Default, PartialEq, Copy, Clone)]
@@ -123,11 +121,6 @@ impl Plugin {
             bail!("Problems with module: {}", errors.join(", "))
         }
         Ok(())
-    }
-
-    /// Generate valid QuickJS bytecode from Javascript source code.
-    pub(crate) fn compile_source(&self, js_source_code: &[u8]) -> Result<Vec<u8>> {
-        bytecode::compile_source(self.as_bytes(), js_source_code)
     }
 }
 
