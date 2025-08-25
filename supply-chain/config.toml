@@ -245,7 +245,15 @@ criteria = "safe-to-deploy"
 version = "0.3.30"
 criteria = "safe-to-deploy"
 
+[[exemptions.futures-executor]]
+version = "0.3.30"
+criteria = "safe-to-deploy"
+
 [[exemptions.futures-io]]
+version = "0.3.30"
+criteria = "safe-to-deploy"
+
+[[exemptions.futures-macro]]
 version = "0.3.30"
 criteria = "safe-to-deploy"
 
@@ -661,6 +669,14 @@ criteria = "safe-to-deploy"
 version = "0.22.0"
 criteria = "safe-to-deploy"
 
+[[exemptions.wasm-encoder]]
+version = "0.236.1"
+criteria = "safe-to-run"
+
+[[exemptions.wasm-metadata]]
+version = "0.236.1"
+criteria = "safe-to-run"
+
 [[exemptions.wasm-opt]]
 version = "0.116.1"
 criteria = "safe-to-deploy"
@@ -671,6 +687,10 @@ criteria = "safe-to-deploy"
 
 [[exemptions.wasm-opt-sys]]
 version = "0.116.0"
+criteria = "safe-to-deploy"
+
+[[exemptions.wasmparser]]
+version = "0.236.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.which]]
@@ -692,6 +712,14 @@ criteria = "safe-to-deploy"
 [[exemptions.windows_i686_gnullvm]]
 version = "0.52.6"
 criteria = "safe-to-deploy"
+
+[[exemptions.wit-component]]
+version = "0.236.1"
+criteria = "safe-to-run"
+
+[[exemptions.wit-parser]]
+version = "0.236.1"
+criteria = "safe-to-run"
 
 [[exemptions.witx]]
 version = "0.9.1"

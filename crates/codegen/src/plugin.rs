@@ -38,6 +38,22 @@ impl PluginKind {
             }
         }
     }
+
+    pub(crate) fn realloc_fn_name(self) -> &'static str {
+        if self == Self::V2 {
+            "canonical_abi_realloc"
+        } else {
+            "cabi_realloc"
+        }
+    }
+
+    pub(crate) fn compile_fn_name(self) -> &'static str {
+        if self == Self::V2 {
+            "compile_src"
+        } else {
+            "compile-src"
+        }
+    }
 }
 
 /// A Javy plugin.
@@ -81,12 +97,16 @@ impl Plugin {
 
         let module = walrus::Module::from_buffer(plugin_bytes)?;
 
-        if let Err(err) = validate_exported_func(&module, "initialize_runtime", &[], &[]) {
+        if module.exports.get_func("compile_src").is_ok() {
+            bail!("Problem with plugin: Using unsupported legacy plugin API");
+        }
+
+        if let Err(err) = validate_exported_func(&module, "initialize-runtime", &[], &[]) {
             errors.push(err);
         }
         if let Err(err) = validate_exported_func(
             &module,
-            "compile_src",
+            "compile-src",
             &[ValType::I32, ValType::I32],
             &[ValType::I32],
         ) {
@@ -95,7 +115,13 @@ impl Plugin {
         if let Err(err) = validate_exported_func(
             &module,
             "invoke",
-            &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
+            &[
+                ValType::I32,
+                ValType::I32,
+                ValType::I32,
+                ValType::I32,
+                ValType::I32,
+            ],
             &[],
         ) {
             errors.push(err);
@@ -118,7 +144,7 @@ impl Plugin {
         }
 
         if !errors.is_empty() {
-            bail!("Problems with module: {}", errors.join(", "))
+            bail!("Problems with plugin: {}", errors.join(", "))
         }
         Ok(())
     }
@@ -166,15 +192,60 @@ mod tests {
     }
 
     #[test]
+    fn test_validate_plugin_with_old_plugin() -> Result<()> {
+        let mut module = walrus::Module::with_config(ModuleConfig::default());
+        module.add_import_memory("foo", "memory", false, false, 0, None, None);
+        let mut compile_src_fn = FunctionBuilder::new(
+            &mut module.types,
+            &[ValType::I32, ValType::I32],
+            &[ValType::I32],
+        );
+        compile_src_fn.func_body().unreachable();
+        let compile_src_fn = compile_src_fn.finish(vec![], &mut module.funcs);
+        module.exports.add("compile_src", compile_src_fn);
+
+        let err = Plugin::new(module.emit_wasm().into()).err().unwrap();
+        assert_eq!(
+            err.to_string(),
+            "Problem with plugin: Using unsupported legacy plugin API"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_validate_plugin_with_incorrect_invoke_and_everything_missing() -> Result<()> {
+        let mut module = walrus::Module::with_config(ModuleConfig::default());
+        let invoke = FunctionBuilder::new(
+            &mut module.types,
+            &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
+            &[],
+        )
+        .finish(vec![], &mut module.funcs);
+        module.exports.add("invoke", invoke);
+
+        let plugin_bytes = module.emit_wasm();
+        let error = Plugin::validate(&plugin_bytes).err().unwrap();
+        assert_eq!(
+            error.to_string(),
+            "Problems with plugin: missing export for function named \
+            `initialize-runtime`, missing export for function named \
+            `compile-src`, type for function `invoke` is incorrect, missing \
+            exported memory named `memory`, missing custom section named \
+            `import_namespace`"
+        );
+        Ok(())
+    }
+
+    #[test]
     fn test_validate_plugin_with_everything_missing() -> Result<()> {
         let mut empty_module = walrus::Module::with_config(ModuleConfig::default());
         let plugin_bytes = empty_module.emit_wasm();
         let error = Plugin::new(plugin_bytes.into()).err().unwrap();
         assert_eq!(
             error.to_string(),
-            "Problems with module: missing export for function named \
-            `initialize_runtime`, missing export for function named \
-            `compile_src`, missing export for function named `invoke`, \
+            "Problems with plugin: missing export for function named \
+            `initialize-runtime`, missing export for function named \
+            `compile-src`, missing export for function named `invoke`, \
             missing exported memory named `memory`, missing custom section \
             named `import_namespace`"
         );
@@ -186,12 +257,12 @@ mod tests {
         let mut module = walrus::Module::with_config(ModuleConfig::default());
         let initialize_runtime = FunctionBuilder::new(&mut module.types, &[ValType::I32], &[])
             .finish(vec![], &mut module.funcs);
-        module.exports.add("initialize_runtime", initialize_runtime);
+        module.exports.add("initialize-runtime", initialize_runtime);
 
         let plugin_bytes = module.emit_wasm();
         let error = Plugin::new(plugin_bytes.into()).err().unwrap();
         let expected_part_of_error =
-            "Problems with module: type for function `initialize_runtime` is incorrect,";
+            "Problems with plugin: type for function `initialize-runtime` is incorrect,";
         if !error.to_string().contains(expected_part_of_error) {
             panic!("Expected error to contain '{expected_part_of_error}' but it did not. Full error is: '{error}'");
         }
@@ -204,12 +275,12 @@ mod tests {
         let mut initialize_runtime = FunctionBuilder::new(&mut module.types, &[], &[ValType::I32]);
         initialize_runtime.func_body().i32_const(0);
         let initialize_runtime = initialize_runtime.finish(vec![], &mut module.funcs);
-        module.exports.add("initialize_runtime", initialize_runtime);
+        module.exports.add("initialize-runtime", initialize_runtime);
 
         let plugin_bytes = module.emit_wasm();
         let error = Plugin::new(plugin_bytes.into()).err().unwrap();
         let expected_part_of_error =
-            "Problems with module: type for function `initialize_runtime` is incorrect,";
+            "Problems with plugin: type for function `initialize-runtime` is incorrect,";
         if !error.to_string().contains(expected_part_of_error) {
             panic!("Expected error to contain '{expected_part_of_error}' but it did not. Full error is: '{error}'");
         }

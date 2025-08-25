@@ -52,11 +52,11 @@ jobs:
         uses: taiki-e/install-action@cargo-hack
 
       - name: Compile plugin
-        run: cargo build -p javy-plugin --release --target=wasm32-wasip1
+        run: cargo build -p javy-plugin --release --target=wasm32-wasip2
 
       - name: Test
         env:
-          CARGO_TARGET_WASM32_WASIP1_RUNNER: wasmtime --dir=.
+          CARGO_TARGET_WASM32_WASIP2_RUNNER: wasmtime --dir=.
         run: |
           cargo hack test --workspace \
           --exclude=javy-cli \
@@ -64,7 +64,7 @@ jobs:
           --exclude=javy-plugin-processing \
           --exclude=javy-runner \
           --exclude=javy-test-plugin \
-          --target=wasm32-wasip1 --each-feature -- --nocapture
+          --target=wasm32-wasip2 --each-feature -- --nocapture
 
       - name: Test Runner
         run: cargo test --package=javy-runner
@@ -77,18 +77,18 @@ jobs:
           --exclude=javy-plugin-processing \
           --exclude=javy-runner \
           --exclude=javy-fuzz \
-          --target=wasm32-wasip1 --all-targets -- -D warnings
+          --target=wasm32-wasip2 --all-targets -- -D warnings
 
       # We need to specify a different job for linting `javy-runner` given that
-      # it depends on Wasmtime and Cranelift cannot be compiled to `wasm32-wasip1`
+      # it depends on Wasmtime and Cranelift cannot be compiled to `wasm32-wasip2`
       - name: Lint Runner
         run: cargo clippy --package=javy-runner -- -D warnings
 
       - name: Build test-plugin
         run: |
-          cargo build --package=javy-test-plugin --release --target=wasm32-wasip1
+          cargo build --package=javy-test-plugin --release --target=wasm32-wasip2
           CARGO_PROFILE_RELEASE_LTO=off cargo build --package=javy-cli --release
-          target/release/javy init-plugin target/wasm32-wasip1/release/test_plugin.wasm -o crates/runner/test_plugin.wasm
+          target/release/javy init-plugin target/wasm32-wasip2/release/test_plugin.wasm -o crates/runner/test_plugin.wasm
 
       - name: Test CLI
         run: CARGO_PROFILE_RELEASE_LTO=off cargo test --package=javy-cli --release -- --nocapture
