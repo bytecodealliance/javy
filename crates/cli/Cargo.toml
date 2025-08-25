@@ -13,7 +13,6 @@ path = "src/main.rs"
 [dependencies]
 anyhow = { workspace = true }
 wasmtime = { workspace = true }
-wasmtime-wasi = { workspace = true }
 walrus = { workspace = true }
 tempfile = { workspace = true }
 clap = { workspace = true }
@@ -29,6 +28,7 @@ num-format = "0.4.4"
 wasmparser = { workspace = true }
 javy-runner = { path = "../runner/" }
 javy-test-macros = { path = "../test-macros/" }
+wasmtime-wasi = { workspace = true }
 
 [build-dependencies]
 anyhow = { workspace = true }

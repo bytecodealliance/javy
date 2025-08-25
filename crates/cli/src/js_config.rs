@@ -2,7 +2,6 @@ use anyhow::{anyhow, Result};
 use serde::Deserialize;
 use std::{collections::HashMap, str};
 use wasmtime::{AsContext, AsContextMut, Engine, Linker};
-use wasmtime_wasi::WasiCtxBuilder;
 
 use crate::{CliPlugin, PluginKind};
 
@@ -20,9 +19,8 @@ impl ConfigSchema {
                 let engine = Engine::default();
                 let module = wasmtime::Module::new(&engine, cli_plugin.as_plugin().as_bytes())?;
                 let mut linker = Linker::new(&engine);
-                wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |s| s)?;
-                let wasi = WasiCtxBuilder::new().inherit_stderr().build_p1();
-                let mut store = wasmtime::Store::new(&engine, wasi);
+                linker.define_unknown_imports_as_default_values(&module)?;
+                let mut store = wasmtime::Store::new(&engine, ());
                 let instance = linker.instantiate(store.as_context_mut(), &module)?;
 
                 let ret_area = instance
