@@ -14,3 +14,4 @@ anyhow = { workspace = true }
 javy-plugin-api = { path = "../plugin-api", features = ["json"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
+wit-bindgen = { workspace = true }

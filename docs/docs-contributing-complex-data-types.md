@@ -4,9 +4,14 @@ Core WebAssembly currently only supports using numbers for arguments and return
 values for exported and imported functions. This presents a problem when you
 want to pass strings, byte arrays, or structured data to and from
 imported/exported functions. The WebAssembly Component Model provides one
-approach to solving this problem but we have not yet added support for producing
-WebAssembly components to Javy. This document will provide an overview for an
-approach using Core WebAssembly to consider.
+approach to solving this problem. When creating Javy plugins, you create a Wasm
+component that can use various structured types however the plugin
+initialization process lowers the component to a Core Wasm module so the
+parameters and return values are expressed in terms of Core Wasm types. You can
+look up how the types are lowered from their component representation to the
+Core representation for callees to ensure you receive parameters and send
+return values correctly.  This document will provide an overview for a different
+approach using Core WebAssembly types to consider.
 
 At a high level, byte arrays can be passed using a pair of integers with the
 first integer representing the address of the start of the byte array in the
@@ -28,7 +33,7 @@ Given an exported function that receives a byte array and looks like:
 (module
   (func (export "your_fn") (param $ptr i32) (param $len i32)
     ...)
-  (func (export "canonical_abi_realloc") (param $orig_ptr i32) (param $orig_size i32) (param $alignment i32) (param $new_len i32)
+  (func (export "cabi_realloc") (param $orig_ptr i32) (param $orig_size i32) (param $alignment i32) (param $new_len i32)
     ...)
 )
 ```
@@ -41,7 +46,7 @@ use anyhow::Result;
 fn call_the_export(bytes: &[u8], instance: wasmtime::Instance, store: &mut wasmtime::Store<WasiCtx>) -> Result<()> {
     let memory = instance.get_memory(&mut store, "memory");
     let realloc_fn = instance
-        .get_typed_func::<(u32, u32, u32, u32), u32>(&mut store, "canonical_abi_realloc")?;
+        .get_typed_func::<(u32, u32, u32, u32), u32>(&mut store, "cabi_realloc")?;
     let len = bytes.len().try_into()?;
 
     let original_ptr = 0;
@@ -58,9 +63,6 @@ fn call_the_export(bytes: &[u8], instance: wasmtime::Instance, store: &mut wasmt
     Ok(())
 }
 ```
-
-You can export the `canonical_abi_realloc` function by enabling the
-`export_alloc_fns` feature in the `javy` crate.
 
 In the WebAssembly instance when receiving a byte array in the exported
 function, you can use the `std::slice::from_raw_parts` function to get the
@@ -188,7 +190,7 @@ Given an imported WebAssembly function that returns a byte array and looks like:
 ```wat
 (module
   (import "host" "my_import" (func $my_import (result i32)))
-  (func (export "canonical_abi_realloc") (param $orig_ptr i32) (param $orig_size i32) (param $alignment i32) (param $new_len i32)
+  (func (export "cabi_realloc") (param $orig_ptr i32) (param $orig_size i32) (param $alignment i32) (param $new_len i32)
     ...)
 )
 ```
@@ -211,7 +213,7 @@ fn setup(linker: &mut wasmtime::Linker<wasmtime_wasi::WasiContext>) -> Result<()
             |mut caller: wasmtime::Caller<'_, StoreContext>| -> Result<u32> {
                 let memory = caller.get_export("memory").unwrap().into_memory().unwrap();
                 let realloc = caller
-                    .get_export("canonical_abi_realloc")
+                    .get_export("cabi_realloc")
                     .unwrap()
                     .into_func()
                     .unwrap()
@@ -249,9 +251,6 @@ fn setup(linker: &mut wasmtime::Linker<wasmtime_wasi::WasiContext>) -> Result<()
         .unwrap();
 }
 ```
-
-You can export the `canonical_abi_realloc` function by enabling the
-`export_alloc_fns` feature in the `javy` crate.
 
 When reading a returned byte array from the host, we extract the pointer and
 length from the wide pointer and then use the pointer and length to read a slice

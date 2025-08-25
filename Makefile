@@ -15,25 +15,25 @@ cli: plugin
 	CARGO_PROFILE_RELEASE_LTO=off cargo build --package=javy-cli --release
 
 plugin:
-	cargo build --package=javy-plugin --release --target=wasm32-wasip1 --features=$(PLUGIN_FEATURES)
-	cargo run --package=javy-plugin-processing target/wasm32-wasip1/release/plugin.wasm target/wasm32-wasip1/release/plugin_wizened.wasm
+	cargo build --package=javy-plugin --release --target=wasm32-wasip2 --features=$(PLUGIN_FEATURES)
+	cargo run --package=javy-plugin-processing target/wasm32-wasip2/release/plugin.wasm target/wasm32-wasip2/release/plugin_wizened.wasm
 
 build-test-plugin: cli
-	cargo build --package=javy-test-plugin --release --target=wasm32-wasip1
-	target/release/javy init-plugin target/wasm32-wasip1/release/test_plugin.wasm -o crates/runner/test_plugin.wasm
+	cargo build --package=javy-test-plugin --target=wasm32-wasip2 --release
+	cargo run --package=javy-plugin-processing -- target/wasm32-wasip2/release/test_plugin.wasm crates/runner/test_plugin.wasm
 
 docs:
 	cargo doc --package=javy-cli --open
-	cargo doc --package=javy-plugin --open --target=wasm32-wasip1
+	cargo doc --package=javy-plugin --open --target=wasm32-wasip2
 
 test-javy:
-	CARGO_TARGET_WASM32_WASIP1_RUNNER="wasmtime --dir=." cargo hack test --package=javy --target=wasm32-wasip1 --each-feature -- --nocapture
+	CARGO_TARGET_WASM32_WASIP2_RUNNER="wasmtime --dir=." cargo hack test --package=javy --target=wasm32-wasip2 --each-feature -- --nocapture
 
 test-plugin-api:
-	CARGO_TARGET_WASM32_WASIP1_RUNNER="wasmtime --dir=." cargo hack test --package=javy-plugin-api --target=wasm32-wasip1 --each-feature -- --nocapture
+	CARGO_TARGET_WASM32_WASIP2_RUNNER="wasmtime --dir=." cargo hack test --package=javy-plugin-api --target=wasm32-wasip2 --each-feature -- --nocapture
 
 test-plugin:
-	CARGO_TARGET_WASM32_WASIP1_RUNNER="wasmtime" cargo test --package=javy-plugin --target=wasm32-wasip1 -- --nocapture
+	CARGO_TARGET_WASM32_WASIP2_RUNNER="wasmtime" cargo test --package=javy-plugin --target=wasm32-wasip2 -- --nocapture
 
 test-plugin-processing:
 	cargo test --package=javy-plugin-processing -- --nocapture
@@ -61,15 +61,15 @@ fmt: fmt-javy fmt-plugin-api fmt-plugin fmt-plugin-processing fmt-cli fmt-codege
 
 fmt-javy:
 	cargo fmt --package=javy -- --check
-	cargo clippy --package=javy --target=wasm32-wasip1 --all-targets -- -D warnings
+	cargo clippy --package=javy --target=wasm32-wasip2 --all-targets -- -D warnings
 
 fmt-plugin-api:
 	cargo fmt --package=javy-plugin-api -- --check
-	cargo clippy --package=javy-plugin-api --target=wasm32-wasip1 --all-targets -- -D warnings
+	cargo clippy --package=javy-plugin-api --target=wasm32-wasip2 --all-targets -- -D warnings
 
 fmt-plugin:
 	cargo fmt --package=javy-plugin -- --check
-	cargo clippy --package=javy-plugin --target=wasm32-wasip1 --all-targets -- -D warnings
+	cargo clippy --package=javy-plugin --target=wasm32-wasip2 --all-targets -- -D warnings
 
 fmt-plugin-processing:
 	cargo fmt --package=javy-plugin-processing -- --check

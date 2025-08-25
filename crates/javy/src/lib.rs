@@ -54,7 +54,6 @@ pub use rquickjs as quickjs;
 pub use runtime::Runtime;
 use std::str;
 
-pub mod alloc;
 mod config;
 mod runtime;
 mod serde;

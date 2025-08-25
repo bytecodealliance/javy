@@ -8,9 +8,21 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `javy_plugin` macro to generate a plugin that uses the new plugin API.
+
+### Changed
+
+- The plugin API expected by the Javy CLI has been changed. The README contains
+  a section on how to update your plugin to use the new API. Please read the
+  extending Javy documentation for more details on the new plugin API.
+- `initialize_runtime`, `compile_src`, and `invoke` function signatures have
+  changed.
+
 ### Removed
 
-- The `eval_bytecode` function was deleted.
+- `run_bytecode` and `eval_bytecode` functions have been removed.
 
 ## [3.2.0] - 2025-07-24
 
