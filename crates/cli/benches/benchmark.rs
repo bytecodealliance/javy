@@ -202,7 +202,7 @@ fn execute_javy(index_js: &Path, wasm: &Path, linking: &Linking) -> Result<()> {
         args.push("-C");
         args.push("plugin=../../target/wasm32-wasip1/release/plugin_wizened.wasm");
     }
-    let status_code = Command::new(Path::new("../../target/release/javy").to_str().unwrap())
+    let status_code = Command::new(Path::new("../../target/debug/javy").to_str().unwrap())
         .args(args)
         .status()?;
     if !status_code.success() {
