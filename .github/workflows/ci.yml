@@ -87,33 +87,33 @@ jobs:
       - name: Build test-plugin
         run: |
           cargo build --package=javy-test-plugin --release --target=wasm32-wasip1
-          CARGO_PROFILE_RELEASE_LTO=off cargo build --package=javy-cli --release
-          target/release/javy init-plugin target/wasm32-wasip1/release/test_plugin.wasm -o crates/runner/test_plugin.wasm
+          cargo build --package=javy-cli
+          target/debug/javy init-plugin target/wasm32-wasip1/release/test_plugin.wasm -o crates/runner/test_plugin.wasm
 
       - name: Test CLI
-        run: CARGO_PROFILE_RELEASE_LTO=off cargo test --package=javy-cli --release -- --nocapture
+        run: cargo test --package=javy-cli -- --nocapture
 
       - name: Test CodeGen
         run: |
-          target/release/javy emit-plugin -o crates/codegen/default_plugin.wasm
-          CARGO_PROFILE_RELEASE_LTO=off cargo hack test --package=javy-codegen --release --each-feature -- --nocapture
+          target/debug/javy emit-plugin -o crates/codegen/default_plugin.wasm
+          cargo hack test --package=javy-codegen --each-feature -- --nocapture
 
       - name: Test plugin processing
         run: |
           cargo test --package=javy-plugin-processing -- --nocapture
 
       - name: Check benchmarks
-        run: CARGO_PROFILE_RELEASE_LTO=off cargo check --package=javy-cli --release --benches
+        run: cargo check --package=javy-cli --benches
 
       - name: Lint CLI
         run: |
           cargo fmt -- --check
-          CARGO_PROFILE_RELEASE_LTO=off cargo clippy --package=javy-cli --release --all-targets -- -D warnings
+          cargo clippy --package=javy-cli --all-targets -- -D warnings
 
       - name: Lint CodeGen
         run: |
           cargo fmt -- --check
-          CARGO_PROFILE_RELEASE_LTO=off cargo hack clippy --package=javy-codegen --release --all-targets --each-feature -- -D warnings
+          cargo hack clippy --package=javy-codegen --all-targets --each-feature -- -D warnings
 
       - name: Lint plugin processing
         run: |
