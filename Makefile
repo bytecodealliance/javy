@@ -27,13 +27,13 @@ docs:
 	cargo doc --package=javy-plugin --open --target=wasm32-wasip2
 
 test-javy:
-	CARGO_TARGET_WASM32_WASIP2_RUNNER="wasmtime --dir=." cargo hack test --package=javy --target=wasm32-wasip2 --each-feature -- --nocapture
+	cargo hack test --package=javy --target=wasm32-wasip2 --each-feature -- --nocapture
 
 test-plugin-api:
-	CARGO_TARGET_WASM32_WASIP2_RUNNER="wasmtime --dir=." cargo hack test --package=javy-plugin-api --target=wasm32-wasip2 --each-feature -- --nocapture
+	cargo hack test --package=javy-plugin-api --target=wasm32-wasip2 --each-feature -- --nocapture
 
 test-plugin:
-	CARGO_TARGET_WASM32_WASIP2_RUNNER="wasmtime" cargo test --package=javy-plugin --target=wasm32-wasip2 -- --nocapture
+	cargo test --package=javy-plugin --target=wasm32-wasip2 -- --nocapture
 
 test-plugin-processing:
 	cargo test --package=javy-plugin-processing -- --nocapture

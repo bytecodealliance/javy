@@ -55,8 +55,6 @@ jobs:
         run: cargo build -p javy-plugin --release --target=wasm32-wasip2
 
       - name: Test
-        env:
-          CARGO_TARGET_WASM32_WASIP2_RUNNER: wasmtime --dir=.
         run: |
           cargo hack test --workspace \
           --exclude=javy-cli \
