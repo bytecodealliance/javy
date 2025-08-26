@@ -1,0 +1,6 @@
+package local:test;
+
+world exported-logs {
+  export log: func();
+  export log2: func();
+}

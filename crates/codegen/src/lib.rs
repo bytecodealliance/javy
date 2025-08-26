@@ -503,64 +503,6 @@ impl Generator {
         }
     }
 
-    // For the example generated WAT, the `bytecode_len` is 137
-    // (module
-    //    (type (;0;) (func))
-    //    (type (;1;) (func (param i32 i32)))
-    //    (type (;2;) (func (param i32 i32 i32 i32)))
-    //    (type (;3;) (func (param i32 i32 i32 i32) (result i32)))
-    //    (import "javy_quickjs_provider_v2" "canonical_abi_realloc" (func (;0;) (type 3)))
-    //    (import "javy_quickjs_provider_v2" "eval_bytecode" (func (;1;) (type 1)))
-    //    (import "javy_quickjs_provider_v2" "memory" (memory (;0;) 0))
-    //    (import "javy_quickjs_provider_v2" "invoke" (func (;2;) (type 2)))
-    //    (func (;3;) (type 0)
-    //      (local i32 i32)
-    //      i32.const 0
-    //      i32.const 0
-    //      i32.const 1
-    //      i32.const 137
-    //      call 0
-    //      local.tee 0
-    //      i32.const 0
-    //      i32.const 137
-    //      memory.init 0
-    //      data.drop 0
-    //      i32.const 0
-    //      i32.const 0
-    //      i32.const 1
-    //      i32.const 3
-    //      call 0
-    //      local.tee 1
-    //      i32.const 0
-    //      i32.const 3
-    //      memory.init 1
-    //      data.drop 1
-    //      local.get 0
-    //      i32.const 137
-    //      local.get 1
-    //      i32.const 3
-    //      call 2
-    //    )
-    //    (func (;4;) (type 0)
-    //      (local i32)
-    //      i32.const 0
-    //      i32.const 0
-    //      i32.const 1
-    //      i32.const 137
-    //      call 0
-    //      local.tee 0
-    //      i32.const 0
-    //      i32.const 137
-    //      memory.init 0
-    //      local.get 0
-    //      i32.const 137
-    //      call 1
-    //    )
-    //    (export "_start" (func 4))
-    //    (export "foo" (func 3))
-    //    (data (;0;) "\02\05\18function.mjs\06foo\0econsole\06log\06bar\0f\bc\03\00\01\00\00\be\03\00\00\0e\00\06\01\a0\01\00\00\00\03\01\01\1a\00\be\03\00\01\08\ea\05\c0\00\e1)8\e0\00\00\00B\e1\00\00\00\04\e2\00\00\00$\01\00)\bc\03\01\04\01\00\07\0a\0eC\06\01\be\03\00\00\00\03\00\00\13\008\e0\00\00\00B\e1\00\00\00\04\df\00\00\00$\01\00)\bc\03\01\02\03]")
-    //    (data (;1;) "foo")
-    //  )
     /// Generate a Wasm module which will run the provided JS source code.
     pub fn generate(&mut self, js: &js::JS) -> Result<Vec<u8>> {
         if self.wit_opts.defined() {
