@@ -15,13 +15,12 @@ pub fn initialize_plugin(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
     Ok(wasm_bytes)
 }
 
+/// Extracts core plugin module from a plugin component.
 pub fn extract_core_module(component_bytes: &[u8]) -> Result<Vec<u8>> {
-    if !Parser::is_component(component_bytes) {
-        if !Parser::is_core_wasm(component_bytes) {
-            bail!("Expected Wasm component, received unknown file type");
-        } else {
-            bail!("Expected Wasm component, received Wasm module");
-        }
+    if !Parser::is_component(component_bytes) && Parser::is_core_wasm(component_bytes) {
+        bail!("Expected Wasm component, received Wasm module");
+    } else if !Parser::is_component(component_bytes) {
+        bail!("Expected Wasm component, received unknown file type");
     }
 
     let parser = Parser::new(0);
