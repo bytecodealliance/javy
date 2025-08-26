@@ -4,6 +4,7 @@
 # https://doc.rust-lang.org/cargo/reference/config.html
 [target.wasm32-wasip1]
 rustflags = ["-C", "target-feature=+simd128"]
+runner = "wasmtime --dir=."
 
 # We want to ensure that all the MSVC dependencies are statically resolved and
 # included in the final CLI binary.
