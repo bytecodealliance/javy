@@ -15,7 +15,7 @@ cli: plugin
 	CARGO_PROFILE_RELEASE_LTO=off cargo build --package=javy-cli --release
 
 plugin:
-	cargo build --package=javy-plugin --release --target=wasm32-wasip1 --features=$(PLUGIN_FEATURES)
+	cargo build --package=javy-plugin --release --target=wasm32-wasip1
 	cargo run --package=javy-plugin-processing target/wasm32-wasip1/release/plugin.wasm target/wasm32-wasip1/release/plugin_wizened.wasm
 
 build-test-plugin: cli
