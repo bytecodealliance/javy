@@ -118,7 +118,7 @@ fn test_using_invalid_plugin_with_static_build_fails(builder: &mut Builder) -> R
     let err = result.err().unwrap();
     assert!(err
         .to_string()
-        .contains("Problem with plugin: Using unsupported legacy plugin API"));
+        .contains("Could not process plugin: Using unsupported legacy plugin API"));
     Ok(())
 }
 

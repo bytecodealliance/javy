@@ -90,7 +90,7 @@ impl Plugin {
     /// Validates if `plugin_bytes` are a valid plugin.
     pub fn validate(plugin_bytes: &[u8]) -> Result<()> {
         if !Parser::is_core_wasm(plugin_bytes) {
-            bail!("Problem with plugin: Expected Wasm module, received unknown file type");
+            bail!("Could not process plugin: Expected Wasm module, received unknown file type");
         }
 
         let mut errors = vec![];
@@ -98,7 +98,7 @@ impl Plugin {
         let module = walrus::Module::from_buffer(plugin_bytes)?;
 
         if module.exports.get_func("compile_src").is_ok() {
-            bail!("Problem with plugin: Using unsupported legacy plugin API");
+            bail!("Could not process plugin: Using unsupported legacy plugin API");
         }
 
         if let Err(err) = validate_exported_func(&module, "initialize-runtime", &[], &[]) {
@@ -144,7 +144,7 @@ impl Plugin {
         }
 
         if !errors.is_empty() {
-            bail!("Problems with plugin: {}", errors.join(", "))
+            bail!("Could not process plugin: {}", errors.join(", "))
         }
         Ok(())
     }
@@ -186,7 +186,7 @@ mod tests {
         let err = Plugin::new(vec![].into()).err().unwrap();
         assert_eq!(
             err.to_string(),
-            "Problem with plugin: Expected Wasm module, received unknown file type"
+            "Could not process plugin: Expected Wasm module, received unknown file type"
         );
         Ok(())
     }
@@ -207,7 +207,7 @@ mod tests {
         let err = Plugin::new(module.emit_wasm().into()).err().unwrap();
         assert_eq!(
             err.to_string(),
-            "Problem with plugin: Using unsupported legacy plugin API"
+            "Could not process plugin: Using unsupported legacy plugin API"
         );
         Ok(())
     }
@@ -227,7 +227,7 @@ mod tests {
         let error = Plugin::validate(&plugin_bytes).err().unwrap();
         assert_eq!(
             error.to_string(),
-            "Problems with plugin: missing export for function named \
+            "Could not process plugin: missing export for function named \
             `initialize-runtime`, missing export for function named \
             `compile-src`, type for function `invoke` is incorrect, missing \
             exported memory named `memory`, missing custom section named \
@@ -243,7 +243,7 @@ mod tests {
         let error = Plugin::new(plugin_bytes.into()).err().unwrap();
         assert_eq!(
             error.to_string(),
-            "Problems with plugin: missing export for function named \
+            "Could not process plugin: missing export for function named \
             `initialize-runtime`, missing export for function named \
             `compile-src`, missing export for function named `invoke`, \
             missing exported memory named `memory`, missing custom section \
@@ -262,7 +262,7 @@ mod tests {
         let plugin_bytes = module.emit_wasm();
         let error = Plugin::new(plugin_bytes.into()).err().unwrap();
         let expected_part_of_error =
-            "Problems with plugin: type for function `initialize-runtime` is incorrect,";
+            "Could not process plugin: type for function `initialize-runtime` is incorrect,";
         if !error.to_string().contains(expected_part_of_error) {
             panic!("Expected error to contain '{expected_part_of_error}' but it did not. Full error is: '{error}'");
         }
@@ -280,7 +280,7 @@ mod tests {
         let plugin_bytes = module.emit_wasm();
         let error = Plugin::new(plugin_bytes.into()).err().unwrap();
         let expected_part_of_error =
-            "Problems with plugin: type for function `initialize-runtime` is incorrect,";
+            "Could not process plugin: type for function `initialize-runtime` is incorrect,";
         if !error.to_string().contains(expected_part_of_error) {
             panic!("Expected error to contain '{expected_part_of_error}' but it did not. Full error is: '{error}'");
         }
