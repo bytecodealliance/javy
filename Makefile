@@ -46,7 +46,7 @@ test-codegen: cli
 # Note: to make this faster, the engine should be optimized beforehand (wasm-strip + wasm-opt).
 # Disabling LTO substantially improves compile time
 test-cli: plugin build-test-plugin
-	CARGO_PROFILE_RELEASE_LTO=off cargo test --package=javy-cli --release --features=$(CLI_FEATURES) -- --nocapture
+	CARGO_PROFILE_RELEASE_LTO=off cargo test --package=javy-cli --release -- --nocapture
 
 test-runner:
 	cargo test --package=javy-runner -- --nocapture
