@@ -201,18 +201,6 @@ impl Generator {
     }
 
     #[cfg(feature = "plugin_internal")]
-    /// Set true if linking with a default plugin module.
-    pub fn linking_default_plugin(&mut self, value: bool) -> &mut Self {
-        self.plugin_kind = if value {
-            PluginKind::Default
-        } else {
-            PluginKind::User
-        };
-
-        self
-    }
-
-    #[cfg(feature = "plugin_internal")]
     /// Set true if linking with a V2 plugin module.
     pub fn linking_v2_plugin(&mut self, value: bool) -> &mut Self {
         self.plugin_kind = if value {

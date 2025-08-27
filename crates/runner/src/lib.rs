@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Result};
+use anyhow::{bail, Result};
 use std::error::Error;
 use std::fmt::{self, Display, Formatter};
 use std::fs;
@@ -94,7 +94,6 @@ pub struct Builder {
     /// Whether to use the `compile` or `build` command.
     command: JavyCommand,
     /// The javy plugin.
-    /// Used for import validation purposes only.
     plugin: Plugin,
     /// Whether to compress the source code.
     compress_source_code: Option<bool>,
@@ -227,19 +226,10 @@ impl Builder {
                         wit,
                         world,
                         preload,
-                        plugin,
                         compress_source_code,
                     )
                 } else {
-                    Runner::compile_static(
-                        bin_path,
-                        root,
-                        input,
-                        wit,
-                        world,
-                        plugin,
-                        compress_source_code,
-                    )
+                    Runner::compile_static(bin_path, root, input, wit, world, compress_source_code)
                 }
             }
             JavyCommand::Build => Runner::build(
@@ -265,7 +255,6 @@ pub struct Runner {
     linker: Linker<StoreContext>,
     initial_fuel: u64,
     preload: Option<(String, Vec<u8>)>,
-    plugin: Plugin,
 }
 
 #[derive(Debug)]
@@ -367,7 +356,6 @@ impl Runner {
             linker,
             initial_fuel: u64::MAX,
             preload,
-            plugin: Plugin::Default,
         })
     }
 
@@ -377,7 +365,6 @@ impl Runner {
         source: impl AsRef<Path>,
         wit: Option<PathBuf>,
         world: Option<String>,
-        plugin: Plugin,
         compress_source_code: Option<bool>,
     ) -> Result<Self> {
         // This directory is unique and will automatically get deleted
@@ -407,7 +394,6 @@ impl Runner {
             linker,
             initial_fuel: u64::MAX,
             preload: None,
-            plugin,
         })
     }
 
@@ -419,7 +405,6 @@ impl Runner {
         wit: Option<PathBuf>,
         world: Option<String>,
         preload: (String, PathBuf),
-        plugin: Plugin,
         compress_source_code: Option<bool>,
     ) -> Result<Self> {
         let tempdir = tempfile::tempdir()?;
@@ -449,7 +434,6 @@ impl Runner {
             linker,
             initial_fuel: u64::MAX,
             preload: Some((preload.0, preload_module)),
-            plugin,
         })
     }
 
@@ -460,76 +444,7 @@ impl Runner {
             linker: Self::setup_linker(&engine)?,
             initial_fuel: u64::MAX,
             preload: None,
-            plugin: Plugin::Default,
         })
-    }
-
-    pub fn ensure_expected_imports(&self, expect_compile_imports: bool) -> Result<()> {
-        let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
-        let instance_name = self.plugin.namespace();
-
-        let imports = module
-            .imports()
-            .filter(|i| i.module() == instance_name)
-            .collect::<Vec<_>>();
-        let expected_import_count = if expect_compile_imports { 4 } else { 3 };
-        if imports.len() != expected_import_count {
-            bail!("Dynamically linked modules should have exactly {expected_import_count} imports for {instance_name}");
-        }
-
-        let realloc_name = if expect_compile_imports {
-            "canonical_abi_realloc"
-        } else {
-            "cabi_realloc"
-        };
-        let realloc = imports
-            .iter()
-            .find(|i| i.name() == realloc_name)
-            .ok_or_else(|| anyhow!("Should have {realloc_name} import"))?;
-        let ty = realloc.ty();
-        let f = ty.unwrap_func();
-        if !f.params().all(|p| p.is_i32()) || f.params().len() != 4 {
-            bail!("{realloc_name} should accept 4 i32s as parameters");
-        }
-        if !f.results().all(|p| p.is_i32()) || f.results().len() != 1 {
-            bail!("{realloc_name} should return 1 i32 as a result");
-        }
-
-        imports
-            .iter()
-            .find(|i| i.name() == "memory" && i.ty().memory().is_some())
-            .ok_or_else(|| anyhow!("Should have memory import named memory"))?;
-
-        if expect_compile_imports {
-            let eval_bytecode = imports
-                .iter()
-                .find(|i| i.name() == "eval_bytecode")
-                .ok_or_else(|| anyhow!("Should have eval_bytecode import"))?;
-            let ty = eval_bytecode.ty();
-            let f = ty.unwrap_func();
-            if !f.params().all(|p| p.is_i32()) || f.params().len() != 2 {
-                bail!("eval_bytecode should accept 2 i32s as parameters");
-            }
-            if f.results().len() != 0 {
-                bail!("eval_bytecode should return no results");
-            }
-        }
-
-        let invoke = imports
-            .iter()
-            .find(|i| i.name() == "invoke")
-            .ok_or_else(|| anyhow!("Should have invoke import"))?;
-        let ty = invoke.ty();
-        let f = ty.unwrap_func();
-        let expected_invoke_param_count = if expect_compile_imports { 4 } else { 5 };
-        if !f.params().all(|p| p.is_i32()) || f.params().len() != expected_invoke_param_count {
-            bail!("invoke should accept {expected_invoke_param_count} i32s as parameters");
-        }
-        if f.results().len() != 0 {
-            bail!("invoke should return no results");
-        }
-
-        Ok(())
     }
 
     pub fn assert_producers(&self) -> Result<()> {

@@ -10,7 +10,6 @@ use wasmparser::Parser;
 pub(crate) enum PluginKind {
     #[default]
     User,
-    Default,
     V2,
 }
 
@@ -19,7 +18,7 @@ impl PluginKind {
     pub(crate) fn import_namespace(self, plugin: &Plugin) -> Result<String> {
         match self {
             PluginKind::V2 => Ok("javy_quickjs_provider_v2".to_string()),
-            PluginKind::User | PluginKind::Default => {
+            PluginKind::User => {
                 // The import namespace to use for this plugin.
                 let module = walrus::Module::from_buffer(plugin.as_bytes())?;
                 let import_namespace: std::borrow::Cow<'_, [u8]> = module

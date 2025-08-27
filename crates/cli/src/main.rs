@@ -49,9 +49,7 @@ fn main() -> Result<()> {
                     .linking(LinkingKind::Dynamic)
                     .linking_v2_plugin(true);
             } else {
-                generator
-                    .linking(LinkingKind::Static)
-                    .linking_default_plugin(true);
+                generator.linking(LinkingKind::Static);
             }
 
             generator
@@ -81,11 +79,6 @@ fn main() -> Result<()> {
             let js_opts = JsConfig::from_group_values(&cli_plugin, opts.js.clone())?;
 
             let mut generator = Generator::new(cli_plugin.into_plugin());
-
-            // Always link to the default plugin if no plugin is provided.
-            if codegen_opts.plugin.is_none() {
-                generator.linking_default_plugin(true);
-            }
 
             // Configure the generator with the provided options.
             generator
