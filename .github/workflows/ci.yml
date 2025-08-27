@@ -54,18 +54,8 @@ jobs:
       - name: Compile plugin
         run: cargo build -p javy-plugin --release --target=wasm32-wasip2
 
-      - name: Test
-        run: |
-          cargo hack test --workspace \
-          --exclude=javy-cli \
-          --exclude=javy-codegen \
-          --exclude=javy-plugin-processing \
-          --exclude=javy-runner \
-          --exclude=javy-test-plugin \
-          --target=wasm32-wasip2 --each-feature -- --nocapture
-
-      - name: Test Runner
-        run: cargo test --package=javy-runner
+      - name: Check benchmarks
+        run: CARGO_PROFILE_RELEASE_LTO=off cargo check --package=javy-cli --release --benches
 
       - name: Lint
         run: |
@@ -80,7 +70,35 @@ jobs:
       # We need to specify a different job for linting `javy-runner` given that
       # it depends on Wasmtime and Cranelift cannot be compiled to `wasm32-wasip2`
       - name: Lint Runner
-        run: cargo clippy --package=javy-runner -- -D warnings
+        run: cargo clippy --package=javy-runner --all-features -- -D warnings
+
+      - name: Lint CLI
+        run: |
+          cargo fmt -- --check
+          CARGO_PROFILE_RELEASE_LTO=off cargo clippy --package=javy-cli --release --all-targets --all-features -- -D warnings
+
+      - name: Lint CodeGen
+        run: |
+          cargo fmt -- --check
+          CARGO_PROFILE_RELEASE_LTO=off cargo clippy --package=javy-codegen --release --all-targets --all-features -- -D warnings
+
+      - name: Lint plugin processing
+        run: |
+          cargo fmt --package=javy-plugin-processing -- --check
+          cargo clippy --package=javy-plugin-processing --all-targets --all-features -- -D warnings
+
+      - name: Test
+        run: |
+          cargo hack test --workspace \
+          --exclude=javy-cli \
+          --exclude=javy-codegen \
+          --exclude=javy-plugin-processing \
+          --exclude=javy-runner \
+          --exclude=javy-test-plugin \
+          --target=wasm32-wasip2 --each-feature -- --nocapture
+
+      - name: Test Runner
+        run: cargo test --package=javy-runner
 
       - name: Build test-plugin
         run: |
@@ -99,24 +117,6 @@ jobs:
       - name: Test plugin processing
         run: |
           cargo test --package=javy-plugin-processing -- --nocapture
-
-      - name: Check benchmarks
-        run: CARGO_PROFILE_RELEASE_LTO=off cargo check --package=javy-cli --release --benches
-
-      - name: Lint CLI
-        run: |
-          cargo fmt -- --check
-          CARGO_PROFILE_RELEASE_LTO=off cargo clippy --package=javy-cli --release --all-targets --all-features -- -D warnings
-
-      - name: Lint CodeGen
-        run: |
-          cargo fmt -- --check
-          CARGO_PROFILE_RELEASE_LTO=off cargo clippy --package=javy-codegen --release --all-targets --all-features -- -D warnings
-
-      - name: Lint plugin processing
-        run: |
-          cargo fmt --package=javy-plugin-processing -- --check
-          cargo clippy --package=javy-plugin-processing --all-targets --all-features -- -D warnings
 
       - name: WPT
         run: |
