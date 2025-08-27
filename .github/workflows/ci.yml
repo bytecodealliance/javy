@@ -75,7 +75,7 @@ jobs:
           --exclude=javy-plugin-processing \
           --exclude=javy-runner \
           --exclude=javy-fuzz \
-          --target=wasm32-wasip2 --all-targets -- -D warnings
+          --target=wasm32-wasip2 --all-targets --all-features -- -D warnings
 
       # We need to specify a different job for linting `javy-runner` given that
       # it depends on Wasmtime and Cranelift cannot be compiled to `wasm32-wasip2`
@@ -106,17 +106,17 @@ jobs:
       - name: Lint CLI
         run: |
           cargo fmt -- --check
-          CARGO_PROFILE_RELEASE_LTO=off cargo clippy --package=javy-cli --release --all-targets -- -D warnings
+          CARGO_PROFILE_RELEASE_LTO=off cargo clippy --package=javy-cli --release --all-targets --all-features -- -D warnings
 
       - name: Lint CodeGen
         run: |
           cargo fmt -- --check
-          CARGO_PROFILE_RELEASE_LTO=off cargo hack clippy --package=javy-codegen --release --all-targets --each-feature -- -D warnings
+          CARGO_PROFILE_RELEASE_LTO=off cargo clippy --package=javy-codegen --release --all-targets --all-features -- -D warnings
 
       - name: Lint plugin processing
         run: |
           cargo fmt --package=javy-plugin-processing -- --check
-          cargo clippy --package=javy-plugin-processing --all-targets -- -D warnings
+          cargo clippy --package=javy-plugin-processing --all-targets --all-features -- -D warnings
 
       - name: WPT
         run: |
