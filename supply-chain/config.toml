@@ -125,6 +125,10 @@ criteria = "safe-to-deploy"
 version = "1.8.1"
 criteria = "safe-to-deploy"
 
+[[exemptions.console]]
+version = "0.15.11"
+criteria = "safe-to-run"
+
 [[exemptions.convert_case]]
 version = "0.6.0"
 criteria = "safe-to-deploy"
@@ -212,6 +216,10 @@ criteria = "safe-to-deploy"
 [[exemptions.embedded-io]]
 version = "0.6.1"
 criteria = "safe-to-deploy"
+
+[[exemptions.encode_unicode]]
+version = "1.0.0"
+criteria = "safe-to-run"
 
 [[exemptions.env_logger]]
 version = "0.8.4"
@@ -304,6 +312,10 @@ criteria = "safe-to-deploy"
 [[exemptions.if_chain]]
 version = "1.0.2"
 criteria = "safe-to-deploy"
+
+[[exemptions.insta]]
+version = "1.43.1"
+criteria = "safe-to-run"
 
 [[exemptions.ipnet]]
 version = "2.9.0"
@@ -408,10 +420,6 @@ criteria = "safe-to-run"
 [[exemptions.plotters-svg]]
 version = "0.3.6"
 criteria = "safe-to-run"
-
-[[exemptions.portable-atomic]]
-version = "1.9.0"
-criteria = "safe-to-deploy"
 
 [[exemptions.postcard]]
 version = "1.0.10"

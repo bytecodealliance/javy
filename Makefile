@@ -15,7 +15,7 @@ cli: plugin
 	CARGO_PROFILE_RELEASE_LTO=off cargo build --package=javy-cli --release
 
 plugin:
-	cargo build --package=javy-plugin --release --target=wasm32-wasip1 --features=$(PLUGIN_FEATURES)
+	cargo build --package=javy-plugin --release --target=wasm32-wasip1
 	cargo run --package=javy-plugin-processing target/wasm32-wasip1/release/plugin.wasm target/wasm32-wasip1/release/plugin_wizened.wasm
 
 build-test-plugin: cli
@@ -46,7 +46,7 @@ test-codegen: cli
 # Note: to make this faster, the engine should be optimized beforehand (wasm-strip + wasm-opt).
 # Disabling LTO substantially improves compile time
 test-cli: plugin build-test-plugin
-	CARGO_PROFILE_RELEASE_LTO=off cargo test --package=javy-cli --release --features=$(CLI_FEATURES) -- --nocapture
+	CARGO_PROFILE_RELEASE_LTO=off cargo test --package=javy-cli --release -- --nocapture
 
 test-runner:
 	cargo test --package=javy-runner -- --nocapture
@@ -61,19 +61,19 @@ fmt: fmt-javy fmt-plugin-api fmt-plugin fmt-plugin-processing fmt-cli fmt-codege
 
 fmt-javy:
 	cargo fmt --package=javy -- --check
-	cargo clippy --package=javy --target=wasm32-wasip1 --all-targets -- -D warnings
+	cargo clippy --package=javy --target=wasm32-wasip1 --all-targets --all-features -- -D warnings
 
 fmt-plugin-api:
 	cargo fmt --package=javy-plugin-api -- --check
-	cargo clippy --package=javy-plugin-api --target=wasm32-wasip1 --all-targets -- -D warnings
+	cargo clippy --package=javy-plugin-api --target=wasm32-wasip1 --all-targets --all-features -- -D warnings
 
 fmt-plugin:
 	cargo fmt --package=javy-plugin -- --check
-	cargo clippy --package=javy-plugin --target=wasm32-wasip1 --all-targets -- -D warnings
+	cargo clippy --package=javy-plugin --target=wasm32-wasip1 --all-targets --all-features -- -D warnings
 
 fmt-plugin-processing:
 	cargo fmt --package=javy-plugin-processing -- --check
-	cargo clippy --package=javy-plugin-processing --all-targets -- -D warnings
+	cargo clippy --package=javy-plugin-processing --all-targets --all-features -- -D warnings
 
 # Use `--release` on CLI clippy to align with `test-cli`.
 # This reduces the size of the target directory which improves CI stability.
@@ -83,4 +83,4 @@ fmt-cli:
 
 fmt-codegen:
 	cargo fmt --package=javy-codegen -- --check
-	cargo clippy --package=javy-codegen --release --all-targets -- -D warnings
+	cargo clippy --package=javy-codegen --release --all-targets --all-features -- -D warnings
