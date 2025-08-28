@@ -12,13 +12,14 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 - `Generator` now has a `producer_version` method so the version in the
   producers custom section can be set.
-- `Generator` now has a `source` method so that the javy source custom
-  section can be omitted.
 
 ### Changed
 
 - `Plugin::new` now validates the bytes are a valid plugin and returns a
   result.
+- The `source_compression` method of `Generator` has been replaced with a
+  `source_embedding` method which takes `SourceEmbedding` argument, specifying
+  whether the source custom section should be omitted, uncompressed, or compressed.
 
 ## [1.0.0] - 2025-03-10
 
