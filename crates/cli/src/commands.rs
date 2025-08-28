@@ -209,10 +209,13 @@ option_group! {
         /// Optional WIT world name for WIT file. Must be specified if WIT is
         /// file path is specified.
         WitWorld(String),
-        /// Embed the JavaScript source in the generated WebAssembly module.
+        /// Embed the JavaScript source in a custom section in the generated
+        /// WebAssembly module.
         Source(bool),
         /// Enable source code compression, which generates smaller WebAssembly
-        /// files at the cost of increased compile time.
+        /// files at the cost of increased compile time. This option has no effect
+        /// if the `source` shouldn't be embedded in the generated WebAssembly
+        /// module.
         SourceCompression(bool),
         /// Optional path to Javy plugin Wasm module. Required for dynamically
         /// linked modules. JavaScript config options are also not supported when

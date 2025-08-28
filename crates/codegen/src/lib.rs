@@ -107,6 +107,18 @@ pub enum LinkingKind {
     Dynamic,
 }
 
+/// Source code embedding options for the generated Wasm module.
+#[derive(Debug, Clone, Default)]
+pub enum SourceEmbedding {
+    #[default]
+    /// Embed the source code without compression
+    Uncompressed,
+    /// Embed the source code with compression
+    Compressed,
+    /// Don't embed the source code
+    Omitted,
+}
+
 /// Identifiers used by the generated module.
 // This is an internal detail of this module.
 #[derive(Debug)]
@@ -159,10 +171,8 @@ pub struct Generator {
     pub(crate) plugin: Plugin,
     /// What kind of linking to use when generating a module.
     pub(crate) linking: LinkingKind,
-    /// Whether to embed the JS source in the generated module.
-    pub(crate) source: bool,
-    /// Whether to compress the JS source in the generated module.
-    pub(crate) source_compression: bool,
+    /// Source code embedding option for the generated module.
+    pub(crate) source_embedding: SourceEmbedding,
     /// WIT options for code generation.
     pub(crate) wit_opts: WitOptions,
     /// JavaScript function exports.
@@ -190,15 +200,9 @@ impl Generator {
         self
     }
 
-    /// Set if JS source should be included in the generated Wasm (default: true).
-    pub fn source(&mut self, source: bool) -> &mut Self {
-        self.source = source;
-        self
-    }
-
-    /// Set if JS source compression is enabled (default: false).
-    pub fn source_compression(&mut self, source_compression: bool) -> &mut Self {
-        self.source_compression = source_compression;
+    /// Set the source embedding option (default: [`SourceEmbedding::Compressed`])
+    pub fn source_embedding(&mut self, source_embedding: SourceEmbedding) -> &mut Self {
+        self.source_embedding = source_embedding;
         self
     }
 
@@ -520,10 +524,12 @@ impl Generator {
                 .as_deref()
                 .unwrap_or(env!("CARGO_PKG_VERSION")),
         );
-        if self.source {
-            if !self.source_compression {
+        match self.source_embedding {
+            SourceEmbedding::Omitted => {}
+            SourceEmbedding::Uncompressed => {
                 module.customs.add(SourceCodeSection::uncompressed(js)?);
-            } else {
+            }
+            SourceEmbedding::Compressed => {
                 module.customs.add(SourceCodeSection::compressed(js)?);
             }
         }
