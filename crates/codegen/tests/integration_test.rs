@@ -45,6 +45,7 @@ fn test_snapshot_for_dynamically_linked_module() -> Result<()> {
         Some(sample_scripts.join("exported-functions.wit")),
         Some("exported-logs".into()),
     ))?)
+    .producer_version("snapshot".into())
     .generate(&js)?;
     let wat = wasmprinter::print_bytes(wasm)?;
     insta::assert_snapshot!("default_dynamic", wat);
@@ -67,6 +68,7 @@ fn test_snapshot_for_dynamically_linked_v2_module() -> Result<()> {
             Some(sample_scripts.join("exported-functions.wit")),
             Some("exported-logs".into()),
         ))?)
+        .producer_version("snapshot".into())
         .generate(&js)?;
     let wat = wasmprinter::print_bytes(wasm)?;
     insta::assert_snapshot!("v2_dynamic", wat);

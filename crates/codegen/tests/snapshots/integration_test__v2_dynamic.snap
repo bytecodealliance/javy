@@ -90,7 +90,7 @@ expression: wat
   (data (;2;) "log2")
   (@producers
     (language "JavaScript" "ES2020")
-    (processed-by "Javy" "2.0.0-alpha.1")
+    (processed-by "Javy" "snapshot")
   )
   (@custom "javy_source" (after data) "export function log() {\0a    console.log(\22Hello from function!\22);\0a}\0a\0aexport function log2() {\0a    console.log(\22Hello from function2!\22);\0a}\0a\0aconsole.log(\22Hello from top-level scope\22);\0a")
 )
