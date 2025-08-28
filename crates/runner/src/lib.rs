@@ -96,6 +96,8 @@ pub struct Builder {
     plugin: Plugin,
     /// Whether to compress the source code.
     compress_source_code: Option<bool>,
+    /// Whether to include the source code.
+    source_code: Option<bool>,
 }
 
 impl Default for Builder {
@@ -115,6 +117,7 @@ impl Default for Builder {
             event_loop: None,
             plugin: Plugin::Default,
             compress_source_code: None,
+            source_code: None,
         }
     }
 }
@@ -185,6 +188,11 @@ impl Builder {
         self
     }
 
+    pub fn source_code(&mut self, enabled: bool) -> &mut Self {
+        self.source_code = Some(enabled);
+        self
+    }
+
     pub fn build(&mut self) -> Result<Runner> {
         if self.built {
             bail!("Builder already used to build a runner")
@@ -211,6 +219,7 @@ impl Builder {
             command,
             plugin,
             compress_source_code,
+            source_code,
         } = std::mem::take(self);
 
         self.built = true;
@@ -244,6 +253,7 @@ impl Builder {
                 preload,
                 plugin,
                 compress_source_code,
+                source_code,
             ),
         }
     }
@@ -314,6 +324,7 @@ impl Runner {
         preload: Option<(String, PathBuf)>,
         plugin: Plugin,
         compress_source_code: Option<bool>,
+        source_code: Option<bool>,
     ) -> Result<Self> {
         // This directory is unique and will automatically get deleted
         // when `tempdir` goes out of scope.
@@ -334,6 +345,7 @@ impl Runner {
             &event_loop,
             &plugin,
             &compress_source_code,
+            &source_code,
         );
 
         Self::exec_command(bin, root, args)?;
@@ -522,6 +534,7 @@ impl Runner {
         event_loop: &Option<bool>,
         plugin: &Plugin,
         compress_source_code: &Option<bool>,
+        source_code: &Option<bool>,
     ) -> Vec<String> {
         let mut args = vec![
             "build".to_string(),
@@ -579,6 +592,11 @@ impl Runner {
                 "source-compression={}",
                 if enabled { "y" } else { "n" }
             ));
+        }
+
+        if let Some(enabled) = *source_code {
+            args.push("-C".into());
+            args.push(format!("source={}", if enabled { "y" } else { "n" }));
         }
 
         args

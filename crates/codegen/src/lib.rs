@@ -111,11 +111,11 @@ pub enum LinkingKind {
 #[derive(Debug, Clone, Default)]
 pub enum SourceEmbedding {
     #[default]
-    /// Embed the source code without compression
+    /// Embed the source code without compression.
     Uncompressed,
-    /// Embed the source code with compression
+    /// Embed the source code with compression.
     Compressed,
-    /// Don't embed the source code
+    /// Don't embed the source code.
     Omitted,
 }
 
