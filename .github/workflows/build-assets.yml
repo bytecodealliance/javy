@@ -31,12 +31,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: plugin
-          path: target/wasm32-wasip1/release/plugin.wasm
+          path: target/wasm32-wasip2/release/plugin.wasm
 
       - name: Wizen and archive wizened plugin
         run: |
-          cargo run --package=javy-plugin-processing target/wasm32-wasip1/release/plugin.wasm target/wasm32-wasip1/release/plugin_wizened.wasm
-          gzip -k -f target/wasm32-wasip1/release/plugin_wizened.wasm && mv target/wasm32-wasip1/release/plugin_wizened.wasm.gz plugin.wasm.gz
+          cargo run --package=javy-plugin-processing target/wasm32-wasip2/release/plugin.wasm target/wasm32-wasip2/release/plugin_wizened.wasm
+          gzip -k -f target/wasm32-wasip2/release/plugin_wizened.wasm && mv target/wasm32-wasip2/release/plugin_wizened.wasm.gz plugin.wasm.gz
 
       - name: Upload archived plugin to artifacts
         uses: actions/upload-artifact@v4
@@ -118,7 +118,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: plugin
-          path: target/wasm32-wasip1/release/
+          path: target/wasm32-wasip2/release/
 
       - name: Build CLI ${{ matrix.os }}
         run: cargo build --release --target ${{ matrix.target }} --package javy-cli

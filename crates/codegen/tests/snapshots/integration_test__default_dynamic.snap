@@ -4,11 +4,11 @@ expression: wat
 ---
 (module
   (type (;0;) (func))
-  (type (;1;) (func (param i32 i32 i32 i32)))
-  (type (;2;) (func (param i32 i32 i32 i32) (result i32)))
-  (import "javy_quickjs_provider_v4" "canonical_abi_realloc" (func (;0;) (type 2)))
-  (import "javy_quickjs_provider_v4" "invoke" (func (;1;) (type 1)))
-  (import "javy_quickjs_provider_v4" "memory" (memory (;0;) 0))
+  (type (;1;) (func (param i32 i32 i32 i32) (result i32)))
+  (type (;2;) (func (param i32 i32 i32 i32 i32)))
+  (import "javy-default-plugin-v1" "cabi_realloc" (func (;0;) (type 1)))
+  (import "javy-default-plugin-v1" "invoke" (func (;1;) (type 2)))
+  (import "javy-default-plugin-v1" "memory" (memory (;0;) 0))
   (export "_start" (func 4))
   (export "log" (func 2))
   (export "log2" (func 3))
@@ -36,6 +36,7 @@ expression: wat
     data.drop 1
     local.get 0
     i32.const 296
+    i32.const 1
     local.get 1
     i32.const 3
     call 1
@@ -64,6 +65,7 @@ expression: wat
     data.drop 2
     local.get 0
     i32.const 296
+    i32.const 1
     local.get 1
     i32.const 4
     call 1
@@ -81,6 +83,7 @@ expression: wat
     memory.init 0
     local.get 0
     i32.const 296
+    i32.const 0
     i32.const 0
     i32.const 0
     call 1

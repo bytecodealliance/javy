@@ -123,7 +123,7 @@ pub enum SourceEmbedding {
 // This is an internal detail of this module.
 #[derive(Debug)]
 pub(crate) struct Identifiers {
-    canonical_abi_realloc: FunctionId,
+    cabi_realloc: FunctionId,
     eval_bytecode: Option<FunctionId>,
     invoke: FunctionId,
     memory: MemoryId,
@@ -131,13 +131,13 @@ pub(crate) struct Identifiers {
 
 impl Identifiers {
     fn new(
-        canonical_abi_realloc: FunctionId,
+        cabi_realloc: FunctionId,
         eval_bytecode: Option<FunctionId>,
         invoke: FunctionId,
         memory: MemoryId,
     ) -> Self {
         Self {
-            canonical_abi_realloc,
+            cabi_realloc,
             eval_bytecode,
             invoke,
             memory,
@@ -244,12 +244,12 @@ impl Generator {
         let config = transform::module_config();
         let module = match &self.linking {
             LinkingKind::Static => {
-                // Copy config JSON into stdin for `initialize_runtime` function.
+                // Copy config JSON into stdin for `initialize-runtime` function.
                 STDIN_PIPE
                     .set(MemoryInputPipe::new(self.js_runtime_config.clone()))
                     .unwrap();
                 let wasm = Wizer::new()
-                    .init_func("initialize_runtime")
+                    .init_func("initialize-runtime")
                     .make_linker(Some(Rc::new(move |engine| {
                         let mut linker = Linker::new(engine);
                         wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, move |cx| {
@@ -282,7 +282,9 @@ impl Generator {
     pub(crate) fn resolve_identifiers(&self, module: &mut Module) -> Result<Identifiers> {
         match self.linking {
             LinkingKind::Static => {
-                let canonical_abi_realloc_fn = module.exports.get_func("canonical_abi_realloc")?;
+                let cabi_realloc = module
+                    .exports
+                    .get_func(self.plugin_kind.realloc_fn_name())?;
                 let invoke = module.exports.get_func("invoke")?;
                 let ExportItem::Memory(memory) = module
                     .exports
@@ -293,12 +295,7 @@ impl Generator {
                 else {
                     anyhow::bail!("Export with name memory must be of type memory")
                 };
-                Ok(Identifiers::new(
-                    canonical_abi_realloc_fn,
-                    None,
-                    invoke,
-                    memory,
-                ))
+                Ok(Identifiers::new(cabi_realloc, None, invoke, memory))
             }
             LinkingKind::Dynamic => {
                 // All code by default is assumed to be linking against a default
@@ -307,14 +304,14 @@ impl Generator {
                 // to determine the import_namespace.
                 let import_namespace = self.plugin_kind.import_namespace(&self.plugin)?;
 
-                let canonical_abi_realloc_type = module.types.add(
+                let cabi_realloc_type = module.types.add(
                     &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
                     &[ValType::I32],
                 );
-                let (canonical_abi_realloc_fn_id, _) = module.add_import_func(
+                let (cabi_realloc_fn_id, _) = module.add_import_func(
                     &import_namespace,
-                    "canonical_abi_realloc",
-                    canonical_abi_realloc_type,
+                    self.plugin_kind.realloc_fn_name(),
+                    cabi_realloc_type,
                 );
 
                 // User plugins can use `invoke` with a null function name.
@@ -332,10 +329,19 @@ impl Generator {
                     None
                 };
 
-                let invoke_type = module.types.add(
-                    &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
-                    &[],
-                );
+                let invoke_params = if self.plugin_kind == PluginKind::V2 {
+                    [ValType::I32, ValType::I32, ValType::I32, ValType::I32].as_slice()
+                } else {
+                    [
+                        ValType::I32,
+                        ValType::I32,
+                        ValType::I32,
+                        ValType::I32,
+                        ValType::I32,
+                    ]
+                    .as_slice()
+                };
+                let invoke_type = module.types.add(invoke_params, &[]);
                 let (invoke_fn_id, _) =
                     module.add_import_func(&import_namespace, "invoke", invoke_type);
 
@@ -350,7 +356,7 @@ impl Generator {
                 );
 
                 Ok(Identifiers::new(
-                    canonical_abi_realloc_fn_id,
+                    cabi_realloc_fn_id,
                     eval_bytecode_fn_id,
                     invoke_fn_id,
                     memory_id,
@@ -366,7 +372,7 @@ impl Generator {
         js: &js::JS,
         imports: &Identifiers,
     ) -> Result<BytecodeMetadata> {
-        let bytecode = bytecode::compile_source(self.plugin.as_bytes(), js.as_bytes())?;
+        let bytecode = bytecode::compile_source(&self.plugin, self.plugin_kind, js.as_bytes())?;
         let bytecode_len: i32 = bytecode.len().try_into()?;
         let bytecode_data = module.data.add(DataKind::Passive, bytecode);
 
@@ -379,7 +385,7 @@ impl Generator {
             .i32_const(0) // orig size
             .i32_const(1) // alignment
             .i32_const(bytecode_len) // new size
-            .call(imports.canonical_abi_realloc)
+            .call(imports.cabi_realloc)
             // Copy bytecode array into allocated memory.
             .local_tee(bytecode_ptr_local) // save returned address to local and set as dest addr for mem.init
             .i32_const(0) // offset into data segment for mem.init
@@ -404,6 +410,7 @@ impl Generator {
             instructions
                 .local_get(bytecode_ptr_local) // ptr to bytecode
                 .i32_const(bytecode_len)
+                .i32_const(0) // set option discriminator to none
                 .i32_const(0) // set function name ptr to null
                 .i32_const(0) // set function name len to 0
                 .call(imports.invoke);
@@ -441,7 +448,7 @@ impl Generator {
                     .i32_const(0) // orig len
                     .i32_const(1) // alignment
                     .i32_const(bc_metadata.len) // size to copy
-                    .call(identifiers.canonical_abi_realloc)
+                    .call(identifiers.cabi_realloc)
                     .local_tee(bc_metadata.ptr)
                     .i32_const(0) // offset into data segment
                     .i32_const(bc_metadata.len) // size to copy
@@ -452,7 +459,7 @@ impl Generator {
                     .i32_const(0) // orig len
                     .i32_const(1) // alignment
                     .i32_const(js_export_len) // new size
-                    .call(identifiers.canonical_abi_realloc)
+                    .call(identifiers.cabi_realloc)
                     .local_tee(fn_name_ptr_local)
                     .i32_const(0) // offset into data segment
                     .i32_const(js_export_len) // size to copy
@@ -460,7 +467,14 @@ impl Generator {
                     .data_drop(fn_name_data)
                     // Call invoke.
                     .local_get(bc_metadata.ptr)
-                    .i32_const(bc_metadata.len)
+                    .i32_const(bc_metadata.len);
+
+                if self.plugin_kind != PluginKind::V2 {
+                    export_fn.func_body().i32_const(1); // set function name option discriminator to some
+                }
+
+                export_fn
+                    .func_body()
                     .local_get(fn_name_ptr_local)
                     .i32_const(js_export_len)
                     .call(identifiers.invoke);
@@ -476,7 +490,7 @@ impl Generator {
         match self.linking {
             LinkingKind::Static => {
                 // Remove no longer necessary exports.
-                module.exports.remove("canonical_abi_realloc")?;
+                module.exports.remove(self.plugin_kind.realloc_fn_name())?;
 
                 // Only v2 plugin exposes eval_bytecode function.
                 if self.plugin_kind == PluginKind::V2 {
@@ -484,7 +498,7 @@ impl Generator {
                 }
 
                 module.exports.remove("invoke")?;
-                module.exports.remove("compile_src")?;
+                module.exports.remove(self.plugin_kind.compile_fn_name())?;
 
                 // Run wasm-opt to optimize.
                 let tempdir = tempfile::tempdir()?;

@@ -1,26 +1,34 @@
 //! Plugin used for testing. We need a plugin with slightly different behavior
 //! to validate a plugin is actually used when it should be.
 
-use javy_plugin_api::{import_namespace, javy::quickjs::prelude::Func, Config};
+use javy_plugin_api::{
+    javy::{quickjs::prelude::Func, Runtime},
+    javy_plugin, Config,
+};
 
-import_namespace!("test_plugin");
+wit_bindgen::generate!({ world: "javy-test-plugin", generate_all });
 
-#[link(wasm_import_module = "some_host")]
-extern "C" {
-    fn imported_function();
+fn config() -> Config {
+    Config::default()
 }
 
-#[export_name = "initialize_runtime"]
-pub extern "C" fn initialize_runtime() {
-    let config = Config::default();
-    javy_plugin_api::initialize_runtime(config, |runtime| {
-        runtime.context().with(|ctx| {
-            ctx.globals().set("plugin", true).unwrap();
-            ctx.globals()
-                .set("func", Func::from(|| unsafe { imported_function() }))
-                .unwrap();
-        });
-        runtime
-    })
-    .unwrap();
+fn modify_runtime(runtime: Runtime) -> Runtime {
+    runtime.context().with(|ctx| {
+        ctx.globals().set("plugin", true).unwrap();
+        ctx.globals()
+            .set(
+                "func",
+                Func::from(|| {
+                    crate::imported_function();
+                }),
+            )
+            .unwrap();
+    });
+    runtime
 }
+
+struct Component;
+
+javy_plugin!("test-plugin", Component, config, modify_runtime);
+
+export!(Component);

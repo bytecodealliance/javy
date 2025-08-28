@@ -53,17 +53,9 @@ impl SharedConfig {
     }
 }
 
-#[export_name = "config-schema"]
-pub fn config_schema() -> *const u32 {
-    let schema = serde_json::to_string(&SharedConfig::config_schema())
+pub fn config_schema() -> Vec<u8> {
+    serde_json::to_string(&SharedConfig::config_schema())
         .unwrap()
-        .into_bytes();
-    let len = schema.len();
-    // Leak the config schema. This should be fine since the Wasm instance will
-    // be torn down right after by the Javy CLI.
-    let bytecode_ptr = Box::leak(schema.into_boxed_slice()).as_ptr();
-    CONFIG_RET_AREA.with(|v| {
-        v.set([bytecode_ptr as u32, len as u32]).unwrap();
-        v.get().unwrap().as_ptr()
-    })
+        .as_bytes()
+        .to_vec()
 }
