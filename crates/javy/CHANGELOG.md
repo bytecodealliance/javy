@@ -8,6 +8,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [5.0.0] - 2025-08-28
+
 ### Removed
 
 - `export_alloc_fns` has been removed. This removes the implementation of

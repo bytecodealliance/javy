@@ -14,7 +14,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "5.0.4"
+version = "6.0.0"
 authors = ["The Javy Project Developers"]
 edition = "2021"
 license = "Apache-2.0 WITH LLVM-exception"
@@ -27,7 +27,7 @@ wasmtime = "31"
 wasmtime-wasi = "31"
 wasm-opt = "0.116.1"
 anyhow = "1.0"
-javy = { path = "crates/javy", version = "5.0.0-alpha.1" }
+javy = { path = "crates/javy", version = "5.0.0" }
 tempfile = "3.20.0"
 uuid = { version = "1.17", features = ["v4"] }
 serde = { version = "1.0", default-features = false }
