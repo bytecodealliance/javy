@@ -12,6 +12,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 - `Generator` now has a `producer_version` method so the version in the
   producers custom section can be set.
+- `Generator` now has a `source` method so that the javy source custom
+  section can be omitted.
 
 ### Changed
 
