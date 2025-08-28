@@ -263,7 +263,7 @@ fn test_exported_default_fn(builder: &mut Builder) -> Result<()> {
 }
 
 #[javy_cli_test]
-fn test_source_code_compression_default(builder: &mut Builder) -> Result<()> {
+fn test_source_code_default(builder: &mut Builder) -> Result<()> {
     let runner = builder.build()?;
     let javy_source = runner
         .javy_source_custom_section()
@@ -298,6 +298,26 @@ fn test_source_code_compression_disabled(builder: &mut Builder) -> Result<()> {
     let mut javy_source = vec![];
     let res = decompressor.read_to_end(&mut javy_source);
     assert!(res.is_err());
+    Ok(())
+}
+
+#[javy_cli_test(commands(not(Compile)))]
+fn test_source_code_omitted(builder: &mut Builder) -> Result<()> {
+    let runner = builder.source_code(false).build()?;
+    assert!(
+        runner.javy_source_custom_section().is_none(),
+        "Should not have a source code section"
+    );
+    Ok(())
+}
+
+#[javy_cli_test(commands(not(Compile)))]
+fn test_source_code_not_omitted(builder: &mut Builder) -> Result<()> {
+    let runner = builder.source_code(true).build()?;
+    assert!(
+        runner.javy_source_custom_section().is_some(),
+        "Should have a source code section"
+    );
     Ok(())
 }
 
