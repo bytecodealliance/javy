@@ -171,6 +171,16 @@ where
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Source {
+    /// Omit the source code.
+    Omitted,
+    /// Compress the source code.
+    Compressed,
+    /// Include source code but don't compress it.
+    Uncompressed,
+}
+
 /// Code generation option group.
 /// This group gets configured from the [`CodegenOption`] enum.
 //
@@ -180,8 +190,7 @@ where
 pub struct CodegenOptionGroup {
     pub dynamic: bool,
     pub wit: WitOptions,
-    pub source: bool,
-    pub source_compression: bool,
+    pub source: Source,
     pub plugin: Option<PathBuf>,
 }
 
@@ -190,8 +199,7 @@ impl Default for CodegenOptionGroup {
         Self {
             dynamic: false,
             wit: WitOptions::default(),
-            source: true,
-            source_compression: true,
+            source: Source::Compressed,
             plugin: None,
         }
     }
@@ -209,14 +217,12 @@ option_group! {
         /// Optional WIT world name for WIT file. Must be specified if WIT is
         /// file path is specified.
         WitWorld(String),
-        /// Embed the JavaScript source in a custom section in the generated
-        /// WebAssembly module.
-        Source(bool),
-        /// Enable source code compression, which generates smaller WebAssembly
-        /// files at the cost of increased compile time. This option has no effect
-        /// if the `source` shouldn't be embedded in the generated WebAssembly
-        /// module.
-        SourceCompression(bool),
+        /// How to embed the JavaScript source in a custom section in the generated
+        /// WebAssembly module. Options are `omitted`, `compressed`, and
+        /// `uncompressed`. `compressed` enables source code compression which
+        /// generates smaller WebAssembly files at the cost of increased compile
+        /// time.
+        Source(Source),
         /// Optional path to Javy plugin Wasm module. Required for dynamically
         /// linked modules. JavaScript config options are also not supported when
         /// using this parameter.
@@ -236,7 +242,6 @@ impl TryFrom<Vec<GroupOption<CodegenOption>>> for CodegenOptionGroup {
         let mut wit_specified = false;
         let mut wit_world_specified = false;
         let mut source_specified = false;
-        let mut source_compression_specified = false;
         let mut plugin_specified = false;
 
         for option in value.iter().flat_map(|i| i.0.iter()) {
@@ -262,19 +267,12 @@ impl TryFrom<Vec<GroupOption<CodegenOption>>> for CodegenOptionGroup {
                     wit_world = Some(world);
                     wit_world_specified = true;
                 }
-                CodegenOption::Source(enabled) => {
+                CodegenOption::Source(source) => {
                     if source_specified {
                         bail!("source can only be specified once");
                     }
-                    options.source = *enabled;
+                    options.source = *source;
                     source_specified = true;
-                }
-                CodegenOption::SourceCompression(enabled) => {
-                    if source_compression_specified {
-                        bail!("source-compression can only be specified once");
-                    }
-                    options.source_compression = *enabled;
-                    source_compression_specified = true;
                 }
                 CodegenOption::Plugin(path) => {
                     if plugin_specified {
@@ -422,7 +420,7 @@ mod tests {
     use std::path::PathBuf;
 
     use crate::{
-        commands::{JsGroupOption, JsGroupValue},
+        commands::{JsGroupOption, JsGroupValue, Source},
         js_config::JsConfig,
         plugin::PLUGIN_MODULE,
         CliPlugin, Plugin, PluginKind,
@@ -536,19 +534,21 @@ mod tests {
 
         assert_eq!(group, expected);
 
-        let raw = vec![GroupOption(vec![CodegenOption::Source(false)])];
+        let raw = vec![GroupOption(vec![CodegenOption::Source(Source::Omitted)])];
         let group: CodegenOptionGroup = raw.try_into()?;
         let expected = CodegenOptionGroup {
-            source: false,
+            source: Source::Omitted,
             ..Default::default()
         };
 
         assert_eq!(group, expected);
 
-        let raw = vec![GroupOption(vec![CodegenOption::SourceCompression(false)])];
+        let raw = vec![GroupOption(vec![CodegenOption::Source(
+            Source::Uncompressed,
+        )])];
         let group: CodegenOptionGroup = raw.try_into()?;
         let expected = CodegenOptionGroup {
-            source_compression: false,
+            source: Source::Uncompressed,
             ..Default::default()
         };
 
@@ -597,13 +597,13 @@ mod tests {
         );
 
         let raw = vec![GroupOption(vec![
-            CodegenOption::SourceCompression(true),
-            CodegenOption::SourceCompression(false),
+            CodegenOption::Source(Source::Compressed),
+            CodegenOption::Source(Source::Uncompressed),
         ])];
         let result: Result<CodegenOptionGroup, Error> = raw.try_into();
         assert_eq!(
             result.err().unwrap().to_string(),
-            "source-compression can only be specified once"
+            "source can only be specified once"
         );
 
         let raw = vec![GroupOption(vec![

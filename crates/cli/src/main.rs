@@ -91,15 +91,12 @@ fn main() -> Result<()> {
                 .wit_opts(codegen_opts.wit)
                 .js_runtime_config(js_opts.to_json()?);
 
-            if codegen_opts.source {
-                if codegen_opts.source_compression {
-                    generator.source_embedding(SourceEmbedding::Compressed);
-                } else {
-                    generator.source_embedding(SourceEmbedding::Uncompressed);
-                }
-            } else {
-                generator.source_embedding(SourceEmbedding::Omitted);
-            }
+            let source_embedding = match codegen_opts.source {
+                commands::Source::Omitted => SourceEmbedding::Omitted,
+                commands::Source::Compressed => SourceEmbedding::Compressed,
+                commands::Source::Uncompressed => SourceEmbedding::Uncompressed,
+            };
+            generator.source_embedding(source_embedding);
 
             set_producer_version(&mut generator);
 

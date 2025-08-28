@@ -1,5 +1,5 @@
 use anyhow::{bail, Result};
-use javy_runner::{Builder, Plugin, Runner, RunnerError};
+use javy_runner::{Builder, Plugin, Runner, RunnerError, Source};
 use std::{io::Read, path::PathBuf, process::Command, str};
 use wasmtime::{AsContextMut, Engine, Linker, Module, Store};
 use wasmtime_wasi::WasiCtxBuilder;
@@ -276,8 +276,8 @@ fn test_source_code_default(builder: &mut Builder) -> Result<()> {
 }
 
 #[javy_cli_test]
-fn test_source_code_compression_enabled(builder: &mut Builder) -> Result<()> {
-    let runner = builder.compress_source_code(true).build()?;
+fn test_source_code_compressed(builder: &mut Builder) -> Result<()> {
+    let runner = builder.source_code(Source::Compressed).build()?;
     let javy_source = runner
         .javy_source_custom_section()
         .expect("Should have javy_source custom section");
@@ -289,8 +289,8 @@ fn test_source_code_compression_enabled(builder: &mut Builder) -> Result<()> {
 }
 
 #[javy_cli_test]
-fn test_source_code_compression_disabled(builder: &mut Builder) -> Result<()> {
-    let runner = builder.compress_source_code(false).build()?;
+fn test_source_code_uncompressed(builder: &mut Builder) -> Result<()> {
+    let runner = builder.source_code(Source::Uncompressed).build()?;
     let javy_source = runner
         .javy_source_custom_section()
         .expect("Should have javy_source custom section");
@@ -303,20 +303,10 @@ fn test_source_code_compression_disabled(builder: &mut Builder) -> Result<()> {
 
 #[javy_cli_test(commands(not(Compile)))]
 fn test_source_code_omitted(builder: &mut Builder) -> Result<()> {
-    let runner = builder.source_code(false).build()?;
+    let runner = builder.source_code(Source::Omitted).build()?;
     assert!(
         runner.javy_source_custom_section().is_none(),
         "Should not have a source code section"
-    );
-    Ok(())
-}
-
-#[javy_cli_test(commands(not(Compile)))]
-fn test_source_code_not_omitted(builder: &mut Builder) -> Result<()> {
-    let runner = builder.source_code(true).build()?;
-    assert!(
-        runner.javy_source_custom_section().is_some(),
-        "Should have a source code section"
     );
     Ok(())
 }

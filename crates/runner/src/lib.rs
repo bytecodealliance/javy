@@ -26,6 +26,13 @@ pub enum Plugin {
     DefaultAsUser,
 }
 
+#[derive(Debug, Clone)]
+pub enum Source {
+    Omitted,
+    Compressed,
+    Uncompressed,
+}
+
 impl Plugin {
     pub fn namespace(&self) -> &'static str {
         match self {
@@ -94,10 +101,8 @@ pub struct Builder {
     command: JavyCommand,
     /// The javy plugin.
     plugin: Plugin,
-    /// Whether to compress the source code.
-    compress_source_code: Option<bool>,
-    /// Whether to include the source code.
-    source_code: Option<bool>,
+    /// How to embed the source code.
+    source_code: Option<Source>,
 }
 
 impl Default for Builder {
@@ -116,7 +121,6 @@ impl Default for Builder {
             text_encoding: None,
             event_loop: None,
             plugin: Plugin::Default,
-            compress_source_code: None,
             source_code: None,
         }
     }
@@ -183,13 +187,8 @@ impl Builder {
         self
     }
 
-    pub fn compress_source_code(&mut self, enabled: bool) -> &mut Self {
-        self.compress_source_code = Some(enabled);
-        self
-    }
-
-    pub fn source_code(&mut self, enabled: bool) -> &mut Self {
-        self.source_code = Some(enabled);
+    pub fn source_code(&mut self, source: Source) -> &mut Self {
+        self.source_code = Some(source);
         self
     }
 
@@ -218,7 +217,6 @@ impl Builder {
             preload,
             command,
             plugin,
-            compress_source_code,
             source_code,
         } = std::mem::take(self);
 
@@ -226,6 +224,13 @@ impl Builder {
 
         match command {
             JavyCommand::Compile => {
+                let compress_source = source_code
+                    .map(|s| match s {
+                        Source::Omitted => bail!("Unsupported for compile"),
+                        Source::Compressed => Ok(true),
+                        Source::Uncompressed => Ok(false),
+                    })
+                    .transpose()?;
                 if let Some(preload) = preload {
                     Runner::compile_dynamic(
                         bin_path,
@@ -234,10 +239,10 @@ impl Builder {
                         wit,
                         world,
                         preload,
-                        compress_source_code,
+                        compress_source,
                     )
                 } else {
-                    Runner::compile_static(bin_path, root, input, wit, world, compress_source_code)
+                    Runner::compile_static(bin_path, root, input, wit, world, compress_source)
                 }
             }
             JavyCommand::Build => Runner::build(
@@ -252,7 +257,6 @@ impl Builder {
                 event_loop,
                 preload,
                 plugin,
-                compress_source_code,
                 source_code,
             ),
         }
@@ -323,8 +327,7 @@ impl Runner {
         event_loop: Option<bool>,
         preload: Option<(String, PathBuf)>,
         plugin: Plugin,
-        compress_source_code: Option<bool>,
-        source_code: Option<bool>,
+        source_code: Option<Source>,
     ) -> Result<Self> {
         // This directory is unique and will automatically get deleted
         // when `tempdir` goes out of scope.
@@ -344,7 +347,6 @@ impl Runner {
             &text_encoding,
             &event_loop,
             &plugin,
-            &compress_source_code,
             &source_code,
         );
 
@@ -533,8 +535,7 @@ impl Runner {
         text_encoding: &Option<bool>,
         event_loop: &Option<bool>,
         plugin: &Plugin,
-        compress_source_code: &Option<bool>,
-        source_code: &Option<bool>,
+        source_code: &Option<Source>,
     ) -> Vec<String> {
         let mut args = vec![
             "build".to_string(),
@@ -586,17 +587,16 @@ impl Runner {
             args.push(format!("plugin={}", plugin.path().to_str().unwrap()));
         }
 
-        if let Some(enabled) = *compress_source_code {
+        if let Some(source) = source_code {
             args.push("-C".into());
             args.push(format!(
-                "source-compression={}",
-                if enabled { "y" } else { "n" }
+                "source={}",
+                match source {
+                    Source::Omitted => "omitted",
+                    Source::Compressed => "compressed",
+                    Source::Uncompressed => "uncompressed",
+                }
             ));
-        }
-
-        if let Some(enabled) = *source_code {
-            args.push("-C".into());
-            args.push(format!("source={}", if enabled { "y" } else { "n" }));
         }
 
         args
