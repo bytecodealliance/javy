@@ -17,6 +17,9 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 - `Plugin::new` now validates the bytes are a valid plugin and returns a
   result.
+- The `source_compression` method of `Generator` has been replaced with a
+  `source_embedding` method which takes `SourceEmbedding` argument, specifying
+  whether the source custom section should be omitted, uncompressed, or compressed.
 
 ## [1.0.0] - 2025-03-10
 

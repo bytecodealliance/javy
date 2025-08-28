@@ -180,6 +180,7 @@ where
 pub struct CodegenOptionGroup {
     pub dynamic: bool,
     pub wit: WitOptions,
+    pub source: bool,
     pub source_compression: bool,
     pub plugin: Option<PathBuf>,
 }
@@ -189,6 +190,7 @@ impl Default for CodegenOptionGroup {
         Self {
             dynamic: false,
             wit: WitOptions::default(),
+            source: true,
             source_compression: true,
             plugin: None,
         }
@@ -207,8 +209,13 @@ option_group! {
         /// Optional WIT world name for WIT file. Must be specified if WIT is
         /// file path is specified.
         WitWorld(String),
+        /// Embed the JavaScript source in a custom section in the generated
+        /// WebAssembly module.
+        Source(bool),
         /// Enable source code compression, which generates smaller WebAssembly
-        /// files at the cost of increased compile time.
+        /// files at the cost of increased compile time. This option has no effect
+        /// if the `source` shouldn't be embedded in the generated WebAssembly
+        /// module.
         SourceCompression(bool),
         /// Optional path to Javy plugin Wasm module. Required for dynamically
         /// linked modules. JavaScript config options are also not supported when
@@ -228,6 +235,7 @@ impl TryFrom<Vec<GroupOption<CodegenOption>>> for CodegenOptionGroup {
         let mut dynamic_specified = false;
         let mut wit_specified = false;
         let mut wit_world_specified = false;
+        let mut source_specified = false;
         let mut source_compression_specified = false;
         let mut plugin_specified = false;
 
@@ -253,6 +261,13 @@ impl TryFrom<Vec<GroupOption<CodegenOption>>> for CodegenOptionGroup {
                     }
                     wit_world = Some(world);
                     wit_world_specified = true;
+                }
+                CodegenOption::Source(enabled) => {
+                    if source_specified {
+                        bail!("source can only be specified once");
+                    }
+                    options.source = *enabled;
+                    source_specified = true;
                 }
                 CodegenOption::SourceCompression(enabled) => {
                     if source_compression_specified {
@@ -516,6 +531,15 @@ mod tests {
         let expected = CodegenOptionGroup {
             dynamic: true,
             plugin: Some(PathBuf::from("file.wasm")),
+            ..Default::default()
+        };
+
+        assert_eq!(group, expected);
+
+        let raw = vec![GroupOption(vec![CodegenOption::Source(false)])];
+        let group: CodegenOptionGroup = raw.try_into()?;
+        let expected = CodegenOptionGroup {
+            source: false,
             ..Default::default()
         };
 

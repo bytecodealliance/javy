@@ -8,7 +8,7 @@ use anyhow::Result;
 use clap::Parser;
 
 use commands::CodegenOptionGroup;
-use javy_codegen::{Generator, LinkingKind, Plugin, WitOptions, JS};
+use javy_codegen::{Generator, LinkingKind, Plugin, SourceEmbedding, WitOptions, JS};
 use js_config::JsConfig;
 use plugin::{
     CliPlugin, PluginKind, UninitializedPlugin, PLUGIN_MODULE, QUICKJS_PROVIDER_V2_MODULE,
@@ -57,8 +57,14 @@ fn main() -> Result<()> {
                     opts.wit.clone(),
                     opts.wit_world.clone(),
                 ))?)
-                .source_compression(!opts.no_source_compression)
                 .js_runtime_config(JsConfig::default().to_json()?);
+
+            if opts.no_source_compression {
+                generator.source_embedding(SourceEmbedding::Uncompressed);
+            } else {
+                generator.source_embedding(SourceEmbedding::Compressed);
+            }
+
             set_producer_version(&mut generator);
 
             let wasm = generator.generate(&js)?;
@@ -83,8 +89,18 @@ fn main() -> Result<()> {
             // Configure the generator with the provided options.
             generator
                 .wit_opts(codegen_opts.wit)
-                .source_compression(codegen_opts.source_compression)
                 .js_runtime_config(js_opts.to_json()?);
+
+            if codegen_opts.source {
+                if codegen_opts.source_compression {
+                    generator.source_embedding(SourceEmbedding::Compressed);
+                } else {
+                    generator.source_embedding(SourceEmbedding::Uncompressed);
+                }
+            } else {
+                generator.source_embedding(SourceEmbedding::Omitted);
+            }
+
             set_producer_version(&mut generator);
 
             if codegen_opts.dynamic {
