@@ -159,7 +159,9 @@ pub struct Generator {
     pub(crate) plugin: Plugin,
     /// What kind of linking to use when generating a module.
     pub(crate) linking: LinkingKind,
-    /// Whether to embed the compressed JS source in the generated module.
+    /// Whether to embed the JS source in the generated module.
+    pub(crate) source: bool,
+    /// Whether to compress the JS source in the generated module.
     pub(crate) source_compression: bool,
     /// WIT options for code generation.
     pub(crate) wit_opts: WitOptions,
@@ -185,6 +187,12 @@ impl Generator {
     /// Set the kind of linking (default: [`LinkingKind::Static`])
     pub fn linking(&mut self, linking: LinkingKind) -> &mut Self {
         self.linking = linking;
+        self
+    }
+
+    /// Set if JS source should be included in the generated Wasm (default: true).
+    pub fn source(&mut self, source: bool) -> &mut Self {
+        self.source = source;
         self
     }
 
@@ -512,10 +520,12 @@ impl Generator {
                 .as_deref()
                 .unwrap_or(env!("CARGO_PKG_VERSION")),
         );
-        if !self.source_compression {
-            module.customs.add(SourceCodeSection::uncompressed(js)?);
-        } else {
-            module.customs.add(SourceCodeSection::compressed(js)?);
+        if self.source {
+            if !self.source_compression {
+                module.customs.add(SourceCodeSection::uncompressed(js)?);
+            } else {
+                module.customs.add(SourceCodeSection::compressed(js)?);
+            }
         }
 
         let wasm = self.postprocess(&mut module)?;

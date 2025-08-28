@@ -83,6 +83,7 @@ fn main() -> Result<()> {
             // Configure the generator with the provided options.
             generator
                 .wit_opts(codegen_opts.wit)
+                .source(codegen_opts.source)
                 .source_compression(codegen_opts.source_compression)
                 .js_runtime_config(js_opts.to_json()?);
             set_producer_version(&mut generator);
