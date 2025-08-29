@@ -8,6 +8,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [4.0.0] - 2025-08-28
+
 ### Added
 
 - `javy_plugin` macro to generate a plugin that uses the new plugin API.
