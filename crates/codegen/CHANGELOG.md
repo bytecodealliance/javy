@@ -15,6 +15,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- The API plugins are required to conform to has been updated. Please consult
+  the extending Javy documentation for the new API.
 - `Plugin::new` now validates the bytes are a valid plugin and returns a
   result.
 - The `source_compression` method of `Generator` has been replaced with a

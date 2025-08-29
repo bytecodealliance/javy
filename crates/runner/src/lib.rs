@@ -24,6 +24,7 @@ pub enum Plugin {
     User,
     /// Pass the default plugin on the CLI as a user plugin.
     DefaultAsUser,
+    InvalidUser,
 }
 
 #[derive(Debug, Clone)]
@@ -36,18 +37,18 @@ pub enum Source {
 impl Plugin {
     pub fn namespace(&self) -> &'static str {
         match self {
-            Self::V2 => "javy_quickjs_provider_v2",
+            Self::V2 | Self::InvalidUser => "javy_quickjs_provider_v2",
             // Could try and derive this but not going to for now since tests
             // will break if it changes.
-            Self::Default | Self::DefaultAsUser => "javy_quickjs_provider_v4",
-            Self::User { .. } => "test_plugin",
+            Self::Default | Self::DefaultAsUser => "javy-default-plugin-v1",
+            Self::User { .. } => "test-plugin",
         }
     }
 
     pub fn path(&self) -> PathBuf {
         let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         match self {
-            Self::V2 => root
+            Self::V2 | Self::InvalidUser => root
                 .join("..")
                 .join("..")
                 .join("crates")
@@ -59,7 +60,7 @@ impl Plugin {
                 .join("..")
                 .join("..")
                 .join("target")
-                .join("wasm32-wasip1")
+                .join("wasm32-wasip2")
                 .join("release")
                 .join("plugin_wizened.wasm"),
         }
@@ -67,8 +68,8 @@ impl Plugin {
 
     pub fn needs_plugin_arg(&self) -> bool {
         match self {
-            Self::V2 | Self::Default => false,
-            Self::User | Self::DefaultAsUser => true,
+            Plugin::V2 | Plugin::Default => false,
+            Plugin::User | Plugin::DefaultAsUser | Plugin::InvalidUser => true,
         }
     }
 }
@@ -714,8 +715,17 @@ impl Runner {
             None => (0, 0),
         };
         let res = instance
-            .get_typed_func::<(u32, u32, u32, u32), ()>(store.as_context_mut(), "invoke")?
-            .call(store.as_context_mut(), (bc_ptr, bc_len, fn_ptr, fn_len));
+            .get_typed_func::<(u32, u32, u32, u32, u32), ()>(store.as_context_mut(), "invoke")?
+            .call(
+                store.as_context_mut(),
+                (
+                    bc_ptr,
+                    bc_len,
+                    if func.is_some() { 1 } else { 0 },
+                    fn_ptr,
+                    fn_len,
+                ),
+            );
 
         self.extract_store_data(res, store)
     }
@@ -753,7 +763,7 @@ impl Runner {
             .get_memory(store.as_context_mut(), "memory")
             .unwrap();
         let compile_src_func =
-            instance.get_typed_func::<(u32, u32), u32>(store.as_context_mut(), "compile_src")?;
+            instance.get_typed_func::<(u32, u32), u32>(store.as_context_mut(), "compile-src")?;
 
         let js_src_ptr = Self::allocate_memory(
             instance,
@@ -767,12 +777,19 @@ impl Runner {
             store.as_context_mut(),
             (js_src_ptr, source.len().try_into()?),
         )?;
-        let mut ret_buffer = [0; 8];
+        let mut ret_buffer = [0; 12];
         memory.read(store.as_context(), ret_ptr.try_into()?, &mut ret_buffer)?;
-        let bytecode_ptr = u32::from_le_bytes(ret_buffer[0..4].try_into()?);
-        let bytecode_len = u32::from_le_bytes(ret_buffer[4..8].try_into()?);
+        let result = u32::from_le_bytes(ret_buffer[0..4].try_into()?);
+        let ptr = u32::from_le_bytes(ret_buffer[4..8].try_into()?);
+        let len = u32::from_le_bytes(ret_buffer[8..12].try_into()?);
+        let mut buf = vec![0; len as _];
+        memory.read(store.as_context(), ptr as _, &mut buf)?;
+        if result != 0 {
+            let err = String::from_utf8_lossy(&buf);
+            bail!("Error compiling bytecode: {err}");
+        }
 
-        Ok((bytecode_ptr, bytecode_len))
+        Ok((ptr, len))
     }
 
     fn allocate_memory(
@@ -781,10 +798,8 @@ impl Runner {
         alignment: u32,
         new_size: u32,
     ) -> Result<u32> {
-        let realloc_func = instance.get_typed_func::<(u32, u32, u32, u32), u32>(
-            store.as_context_mut(),
-            "canonical_abi_realloc",
-        )?;
+        let realloc_func = instance
+            .get_typed_func::<(u32, u32, u32, u32), u32>(store.as_context_mut(), "cabi_realloc")?;
         let orig_ptr = 0;
         let orig_size = 0;
         realloc_func.call(

@@ -12,7 +12,7 @@ meet these requirements.
 To successfully instantiate and run a dynamically linked Javy module, the
 execution environment must provide a collection of imports that match the
 exports from a Javy plugin Wasm module (for example,
-`canonical_abi_realloc` and `invoke`). The namespace for these imports must
+`cabi_realloc` and `invoke`). The namespace for these imports must
 match the import namespace specified by the Javy plugin Wasm module used to
 generate the dynamically linked Wasm module (this is, if the plugin's import
 namespace was `my_plugin_v1`, then the imports must be made available under the
@@ -41,6 +41,6 @@ Run:
 $ echo 'console.log("hello world!");' > my_code.js
 $ javy emit-plugin -o plugin.wasm
 $ javy build -C dynamic -C plugin=plugin.wasm -o my_code.wasm my_code.js
-$ wasmtime run --preload javy_quickjs_provider_v4=plugin.wasm my_code.wasm
+$ wasmtime run --preload javy-default-plugin-v1=plugin.wasm my_code.wasm
 hello world!
 ```
