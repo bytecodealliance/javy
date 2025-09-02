@@ -72,15 +72,15 @@ user-login = "BurntSushi"
 user-name = "Andrew Gallant"
 
 [[publisher.cap-fs-ext]]
-version = "3.4.2"
-when = "2024-12-04"
+version = "3.4.4"
+when = "2025-04-21"
 user-id = 6825
 user-login = "sunfishcode"
 user-name = "Dan Gohman"
 
 [[publisher.cap-net-ext]]
-version = "3.4.2"
-when = "2024-12-04"
+version = "3.4.1"
+when = "2024-11-05"
 user-id = 6825
 user-login = "sunfishcode"
 user-name = "Dan Gohman"
@@ -93,8 +93,8 @@ user-login = "sunfishcode"
 user-name = "Dan Gohman"
 
 [[publisher.cap-rand]]
-version = "3.4.2"
-when = "2024-12-04"
+version = "3.4.1"
+when = "2024-11-05"
 user-id = 6825
 user-login = "sunfishcode"
 user-name = "Dan Gohman"
@@ -107,8 +107,8 @@ user-login = "sunfishcode"
 user-name = "Dan Gohman"
 
 [[publisher.cap-time-ext]]
-version = "3.4.2"
-when = "2024-12-04"
+version = "3.4.4"
+when = "2025-04-21"
 user-id = 6825
 user-login = "sunfishcode"
 user-name = "Dan Gohman"
@@ -163,74 +163,80 @@ user-login = "jrmuizel"
 user-name = "Jeff Muizelaar"
 
 [[publisher.cranelift-assembler-x64]]
-version = "0.118.0"
-when = "2025-03-20"
+version = "0.123.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.cranelift-assembler-x64-meta]]
-version = "0.118.0"
-when = "2025-03-20"
+version = "0.123.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.cranelift-bforest]]
-version = "0.118.0"
-when = "2025-03-20"
+version = "0.123.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.cranelift-bitset]]
-version = "0.118.0"
-when = "2025-03-20"
+version = "0.123.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.cranelift-codegen]]
-version = "0.118.0"
-when = "2025-03-20"
+version = "0.123.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.cranelift-codegen-meta]]
-version = "0.118.0"
-when = "2025-03-20"
+version = "0.123.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.cranelift-codegen-shared]]
-version = "0.118.0"
-when = "2025-03-20"
+version = "0.123.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.cranelift-control]]
-version = "0.118.0"
-when = "2025-03-20"
+version = "0.123.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.cranelift-entity]]
-version = "0.118.0"
-when = "2025-03-20"
+version = "0.123.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.cranelift-frontend]]
-version = "0.118.0"
-when = "2025-03-20"
+version = "0.123.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.cranelift-isle]]
-version = "0.118.0"
-when = "2025-03-20"
+version = "0.123.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.cranelift-native]]
-version = "0.118.0"
-when = "2025-03-20"
+version = "0.123.2"
+when = "2025-08-26"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.cranelift-srcgen]]
+version = "0.123.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -424,8 +430,14 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.pulley-interpreter]]
-version = "31.0.0"
-when = "2025-03-20"
+version = "36.0.2"
+when = "2025-08-26"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.pulley-macros]]
+version = "36.0.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -465,8 +477,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.regalloc2]]
-version = "0.11.1"
-when = "2024-12-02"
+version = "0.12.2"
+when = "2025-05-07"
 user-id = 3726
 user-login = "cfallin"
 user-name = "Chris Fallin"
@@ -618,9 +630,23 @@ user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
 
+[[publisher.thiserror]]
+version = "2.0.16"
+when = "2025-08-20"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
 [[publisher.thiserror-impl]]
 version = "1.0.61"
 when = "2024-05-17"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
+
+[[publisher.thiserror-impl]]
+version = "2.0.16"
+when = "2025-08-20"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -758,18 +784,6 @@ user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasm-encoder]]
-version = "0.226.0"
-when = "2025-02-19"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wasm-encoder]]
-version = "0.228.0"
-when = "2025-04-01"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wasm-encoder]]
 version = "0.235.0"
 when = "2025-06-13"
 user-id = 73222
@@ -794,26 +808,8 @@ user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmparser]]
-version = "0.226.0"
-when = "2025-02-19"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wasmparser]]
-version = "0.228.0"
-when = "2025-04-01"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wasmparser]]
 version = "0.235.0"
 when = "2025-06-13"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wasmprinter]]
-version = "0.226.0"
-when = "2025-02-19"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -824,116 +820,110 @@ user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmtime]]
-version = "31.0.0"
-when = "2025-03-20"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wasmtime-asm-macros]]
-version = "31.0.0"
-when = "2025-03-20"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wasmtime-cache]]
-version = "31.0.0"
-when = "2025-03-20"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wasmtime-component-macro]]
-version = "31.0.0"
-when = "2025-03-20"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wasmtime-component-util]]
-version = "31.0.0"
-when = "2025-03-20"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wasmtime-cranelift]]
-version = "31.0.0"
-when = "2025-03-20"
+version = "36.0.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmtime-environ]]
-version = "31.0.0"
-when = "2025-03-20"
+version = "36.0.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
-[[publisher.wasmtime-fiber]]
-version = "31.0.0"
-when = "2025-03-20"
+[[publisher.wasmtime-internal-asm-macros]]
+version = "36.0.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
-[[publisher.wasmtime-jit-debug]]
-version = "31.0.0"
-when = "2025-03-20"
+[[publisher.wasmtime-internal-cache]]
+version = "36.0.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
-[[publisher.wasmtime-jit-icache-coherence]]
-version = "31.0.0"
-when = "2025-03-20"
+[[publisher.wasmtime-internal-component-macro]]
+version = "36.0.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
-[[publisher.wasmtime-math]]
-version = "31.0.0"
-when = "2025-03-20"
+[[publisher.wasmtime-internal-component-util]]
+version = "36.0.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
-[[publisher.wasmtime-slab]]
-version = "31.0.0"
-when = "2025-03-20"
+[[publisher.wasmtime-internal-cranelift]]
+version = "36.0.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
-[[publisher.wasmtime-versioned-export-macros]]
-version = "31.0.0"
-when = "2025-03-20"
+[[publisher.wasmtime-internal-fiber]]
+version = "36.0.2"
+when = "2025-08-26"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wasmtime-internal-jit-debug]]
+version = "36.0.2"
+when = "2025-08-26"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wasmtime-internal-jit-icache-coherence]]
+version = "36.0.2"
+when = "2025-08-26"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wasmtime-internal-math]]
+version = "36.0.2"
+when = "2025-08-26"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wasmtime-internal-slab]]
+version = "36.0.2"
+when = "2025-08-26"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wasmtime-internal-unwinder]]
+version = "36.0.2"
+when = "2025-08-26"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wasmtime-internal-versioned-export-macros]]
+version = "36.0.2"
+when = "2025-08-26"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wasmtime-internal-winch]]
+version = "36.0.2"
+when = "2025-08-26"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wasmtime-internal-wit-bindgen]]
+version = "36.0.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmtime-wasi]]
-version = "31.0.0"
-when = "2025-03-20"
+version = "36.0.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wasmtime-wasi-io]]
-version = "31.0.0"
-when = "2025-03-20"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wasmtime-winch]]
-version = "31.0.0"
-when = "2025-03-20"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wasmtime-wit-bindgen]]
-version = "31.0.0"
-when = "2025-03-20"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wast]]
-version = "226.0.0"
-when = "2025-02-19"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wat]]
-version = "1.226.0"
-when = "2025-02-19"
+version = "36.0.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -945,20 +935,20 @@ user-login = "alexcrichton"
 user-name = "Alex Crichton"
 
 [[publisher.wiggle]]
-version = "31.0.0"
-when = "2025-03-20"
+version = "36.0.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wiggle-generate]]
-version = "31.0.0"
-when = "2025-03-20"
+version = "36.0.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wiggle-macro]]
-version = "31.0.0"
-when = "2025-03-20"
+version = "36.0.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -970,14 +960,21 @@ user-login = "BurntSushi"
 user-name = "Andrew Gallant"
 
 [[publisher.winch-codegen]]
-version = "31.0.0"
-when = "2025-03-20"
+version = "36.0.2"
+when = "2025-08-26"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.windows-core]]
 version = "0.52.0"
 when = "2023-11-15"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
+[[publisher.windows-link]]
+version = "0.1.3"
+when = "2025-06-12"
 user-id = 64539
 user-login = "kennykerr"
 user-name = "Kenny Kerr"
@@ -996,9 +993,23 @@ user-id = 64539
 user-login = "kennykerr"
 user-name = "Kenny Kerr"
 
+[[publisher.windows-sys]]
+version = "0.60.2"
+when = "2025-06-12"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
 [[publisher.windows-targets]]
 version = "0.52.6"
 when = "2024-07-03"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
+[[publisher.windows-targets]]
+version = "0.53.3"
+when = "2025-07-28"
 user-id = 64539
 user-login = "kennykerr"
 user-name = "Kenny Kerr"
@@ -1010,9 +1021,23 @@ user-id = 64539
 user-login = "kennykerr"
 user-name = "Kenny Kerr"
 
+[[publisher.windows_aarch64_gnullvm]]
+version = "0.53.0"
+when = "2025-01-07"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
 [[publisher.windows_aarch64_msvc]]
 version = "0.52.6"
 when = "2024-07-03"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
+[[publisher.windows_aarch64_msvc]]
+version = "0.53.0"
+when = "2025-01-07"
 user-id = 64539
 user-login = "kennykerr"
 user-name = "Kenny Kerr"
@@ -1024,9 +1049,37 @@ user-id = 64539
 user-login = "kennykerr"
 user-name = "Kenny Kerr"
 
+[[publisher.windows_i686_gnu]]
+version = "0.53.0"
+when = "2025-01-07"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
+[[publisher.windows_i686_gnullvm]]
+version = "0.52.6"
+when = "2024-07-03"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
+[[publisher.windows_i686_gnullvm]]
+version = "0.53.0"
+when = "2025-01-07"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
 [[publisher.windows_i686_msvc]]
 version = "0.52.6"
 when = "2024-07-03"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
+[[publisher.windows_i686_msvc]]
+version = "0.53.0"
+when = "2025-01-07"
 user-id = 64539
 user-login = "kennykerr"
 user-name = "Kenny Kerr"
@@ -1038,6 +1091,13 @@ user-id = 64539
 user-login = "kennykerr"
 user-name = "Kenny Kerr"
 
+[[publisher.windows_x86_64_gnu]]
+version = "0.53.0"
+when = "2025-01-07"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
 [[publisher.windows_x86_64_gnullvm]]
 version = "0.52.6"
 when = "2024-07-03"
@@ -1045,9 +1105,23 @@ user-id = 64539
 user-login = "kennykerr"
 user-name = "Kenny Kerr"
 
+[[publisher.windows_x86_64_gnullvm]]
+version = "0.53.0"
+when = "2025-01-07"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
 [[publisher.windows_x86_64_msvc]]
 version = "0.52.6"
 when = "2024-07-03"
+user-id = 64539
+user-login = "kennykerr"
+user-name = "Kenny Kerr"
+
+[[publisher.windows_x86_64_msvc]]
+version = "0.53.0"
+when = "2025-01-07"
 user-id = 64539
 user-login = "kennykerr"
 user-name = "Kenny Kerr"
@@ -1122,20 +1196,14 @@ user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wit-parser]]
-version = "0.226.0"
-when = "2025-02-19"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wit-parser]]
 version = "0.235.0"
 when = "2025-06-13"
 user-id = 73222
 user-login = "wasmtime-publish"
 
 [[publisher.wizer]]
-version = "9.0.0"
-when = "2025-06-03"
+version = "10.0.0"
+when = "2025-08-27"
 user-id = 696
 user-login = "fitzgen"
 user-name = "Nick Fitzgerald"
@@ -1169,6 +1237,14 @@ criteria = "safe-to-deploy"
 user-id = 73222 # wasmtime-publish
 start = "2021-10-29"
 end = "2026-08-21"
+notes = "The Bytecode Alliance is the author of this crate."
+
+[[audits.bytecode-alliance.wildcard-audits.cranelift-bitset]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+user-id = 73222 # wasmtime-publish
+start = "2025-04-21"
+end = "2026-04-21"
 notes = "The Bytecode Alliance is the author of this crate."
 
 [[audits.bytecode-alliance.wildcard-audits.cranelift-codegen]]
@@ -1235,6 +1311,14 @@ start = "2021-10-29"
 end = "2026-08-21"
 notes = "The Bytecode Alliance is the author of this crate."
 
+[[audits.bytecode-alliance.wildcard-audits.cranelift-srcgen]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+user-id = 73222 # wasmtime-publish
+start = "2025-04-21"
+end = "2026-04-21"
+notes = "The Bytecode Alliance is the author of this crate."
+
 [[audits.bytecode-alliance.wildcard-audits.pulley-interpreter]]
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
@@ -1242,6 +1326,13 @@ user-id = 73222 # wasmtime-publish
 start = "2024-09-20"
 end = "2026-08-21"
 notes = "The Bytecode Alliance is the author of this crate."
+
+[[audits.bytecode-alliance.wildcard-audits.pulley-macros]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+user-id = 73222 # wasmtime-publish
+start = "2025-06-20"
+end = "2026-08-21"
 
 [[audits.bytecode-alliance.wildcard-audits.regalloc2]]
 who = "Chris Fallin <chris@cfallin.org>"
@@ -1307,46 +1398,6 @@ start = "2021-10-29"
 end = "2026-08-21"
 notes = "The Bytecode Alliance is the author of this crate."
 
-[[audits.bytecode-alliance.wildcard-audits.wasmtime-asm-macros]]
-who = "Bobby Holley <bobbyholley@gmail.com>"
-criteria = "safe-to-deploy"
-user-id = 73222 # wasmtime-publish
-start = "2022-08-22"
-end = "2026-08-21"
-notes = "The Bytecode Alliance is the author of this crate."
-
-[[audits.bytecode-alliance.wildcard-audits.wasmtime-cache]]
-who = "Bobby Holley <bobbyholley@gmail.com>"
-criteria = "safe-to-deploy"
-user-id = 73222 # wasmtime-publish
-start = "2021-10-29"
-end = "2026-08-21"
-notes = "The Bytecode Alliance is the author of this crate."
-
-[[audits.bytecode-alliance.wildcard-audits.wasmtime-component-macro]]
-who = "Bobby Holley <bobbyholley@gmail.com>"
-criteria = "safe-to-deploy"
-user-id = 73222 # wasmtime-publish
-start = "2022-07-20"
-end = "2026-08-21"
-notes = "The Bytecode Alliance is the author of this crate."
-
-[[audits.bytecode-alliance.wildcard-audits.wasmtime-component-util]]
-who = "Bobby Holley <bobbyholley@gmail.com>"
-criteria = "safe-to-deploy"
-user-id = 73222 # wasmtime-publish
-start = "2022-08-22"
-end = "2026-08-21"
-notes = "The Bytecode Alliance is the author of this crate."
-
-[[audits.bytecode-alliance.wildcard-audits.wasmtime-cranelift]]
-who = "Bobby Holley <bobbyholley@gmail.com>"
-criteria = "safe-to-deploy"
-user-id = 73222 # wasmtime-publish
-start = "2021-10-29"
-end = "2026-08-21"
-notes = "The Bytecode Alliance is the author of this crate."
-
 [[audits.bytecode-alliance.wildcard-audits.wasmtime-environ]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
 criteria = "safe-to-deploy"
@@ -1355,36 +1406,116 @@ start = "2021-10-29"
 end = "2026-08-21"
 notes = "The Bytecode Alliance is the author of this crate."
 
-[[audits.bytecode-alliance.wildcard-audits.wasmtime-fiber]]
-who = "Bobby Holley <bobbyholley@gmail.com>"
+[[audits.bytecode-alliance.wildcard-audits.wasmtime-internal-asm-macros]]
+who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
 user-id = 73222 # wasmtime-publish
-start = "2021-10-29"
-end = "2026-08-21"
+start = "2025-07-20"
+end = "2026-07-20"
 notes = "The Bytecode Alliance is the author of this crate."
 
-[[audits.bytecode-alliance.wildcard-audits.wasmtime-jit-debug]]
-who = "Bobby Holley <bobbyholley@gmail.com>"
+[[audits.bytecode-alliance.wildcard-audits.wasmtime-internal-cache]]
+who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
 user-id = 73222 # wasmtime-publish
-start = "2022-03-07"
-end = "2026-08-21"
+start = "2025-07-20"
+end = "2026-07-20"
 notes = "The Bytecode Alliance is the author of this crate."
 
-[[audits.bytecode-alliance.wildcard-audits.wasmtime-jit-icache-coherence]]
-who = "Bobby Holley <bobbyholley@gmail.com>"
+[[audits.bytecode-alliance.wildcard-audits.wasmtime-internal-component-macro]]
+who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
 user-id = 73222 # wasmtime-publish
-start = "2022-11-21"
-end = "2026-08-21"
+start = "2025-07-20"
+end = "2026-07-20"
 notes = "The Bytecode Alliance is the author of this crate."
 
-[[audits.bytecode-alliance.wildcard-audits.wasmtime-math]]
-who = "Saúl Cabrera <saulecabrera@gmail.com>"
+[[audits.bytecode-alliance.wildcard-audits.wasmtime-internal-component-util]]
+who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
 user-id = 73222 # wasmtime-publish
-start = "2025-01-20"
-end = "2026-01-21"
+start = "2025-07-20"
+end = "2026-07-20"
+notes = "The Bytecode Alliance is the author of this crate."
+
+[[audits.bytecode-alliance.wildcard-audits.wasmtime-internal-cranelift]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+user-id = 73222 # wasmtime-publish
+start = "2025-07-20"
+end = "2026-07-20"
+notes = "The Bytecode Alliance is the author of this crate."
+
+[[audits.bytecode-alliance.wildcard-audits.wasmtime-internal-fiber]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+user-id = 73222 # wasmtime-publish
+start = "2025-07-20"
+end = "2026-07-20"
+notes = "The Bytecode Alliance is the author of this crate."
+
+[[audits.bytecode-alliance.wildcard-audits.wasmtime-internal-jit-debug]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+user-id = 73222 # wasmtime-publish
+start = "2025-07-20"
+end = "2026-07-20"
+notes = "The Bytecode Alliance is the author of this crate."
+
+[[audits.bytecode-alliance.wildcard-audits.wasmtime-internal-jit-icache-coherence]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+user-id = 73222 # wasmtime-publish
+start = "2025-07-20"
+end = "2026-07-20"
+notes = "The Bytecode Alliance is the author of this crate."
+
+[[audits.bytecode-alliance.wildcard-audits.wasmtime-internal-math]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+user-id = 73222 # wasmtime-publish
+start = "2025-07-20"
+end = "2026-07-20"
+notes = "The Bytecode Alliance is the author of this crate."
+
+[[audits.bytecode-alliance.wildcard-audits.wasmtime-internal-slab]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+user-id = 73222 # wasmtime-publish
+start = "2025-07-20"
+end = "2026-07-20"
+notes = "The Bytecode Alliance is the author of this crate."
+
+[[audits.bytecode-alliance.wildcard-audits.wasmtime-internal-unwinder]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+user-id = 73222 # wasmtime-publish
+start = "2025-07-20"
+end = "2026-07-20"
+notes = "The Bytecode Alliance is the author of this crate."
+
+[[audits.bytecode-alliance.wildcard-audits.wasmtime-internal-versioned-export-macros]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+user-id = 73222 # wasmtime-publish
+start = "2025-07-20"
+end = "2026-07-20"
+notes = "The Bytecode Alliance is the author of this crate."
+
+[[audits.bytecode-alliance.wildcard-audits.wasmtime-internal-winch]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+user-id = 73222 # wasmtime-publish
+start = "2025-07-20"
+end = "2026-07-20"
+notes = "The Bytecode Alliance is the author of this crate."
+
+[[audits.bytecode-alliance.wildcard-audits.wasmtime-internal-wit-bindgen]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+user-id = 73222 # wasmtime-publish
+start = "2025-07-20"
+end = "2026-07-20"
 notes = "The Bytecode Alliance is the author of this crate."
 
 [[audits.bytecode-alliance.wildcard-audits.wasmtime-wasi]]
@@ -1402,46 +1533,6 @@ user-id = 73222 # wasmtime-publish
 start = "2025-02-20"
 end = "2026-02-20"
 notes = "The Bytecode Alliance is the author of this crate."
-
-[[audits.bytecode-alliance.wildcard-audits.wasmtime-winch]]
-who = "Bobby Holley <bobbyholley@gmail.com>"
-criteria = "safe-to-deploy"
-user-id = 73222 # wasmtime-publish
-start = "2022-11-21"
-end = "2026-08-21"
-notes = "The Bytecode Alliance is the author of this crate."
-
-[[audits.bytecode-alliance.wildcard-audits.wasmtime-wit-bindgen]]
-who = "Bobby Holley <bobbyholley@gmail.com>"
-criteria = "safe-to-deploy"
-user-id = 73222 # wasmtime-publish
-start = "2023-01-20"
-end = "2026-08-21"
-notes = "The Bytecode Alliance is the author of this crate."
-
-[[audits.bytecode-alliance.wildcard-audits.wast]]
-who = "Alex Crichton <alex@alexcrichton.com>"
-criteria = "safe-to-deploy"
-user-id = 73222 # wasmtime-publish
-start = "2023-01-01"
-end = "2026-06-03"
-notes = """
-The Bytecode Alliance uses the `wasmtime-publish` crates.io account to automate
-publication of this crate from CI. This repository requires all PRs are reviewed
-by a Bytecode Alliance maintainer and it owned by the Bytecode Alliance itself.
-"""
-
-[[audits.bytecode-alliance.wildcard-audits.wat]]
-who = "Alex Crichton <alex@alexcrichton.com>"
-criteria = "safe-to-deploy"
-user-id = 73222 # wasmtime-publish
-start = "2023-01-01"
-end = "2026-06-03"
-notes = """
-The Bytecode Alliance uses the `wasmtime-publish` crates.io account to automate
-publication of this crate from CI. This repository requires all PRs are reviewed
-by a Bytecode Alliance maintainer and it owned by the Bytecode Alliance itself.
-"""
 
 [[audits.bytecode-alliance.wildcard-audits.wiggle]]
 who = "Bobby Holley <bobbyholley@gmail.com>"
@@ -1576,6 +1667,18 @@ who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
 delta = "0.21.0 -> 0.22.0"
 
+[[audits.bytecode-alliance.audits.addr2line]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.22.0 -> 0.24.1"
+notes = "Lots of internal code refactorings and code movement. Nothing out of place however."
+
+[[audits.bytecode-alliance.audits.addr2line]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.24.1 -> 0.25.0"
+notes = "All minor changes, even a net reduction of `unsafe`."
+
 [[audits.bytecode-alliance.audits.adler]]
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
@@ -1626,6 +1729,16 @@ notes = """
 Changes in how macros are invoked and various bits and pieces of macro-fu.
 Otherwise no major changes and nothing dealing with `unsafe`.
 """
+
+[[audits.bytecode-alliance.audits.cap-net-ext]]
+who = "Dan Gohman <dev@sunfishcode.online>"
+criteria = "safe-to-deploy"
+delta = "3.4.1 -> 3.4.4"
+
+[[audits.bytecode-alliance.audits.cap-rand]]
+who = "Dan Gohman <dev@sunfishcode.online>"
+criteria = "safe-to-deploy"
+delta = "3.4.1 -> 3.4.4"
 
 [[audits.bytecode-alliance.audits.cargo_metadata]]
 who = "Pat Hickey <phickey@fastly.com>"
@@ -1739,18 +1852,6 @@ structures representing the Firefox \"processed\" profile format, with serde
 serialization support. All logic is trivial: either unit conversion, or
 hash-consing to support de-duplication required by the format.
 """
-
-[[audits.bytecode-alliance.audits.gimli]]
-who = "Alex Crichton <alex@alexcrichton.com>"
-criteria = "safe-to-deploy"
-delta = "0.29.0 -> 0.31.0"
-notes = "Various updates here and there, nothing too major, what you'd expect from a DWARF parsing crate."
-
-[[audits.bytecode-alliance.audits.gimli]]
-who = "Alex Crichton <alex@alexcrichton.com>"
-criteria = "safe-to-deploy"
-delta = "0.31.0 -> 0.31.1"
-notes = "No fundmanetally new `unsafe` code, some small refactoring of existing code. Lots of changes in tests, not as many changes in the rest of the crate. More dwarf!"
 
 [[audits.bytecode-alliance.audits.hashbrown]]
 who = "Chris Fallin <chris@cfallin.org>"
@@ -1898,6 +1999,24 @@ criteria = "safe-to-deploy"
 delta = "0.6.3 -> 0.6.4"
 notes = "This commit only updated the dependency `rustix`, so same as before."
 
+[[audits.bytecode-alliance.audits.object]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.36.0 -> 0.36.5"
+notes = "No new unsafe code, lots of new relocations/objects support, everything looks nominal"
+
+[[audits.bytecode-alliance.audits.object]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.36.5 -> 0.37.1"
+notes = "New object file formats, new formatting, new other minor changes, no new `unsafe`."
+
+[[audits.bytecode-alliance.audits.object]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.37.1 -> 0.37.3"
+notes = "Lots of new support for new object features, no new unsafe or anything suspicious."
+
 [[audits.bytecode-alliance.audits.percent-encoding]]
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
@@ -1940,16 +2059,6 @@ who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
 version = "1.1.0"
 notes = "Only minor `unsafe` code blocks which look valid and otherwise does what it says on the tin."
-
-[[audits.bytecode-alliance.audits.sptr]]
-who = "Alex Crichton <alex@alexcrichton.com>"
-criteria = "safe-to-deploy"
-version = "0.3.2"
-notes = """
-This crate is 90% documentation and does contain a good deal of `unsafe` code,
-but it's all doing what it says on the tin: being a stable polyfill for strict
-provenance APIs in the standard library while they're on Nightly.
-"""
 
 [[audits.bytecode-alliance.audits.static_assertions]]
 who = "Andrew Brown <andrew.brown@intel.com>"
@@ -2030,6 +2139,12 @@ no hits, except for some `net` usage in tests.
 The crate has quite a few bits of `unsafe` Rust.  The audit comments can be
 found in https://chromium-review.googlesource.com/c/chromium/src/+/6187726/2
 '''
+aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
+
+[[audits.google.audits.base64]]
+who = "amarjotgill <amarjotgill@google.com>"
+criteria = "safe-to-deploy"
+version = "0.22.1"
 aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
 
 [[audits.google.audits.bitflags]]

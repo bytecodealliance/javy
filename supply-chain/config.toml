@@ -45,10 +45,6 @@ criteria = "safe-to-deploy"
 version = "0.19.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.addr2line]]
-version = "0.24.2"
-criteria = "safe-to-deploy"
-
 [[exemptions.ahash]]
 version = "0.8.11"
 criteria = "safe-to-deploy"
@@ -75,10 +71,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.backtrace]]
 version = "0.3.73"
-criteria = "safe-to-deploy"
-
-[[exemptions.base64]]
-version = "0.21.7"
 criteria = "safe-to-deploy"
 
 [[exemptions.base64-simd]]
@@ -201,14 +193,6 @@ criteria = "safe-to-deploy"
 version = "2.0.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.dirs]]
-version = "4.0.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.dirs-sys]]
-version = "0.3.7"
-criteria = "safe-to-deploy"
-
 [[exemptions.dirs-sys-next]]
 version = "0.1.2"
 criteria = "safe-to-deploy"
@@ -297,6 +281,10 @@ criteria = "safe-to-deploy"
 version = "0.26.2"
 criteria = "safe-to-deploy"
 
+[[exemptions.gimli]]
+version = "0.32.2"
+criteria = "safe-to-deploy"
+
 [[exemptions.halfbrown]]
 version = "0.3.0"
 criteria = "safe-to-deploy"
@@ -380,6 +368,10 @@ criteria = "safe-to-deploy"
 [[exemptions.num-format]]
 version = "0.4.4"
 criteria = "safe-to-run"
+
+[[exemptions.object]]
+version = "0.36.0"
+criteria = "safe-to-deploy"
 
 [[exemptions.object]]
 version = "0.36.7"
@@ -517,10 +509,6 @@ criteria = "safe-to-deploy"
 version = "1.1.1"
 criteria = "safe-to-deploy"
 
-[[exemptions.shellexpand]]
-version = "2.1.2"
-criteria = "safe-to-deploy"
-
 [[exemptions.simd-json]]
 version = "0.15.1"
 criteria = "safe-to-deploy"
@@ -621,10 +609,6 @@ criteria = "safe-to-deploy"
 version = "0.1.32"
 criteria = "safe-to-deploy"
 
-[[exemptions.trait-variant]]
-version = "0.1.2"
-criteria = "safe-to-deploy"
-
 [[exemptions.triomphe]]
 version = "0.1.13"
 criteria = "safe-to-deploy"
@@ -675,7 +659,11 @@ criteria = "safe-to-deploy"
 
 [[exemptions.wasm-encoder]]
 version = "0.236.1"
-criteria = "safe-to-run"
+criteria = "safe-to-deploy"
+
+[[exemptions.wasm-encoder]]
+version = "0.238.0"
+criteria = "safe-to-deploy"
 
 [[exemptions.wasm-metadata]]
 version = "0.236.1"
@@ -697,6 +685,18 @@ criteria = "safe-to-deploy"
 version = "0.236.1"
 criteria = "safe-to-deploy"
 
+[[exemptions.wasmparser]]
+version = "0.238.0"
+criteria = "safe-to-deploy"
+
+[[exemptions.wast]]
+version = "238.0.0"
+criteria = "safe-to-deploy"
+
+[[exemptions.wat]]
+version = "1.238.0"
+criteria = "safe-to-deploy"
+
 [[exemptions.which]]
 version = "4.4.2"
 criteria = "safe-to-deploy"
@@ -713,17 +713,13 @@ criteria = "safe-to-deploy"
 version = "0.4.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.windows_i686_gnullvm]]
-version = "0.52.6"
-criteria = "safe-to-deploy"
-
 [[exemptions.wit-component]]
 version = "0.236.1"
 criteria = "safe-to-run"
 
 [[exemptions.wit-parser]]
 version = "0.236.1"
-criteria = "safe-to-run"
+criteria = "safe-to-deploy"
 
 [[exemptions.witx]]
 version = "0.9.1"
