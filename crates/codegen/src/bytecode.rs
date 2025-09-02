@@ -32,8 +32,8 @@ fn create_wasm_env(plugin_bytes: &[u8]) -> Result<(Store<()>, Instance, Memory)>
     let engine = Engine::default();
     let module = Module::new(&engine, plugin_bytes)?;
     let mut linker = Linker::new(&engine);
-    linker.define_unknown_imports_as_default_values(&module)?;
     let mut store = Store::new(&engine, ());
+    linker.define_unknown_imports_as_default_values(&mut store, &module)?;
     let instance = linker.instantiate(store.as_context_mut(), &module)?;
     let memory = instance
         .get_memory(store.as_context_mut(), "memory")

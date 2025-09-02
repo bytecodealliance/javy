@@ -8,7 +8,7 @@ use std::process::Command;
 use std::str;
 use tempfile::TempDir;
 use wasmtime::{AsContextMut, Config, Engine, Instance, Linker, Module, OptLevel, Store};
-use wasmtime_wasi::pipe::{MemoryInputPipe, MemoryOutputPipe};
+use wasmtime_wasi::p2::pipe::{MemoryInputPipe, MemoryOutputPipe};
 use wasmtime_wasi::{preview1::WasiP1Ctx, WasiCtxBuilder};
 
 #[derive(Debug, Clone)]

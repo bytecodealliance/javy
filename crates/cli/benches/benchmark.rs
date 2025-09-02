@@ -4,7 +4,7 @@ use num_format::{Locale, ToFormattedString};
 use std::{fmt::Display, fs, path::Path, process::Command};
 use wasmtime::{AsContextMut, Engine, Linker, Module, Store};
 use wasmtime_wasi::{
-    pipe::{MemoryInputPipe, MemoryOutputPipe},
+    p2::pipe::{MemoryInputPipe, MemoryOutputPipe},
     preview1::WasiP1Ctx,
     WasiCtxBuilder,
 };
