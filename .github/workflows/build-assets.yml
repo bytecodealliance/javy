@@ -22,7 +22,7 @@ jobs:
     name: compile_plugin
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Make plugin
         run: make plugin
@@ -31,12 +31,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: plugin
-          path: target/wasm32-wasip1/release/plugin.wasm
+          path: target/wasm32-wasip2/release/plugin.wasm
 
       - name: Wizen and archive wizened plugin
         run: |
-          cargo run --package=javy-plugin-processing target/wasm32-wasip1/release/plugin.wasm target/wasm32-wasip1/release/plugin_wizened.wasm
-          gzip -k -f target/wasm32-wasip1/release/plugin_wizened.wasm && mv target/wasm32-wasip1/release/plugin_wizened.wasm.gz plugin.wasm.gz
+          cargo run --package=javy-plugin-processing target/wasm32-wasip2/release/plugin.wasm target/wasm32-wasip2/release/plugin_wizened.wasm
+          gzip -k -f target/wasm32-wasip2/release/plugin_wizened.wasm && mv target/wasm32-wasip2/release/plugin_wizened.wasm.gz plugin.wasm.gz
 
       - name: Upload archived plugin to artifacts
         uses: actions/upload-artifact@v4
@@ -104,7 +104,7 @@ jobs:
             target: x86_64-pc-windows-msvc
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Should no-op except for macos-arm and linux-arm cases where that target won't be installed
       - name: Install target
@@ -115,10 +115,10 @@ jobs:
         run: sudo apt-get update && sudo apt-get --assume-yes install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
         if: matrix.target == 'aarch64-unknown-linux-gnu'
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: plugin
-          path: target/wasm32-wasip1/release/
+          path: target/wasm32-wasip2/release/
 
       - name: Build CLI ${{ matrix.os }}
         run: cargo build --release --target ${{ matrix.target }} --package javy-cli

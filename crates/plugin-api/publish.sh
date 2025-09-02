@@ -2,4 +2,4 @@
 
 set -e
 
-cargo publish --target=wasm32-wasip1
+cargo publish --target=wasm32-wasip2

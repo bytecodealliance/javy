@@ -8,6 +8,15 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [5.0.0] - 2025-08-28
+
+### Removed
+
+- `export_alloc_fns` has been removed. This removes the implementation of
+  exported `canonical_abi_realloc` and `canonical_abi_free` implementations
+  since Javy will now rely on the component model defintions of these
+  functions.
+
 ## [4.1.0] - 2025-07-24
 
 ### Added

@@ -1,6 +1,6 @@
 [package]
 name = "javy"
-version = "4.1.1-alpha.1"
+version = "5.0.1-alpha.1"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -32,7 +32,6 @@ simd-json = { version = "0.15.1", optional = true, default-features = false, fea
 javy-test-macros = { path = "../test-macros/" }
 
 [features]
-export_alloc_fns = []
 messagepack = ["rmp-serde", "serde-transcode"]
 # According to our benchmarks and experiments, the fastest and most efficient
 # JSON implementation comes from:

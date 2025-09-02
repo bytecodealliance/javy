@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
-use javy_codegen::{Generator, LinkingKind, Plugin, JS};
+use javy_codegen::{Generator, LinkingKind, Plugin, WitOptions, JS};
 
 #[test]
 fn test_empty() -> Result<()> {
@@ -30,4 +30,55 @@ fn test_empty() -> Result<()> {
     walrus::Module::from_buffer(wasm.as_slice())?;
 
     Ok(())
+}
+
+#[test]
+fn test_snapshot_for_dynamically_linked_module() -> Result<()> {
+    let cargo_manifest_dir = cargo_manifest_dir();
+    let sample_scripts = sample_scripts_dir();
+    let js = JS::from_file(&sample_scripts.join("exported-functions.js"))?;
+    let wasm = Generator::new(Plugin::new_from_path(
+        cargo_manifest_dir.join("default_plugin.wasm"),
+    )?)
+    .linking(LinkingKind::Dynamic)
+    .wit_opts(WitOptions::from_tuple((
+        Some(sample_scripts.join("exported-functions.wit")),
+        Some("exported-logs".into()),
+    ))?)
+    .producer_version("snapshot".into())
+    .generate(&js)?;
+    let wat = wasmprinter::print_bytes(wasm)?;
+    insta::assert_snapshot!("default_dynamic", wat);
+    Ok(())
+}
+
+#[cfg(feature = "plugin_internal")]
+const V2_PLUGIN: &[u8] = include_bytes!("../../../crates/cli/src/javy_quickjs_provider_v2.wasm");
+
+#[cfg(feature = "plugin_internal")]
+#[test]
+fn test_snapshot_for_dynamically_linked_v2_module() -> Result<()> {
+    let sample_scripts = sample_scripts_dir();
+    let js = JS::from_file(&sample_scripts.join("exported-functions.js"))?;
+    let plugin = Plugin::new_javy_quickjs_v2_plugin(V2_PLUGIN);
+    let wasm = Generator::new(plugin)
+        .linking(LinkingKind::Dynamic)
+        .linking_v2_plugin(true)
+        .wit_opts(WitOptions::from_tuple((
+            Some(sample_scripts.join("exported-functions.wit")),
+            Some("exported-logs".into()),
+        ))?)
+        .producer_version("snapshot".into())
+        .generate(&js)?;
+    let wat = wasmprinter::print_bytes(wasm)?;
+    insta::assert_snapshot!("v2_dynamic", wat);
+    Ok(())
+}
+
+fn cargo_manifest_dir() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+}
+
+fn sample_scripts_dir() -> PathBuf {
+    cargo_manifest_dir().join("tests").join("sample-scripts")
 }

@@ -41,9 +41,6 @@
 //!   [`Config`] to configure behavior.
 //!
 //! ## Features
-//! * `export_alloc_fns` - exports [`alloc::canonical_abi_realloc`] and
-//!   [`alloc::canonical_abi_free`] from generated WebAssembly for allocating
-//!   and freeing memory
 //! * `json` - functions for converting between [`quickjs::JSValueRef`] and JSON
 //!   byte slices
 //! * `messagepack` - functions for converting between [`quickjs::JSValueRef`]
@@ -54,7 +51,6 @@ pub use rquickjs as quickjs;
 pub use runtime::Runtime;
 use std::str;
 
-pub mod alloc;
 mod config;
 mod runtime;
 mod serde;

@@ -1,23 +1,36 @@
 //! A crate for creating Javy plugins
 //!
 //! Example usage:
-//! ```rust
-//! use javy_plugin_api::import_namespace;
-//! use javy_plugin_api::Config;
+//! ```ignore
+//! use javy_plugin_api::{
+//!     javy::{quickjs::prelude::Func, Runtime},
+//!     javy_plugin, Config,
+//! };
+//!
+//! wit_bindgen::generate!({ world: "my-javy-plugin-v1", generate_all });
+//!
+//! fn config() -> Config {
+//!     let mut config = Config::default();
+//!     config
+//!         .text_encoding(true)
+//!         .javy_stream_io(true);
+//!     config
+//! }
+//!
+//! fn modify_runtime(runtime: Runtime) -> Runtime {
+//!     runtime.context().with(|ctx| {
+//!         ctx.globals().set("plugin", true).unwrap();
+//!     });
+//!     runtime
+//! }
+//!
+//! struct Component;
 //!
 //! // Dynamically linked modules will use `my_javy_plugin_v1` as the import
 //! // namespace.
-//! import_namespace!("my_javy_plugin_v1");
+//! javy_plugin!("my-javy-plugin-v1", Component, config, modify_runtime);
 //!
-//! #[export_name = "initialize_runtime"]
-//! pub extern "C" fn initialize_runtime() {
-//!    let mut config = Config::default();
-//!    config
-//!        .text_encoding(true)
-//!        .javy_stream_io(true);
-//!
-//!    javy_plugin_api::initialize_runtime(config, |runtime| runtime).unwrap();
-//! }
+//! export!(Component);
 //! ```
 //!
 //! The crate will automatically add exports for a number of Wasm functions in
@@ -25,10 +38,10 @@
 //!
 //! # Core concepts
 //! * [`javy`] - a re-export of the [`javy`] crate.
-//! * [`import_namespace`] - required to provide an import namespace when the
-//!   plugin is used to generate dynamically linked modules.
-//! * [`initialize_runtime`] - used to configure the QuickJS runtime with a
-//!   [`Config`] to add behavior to the created [`javy::Runtime`].
+//! * [`javy_plugin`] - Takes a namespace to use for the module name for
+//!   imports, a struct to add function exports to, a config method, and a
+//!   method for updating the Javy runtime.
+//! * [`Config`] - to add behavior to the created [`javy::Runtime`].
 //!
 //! # Features
 //! * `json` - enables the `json` feature in the `javy` crate.
@@ -38,16 +51,17 @@
 // and we can safely reason about the accesses to the Javy Runtime. We also
 // don't want to introduce overhead from taking unnecessary mutex locks.
 #![allow(static_mut_refs)]
-use anyhow::{anyhow, bail, Error, Result};
+use anyhow::{anyhow, bail, Result};
 pub use config::Config;
 use javy::quickjs::{self, Ctx, Error as JSError, Function, Module, Value};
 use javy::{from_js_error, Runtime};
 use std::cell::OnceCell;
-use std::{process, slice, str};
+use std::str;
 
 pub use javy;
 
 mod config;
+mod javy_plugin;
 mod namespace;
 
 const FUNCTION_MODULE_NAME: &str = "function.mjs";
@@ -66,11 +80,13 @@ static EVENT_LOOP_ERR: &str = r#"
             "#;
 
 /// Initializes the Javy runtime.
-pub fn initialize_runtime<F>(config: Config, modify_runtime: F) -> Result<()>
+pub fn initialize_runtime<F, G>(config: F, modify_runtime: G) -> Result<()>
 where
-    F: FnOnce(Runtime) -> Runtime,
+    F: FnOnce() -> Config,
+    G: FnOnce(Runtime) -> Runtime,
 {
-    let runtime = Runtime::new(config.runtime_config).unwrap();
+    let config = config();
+    let runtime = Runtime::new(config.runtime_config)?;
     let runtime = modify_runtime(runtime);
     unsafe {
         RUNTIME.take(); // Allow re-initializing.
@@ -88,19 +104,15 @@ where
 
 /// Compiles JS source code to QuickJS bytecode.
 ///
-/// Returns a pointer to a buffer containing a 32-bit pointer to the bytecode byte array and the
-/// u32 length of the bytecode byte array.
+/// Returns result with the success value being a vector of the bytecode and
+/// failure being the error message.
 ///
 /// # Arguments
 ///
-/// * `js_src_ptr` - A pointer to the start of a byte array containing UTF-8 JS source code
-/// * `js_src_len` - The length of the byte array containing JS source code
-///
-/// # Safety
-///
-/// * `js_src_ptr` must reference a valid array of unsigned bytes of `js_src_len` length
-#[export_name = "compile_src"]
-pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -> *const u32 {
+/// * `config` - A function that returns a config for Javy
+/// * `modify_runtime` - A function that returns a Javy runtime
+/// * `js_src` - A slice of bytes representing the JS source code
+pub fn compile_src(js_src: &[u8]) -> Result<Vec<u8>> {
     // Use initialized runtime when compiling because certain runtime
     // configurations can cause different bytecode to be emitted.
     //
@@ -115,50 +127,17 @@ pub unsafe extern "C" fn compile_src(js_src_ptr: *const u8, js_src_len: usize) -
     // Setting `config.bignum_extension` to `true` will produce different
     // bytecode than if it were set to `false`.
     let runtime = unsafe { RUNTIME.get().unwrap() };
-    let js_src = str::from_utf8(slice::from_raw_parts(js_src_ptr, js_src_len)).unwrap();
-
-    let bytecode = runtime
-        .compile_to_bytecode(FUNCTION_MODULE_NAME, js_src)
-        .unwrap();
-
-    // We need the bytecode buffer to live longer than this function so it can be read from memory
-    let len = bytecode.len();
-    let bytecode_ptr = Box::leak(bytecode.into_boxed_slice()).as_ptr();
-    COMPILE_SRC_RET_AREA.with(|ret_area| {
-        ret_area.set([bytecode_ptr as u32, len as u32]).unwrap();
-        ret_area.get().unwrap().as_ptr()
-    })
+    runtime.compile_to_bytecode(FUNCTION_MODULE_NAME, &String::from_utf8_lossy(js_src))
 }
 
 /// Evaluates QuickJS bytecode and optionally invokes exported JS function with
 /// name.
 ///
-/// # Safety
+/// # Arguments
 ///
-/// * `bytecode_ptr` must reference a valid array of bytes of `bytecode_len`
-///   length.
-/// * If `fn_name_ptr` is not 0, it must reference a UTF-8 string with
-///   `fn_name_len` byte length.
-#[export_name = "invoke"]
-pub unsafe extern "C" fn invoke(
-    bytecode_ptr: *const u8,
-    bytecode_len: usize,
-    fn_name_ptr: *const u8,
-    fn_name_len: usize,
-) {
-    let bytecode = slice::from_raw_parts(bytecode_ptr, bytecode_len);
-    let fn_name = if !fn_name_ptr.is_null() && fn_name_len != 0 {
-        Some(str::from_utf8_unchecked(slice::from_raw_parts(
-            fn_name_ptr,
-            fn_name_len,
-        )))
-    } else {
-        None
-    };
-    run_bytecode(bytecode, fn_name);
-}
-
-fn run_bytecode(bytecode: &[u8], fn_name: Option<&str>) {
+/// * `bytecode` - The QuickJS bytecode
+/// * `fn_name` - The JS function name
+pub fn invoke(bytecode: &[u8], fn_name: Option<&str>) -> Result<()> {
     let runtime = unsafe { RUNTIME.get() }.unwrap();
     runtime
         .context()
@@ -179,7 +158,6 @@ fn run_bytecode(bytecode: &[u8], fn_name: Option<&str>) {
         })
         .map_err(|e| runtime.context().with(|cx| from_js_error(cx.clone(), e)))
         .and_then(|_: ()| ensure_pending_jobs(runtime))
-        .unwrap_or_else(handle_error)
 }
 
 /// Handles the promise returned by evaluating the JS bytecode.
@@ -216,9 +194,4 @@ fn ensure_pending_jobs(rt: &Runtime) -> Result<()> {
     } else {
         Ok(())
     }
-}
-
-fn handle_error(e: Error) {
-    eprintln!("{e}");
-    process::abort();
 }

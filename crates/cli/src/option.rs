@@ -1,6 +1,8 @@
 use anyhow::{bail, Result};
 use std::path::PathBuf;
 
+use crate::commands;
+
 /// An option group used for parsing strings to their group option representation.
 #[derive(Clone, Debug)]
 pub struct GroupOption<T>(pub Vec<T>);
@@ -170,6 +172,25 @@ impl OptionValue for PathBuf {
         match val {
             Some(v) => Ok(PathBuf::from(v)),
             None => bail!("Expected path argument"),
+        }
+    }
+}
+
+impl OptionValue for commands::Source {
+    fn help() -> &'static str {
+        "[=omitted|compressed|uncompressed]"
+    }
+
+    fn parse(val: Option<&str>) -> Result<Self>
+    where
+        Self: Sized,
+    {
+        match val {
+            Some("omitted") => Ok(Self::Omitted),
+            Some("compressed") => Ok(Self::Compressed),
+            Some("uncompressed") => Ok(Self::Uncompressed),
+            Some(_) => bail!("Unexpected flag. Valid options: omitted, compressed, uncompressed"),
+            None => bail!("Expected source argument"),
         }
     }
 }

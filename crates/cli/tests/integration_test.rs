@@ -1,6 +1,7 @@
 use anyhow::{bail, Result};
-use javy_runner::{Builder, Plugin, Runner, RunnerError};
-use std::{io::Read, path::PathBuf, process::Command, str};
+use javy_runner::{Builder, Plugin, Runner, RunnerError, Source};
+use std::{fs, io::Read, path::PathBuf, process::Command, str};
+use wasmparser::Parser;
 use wasmtime::{AsContextMut, Engine, Linker, Module, Store};
 use wasmtime_wasi::WasiCtxBuilder;
 
@@ -11,7 +12,7 @@ fn test_empty(builder: &mut Builder) -> Result<()> {
     let mut runner = builder.input("empty.js").build()?;
 
     let (_, _, fuel_consumed) = run(&mut runner, vec![]);
-    assert_fuel_consumed_within_threshold(22_590, fuel_consumed);
+    assert_fuel_consumed_within_threshold(23_048, fuel_consumed);
     Ok(())
 }
 
@@ -108,6 +109,16 @@ fn test_using_plugin_with_static_build_fails_with_runtime_config(
         .to_string()
         .contains("Property simd-json-builtins is not supported for runtime configuration"));
 
+    Ok(())
+}
+
+#[javy_cli_test(commands(not(Compile)))]
+fn test_using_invalid_plugin_with_static_build_fails(builder: &mut Builder) -> Result<()> {
+    let result = builder.plugin(Plugin::InvalidUser).build();
+    let err = result.err().unwrap();
+    assert!(err
+        .to_string()
+        .contains("Could not process plugin: Using unsupported legacy plugin API"));
     Ok(())
 }
 
@@ -263,7 +274,7 @@ fn test_exported_default_fn(builder: &mut Builder) -> Result<()> {
 }
 
 #[javy_cli_test]
-fn test_source_code_compression_default(builder: &mut Builder) -> Result<()> {
+fn test_source_code_default(builder: &mut Builder) -> Result<()> {
     let runner = builder.build()?;
     let javy_source = runner
         .javy_source_custom_section()
@@ -276,8 +287,8 @@ fn test_source_code_compression_default(builder: &mut Builder) -> Result<()> {
 }
 
 #[javy_cli_test]
-fn test_source_code_compression_enabled(builder: &mut Builder) -> Result<()> {
-    let runner = builder.compress_source_code(true).build()?;
+fn test_source_code_compressed(builder: &mut Builder) -> Result<()> {
+    let runner = builder.source_code(Source::Compressed).build()?;
     let javy_source = runner
         .javy_source_custom_section()
         .expect("Should have javy_source custom section");
@@ -289,8 +300,8 @@ fn test_source_code_compression_enabled(builder: &mut Builder) -> Result<()> {
 }
 
 #[javy_cli_test]
-fn test_source_code_compression_disabled(builder: &mut Builder) -> Result<()> {
-    let runner = builder.compress_source_code(false).build()?;
+fn test_source_code_uncompressed(builder: &mut Builder) -> Result<()> {
+    let runner = builder.source_code(Source::Uncompressed).build()?;
     let javy_source = runner
         .javy_source_custom_section()
         .expect("Should have javy_source custom section");
@@ -301,13 +312,18 @@ fn test_source_code_compression_disabled(builder: &mut Builder) -> Result<()> {
     Ok(())
 }
 
+#[javy_cli_test(commands(not(Compile)))]
+fn test_source_code_omitted(builder: &mut Builder) -> Result<()> {
+    let runner = builder.source_code(Source::Omitted).build()?;
+    assert!(
+        runner.javy_source_custom_section().is_none(),
+        "Should not have a source code section"
+    );
+    Ok(())
+}
+
 #[test]
 fn test_init_plugin() -> Result<()> {
-    // This test works by trying to call the `compile_src` function on the
-    // default plugin. The unwizened version should fail because the
-    // underlying Javy runtime has not been initialized yet. Using `init-plugin` on
-    // the unwizened plugin should initialize the runtime so calling
-    // `compile-src` on this module should succeed.
     let engine = Engine::default();
     let mut linker = Linker::new(&engine);
     wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |s| s)?;
@@ -319,19 +335,16 @@ fn test_init_plugin() -> Result<()> {
         .join("..")
         .join(
             std::path::Path::new("target")
-                .join("wasm32-wasip1")
+                .join("wasm32-wasip2")
                 .join("release")
                 .join("plugin.wasm"),
         );
 
-    // Check that plugin is in fact uninitialized at this point.
-    let module = Module::from_file(&engine, &uninitialized_plugin)?;
-    let instance = linker.instantiate(store.as_context_mut(), &module)?;
-    let result = instance
-        .get_typed_func::<(i32, i32), i32>(store.as_context_mut(), "compile_src")?
-        .call(store.as_context_mut(), (0, 0));
-    // This should fail because the runtime is uninitialized.
-    assert!(result.is_err());
+    // Check that plugin is in fact uninitialized at this point by seeing if it's a component.
+    assert!(
+        Parser::is_component(&fs::read(&uninitialized_plugin)?),
+        "Expected Wasm file to be component but was not a component"
+    );
 
     // Initialize the plugin.
     let output = Command::new(env!("CARGO_BIN_EXE_javy"))
@@ -351,7 +364,7 @@ fn test_init_plugin() -> Result<()> {
     let instance = linker.instantiate(store.as_context_mut(), &module)?;
     // This should succeed because the runtime is initialized.
     instance
-        .get_typed_func::<(i32, i32), i32>(store.as_context_mut(), "compile_src")?
+        .get_typed_func::<(i32, i32), i32>(store.as_context_mut(), "compile-src")?
         .call(store.as_context_mut(), (0, 0))?;
     Ok(())
 }

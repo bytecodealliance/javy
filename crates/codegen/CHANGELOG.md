@@ -8,6 +8,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [2.0.0] - 2025-08-28
+
 ### Added
 
 - `Generator` now has a `producer_version` method so the version in the
@@ -15,8 +17,13 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- The API plugins are required to conform to has been updated. Please consult
+  the extending Javy documentation for the new API.
 - `Plugin::new` now validates the bytes are a valid plugin and returns a
   result.
+- The `source_compression` method of `Generator` has been replaced with a
+  `source_embedding` method which takes `SourceEmbedding` argument, specifying
+  whether the source custom section should be omitted, uncompressed, or compressed.
 
 ## [1.0.0] - 2025-03-10
 

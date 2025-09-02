@@ -14,25 +14,25 @@ cli: plugin
 	cargo build --package=javy-cli
 
 plugin:
-	cargo build --package=javy-plugin --release --target=wasm32-wasip1 --features=$(PLUGIN_FEATURES)
-	cargo run --package=javy-plugin-processing target/wasm32-wasip1/release/plugin.wasm target/wasm32-wasip1/release/plugin_wizened.wasm
+	cargo build --package=javy-plugin --release --target=wasm32-wasip2
+	cargo run --package=javy-plugin-processing target/wasm32-wasip2/release/plugin.wasm target/wasm32-wasip2/release/plugin_wizened.wasm
 
 build-test-plugin: cli
-	cargo build --package=javy-test-plugin --release --target=wasm32-wasip1
-	target/debug/javy init-plugin target/wasm32-wasip1/release/test_plugin.wasm -o crates/runner/test_plugin.wasm
+	cargo build --package=javy-test-plugin --target=wasm32-wasip2 --release
+	cargo run --package=javy-plugin-processing -- target/wasm32-wasip2/release/test_plugin.wasm crates/runner/test_plugin.wasm
 
 docs:
 	cargo doc --package=javy-cli --open
-	cargo doc --package=javy-plugin --open --target=wasm32-wasip1
+	cargo doc --package=javy-plugin --open --target=wasm32-wasip2
 
 test-javy:
-	cargo hack test --package=javy --target=wasm32-wasip1 --each-feature -- --nocapture
+	cargo hack test --package=javy --target=wasm32-wasip2 --each-feature -- --nocapture
 
 test-plugin-api:
-	cargo hack test --package=javy-plugin-api --target=wasm32-wasip1 --each-feature -- --nocapture
+	cargo hack test --package=javy-plugin-api --target=wasm32-wasip2 --each-feature -- --nocapture
 
 test-plugin:
-	cargo test --package=javy-plugin --target=wasm32-wasip1 -- --nocapture
+	cargo test --package=javy-plugin --target=wasm32-wasip2 -- --nocapture
 
 test-plugin-processing:
 	cargo test --package=javy-plugin-processing -- --nocapture
@@ -42,7 +42,7 @@ test-codegen: cli
 	cargo hack test --package=javy-codegen --each-feature -- --nocapture
 
 test-cli: plugin build-test-plugin
-	cargo test --package=javy-cli --features=$(CLI_FEATURES) -- --nocapture
+	cargo test --package=javy-cli -- --nocapture
 
 test-runner:
 	cargo test --package=javy-runner -- --nocapture
@@ -57,19 +57,19 @@ fmt: fmt-javy fmt-plugin-api fmt-plugin fmt-plugin-processing fmt-cli fmt-codege
 
 fmt-javy:
 	cargo fmt --package=javy -- --check
-	cargo clippy --package=javy --target=wasm32-wasip1 --all-targets -- -D warnings
+	cargo clippy --package=javy --target=wasm32-wasip2 --all-targets --all-features -- -D warnings
 
 fmt-plugin-api:
 	cargo fmt --package=javy-plugin-api -- --check
-	cargo clippy --package=javy-plugin-api --target=wasm32-wasip1 --all-targets -- -D warnings
+	cargo clippy --package=javy-plugin-api --target=wasm32-wasip2 --all-targets --all-features -- -D warnings
 
 fmt-plugin:
 	cargo fmt --package=javy-plugin -- --check
-	cargo clippy --package=javy-plugin --target=wasm32-wasip1 --all-targets -- -D warnings
+	cargo clippy --package=javy-plugin --target=wasm32-wasip2 --all-targets --all-features -- -D warnings
 
 fmt-plugin-processing:
 	cargo fmt --package=javy-plugin-processing -- --check
-	cargo clippy --package=javy-plugin-processing --all-targets -- -D warnings
+	cargo clippy --package=javy-plugin-processing --all-targets --all-features -- -D warnings
 
 fmt-cli:
 	cargo fmt --package=javy-cli -- --check
@@ -77,4 +77,4 @@ fmt-cli:
 
 fmt-codegen:
 	cargo fmt --package=javy-codegen -- --check
-	cargo clippy --package=javy-codegen --all-targets -- -D warnings
+	cargo clippy --package=javy-codegen --all-targets --all-features -- -D warnings

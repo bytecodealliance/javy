@@ -11,13 +11,19 @@ jobs:
     name: javy_npm_test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+
+      - name: Read wasmtime version
+        id: wasmtime_version
+        shell: bash
+        run: |
+          VERSION=$(cargo metadata --format-version=1 --locked | jq '.packages[] | select(.name == "wasmtime") | .version' -r)
+          echo "wasmtime_version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Install wasmtime-cli
-        env:
-          WASMTIME_VERSION: 6.0.1
+        shell: bash
         run: |
-          wget -nv 'https://github.com/bytecodealliance/wasmtime/releases/download/v${{ env.WASMTIME_VERSION }}/wasmtime-v${{ env.WASMTIME_VERSION }}-x86_64-linux.tar.xz' -O /tmp/wasmtime.tar.xz
+          wget -nv 'https://github.com/bytecodealliance/wasmtime/releases/download/v${{ steps.wasmtime_version.outputs.wasmtime_version }}/wasmtime-v${{ steps.wasmtime_version.outputs.wasmtime_version }}-x86_64-linux.tar.xz' -O /tmp/wasmtime.tar.xz
           mkdir /tmp/wasmtime
           tar xvf /tmp/wasmtime.tar.xz --strip-components=1 -C /tmp/wasmtime
           echo "/tmp/wasmtime" >> $GITHUB_PATH

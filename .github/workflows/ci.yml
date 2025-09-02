@@ -11,7 +11,7 @@ jobs:
     name: CI
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: true
 
@@ -52,20 +52,10 @@ jobs:
         uses: taiki-e/install-action@cargo-hack
 
       - name: Compile plugin
-        run: cargo build -p javy-plugin --release --target=wasm32-wasip1
+        run: cargo build -p javy-plugin --release --target=wasm32-wasip2
 
-      - name: Test
-        run: |
-          cargo hack test --workspace \
-          --exclude=javy-cli \
-          --exclude=javy-codegen \
-          --exclude=javy-plugin-processing \
-          --exclude=javy-runner \
-          --exclude=javy-test-plugin \
-          --target=wasm32-wasip1 --each-feature -- --nocapture
-
-      - name: Test Runner
-        run: cargo test --package=javy-runner
+      - name: Check benchmarks
+        run: cargo check --package=javy-cli --benches
 
       - name: Lint
         run: |
@@ -75,18 +65,46 @@ jobs:
           --exclude=javy-plugin-processing \
           --exclude=javy-runner \
           --exclude=javy-fuzz \
-          --target=wasm32-wasip1 --all-targets -- -D warnings
+          --target=wasm32-wasip2 --all-targets --all-features -- -D warnings
 
       # We need to specify a different job for linting `javy-runner` given that
-      # it depends on Wasmtime and Cranelift cannot be compiled to `wasm32-wasip1`
+      # it depends on Wasmtime and Cranelift cannot be compiled to `wasm32-wasip2`
       - name: Lint Runner
-        run: cargo clippy --package=javy-runner -- -D warnings
+        run: cargo clippy --package=javy-runner --all-features -- -D warnings
+
+      - name: Lint CLI
+        run: |
+          cargo fmt -- --check
+          cargo clippy --package=javy-cli --all-targets --all-features -- -D warnings
+
+      - name: Lint CodeGen
+        run: |
+          cargo fmt -- --check
+          cargo clippy --package=javy-codegen --all-targets --all-features -- -D warnings
+
+      - name: Lint plugin processing
+        run: |
+          cargo fmt --package=javy-plugin-processing -- --check
+          cargo clippy --package=javy-plugin-processing --all-targets --all-features -- -D warnings
+
+      - name: Test
+        run: |
+          cargo hack test --workspace \
+          --exclude=javy-cli \
+          --exclude=javy-codegen \
+          --exclude=javy-plugin-processing \
+          --exclude=javy-runner \
+          --exclude=javy-test-plugin \
+          --target=wasm32-wasip2 --each-feature -- --nocapture
+
+      - name: Test Runner
+        run: cargo test --package=javy-runner
 
       - name: Build test-plugin
         run: |
-          cargo build --package=javy-test-plugin --release --target=wasm32-wasip1
+          cargo build --package=javy-test-plugin --release --target=wasm32-wasip2
           cargo build --package=javy-cli
-          target/debug/javy init-plugin target/wasm32-wasip1/release/test_plugin.wasm -o crates/runner/test_plugin.wasm
+          target/debug/javy init-plugin target/wasm32-wasip2/release/test_plugin.wasm -o crates/runner/test_plugin.wasm
 
       - name: Test CLI
         run: cargo test --package=javy-cli -- --nocapture
@@ -99,24 +117,6 @@ jobs:
       - name: Test plugin processing
         run: |
           cargo test --package=javy-plugin-processing -- --nocapture
-
-      - name: Check benchmarks
-        run: cargo check --package=javy-cli --benches
-
-      - name: Lint CLI
-        run: |
-          cargo fmt -- --check
-          cargo clippy --package=javy-cli --all-targets -- -D warnings
-
-      - name: Lint CodeGen
-        run: |
-          cargo fmt -- --check
-          cargo hack clippy --package=javy-codegen --all-targets --each-feature -- -D warnings
-
-      - name: Lint plugin processing
-        run: |
-          cargo fmt --package=javy-plugin-processing -- --check
-          cargo clippy --package=javy-plugin-processing --all-targets -- -D warnings
 
       - name: WPT
         run: |

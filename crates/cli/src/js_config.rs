@@ -19,8 +19,8 @@ impl ConfigSchema {
                 let engine = Engine::default();
                 let module = wasmtime::Module::new(&engine, cli_plugin.as_plugin().as_bytes())?;
                 let mut linker = Linker::new(&engine);
-                linker.define_unknown_imports_as_default_values(&module)?;
                 let mut store = wasmtime::Store::new(&engine, ());
+                linker.define_unknown_imports_as_default_values(&mut store, &module)?;
                 let instance = linker.instantiate(store.as_context_mut(), &module)?;
 
                 let ret_area = instance

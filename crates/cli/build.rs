@@ -34,7 +34,7 @@ fn copy_plugin() -> Result<()> {
         .unwrap()
         .parent()
         .unwrap()
-        .join("target/wasm32-wasip1/release");
+        .join("target/wasm32-wasip2/release");
     let plugin_path = module_path.join("plugin.wasm");
     let plugin_wizened_path = module_path.join("plugin_wizened.wasm");
 

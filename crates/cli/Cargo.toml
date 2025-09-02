@@ -29,6 +29,7 @@ wasmparser = { workspace = true }
 javy-runner = { path = "../runner/" }
 javy-test-macros = { path = "../test-macros/" }
 wasmtime-wasi = { workspace = true }
+wit-component = "0.236.1"
 
 [build-dependencies]
 anyhow = { workspace = true }
