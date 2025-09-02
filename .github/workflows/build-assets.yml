@@ -22,7 +22,7 @@ jobs:
     name: compile_plugin
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Make plugin
         run: make plugin
@@ -104,7 +104,7 @@ jobs:
             target: x86_64-pc-windows-msvc
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Should no-op except for macos-arm and linux-arm cases where that target won't be installed
       - name: Install target
