@@ -85,7 +85,7 @@ jobs:
       - name: Lint plugin processing
         run: |
           cargo fmt --package=javy-plugin-processing -- --check
-          cargo clippy --package=javy-plugin-processing --all-targets --all-features -- -D warnings
+          cargo clippy --package=javy-plugin-processing --release --all-targets --all-features -- -D warnings
 
       - name: Test
         run: |
@@ -116,7 +116,7 @@ jobs:
 
       - name: Test plugin processing
         run: |
-          cargo test --package=javy-plugin-processing -- --nocapture
+          cargo test --package=javy-plugin-processing --release -- --nocapture
 
       - name: WPT
         run: |
