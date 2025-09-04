@@ -20,21 +20,21 @@ edition = "2021"
 license = "Apache-2.0 WITH LLVM-exception"
 
 [workspace.dependencies]
-brotli = "8.0.1"
-clap = { version = "4.5.42", features = ["derive"] }
+brotli = "8.0.2"
+clap = { version = "4.5.47", features = ["derive"] }
 wizer = "10.0.0"
 wasmtime = "36"
 wasmtime-wasi = "36"
 wasm-opt = "0.116.1"
 anyhow = "1.0"
 javy = { path = "crates/javy", version = "5.0.1-alpha.1" }
-tempfile = "3.20.0"
-uuid = { version = "1.17", features = ["v4"] }
+tempfile = "3.21.0"
+uuid = { version = "1.18", features = ["v4"] }
 serde = { version = "1.0", default-features = false }
 serde_json = "1.0"
 walrus = "0.23.3"
 wit-bindgen = "0.43.0"
-wasmparser = "0.236.0"
+wasmparser = "0.238.0"
 
 [profile.release]
 lto = true
