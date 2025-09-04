@@ -111,7 +111,6 @@ jobs:
 
       - name: Test CodeGen
         run: |
-          target/release/javy emit-plugin -o crates/codegen/default_plugin.wasm
           CARGO_PROFILE_RELEASE_LTO=off cargo hack test --package=javy-codegen --release --each-feature -- --nocapture
 
       - name: Test plugin processing
