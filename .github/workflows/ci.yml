@@ -6,56 +6,26 @@ on:
       - main
   pull_request:
 
+# Jobs are split between WASI and native because GitHub Action workflows
+# impose a 10 GB limit on disk space and building for both WASI and native
+# targets exceeds the limit. So use one job for WASI targets and one for
+# native to keep us under the limit.
 jobs:
-  ci:
-    name: CI
+  wasi_ci:
+    name: WASI targets
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
         with:
           submodules: true
 
-      - name: Cargo Cache
-        uses: actions/cache@v4
+      - name: Setup cache and tools
+        uses: ./.github/actions/ci-common
         with:
-          path: ~/.cargo
-          key: cargo-${{ hashFiles('Cargo.toml') }}
-          restore-keys: |
-            cargo-${{ hashFiles('Cargo.toml') }}
-            cargo
-
-      - name: Cargo Target Cache
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: cargo-target-${{ hashFiles('Cargo.toml') }}
-          restore-keys: |
-            cargo-target-${{ hashFiles('Cargo.toml') }}
-            cargo-target
-
-      - name: Read wasmtime version
-        id: wasmtime_version
-        shell: bash
-        run: |
-          VERSION=$(cargo metadata --format-version=1 --locked | jq '.packages[] | select(.name == "wasmtime") | .version' -r)
-          echo "wasmtime_version=$VERSION" >> "$GITHUB_OUTPUT"
-
-      - name: Install wasmtime-cli
-        shell: bash
-        run: |
-          wget -nv 'https://github.com/bytecodealliance/wasmtime/releases/download/v${{ steps.wasmtime_version.outputs.wasmtime_version }}/wasmtime-v${{ steps.wasmtime_version.outputs.wasmtime_version }}-x86_64-linux.tar.xz' -O /tmp/wasmtime.tar.xz
-          mkdir /tmp/wasmtime
-          tar xvf /tmp/wasmtime.tar.xz --strip-components=1 -C /tmp/wasmtime
-          echo "/tmp/wasmtime" >> $GITHUB_PATH
-
-      - name: Install cargo-hack
-        uses: taiki-e/install-action@cargo-hack
+          cache-prefix: wasi
 
       - name: Compile plugin
         run: cargo build -p javy-plugin --release --target=wasm32-wasip2
-
-      - name: Check benchmarks
-        run: CARGO_PROFILE_RELEASE_LTO=off cargo check --package=javy-cli --release --benches
 
       - name: Lint
         run: |
@@ -67,26 +37,6 @@ jobs:
           --exclude=javy-fuzz \
           --target=wasm32-wasip2 --all-targets --all-features -- -D warnings
 
-      # We need to specify a different job for linting `javy-runner` given that
-      # it depends on Wasmtime and Cranelift cannot be compiled to `wasm32-wasip2`
-      - name: Lint Runner
-        run: cargo clippy --package=javy-runner --all-features -- -D warnings
-
-      - name: Lint CLI
-        run: |
-          cargo fmt -- --check
-          CARGO_PROFILE_RELEASE_LTO=off cargo clippy --package=javy-cli --release --all-targets --all-features -- -D warnings
-
-      - name: Lint CodeGen
-        run: |
-          cargo fmt -- --check
-          CARGO_PROFILE_RELEASE_LTO=off cargo clippy --package=javy-codegen --release --all-targets --all-features -- -D warnings
-
-      - name: Lint plugin processing
-        run: |
-          cargo fmt --package=javy-plugin-processing -- --check
-          cargo clippy --package=javy-plugin-processing --release --all-targets --all-features -- -D warnings
-
       - name: Test
         run: |
           cargo hack test --workspace \
@@ -97,26 +47,65 @@ jobs:
           --exclude=javy-test-plugin \
           --target=wasm32-wasip2 --each-feature -- --nocapture
 
-      - name: Test Runner
-        run: cargo test --package=javy-runner
+      - name: Build plugin
+        run: |
+          cargo build --package=javy-plugin --release --target=wasm32-wasip2
 
       - name: Build test-plugin
         run: |
           cargo build --package=javy-test-plugin --release --target=wasm32-wasip2
-          CARGO_PROFILE_RELEASE_LTO=off cargo build --package=javy-cli --release
-          target/release/javy init-plugin target/wasm32-wasip2/release/test_plugin.wasm -o crates/runner/test_plugin.wasm
 
-      - name: Test CLI
-        run: CARGO_PROFILE_RELEASE_LTO=off cargo test --package=javy-cli --release -- --nocapture
+      - name: Upload plugins
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugins
+          path: target/wasm32-wasip2/release/*.wasm
 
-      - name: Test CodeGen
+  native_ci:
+    name: Native targets
+    needs: wasi_ci
+    runs-on: ubuntu-latest
+    env:
+      CARGO_PROFILE_RELEASE_LTO: off
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: true
+
+      - name: Download plugins
+        uses: actions/download-artifact@v5
+        with:
+          name: plugins
+          path: target/wasm32-wasip2/release/
+
+      - name: Setup cache and tools
+        uses: ./.github/actions/ci-common
+        with:
+          cache-prefix: native
+
+      - name: Check benchmarks
+        run: cargo check --package=javy-cli --release --benches
+
+      - name: Lint
         run: |
-          target/release/javy emit-plugin -o crates/codegen/default_plugin.wasm
-          CARGO_PROFILE_RELEASE_LTO=off cargo hack test --package=javy-codegen --release --each-feature -- --nocapture
+          cargo clippy --workspace \
+          --exclude=javy \
+          --exclude=javy-plugin-api \
+          --exclude=javy-plugin \
+          --exclude=javy-test-plugin \
+          --release --all-targets --all-features -- -D warnings
 
-      - name: Test plugin processing
+      - name: Initialize test plugin
+        run: cargo run --package=javy-plugin-processing --release -- target/wasm32-wasip2/release/test_plugin.wasm crates/runner/test_plugin.wasm
+
+      - name: Test
         run: |
-          cargo test --package=javy-plugin-processing --release -- --nocapture
+          cargo hack test --workspace \
+          --exclude=javy \
+          --exclude=javy-plugin-api \
+          --exclude=javy-plugin \
+          --exclude=javy-test-plugin \
+          --release --each-feature -- --nocapture
 
       - name: WPT
         run: |
