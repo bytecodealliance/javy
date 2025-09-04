@@ -57,7 +57,7 @@ jobs:
       - name: Check benchmarks
         run: CARGO_PROFILE_RELEASE_LTO=off cargo check --package=javy-cli --release --benches
 
-      - name: Lint
+      - name: Lint WASI crates
         run: |
           cargo clippy --workspace \
           --exclude=javy-cli \
@@ -67,27 +67,18 @@ jobs:
           --exclude=javy-fuzz \
           --target=wasm32-wasip2 --all-targets --all-features -- -D warnings
 
-      # We need to specify a different job for linting `javy-runner` given that
-      # it depends on Wasmtime and Cranelift cannot be compiled to `wasm32-wasip2`
-      - name: Lint Runner
-        run: cargo clippy --package=javy-runner --all-features -- -D warnings
-
-      - name: Lint CLI
+      - name: Lint native crates
+        env:
+          CARGO_PROFILE_RELEASE_LTO: off
         run: |
-          cargo fmt -- --check
-          CARGO_PROFILE_RELEASE_LTO=off cargo clippy --package=javy-cli --release --all-targets --all-features -- -D warnings
+          cargo clippy --workspace \
+          --exclude=javy \
+          --exclude=javy-plugin-api \
+          --exclude=javy-plugin \
+          --exclude=javy-test-plugin \
+          --all-targets --all-features -- -D warnings
 
-      - name: Lint CodeGen
-        run: |
-          cargo fmt -- --check
-          CARGO_PROFILE_RELEASE_LTO=off cargo clippy --package=javy-codegen --release --all-targets --all-features -- -D warnings
-
-      - name: Lint plugin processing
-        run: |
-          cargo fmt --package=javy-plugin-processing -- --check
-          cargo clippy --package=javy-plugin-processing --release --all-targets --all-features -- -D warnings
-
-      - name: Test
+      - name: Test WASI crates
         run: |
           cargo hack test --workspace \
           --exclude=javy-cli \
@@ -97,26 +88,25 @@ jobs:
           --exclude=javy-test-plugin \
           --target=wasm32-wasip2 --each-feature -- --nocapture
 
-      - name: Test Runner
-        run: cargo test --package=javy-runner
-
       - name: Build test-plugin
         run: |
           cargo build --package=javy-test-plugin --release --target=wasm32-wasip2
-          CARGO_PROFILE_RELEASE_LTO=off cargo build --package=javy-cli --release
-          target/release/javy init-plugin target/wasm32-wasip2/release/test_plugin.wasm -o crates/runner/test_plugin.wasm
+          CARGO_PROFILE_RELEASE_LTO=off cargo run --package=javy-plugin-processing --release -- target/wasm32-wasip2/release/test_plugin.wasm crates/runner/test_plugin.wasm
 
-      - name: Test CLI
-        run: CARGO_PROFILE_RELEASE_LTO=off cargo test --package=javy-cli --release -- --nocapture
+      - name: Copy default plugin for codegen crate
+        run: cp target/wasm32-wasip2/release/plugin_wizened.wasm crates/codegen/default_plugin.wasm
 
-      - name: Test CodeGen
+      - name: Test native crates
+        env:
+          CARGO_PROFILE_RELEASE_LTO: off
         run: |
-          target/release/javy emit-plugin -o crates/codegen/default_plugin.wasm
-          CARGO_PROFILE_RELEASE_LTO=off cargo hack test --package=javy-codegen --release --each-feature -- --nocapture
-
-      - name: Test plugin processing
-        run: |
-          cargo test --package=javy-plugin-processing --release -- --nocapture
+          cargo hack test --workspace \
+          --exclude=javy-cli \
+          --exclude=javy-codegen \
+          --exclude=javy-plugin-processing \
+          --exclude=javy-runner \
+          --exclude=javy-test-plugin \
+          --each-feature -- --nocapture
 
       - name: WPT
         run: |
