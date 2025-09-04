@@ -36,6 +36,9 @@ fuzz_target!(|data: ArbitraryValue| {
     let _ = exec(&data);
 });
 
+// Allowing the refs since the runtimes are setup once and never changed so
+// this is safe.
+#[allow(static_mut_refs)]
 fn exec(data: &ArbitraryValue) -> Result<()> {
     let rt = unsafe { RT.as_ref().unwrap() };
     let ref_rt = unsafe { REF_RT.as_ref().unwrap() };
