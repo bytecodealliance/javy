@@ -1,0 +1,44 @@
+name: "Common CI setup"
+description: "Sets up cargo cache, wasmtime, and cargo-hack"
+inputs:
+  cache-prefix:
+    description: "Prefix for cache keys"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Cargo Cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo
+        key: ${{ inputs.cache-prefix }}-cargo-${{ hashFiles('Cargo.toml') }}
+        restore-keys: |
+          ${{ inputs.cache-prefix }}-cargo-${{ hashFiles('Cargo.toml') }}
+          ${{ inputs.cache-prefix }}-cargo
+
+    - name: Cargo Target Cache
+      uses: actions/cache@v4
+      with:
+        path: target
+        key: ${{ inputs.cache-prefix }}-cargo-target-${{ hashFiles('Cargo.toml') }}
+        restore-keys: |
+          ${{ inputs.cache-prefix }}-cargo-target-${{ hashFiles('Cargo.toml') }}
+          ${{ inputs.cache-prefix }}-cargo-target
+
+    - name: Read wasmtime version
+      id: wasmtime_version
+      shell: bash
+      run: |
+        VERSION=$(cargo metadata --format-version=1 --locked | jq '.packages[] | select(.name == "wasmtime") | .version' -r)
+        echo "wasmtime_version=$VERSION" >> "$GITHUB_OUTPUT"
+
+    - name: Install wasmtime-cli
+      shell: bash
+      run: |
+        wget -nv 'https://github.com/bytecodealliance/wasmtime/releases/download/v${{ steps.wasmtime_version.outputs.wasmtime_version }}/wasmtime-v${{ steps.wasmtime_version.outputs.wasmtime_version }}-x86_64-linux.tar.xz' -O /tmp/wasmtime.tar.xz
+        mkdir /tmp/wasmtime
+        tar xvf /tmp/wasmtime.tar.xz --strip-components=1 -C /tmp/wasmtime
+        echo "/tmp/wasmtime" >> $GITHUB_PATH
+
+    - name: Install cargo-hack
+      uses: taiki-e/install-action@cargo-hack

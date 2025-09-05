@@ -39,7 +39,6 @@ test-plugin-processing:
 	cargo test --package=javy-plugin-processing --release -- --nocapture
 
 test-codegen: cli
-	target/release/javy emit-plugin -o crates/codegen/default_plugin.wasm
 	CARGO_PROFILE_RELEASE_LTO=off cargo hack test --package=javy-codegen --release --each-feature -- --nocapture
 
 # Test in release mode to skip some debug assertions
