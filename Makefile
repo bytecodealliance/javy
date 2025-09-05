@@ -15,11 +15,11 @@ cli: plugin
 
 plugin:
 	cargo build --package=javy-plugin --release --target=wasm32-wasip2
-	cargo run --package=javy-plugin-processing target/wasm32-wasip2/release/plugin.wasm target/wasm32-wasip2/release/plugin_wizened.wasm
+	cargo run --package=javy-plugin-processing --release target/wasm32-wasip2/release/plugin.wasm target/wasm32-wasip2/release/plugin_wizened.wasm
 
 build-test-plugin: cli
 	cargo build --package=javy-test-plugin --target=wasm32-wasip2 --release
-	cargo run --package=javy-plugin-processing -- target/wasm32-wasip2/release/test_plugin.wasm crates/runner/test_plugin.wasm
+	cargo run --package=javy-plugin-processing --release -- target/wasm32-wasip2/release/test_plugin.wasm crates/runner/test_plugin.wasm
 
 docs:
 	cargo doc --package=javy-cli --open
@@ -35,10 +35,9 @@ test-plugin:
 	cargo test --package=javy-plugin --target=wasm32-wasip2 -- --nocapture
 
 test-plugin-processing:
-	cargo test --package=javy-plugin-processing -- --nocapture
+	cargo test --package=javy-plugin-processing --release -- --nocapture
 
 test-codegen: cli
-	target/debug/javy emit-plugin -o crates/codegen/default_plugin.wasm
 	cargo hack test --package=javy-codegen --each-feature -- --nocapture
 
 test-cli: plugin build-test-plugin
@@ -69,7 +68,7 @@ fmt-plugin:
 
 fmt-plugin-processing:
 	cargo fmt --package=javy-plugin-processing -- --check
-	cargo clippy --package=javy-plugin-processing --all-targets --all-features -- -D warnings
+	cargo clippy --package=javy-plugin-processing --release --all-targets --all-features -- -D warnings
 
 fmt-cli:
 	cargo fmt --package=javy-cli -- --check

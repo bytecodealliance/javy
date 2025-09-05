@@ -81,6 +81,10 @@ criteria = "safe-to-deploy"
 version = "1.0.0"
 criteria = "safe-to-deploy"
 
+[[exemptions.bitflags]]
+version = "2.9.4"
+criteria = "safe-to-deploy"
+
 [[exemptions.bitvec]]
 version = "1.0.1"
 criteria = "safe-to-deploy"
@@ -90,7 +94,7 @@ version = "0.10.4"
 criteria = "safe-to-deploy"
 
 [[exemptions.brotli]]
-version = "8.0.1"
+version = "8.0.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.brotli-decompressor]]
@@ -630,7 +634,7 @@ version = "1.2.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.uuid]]
-version = "1.17.0"
+version = "1.18.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.value-trait]]
@@ -666,7 +670,7 @@ version = "0.238.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.wasm-metadata]]
-version = "0.236.1"
+version = "0.238.0"
 criteria = "safe-to-run"
 
 [[exemptions.wasm-opt]]
@@ -688,6 +692,14 @@ criteria = "safe-to-deploy"
 [[exemptions.wasmparser]]
 version = "0.238.0"
 criteria = "safe-to-deploy"
+
+[[exemptions.wasmprinter]]
+version = "0.236.1"
+criteria = "safe-to-deploy"
+
+[[exemptions.wasmprinter]]
+version = "0.238.0"
+criteria = "safe-to-run"
 
 [[exemptions.wast]]
 version = "238.0.0"
@@ -714,12 +726,16 @@ version = "0.4.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.wit-component]]
-version = "0.236.1"
+version = "0.238.0"
 criteria = "safe-to-run"
 
 [[exemptions.wit-parser]]
 version = "0.236.1"
 criteria = "safe-to-deploy"
+
+[[exemptions.wit-parser]]
+version = "0.238.0"
+criteria = "safe-to-run"
 
 [[exemptions.witx]]
 version = "0.9.1"

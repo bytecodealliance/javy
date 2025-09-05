@@ -520,7 +520,7 @@ end = "2025-01-03"
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-03-01"
-end = "2025-08-14"
+end = "2026-09-04"
 
 [[trusted.system-interface]]
 criteria = "safe-to-deploy"

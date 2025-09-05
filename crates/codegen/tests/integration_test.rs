@@ -7,20 +7,14 @@ use javy_codegen::{Generator, LinkingKind, Plugin, WitOptions, JS};
 fn test_empty() -> Result<()> {
     // Load valid JS from file.
     let js = JS::from_file(
-        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        &cargo_manifest_dir()
             .join("tests")
             .join("sample-scripts")
-            .join("empty.js")
-            .as_path(),
-    )?;
-
-    // Load existing Javy plugin.
-    let plugin = Plugin::new_from_path(
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("default_plugin.wasm"),
+            .join("empty.js"),
     )?;
 
     // Configure code generator.
-    let mut generator = Generator::new(plugin);
+    let mut generator = Generator::new(default_plugin()?);
     generator.linking(LinkingKind::Static);
 
     // Generate valid Wasm module.
@@ -34,19 +28,16 @@ fn test_empty() -> Result<()> {
 
 #[test]
 fn test_snapshot_for_dynamically_linked_module() -> Result<()> {
-    let cargo_manifest_dir = cargo_manifest_dir();
     let sample_scripts = sample_scripts_dir();
     let js = JS::from_file(&sample_scripts.join("exported-functions.js"))?;
-    let wasm = Generator::new(Plugin::new_from_path(
-        cargo_manifest_dir.join("default_plugin.wasm"),
-    )?)
-    .linking(LinkingKind::Dynamic)
-    .wit_opts(WitOptions::from_tuple((
-        Some(sample_scripts.join("exported-functions.wit")),
-        Some("exported-logs".into()),
-    ))?)
-    .producer_version("snapshot".into())
-    .generate(&js)?;
+    let wasm = Generator::new(default_plugin()?)
+        .linking(LinkingKind::Dynamic)
+        .wit_opts(WitOptions::from_tuple((
+            Some(sample_scripts.join("exported-functions.wit")),
+            Some("exported-logs".into()),
+        ))?)
+        .producer_version("snapshot".into())
+        .generate(&js)?;
     let wat = wasmprinter::print_bytes(wasm)?;
     insta::assert_snapshot!("default_dynamic", wat);
     Ok(())
@@ -81,4 +72,16 @@ fn cargo_manifest_dir() -> PathBuf {
 
 fn sample_scripts_dir() -> PathBuf {
     cargo_manifest_dir().join("tests").join("sample-scripts")
+}
+
+fn default_plugin() -> Result<Plugin> {
+    Plugin::new_from_path(
+        cargo_manifest_dir()
+            .join("..")
+            .join("..")
+            .join("target")
+            .join("wasm32-wasip2")
+            .join("release")
+            .join("plugin_wizened.wasm"),
+    )
 }
