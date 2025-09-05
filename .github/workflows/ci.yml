@@ -24,9 +24,6 @@ jobs:
         with:
           cache-prefix: wasi
 
-      - name: Compile plugin
-        run: cargo build -p javy-plugin --release --target=wasm32-wasip2
-
       - name: Lint
         run: |
           cargo clippy --workspace \
