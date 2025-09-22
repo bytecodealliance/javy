@@ -86,7 +86,7 @@ fn test_console_log(builder: &mut Builder) -> Result<()> {
     Ok(())
 }
 
-#[javy_cli_test(commands(not(Compile)))]
+#[javy_cli_test]
 fn test_using_plugin_with_static_build(builder: &mut Builder) -> Result<()> {
     let mut runner = builder.plugin(Plugin::User).input("plugin.js").build()?;
 
@@ -96,7 +96,7 @@ fn test_using_plugin_with_static_build(builder: &mut Builder) -> Result<()> {
     Ok(())
 }
 
-#[javy_cli_test(commands(not(Compile)))]
+#[javy_cli_test]
 fn test_using_plugin_with_static_build_fails_with_runtime_config(
     builder: &mut Builder,
 ) -> Result<()> {
@@ -112,13 +112,16 @@ fn test_using_plugin_with_static_build_fails_with_runtime_config(
     Ok(())
 }
 
-#[javy_cli_test(commands(not(Compile)))]
+#[javy_cli_test]
 fn test_using_invalid_plugin_with_static_build_fails(builder: &mut Builder) -> Result<()> {
     let result = builder.plugin(Plugin::InvalidUser).build();
     let err = result.err().unwrap();
-    assert!(err
-        .to_string()
-        .contains("Could not process plugin: Using unsupported legacy plugin API"));
+    assert!(
+        err.to_string()
+            .contains("Could not process plugin: Using unsupported legacy plugin API"),
+        "Expected a different string but got: {}",
+        err,
+    );
     Ok(())
 }
 
@@ -132,7 +135,7 @@ fn test_readme_script(builder: &mut Builder) -> Result<()> {
     Ok(())
 }
 
-#[javy_cli_test(commands(not(Compile)))]
+#[javy_cli_test]
 fn test_promises_with_event_loop(builder: &mut Builder) -> Result<()> {
     let mut runner = builder.input("promise.js").event_loop(true).build()?;
 
@@ -153,7 +156,7 @@ fn test_promises_without_event_loop(builder: &mut Builder) -> Result<()> {
     Ok(())
 }
 
-#[javy_cli_test(commands(not(Compile)))]
+#[javy_cli_test]
 fn test_promise_top_level_await(builder: &mut Builder) -> Result<()> {
     let mut runner = builder
         .input("top-level-await.js")
@@ -180,7 +183,7 @@ fn test_exported_functions(builder: &mut Builder) -> Result<()> {
     Ok(())
 }
 
-#[javy_cli_test(commands(not(Compile)))]
+#[javy_cli_test]
 fn test_exported_promises(builder: &mut Builder) -> Result<()> {
     let mut runner = builder
         .input("exported-promise-fn.js")
@@ -312,7 +315,7 @@ fn test_source_code_uncompressed(builder: &mut Builder) -> Result<()> {
     Ok(())
 }
 
-#[javy_cli_test(commands(not(Compile)))]
+#[javy_cli_test]
 fn test_source_code_omitted(builder: &mut Builder) -> Result<()> {
     let runner = builder.source_code(Source::Omitted).build()?;
     assert!(

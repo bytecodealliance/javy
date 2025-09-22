@@ -10,9 +10,7 @@ use clap::Parser;
 use commands::CodegenOptionGroup;
 use javy_codegen::{Generator, LinkingKind, Plugin, SourceEmbedding, WitOptions, JS};
 use js_config::JsConfig;
-use plugin::{
-    CliPlugin, PluginKind, UninitializedPlugin, PLUGIN_MODULE, QUICKJS_PROVIDER_V2_MODULE,
-};
+use plugin::{CliPlugin, PluginKind, UninitializedPlugin, PLUGIN_MODULE};
 use std::fs;
 use std::fs::File;
 use std::io::Write;
@@ -22,56 +20,6 @@ fn main() -> Result<()> {
 
     match &args.command {
         Command::EmitPlugin(opts) => emit_plugin(opts),
-        Command::Compile(opts) => {
-            eprintln!(
-                r#"
-                The `compile` command is deprecated and will be removed.
-
-                Refer to https://github.com/bytecodealliance/javy/issues/702 for
-                details.
-
-                Use the `build` command instead.
-            "#
-            );
-
-            let js = JS::from_file(&opts.input)?;
-
-            let plugin = if opts.dynamic {
-                Plugin::new_javy_quickjs_v2_plugin(QUICKJS_PROVIDER_V2_MODULE)
-            } else {
-                Plugin::new(PLUGIN_MODULE.into())?
-            };
-
-            let mut generator = Generator::new(plugin);
-
-            if opts.dynamic {
-                generator
-                    .linking(LinkingKind::Dynamic)
-                    .linking_v2_plugin(true);
-            } else {
-                generator.linking(LinkingKind::Static);
-            }
-
-            generator
-                .wit_opts(WitOptions::from_tuple((
-                    opts.wit.clone(),
-                    opts.wit_world.clone(),
-                ))?)
-                .js_runtime_config(JsConfig::default().to_json()?);
-
-            if opts.no_source_compression {
-                generator.source_embedding(SourceEmbedding::Uncompressed);
-            } else {
-                generator.source_embedding(SourceEmbedding::Compressed);
-            }
-
-            set_producer_version(&mut generator);
-
-            let wasm = generator.generate(&js)?;
-
-            fs::write(&opts.output, wasm)?;
-            Ok(())
-        }
         Command::Build(opts) => {
             let js = JS::from_file(&opts.input)?;
             let codegen_opts: CodegenOptionGroup = opts.codegen.clone().try_into()?;

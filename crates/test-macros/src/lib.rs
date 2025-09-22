@@ -184,33 +184,11 @@ struct CliTestConfig {
     /// Root directory to load test scripts from, relative to the crate's
     /// directory (i.e., `CARGO_MANIFEST_DIR`)
     scripts_root: String,
-    /// Which commands to generate the test for. It can be either `compile` or
-    /// `build`.
-    commands: Vec<Ident>,
     /// Tests Javy's dynamic linking capabilities.
     dynamic: bool,
 }
 
 impl CliTestConfig {
-    fn commands_from(&mut self, meta: &ParseNestedMeta) -> Result<()> {
-        meta.parse_nested_meta(|meta| {
-            if meta.path.is_ident("not") {
-                meta.parse_nested_meta(|meta| {
-                    if meta.path.is_ident("Compile") || meta.path.is_ident("Build") {
-                        let id = meta.path.require_ident()?.clone();
-                        self.commands.retain(|s| *s != id);
-                        Ok(())
-                    } else {
-                        Err(meta.error("Unknown command"))
-                    }
-                })
-            } else {
-                Err(meta.error("Unknown identifier"))
-            }
-        })?;
-        Ok(())
-    }
-
     fn root_from(&mut self, meta: &ParseNestedMeta) -> Result<()> {
         if meta.path.is_ident("root") {
             let val = meta.value()?;
@@ -238,10 +216,6 @@ impl Default for CliTestConfig {
     fn default() -> Self {
         Self {
             scripts_root: String::from("tests/sample-scripts"),
-            commands: vec![
-                Ident::new("Compile", Span::call_site()),
-                Ident::new("Build", Span::call_site()),
-            ],
             dynamic: false,
         }
     }
@@ -251,9 +225,7 @@ impl Default for CliTestConfig {
 pub fn javy_cli_test(attrs: TokenStream, item: TokenStream) -> TokenStream {
     let mut config = CliTestConfig::default();
     let config_parser = syn::meta::parser(|meta| {
-        if meta.path.is_ident("commands") {
-            config.commands_from(&meta)
-        } else if meta.path.is_ident("root") {
+        if meta.path.is_ident("root") {
             config.root_from(&meta)
         } else if meta.path.is_ident("dyn") {
             config.dynamic_from(&meta)
@@ -271,66 +243,44 @@ pub fn javy_cli_test(attrs: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 fn expand_cli_tests(test_config: &CliTestConfig, func: syn::ItemFn) -> Result<TokenStream> {
-    let mut tests = vec![quote! { #func }];
     let attrs = &func.attrs;
 
-    for ident in &test_config.commands {
-        let command_name = ident.to_string();
-        let func_name = &func.sig.ident;
-        let ret = match &func.sig.output {
-            ReturnType::Default => quote! { () },
-            ReturnType::Type(_, ty) => quote! { -> #ty },
-        };
-        let test_name = Ident::new(
-            &format!("{}_{}", command_name.to_lowercase(), func_name),
-            func_name.span(),
-        );
+    let func_name = &func.sig.ident;
+    let ret = match &func.sig.output {
+        ReturnType::Default => quote! { () },
+        ReturnType::Type(_, ty) => quote! { -> #ty },
+    };
+    let test_name = Ident::new(&format!("build_{func_name}"), func_name.span());
 
-        let preload_setup = if test_config.dynamic {
-            // The compile commmand will remain frozen until it is deleted.
-            // Until then we test with a frozen artifact downloaded from the
-            // releases.
-            if command_name == "Compile" {
-                quote! {
-                    let plugin = javy_runner::Plugin::V2;
-                    builder.preload(
-                        plugin.namespace().into(),
-                        plugin.path(),
-                    );
-                    builder.plugin(plugin);
-                }
-            } else {
-                quote! {
-                    let plugin = javy_runner::Plugin::DefaultAsUser;
-                    builder.preload(plugin.namespace().into(), plugin.path());
-                    builder.plugin(plugin);
-                }
-            }
-        } else {
-            quote! {}
-        };
+    let preload_setup = if test_config.dynamic {
+        quote! {
+            let plugin = javy_runner::Plugin::DefaultAsUser;
+            builder.preload(plugin.namespace().into(), plugin.path());
+            builder.plugin(plugin);
+        }
+    } else {
+        quote! {}
+    };
 
-        let root = test_config.scripts_root.clone();
+    let root = test_config.scripts_root.clone();
 
-        let tok = quote! {
-            #[test]
-            #(#attrs)*
-            fn #test_name() #ret {
-                let mut builder = javy_runner::Builder::default();
-                builder.command(javy_runner::JavyCommand::#ident);
-                builder.root(std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(#root));
-                builder.bin(env!("CARGO_BIN_EXE_javy"));
+    let tok = quote! {
+        #[test]
+        #(#attrs)*
+        fn #test_name() #ret {
+            let mut builder = javy_runner::Builder::default();
+            builder.root(std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(#root));
+            builder.bin(env!("CARGO_BIN_EXE_javy"));
 
-                #preload_setup
+            #preload_setup
 
-                #func_name(&mut builder)
-            }
-        };
+            #func_name(&mut builder)
+        }
+    };
 
-        tests.push(tok);
-    }
     Ok(quote! {
-        #(#tests)*
+        #func
+        #tok
     }
     .into())
 }

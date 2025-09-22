@@ -48,9 +48,10 @@ jobs:
         run: |
           cargo build --package=javy-plugin --release --target=wasm32-wasip2
 
-      - name: Build test-plugin
+      - name: Build test plugins
         run: |
           cargo build --package=javy-test-plugin --release --target=wasm32-wasip2
+          cargo build --package=javy-test-invalid-plugin --release --target=wasm32-unknown-unknown
 
       - name: Upload plugins
         uses: actions/upload-artifact@v4

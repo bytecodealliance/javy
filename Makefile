@@ -18,8 +18,9 @@ plugin:
 	cargo build --package=javy-plugin --release --target=wasm32-wasip2
 	cargo run --package=javy-plugin-processing --release target/wasm32-wasip2/release/plugin.wasm target/wasm32-wasip2/release/plugin_wizened.wasm
 
-build-test-plugin: cli
+build-test-plugins: cli
 	cargo build --package=javy-test-plugin --target=wasm32-wasip2 --release
+	cargo build --package=javy-test-invalid-plugin --target=wasm32-unknown-unknown --release
 	cargo run --package=javy-plugin-processing --release -- target/wasm32-wasip2/release/test_plugin.wasm crates/runner/test_plugin.wasm
 
 docs:
@@ -44,7 +45,7 @@ test-codegen: cli
 # Test in release mode to skip some debug assertions
 # Note: to make this faster, the engine should be optimized beforehand (wasm-strip + wasm-opt).
 # Disabling LTO substantially improves compile time
-test-cli: plugin build-test-plugin
+test-cli: plugin build-test-plugins
 	CARGO_PROFILE_RELEASE_LTO=off cargo test --package=javy-cli --release -- --nocapture
 
 test-runner:
