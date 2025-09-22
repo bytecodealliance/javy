@@ -42,6 +42,7 @@ jobs:
           --exclude=javy-plugin-processing \
           --exclude=javy-runner \
           --exclude=javy-test-plugin \
+          --exclude=javy-test-invalid-plugin \
           --target=wasm32-wasip2 --each-feature -- --nocapture
 
       - name: Build plugin
