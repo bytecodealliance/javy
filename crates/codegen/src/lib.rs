@@ -80,10 +80,10 @@ pub(crate) mod js;
 pub(crate) mod plugin;
 pub(crate) mod wit;
 
+use crate::exports::Exports;
 pub use crate::js::JS;
 pub use crate::plugin::Plugin;
 pub use crate::wit::WitOptions;
-use crate::{exports::Exports, plugin::PluginKind};
 
 use transform::SourceCodeSection;
 use walrus::{
@@ -124,21 +124,14 @@ pub enum SourceEmbedding {
 #[derive(Debug)]
 pub(crate) struct Identifiers {
     cabi_realloc: FunctionId,
-    eval_bytecode: Option<FunctionId>,
     invoke: FunctionId,
     memory: MemoryId,
 }
 
 impl Identifiers {
-    fn new(
-        cabi_realloc: FunctionId,
-        eval_bytecode: Option<FunctionId>,
-        invoke: FunctionId,
-        memory: MemoryId,
-    ) -> Self {
+    fn new(cabi_realloc: FunctionId, invoke: FunctionId, memory: MemoryId) -> Self {
         Self {
             cabi_realloc,
-            eval_bytecode,
             invoke,
             memory,
         }
@@ -177,8 +170,6 @@ pub struct Generator {
     pub(crate) wit_opts: WitOptions,
     /// JavaScript function exports.
     pub(crate) function_exports: Exports,
-    /// The kind of plugin a generator will link.
-    plugin_kind: PluginKind,
     /// An optional JS runtime config provided as JSON bytes.
     js_runtime_config: Vec<u8>,
     /// The version string to include in the producers custom section.
@@ -209,18 +200,6 @@ impl Generator {
     /// Set the wit options. (default: Empty [`WitOptions`])
     pub fn wit_opts(&mut self, wit_opts: wit::WitOptions) -> &mut Self {
         self.wit_opts = wit_opts;
-        self
-    }
-
-    #[cfg(feature = "plugin_internal")]
-    /// Set true if linking with a V2 plugin module.
-    pub fn linking_v2_plugin(&mut self, value: bool) -> &mut Self {
-        self.plugin_kind = if value {
-            PluginKind::V2
-        } else {
-            PluginKind::User
-        };
-
         self
     }
 
@@ -282,9 +261,7 @@ impl Generator {
     pub(crate) fn resolve_identifiers(&self, module: &mut Module) -> Result<Identifiers> {
         match self.linking {
             LinkingKind::Static => {
-                let cabi_realloc = module
-                    .exports
-                    .get_func(self.plugin_kind.realloc_fn_name())?;
+                let cabi_realloc = module.exports.get_func("cabi_realloc")?;
                 let invoke = module.exports.get_func("invoke")?;
                 let ExportItem::Memory(memory) = module
                     .exports
@@ -295,52 +272,28 @@ impl Generator {
                 else {
                     anyhow::bail!("Export with name memory must be of type memory")
                 };
-                Ok(Identifiers::new(cabi_realloc, None, invoke, memory))
+                Ok(Identifiers::new(cabi_realloc, invoke, memory))
             }
             LinkingKind::Dynamic => {
                 // All code by default is assumed to be linking against a default
-                // or a user provided plugin. However V2 plugins require a different
-                // import namespace to be used instead so we use the plugin_kind to
-                // to determine the import_namespace.
-                let import_namespace = self.plugin_kind.import_namespace(&self.plugin)?;
+                // or a user provided plugin.
+                let import_namespace = self.plugin.import_namespace()?;
 
                 let cabi_realloc_type = module.types.add(
                     &[ValType::I32, ValType::I32, ValType::I32, ValType::I32],
                     &[ValType::I32],
                 );
-                let (cabi_realloc_fn_id, _) = module.add_import_func(
-                    &import_namespace,
-                    self.plugin_kind.realloc_fn_name(),
-                    cabi_realloc_type,
-                );
+                let (cabi_realloc_fn_id, _) =
+                    module.add_import_func(&import_namespace, "cabi_realloc", cabi_realloc_type);
 
-                // User plugins can use `invoke` with a null function name.
-                // Non-v2 plugins also won't have an `eval_bytecode` function to
-                // import.
-                let eval_bytecode_fn_id = if self.plugin_kind == PluginKind::V2 {
-                    let eval_bytecode_type = module.types.add(&[ValType::I32, ValType::I32], &[]);
-                    let (eval_bytecode_fn_id, _) = module.add_import_func(
-                        &import_namespace,
-                        "eval_bytecode",
-                        eval_bytecode_type,
-                    );
-                    Some(eval_bytecode_fn_id)
-                } else {
-                    None
-                };
-
-                let invoke_params = if self.plugin_kind == PluginKind::V2 {
-                    [ValType::I32, ValType::I32, ValType::I32, ValType::I32].as_slice()
-                } else {
-                    [
-                        ValType::I32,
-                        ValType::I32,
-                        ValType::I32,
-                        ValType::I32,
-                        ValType::I32,
-                    ]
-                    .as_slice()
-                };
+                let invoke_params = [
+                    ValType::I32,
+                    ValType::I32,
+                    ValType::I32,
+                    ValType::I32,
+                    ValType::I32,
+                ]
+                .as_slice();
                 let invoke_type = module.types.add(invoke_params, &[]);
                 let (invoke_fn_id, _) =
                     module.add_import_func(&import_namespace, "invoke", invoke_type);
@@ -357,7 +310,6 @@ impl Generator {
 
                 Ok(Identifiers::new(
                     cabi_realloc_fn_id,
-                    eval_bytecode_fn_id,
                     invoke_fn_id,
                     memory_id,
                 ))
@@ -372,7 +324,7 @@ impl Generator {
         js: &js::JS,
         imports: &Identifiers,
     ) -> Result<BytecodeMetadata> {
-        let bytecode = bytecode::compile_source(&self.plugin, self.plugin_kind, js.as_bytes())?;
+        let bytecode = bytecode::compile_source(&self.plugin, js.as_bytes())?;
         let bytecode_len: i32 = bytecode.len().try_into()?;
         let bytecode_data = module.data.add(DataKind::Passive, bytecode);
 
@@ -393,28 +345,13 @@ impl Generator {
             // top-2: dest addr, top-1: offset into source, top-0: size of memory region in bytes.
             .memory_init(imports.memory, bytecode_data);
         // Evaluate top level scope.
-        if let Some(eval_bytecode) = imports.eval_bytecode {
-            instructions
-                .local_get(bytecode_ptr_local) // ptr to bytecode
-                .i32_const(bytecode_len)
-                .call(eval_bytecode);
-        } else {
-            // Assert we're not emitting a call with a null function to
-            // invoke for the v2 plugin. `javy_quickjs_provider_v2` will never
-            // support calling `invoke` with a null function. The default
-            // plugin and user plugins do accept null functions.
-            assert!(
-                self.plugin_kind != PluginKind::V2,
-                "Using invoke with null function not supported for v2 plugin"
-            );
-            instructions
-                .local_get(bytecode_ptr_local) // ptr to bytecode
-                .i32_const(bytecode_len)
-                .i32_const(0) // set option discriminator to none
-                .i32_const(0) // set function name ptr to null
-                .i32_const(0) // set function name len to 0
-                .call(imports.invoke);
-        }
+        instructions
+            .local_get(bytecode_ptr_local) // ptr to bytecode
+            .i32_const(bytecode_len)
+            .i32_const(0) // set option discriminator to none
+            .i32_const(0) // set function name ptr to null
+            .i32_const(0) // set function name len to 0
+            .call(imports.invoke);
         let main = main.finish(vec![], &mut module.funcs);
 
         module.exports.add("_start", main);
@@ -467,14 +404,8 @@ impl Generator {
                     .data_drop(fn_name_data)
                     // Call invoke.
                     .local_get(bc_metadata.ptr)
-                    .i32_const(bc_metadata.len);
-
-                if self.plugin_kind != PluginKind::V2 {
-                    export_fn.func_body().i32_const(1); // set function name option discriminator to some
-                }
-
-                export_fn
-                    .func_body()
+                    .i32_const(bc_metadata.len)
+                    .i32_const(1) // set function name option discriminator to some
                     .local_get(fn_name_ptr_local)
                     .i32_const(js_export_len)
                     .call(identifiers.invoke);
@@ -490,15 +421,10 @@ impl Generator {
         match self.linking {
             LinkingKind::Static => {
                 // Remove no longer necessary exports.
-                module.exports.remove(self.plugin_kind.realloc_fn_name())?;
-
-                // Only v2 plugin exposes eval_bytecode function.
-                if self.plugin_kind == PluginKind::V2 {
-                    module.exports.remove("eval_bytecode")?;
-                }
+                module.exports.remove("cabi_realloc")?;
 
                 module.exports.remove("invoke")?;
-                module.exports.remove(self.plugin_kind.compile_fn_name())?;
+                module.exports.remove("compile-src")?;
 
                 // Run wasm-opt to optimize.
                 let tempdir = tempfile::tempdir()?;

@@ -19,7 +19,7 @@ import nodeResolve from "@rollup/plugin-node-resolve";
 
 import * as tests from "./tests.js";
 
-const JAVY_VERSION = "v3.0.1";
+const JAVY_VERSION = "v6.0.0";
 
 const javyPath = path.join(tmpdir(), "javy");
 
@@ -124,7 +124,7 @@ export async function runJS({ source, stdin, expectedOutput }) {
 
 async function compileWithJavy(infile, outfile) {
 	const { exitCode, stdout, stderr } = await runCommand(javyPath, [
-		"compile",
+		"build",
 		"-o",
 		outfile,
 		infile,

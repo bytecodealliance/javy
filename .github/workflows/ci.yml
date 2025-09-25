@@ -42,21 +42,23 @@ jobs:
           --exclude=javy-plugin-processing \
           --exclude=javy-runner \
           --exclude=javy-test-plugin \
+          --exclude=javy-test-invalid-plugin \
           --target=wasm32-wasip2 --each-feature -- --nocapture
 
       - name: Build plugin
         run: |
           cargo build --package=javy-plugin --release --target=wasm32-wasip2
 
-      - name: Build test-plugin
+      - name: Build test plugins
         run: |
           cargo build --package=javy-test-plugin --release --target=wasm32-wasip2
+          cargo build --package=javy-test-invalid-plugin --release --target=wasm32-unknown-unknown
 
       - name: Upload plugins
         uses: actions/upload-artifact@v4
         with:
           name: plugins
-          path: target/wasm32-wasip2/release/*.wasm
+          path: target/**/release/*.wasm
 
   native_ci:
     name: Native targets
@@ -73,7 +75,7 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           name: plugins
-          path: target/wasm32-wasip2/release/
+          path: target/
 
       - name: Setup cache and tools
         uses: ./.github/actions/ci-common

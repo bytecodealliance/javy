@@ -12,14 +12,7 @@ use wasmtime_wasi::p2::pipe::{MemoryInputPipe, MemoryOutputPipe};
 use wasmtime_wasi::{preview1::WasiP1Ctx, WasiCtxBuilder};
 
 #[derive(Debug, Clone)]
-pub enum JavyCommand {
-    Build,
-    Compile,
-}
-
-#[derive(Debug, Clone)]
 pub enum Plugin {
-    V2,
     Default,
     User,
     /// Pass the default plugin on the CLI as a user plugin.
@@ -37,7 +30,7 @@ pub enum Source {
 impl Plugin {
     pub fn namespace(&self) -> &'static str {
         match self {
-            Self::V2 | Self::InvalidUser => "javy_quickjs_provider_v2",
+            Self::InvalidUser => "invalid-plugin",
             // Could try and derive this but not going to for now since tests
             // will break if it changes.
             Self::Default | Self::DefaultAsUser => "javy-default-plugin-v1",
@@ -47,19 +40,14 @@ impl Plugin {
 
     pub fn path(&self) -> PathBuf {
         let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let target = root.join("..").join("..").join("target");
         match self {
-            Self::V2 | Self::InvalidUser => root
-                .join("..")
-                .join("..")
-                .join("crates")
-                .join("cli")
-                .join("src")
-                .join("javy_quickjs_provider_v2.wasm"),
+            Self::InvalidUser => target
+                .join("wasm32-unknown-unknown")
+                .join("release")
+                .join("test_invalid_plugin.wasm"),
             Self::User => root.join("test_plugin.wasm"),
-            Self::Default | Self::DefaultAsUser => root
-                .join("..")
-                .join("..")
-                .join("target")
+            Self::Default | Self::DefaultAsUser => target
                 .join("wasm32-wasip2")
                 .join("release")
                 .join("plugin_wizened.wasm"),
@@ -68,7 +56,7 @@ impl Plugin {
 
     pub fn needs_plugin_arg(&self) -> bool {
         match self {
-            Plugin::V2 | Plugin::Default => false,
+            Plugin::Default => false,
             Plugin::User | Plugin::DefaultAsUser | Plugin::InvalidUser => true,
         }
     }
@@ -98,8 +86,6 @@ pub struct Builder {
     built: bool,
     /// Preload the module at path, using the given instance name.
     preload: Option<(String, PathBuf)>,
-    /// Whether to use the `compile` or `build` command.
-    command: JavyCommand,
     /// The javy plugin.
     plugin: Plugin,
     /// How to embed the source code.
@@ -116,7 +102,6 @@ impl Default for Builder {
             root: Default::default(),
             built: false,
             preload: None,
-            command: JavyCommand::Build,
             javy_stream_io: None,
             simd_json_builtins: None,
             text_encoding: None,
@@ -178,11 +163,6 @@ impl Builder {
         self
     }
 
-    pub fn command(&mut self, command: JavyCommand) -> &mut Self {
-        self.command = command;
-        self
-    }
-
     pub fn plugin(&mut self, plugin: Plugin) -> &mut Self {
         self.plugin = plugin;
         self
@@ -216,51 +196,26 @@ impl Builder {
             event_loop,
             built: _,
             preload,
-            command,
             plugin,
             source_code,
         } = std::mem::take(self);
 
         self.built = true;
 
-        match command {
-            JavyCommand::Compile => {
-                let compress_source = source_code
-                    .map(|s| match s {
-                        Source::Omitted => bail!("Unsupported for compile"),
-                        Source::Compressed => Ok(true),
-                        Source::Uncompressed => Ok(false),
-                    })
-                    .transpose()?;
-                if let Some(preload) = preload {
-                    Runner::compile_dynamic(
-                        bin_path,
-                        root,
-                        input,
-                        wit,
-                        world,
-                        preload,
-                        compress_source,
-                    )
-                } else {
-                    Runner::compile_static(bin_path, root, input, wit, world, compress_source)
-                }
-            }
-            JavyCommand::Build => Runner::build(
-                bin_path,
-                root,
-                input,
-                wit,
-                world,
-                javy_stream_io,
-                simd_json_builtins,
-                text_encoding,
-                event_loop,
-                preload,
-                plugin,
-                source_code,
-            ),
-        }
+        Runner::build(
+            bin_path,
+            root,
+            input,
+            wit,
+            world,
+            javy_stream_io,
+            simd_json_builtins,
+            text_encoding,
+            event_loop,
+            preload,
+            plugin,
+            source_code,
+        )
     }
 }
 
@@ -373,84 +328,6 @@ impl Runner {
         })
     }
 
-    fn compile_static(
-        bin: String,
-        root: PathBuf,
-        source: impl AsRef<Path>,
-        wit: Option<PathBuf>,
-        world: Option<String>,
-        compress_source_code: Option<bool>,
-    ) -> Result<Self> {
-        // This directory is unique and will automatically get deleted
-        // when `tempdir` goes out of scope.
-        let tempdir = tempfile::tempdir()?;
-        let wasm_file = Self::out_wasm(&tempdir);
-        let js_file = root.join(source);
-        let wit_file = wit.map(|p| root.join(p));
-
-        let args = Self::base_compile_args(
-            &js_file,
-            &wasm_file,
-            &wit_file,
-            &world,
-            &compress_source_code,
-        );
-
-        Self::exec_command(bin, root, args)?;
-
-        let wasm = fs::read(&wasm_file)?;
-
-        let engine = Self::setup_engine();
-        let linker = Self::setup_linker(&engine)?;
-
-        Ok(Self {
-            wasm,
-            linker,
-            initial_fuel: u64::MAX,
-            preload: None,
-        })
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    pub fn compile_dynamic(
-        bin: String,
-        root: PathBuf,
-        source: impl AsRef<Path>,
-        wit: Option<PathBuf>,
-        world: Option<String>,
-        preload: (String, PathBuf),
-        compress_source_code: Option<bool>,
-    ) -> Result<Self> {
-        let tempdir = tempfile::tempdir()?;
-        let wasm_file = Self::out_wasm(&tempdir);
-        let js_file = root.join(source);
-        let wit_file = wit.map(|p| root.join(p));
-
-        let mut args = Self::base_compile_args(
-            &js_file,
-            &wasm_file,
-            &wit_file,
-            &world,
-            &compress_source_code,
-        );
-        args.push("-d".to_string());
-
-        Self::exec_command(bin, root, args)?;
-
-        let wasm = fs::read(&wasm_file)?;
-        let preload_module = fs::read(&preload.1)?;
-
-        let engine = Self::setup_engine();
-        let linker = Self::setup_linker(&engine)?;
-
-        Ok(Self {
-            wasm,
-            linker,
-            initial_fuel: u64::MAX,
-            preload: Some((preload.0, preload_module)),
-        })
-    }
-
     pub fn with_dylib(wasm: Vec<u8>) -> Result<Self> {
         let engine = Self::setup_engine();
         Ok(Self {
@@ -521,9 +398,6 @@ impl Runner {
     // TODO: Some of the methods in the Runner (`build`, `build_args`)  could be
     // refactored to take structs as parameters rather than individual
     // parameters to avoid verbosity.
-    //
-    // This refactoring will be a bit challenging until we fully deprecate the
-    // `compile` command.
     #[allow(clippy::too_many_arguments)]
     fn build_args(
         input: &Path,
@@ -598,34 +472,6 @@ impl Runner {
                     Source::Uncompressed => "uncompressed",
                 }
             ));
-        }
-
-        args
-    }
-
-    fn base_compile_args(
-        input: &Path,
-        out: &Path,
-        wit: &Option<PathBuf>,
-        world: &Option<String>,
-        compress_source_code: &Option<bool>,
-    ) -> Vec<String> {
-        let mut args = vec![
-            "compile".to_string(),
-            input.to_str().unwrap().to_string(),
-            "-o".to_string(),
-            out.to_str().unwrap().to_string(),
-        ];
-
-        if let (Some(wit), Some(world)) = (wit, world) {
-            args.push("--wit".to_string());
-            args.push(wit.to_str().unwrap().to_string());
-            args.push("-n".to_string());
-            args.push(world.to_string());
-        }
-
-        if let Some(false) = compress_source_code {
-            args.push("--no-source-compression".into());
         }
 
         args

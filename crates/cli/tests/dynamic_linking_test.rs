@@ -76,11 +76,7 @@ fn test_producers_section_present(builder: &mut Builder) -> Result<()> {
     runner.assert_producers()
 }
 
-#[javy_cli_test(
-    dyn = true,
-    root = "tests/dynamic-linking-scripts",
-    commands(not(Compile))
-)]
+#[javy_cli_test(dyn = true, root = "tests/dynamic-linking-scripts")]
 fn test_using_runtime_flag_with_dynamic_triggers_error(builder: &mut Builder) -> Result<()> {
     let build_result = builder.input("console.js").text_encoding(false).build();
     assert!(build_result.is_err_and(|e| e
@@ -89,7 +85,7 @@ fn test_using_runtime_flag_with_dynamic_triggers_error(builder: &mut Builder) ->
     Ok(())
 }
 
-#[javy_cli_test(dyn = true, commands(not(Compile)))]
+#[javy_cli_test(dyn = true)]
 fn test_using_plugin_with_dynamic_works(builder: &mut Builder) -> Result<()> {
     let plugin = Plugin::User;
     let mut runner = builder

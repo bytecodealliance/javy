@@ -1871,6 +1871,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "javy-test-invalid-plugin"
+version = "0.1.0"
+
+[[package]]
 name = "javy-test-macros"
 version = "6.0.0"
 dependencies = [
