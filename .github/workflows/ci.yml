@@ -58,7 +58,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: plugins
-          path: target/wasm32-wasip2/release/*.wasm
+          path: target/**/release/*.wasm
 
   native_ci:
     name: Native targets
@@ -75,7 +75,7 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           name: plugins
-          path: target/wasm32-wasip2/release/
+          path: target/
 
       - name: Setup cache and tools
         uses: ./.github/actions/ci-common
