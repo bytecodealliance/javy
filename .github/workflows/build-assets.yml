@@ -102,6 +102,12 @@ jobs:
             asset_name: javy-x86_64-windows-${{ github.event.release.tag_name }}
             shasum_cmd: sha256sum
             target: x86_64-pc-windows-msvc
+          - name: windows-arm64
+            os: windows-latest
+            path: target\aarch64-pc-windows-msvc\release\javy.exe
+            asset_name: javy-arm-windows-${{ github.event.release.tag_name }}
+            shasum_cmd: sha256sum
+            target: aarch64-pc-windows-msvc
 
     steps:
       - uses: actions/checkout@v5
