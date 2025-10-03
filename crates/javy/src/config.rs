@@ -25,6 +25,7 @@ bitflags! {
         const OPERATORS = 1 << 12;
         const BIGNUM_EXTENSION = 1 << 13;
         const TEXT_ENCODING = 1 << 14;
+        const STRING_NORMALIZE = 1 << 15;
     }
 }
 
@@ -242,6 +243,12 @@ impl Config {
     /// The stream to use for calls to `console.error`.
     pub fn err_stream(&mut self, stream: Box<dyn Write>) -> &mut Self {
         self.err_stream = stream;
+        self
+    }
+
+    /// Configures whether `string.normalize` will be available.
+    pub fn string_normalize(&mut self, enable: bool) -> &mut Self {
+        self.intrinsics.set(JSIntrinsics::STRING_NORMALIZE, enable);
         self
     }
 
