@@ -8,7 +8,6 @@ use std::{
     fs::File,
     io::{Cursor, Read},
     path::Path,
-    rc::Rc,
 };
 
 use anyhow::{anyhow, bail, Context, Result};
@@ -27,15 +26,13 @@ use swc_core::{
 /// JS source code.
 #[derive(Clone, Debug)]
 pub struct JS {
-    source_code: Rc<String>,
+    source_code: String,
 }
 
 impl JS {
     /// Create [`JS`] from a string containing JS source code.
     pub fn from_string(source_code: String) -> JS {
-        JS {
-            source_code: Rc::new(source_code),
-        }
+        JS { source_code }
     }
 
     /// Create [`JS`] from a file containing JS.
@@ -148,7 +145,10 @@ impl JS {
 
     fn parse_module(&self) -> Result<Module> {
         let source_map: SourceMap = Default::default();
-        let file = source_map.new_source_file_from(FileName::Anon.into(), self.source_code.clone());
+        // SWC's source file API works with BytesStr's and initializing a
+        // ByteStr requires either a static str or to own the string so we have
+        // to clone here.
+        let file = source_map.new_source_file(FileName::Anon.into(), self.source_code.to_owned());
         let mut errors = vec![];
         parser::parse_file_as_module(
             &file,
