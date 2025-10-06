@@ -44,8 +44,8 @@ user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.anyhow]]
-version = "1.0.99"
-when = "2025-08-11"
+version = "1.0.100"
+when = "2025-09-19"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -128,15 +128,15 @@ user-login = "emilio"
 user-name = "Emilio Cobos Álvarez"
 
 [[publisher.clap]]
-version = "4.5.47"
-when = "2025-09-02"
+version = "4.5.48"
+when = "2025-09-19"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.clap_builder]]
-version = "4.5.47"
-when = "2025-09-02"
+version = "4.5.48"
+when = "2025-09-19"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
@@ -456,8 +456,8 @@ user-login = "BurntSushi"
 user-name = "Andrew Gallant"
 
 [[publisher.quote]]
-version = "1.0.40"
-when = "2025-03-11"
+version = "1.0.41"
+when = "2025-09-29"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -810,9 +810,21 @@ when = "2025-06-13"
 user-id = 73222
 user-login = "wasmtime-publish"
 
+[[publisher.wasm-encoder]]
+version = "0.236.0"
+when = "2025-07-28"
+user-id = 73222
+user-login = "wasmtime-publish"
+
 [[publisher.wasm-metadata]]
 version = "0.235.0"
 when = "2025-06-13"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wasm-metadata]]
+version = "0.236.0"
+when = "2025-07-28"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -831,6 +843,18 @@ user-login = "wasmtime-publish"
 [[publisher.wasmparser]]
 version = "0.235.0"
 when = "2025-06-13"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wasmparser]]
+version = "0.236.0"
+when = "2025-07-28"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wasmprinter]]
+version = "0.236.0"
+when = "2025-07-28"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -1204,6 +1228,12 @@ when = "2025-06-13"
 user-id = 73222
 user-login = "wasmtime-publish"
 
+[[publisher.wit-component]]
+version = "0.236.0"
+when = "2025-07-28"
+user-id = 73222
+user-login = "wasmtime-publish"
+
 [[publisher.wit-parser]]
 version = "0.212.0"
 when = "2024-06-27"
@@ -1213,6 +1243,12 @@ user-login = "wasmtime-publish"
 [[publisher.wit-parser]]
 version = "0.235.0"
 when = "2025-06-13"
+user-id = 73222
+user-login = "wasmtime-publish"
+
+[[publisher.wit-parser]]
+version = "0.236.0"
+when = "2025-07-28"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -1382,6 +1418,18 @@ by a Bytecode Alliance maintainer and it owned by the Bytecode Alliance itself.
 """
 
 [[audits.bytecode-alliance.wildcard-audits.wasmparser]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+user-id = 73222 # wasmtime-publish
+start = "2023-01-01"
+end = "2026-06-03"
+notes = """
+The Bytecode Alliance uses the `wasmtime-publish` crates.io account to automate
+publication of this crate from CI. This repository requires all PRs are reviewed
+by a Bytecode Alliance maintainer and it owned by the Bytecode Alliance itself.
+"""
+
+[[audits.bytecode-alliance.wildcard-audits.wasmprinter]]
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
 user-id = 73222 # wasmtime-publish
@@ -2041,17 +2089,119 @@ criteria = "safe-to-deploy"
 version = "1.1.0"
 notes = "No dependencies and completely a compile-time crate as advertised. Uses `unsafe` in one module as a compile-time check only: `mem::transmute` and `ptr::write` are wrapped in an impossible-to-run closure."
 
-[[audits.bytecode-alliance.audits.tempfile]]
+[[audits.bytecode-alliance.audits.wasm-encoder]]
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
-delta = "3.20.0 -> 3.21.0"
-notes = "Only minor manifest/CI changes."
+delta = "0.236.0 -> 0.237.0"
+notes = "The Bytecode Alliance is the author of this crate"
+
+[[audits.bytecode-alliance.audits.wasm-encoder]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.237.0 -> 0.238.1"
+notes = "The Bytecode Alliance is the author of this crate"
+
+[[audits.bytecode-alliance.audits.wasm-encoder]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.238.1 -> 0.239.0"
+notes = "The Bytecode Alliance is the author of this crate"
+
+[[audits.bytecode-alliance.audits.wasm-metadata]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.236.0 -> 0.237.0"
+notes = "The Bytecode Alliance is the author of this crate"
+
+[[audits.bytecode-alliance.audits.wasm-metadata]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.237.0 -> 0.238.1"
+notes = "The Bytecode Alliance is the author of this crate"
+
+[[audits.bytecode-alliance.audits.wasm-metadata]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.238.1 -> 0.239.0"
+notes = "The Bytecode Alliance is the author of this crate"
+
+[[audits.bytecode-alliance.audits.wasmparser]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.236.0 -> 0.237.0"
+notes = "The Bytecode Alliance is the author of this crate"
+
+[[audits.bytecode-alliance.audits.wasmparser]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.237.0 -> 0.238.1"
+notes = "The Bytecode Alliance is the author of this crate"
+
+[[audits.bytecode-alliance.audits.wasmparser]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.238.1 -> 0.239.0"
+notes = "The Bytecode Alliance is the author of this crate"
+
+[[audits.bytecode-alliance.audits.wasmprinter]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.236.0 -> 0.237.0"
+notes = "The Bytecode Alliance is the author of this crate"
+
+[[audits.bytecode-alliance.audits.wasmprinter]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.237.0 -> 0.238.1"
+notes = "The Bytecode Alliance is the author of this crate"
+
+[[audits.bytecode-alliance.audits.wasmprinter]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.238.1 -> 0.239.0"
+notes = "The Bytecode Alliance is the author of this crate"
 
 [[audits.bytecode-alliance.audits.wast]]
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
 version = "35.0.2"
 notes = "The Bytecode Alliance is the author of this crate."
+
+[[audits.bytecode-alliance.audits.wit-component]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.236.0 -> 0.237.0"
+notes = "The Bytecode Alliance is the author of this crate"
+
+[[audits.bytecode-alliance.audits.wit-component]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.237.0 -> 0.238.1"
+notes = "The Bytecode Alliance is the author of this crate"
+
+[[audits.bytecode-alliance.audits.wit-component]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.238.1 -> 0.239.0"
+notes = "The Bytecode Alliance is the author of this crate"
+
+[[audits.bytecode-alliance.audits.wit-parser]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.236.0 -> 0.237.0"
+notes = "The Bytecode Alliance is the author of this crate"
+
+[[audits.bytecode-alliance.audits.wit-parser]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.237.0 -> 0.238.1"
+notes = "The Bytecode Alliance is the author of this crate"
+
+[[audits.bytecode-alliance.audits.wit-parser]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.238.1 -> 0.239.0"
+notes = "The Bytecode Alliance is the author of this crate"
 
 [[audits.embark-studios.audits.cargo_metadata]]
 who = "Johan Andersson <opensource@embark-studios.com>"
