@@ -314,7 +314,7 @@ version = "1.0.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.insta]]
-version = "1.43.1"
+version = "1.43.2"
 criteria = "safe-to-run"
 
 [[exemptions.ipnet]]
@@ -502,7 +502,7 @@ version = "1.1.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.simd-json]]
-version = "0.15.1"
+version = "0.16.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.simdutf8]]
@@ -586,7 +586,7 @@ version = "2.0.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.tempfile]]
-version = "3.20.0"
+version = "3.23.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.tracing]]
@@ -649,10 +649,6 @@ criteria = "safe-to-deploy"
 version = "0.238.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.wasm-metadata]]
-version = "0.238.0"
-criteria = "safe-to-run"
-
 [[exemptions.wasm-opt]]
 version = "0.116.1"
 criteria = "safe-to-deploy"
@@ -669,17 +665,9 @@ criteria = "safe-to-deploy"
 version = "0.236.1"
 criteria = "safe-to-deploy"
 
-[[exemptions.wasmparser]]
-version = "0.238.0"
-criteria = "safe-to-deploy"
-
 [[exemptions.wasmprinter]]
 version = "0.236.1"
 criteria = "safe-to-deploy"
-
-[[exemptions.wasmprinter]]
-version = "0.238.0"
-criteria = "safe-to-run"
 
 [[exemptions.wast]]
 version = "238.0.0"
@@ -705,17 +693,9 @@ criteria = "safe-to-deploy"
 version = "0.4.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.wit-component]]
-version = "0.238.0"
-criteria = "safe-to-run"
-
 [[exemptions.wit-parser]]
 version = "0.236.1"
 criteria = "safe-to-deploy"
-
-[[exemptions.wit-parser]]
-version = "0.238.0"
-criteria = "safe-to-run"
 
 [[exemptions.witx]]
 version = "0.9.1"
