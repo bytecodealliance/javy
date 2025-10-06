@@ -8,6 +8,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [5.1.0] - 2025-10-06
+
 ### Added
 
 - Support for `string_normalize` intrinsic (controlling `normalize` method on
