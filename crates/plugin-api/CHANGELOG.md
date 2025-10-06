@@ -8,6 +8,12 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [4.1.0] - 2025-10-06
+
+### Changed
+
+- `javy` dependency updated. Now exposes intrinsic for `String.normalize` that defaults to enabled.
+
 ## [4.0.0] - 2025-08-28
 
 ### Added

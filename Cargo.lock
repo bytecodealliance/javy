@@ -1760,7 +1760,7 @@ dependencies = [
 
 [[package]]
 name = "javy"
-version = "5.1.0-alpha.1"
+version = "5.1.0"
 dependencies = [
  "anyhow",
  "bitflags",
@@ -1779,7 +1779,7 @@ dependencies = [
 
 [[package]]
 name = "javy-cli"
-version = "7.0.0"
+version = "7.0.1"
 dependencies = [
  "anyhow",
  "brotli",
@@ -1845,7 +1845,7 @@ dependencies = [
 
 [[package]]
 name = "javy-plugin-api"
-version = "4.1.0-alpha.1"
+version = "4.1.0"
 dependencies = [
  "anyhow",
  "javy",
@@ -1853,7 +1853,7 @@ dependencies = [
 
 [[package]]
 name = "javy-plugin-processing"
-version = "7.0.0"
+version = "7.0.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -1867,7 +1867,7 @@ dependencies = [
 
 [[package]]
 name = "javy-runner"
-version = "7.0.0"
+version = "7.0.1"
 dependencies = [
  "anyhow",
  "tempfile",
@@ -1883,7 +1883,7 @@ version = "0.1.0"
 
 [[package]]
 name = "javy-test-macros"
-version = "7.0.0"
+version = "7.0.1"
 dependencies = [
  "anyhow",
  "proc-macro2",
