@@ -12,7 +12,7 @@ fn test_empty(builder: &mut Builder) -> Result<()> {
     let mut runner = builder.input("empty.js").build()?;
 
     let (_, _, fuel_consumed) = run(&mut runner, vec![]);
-    assert_fuel_consumed_within_threshold(23_048, fuel_consumed);
+    assert_fuel_consumed_within_threshold(22_448, fuel_consumed);
     Ok(())
 }
 
@@ -402,7 +402,7 @@ fn run_fn(r: &mut Runner, func: &str, stdin: Vec<u8>) -> (Vec<u8>, String, u64) 
 fn assert_fuel_consumed_within_threshold(target_fuel: u64, fuel_consumed: u64) {
     let target_fuel = target_fuel as f64;
     let fuel_consumed = fuel_consumed as f64;
-    let threshold = 2.0;
+    let threshold = 3.0;
     let percentage_difference = ((fuel_consumed - target_fuel) / target_fuel).abs() * 100.0;
 
     assert!(

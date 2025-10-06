@@ -128,6 +128,10 @@ impl Runtime {
                 unsafe { intrinsic::BignumExt::add_intrinsic(ctx.as_raw()) }
             }
 
+            if intrinsics.contains(JSIntrinsics::STRING_NORMALIZE) {
+                unsafe { intrinsic::StringNormalize::add_intrinsic(ctx.as_raw()) }
+            }
+
             if intrinsics.contains(JSIntrinsics::TEXT_ENCODING) {
                 text_encoding::register(ctx.clone())
                     .expect("registering TextEncoding APIs to succeed");

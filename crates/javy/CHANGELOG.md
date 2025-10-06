@@ -8,6 +8,11 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Support for `string_normalize` intrinsic (controlling `normalize` method on
+  strings). `Config` now has a method for enabling and disabling the intrinsic.
+
 ## [5.0.0] - 2025-08-28
 
 ### Removed
