@@ -24,7 +24,7 @@ fn test_dylib_with_error() -> Result<()> {
     assert!(res.is_err());
 
     let e = res.err().unwrap();
-    let expected_log_output = "Error:1:24 foo error\n    at foo (function.mjs:1:24)\n    at <anonymous> (function.mjs:1:50)\n\n";
+    let expected_log_output = "Error: foo error\n    at foo (function.mjs:1:27)\n    at <anonymous> (function.mjs:1:49)\n\n";
     assert_eq!(
         expected_log_output,
         e.downcast_ref::<RunnerError>().unwrap().stderr

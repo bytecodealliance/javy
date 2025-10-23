@@ -157,7 +157,8 @@ pub fn to_js_error(cx: Ctx, e: Error) -> JSError {
 // TODO: Upstream this?
 pub fn to_string_lossy<'js>(cx: &Ctx<'js>, string: &JSString<'js>, error: JSError) -> String {
     let mut len: qjs::size_t = 0;
-    let ptr = unsafe { qjs::JS_ToCStringLen2(cx.as_raw().as_ptr(), &mut len, string.as_raw(), 0) };
+    let ptr =
+        unsafe { qjs::JS_ToCStringLen2(cx.as_raw().as_ptr(), &mut len, string.as_raw(), false) };
     let buffer = unsafe { std::slice::from_raw_parts(ptr as *const u8, len as usize) };
 
     // The error here *must* be a Utf8 error; the `JSString::to_string()` may

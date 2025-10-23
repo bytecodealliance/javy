@@ -240,6 +240,12 @@ user-id = 6825 # Dan Gohman (sunfishcode)
 start = "2020-09-15"
 end = "2024-07-25"
 
+[[trusted.glob]]
+criteria = "safe-to-deploy"
+user-id = 55123 # rust-lang-owner
+start = "2023-01-06"
+end = "2026-10-28"
+
 [[trusted.hashbrown]]
 criteria = "safe-to-deploy"
 user-id = 2915 # Amanieu d'Antras (Amanieu)
@@ -598,13 +604,19 @@ end = "2025-05-02"
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2022-10-21"
-end = "2025-05-02"
+end = "2026-10-28"
 
 [[trusted.toml_edit]]
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2021-09-13"
-end = "2025-05-02"
+end = "2026-10-28"
+
+[[trusted.toml_parser]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2025-07-08"
+end = "2026-10-28"
 
 [[trusted.unicode-ident]]
 criteria = "safe-to-deploy"
@@ -814,7 +826,7 @@ end = "2026-09-02"
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2023-02-22"
-end = "2025-05-02"
+end = "2026-10-28"
 
 [[trusted.winx]]
 criteria = "safe-to-deploy"
