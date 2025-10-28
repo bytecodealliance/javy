@@ -421,8 +421,6 @@ impl Generator {
         match self.linking {
             LinkingKind::Static => {
                 // Remove no longer necessary exports.
-                module.exports.remove("cabi_realloc")?;
-
                 module.exports.remove("invoke")?;
                 module.exports.remove("compile-src")?;
 
