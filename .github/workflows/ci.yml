@@ -71,16 +71,16 @@ jobs:
         with:
           submodules: true
 
+      - name: Setup cache and tools
+        uses: ./.github/actions/ci-common
+        with:
+          cache-prefix: native
+
       - name: Download plugins
         uses: actions/download-artifact@v5
         with:
           name: plugins
           path: target/
-
-      - name: Setup cache and tools
-        uses: ./.github/actions/ci-common
-        with:
-          cache-prefix: native
 
       - name: Check benchmarks
         run: cargo check --package=javy-cli --release --benches
