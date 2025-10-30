@@ -41,6 +41,6 @@ Run:
 $ echo 'console.log("hello world!");' > my_code.js
 $ javy emit-plugin -o plugin.wasm
 $ javy build -C dynamic -C plugin=plugin.wasm -o my_code.wasm my_code.js
-$ wasmtime run --preload javy-default-plugin-v1=plugin.wasm my_code.wasm
+$ wasmtime run --preload javy-default-plugin-v2=plugin.wasm my_code.wasm
 hello world!
 ```

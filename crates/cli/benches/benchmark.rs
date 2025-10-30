@@ -125,7 +125,7 @@ impl FunctionCase {
                 ))?,
             )?;
             let instance = linker.instantiate(store.as_context_mut(), &plugin)?;
-            linker.instance(store.as_context_mut(), "javy-default-plugin-v1", instance)?;
+            linker.instance(store.as_context_mut(), "javy-default-plugin-v2", instance)?;
         }
 
         Ok((linker, store))
