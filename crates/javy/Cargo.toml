@@ -1,6 +1,6 @@
 [package]
 name = "javy"
-version = "5.1.1-alpha.1"
+version = "6.0.0-alpha.1"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -11,9 +11,11 @@ categories = ["wasm"]
 
 [dependencies]
 anyhow = { workspace = true }
-rquickjs = { version = "=0.6.1", features = ["array-buffer", "bindgen"] }
-rquickjs-core = "=0.6.1"
-rquickjs-sys = "=0.6.1"
+rquickjs = { version = "0.10.0", features = [
+    "array-buffer",
+    "bindgen",
+    "disable-assertions",
+] }
 serde = { workspace = true, default-features = true, features = ["derive"] }
 serde_json = { workspace = true, optional = true }
 serde-transcode = { version = "1.1", optional = true }

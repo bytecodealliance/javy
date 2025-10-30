@@ -10,7 +10,7 @@ mod shared_config;
 
 wit_bindgen::generate!({ world: "javy-default-plugin", generate_all });
 
-import_namespace!("javy-default-plugin-v1");
+import_namespace!("javy-default-plugin-v2");
 
 struct Component;
 

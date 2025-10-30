@@ -62,7 +62,7 @@ fn test_encoding(builder: &mut Builder) -> Result<()> {
 
     let (output, _, fuel_consumed) = run(&mut runner, "hello".into());
     assert_eq!("el".as_bytes(), output);
-    assert_fuel_consumed_within_threshold(252_723, fuel_consumed);
+    assert_fuel_consumed_within_threshold(244_706, fuel_consumed);
 
     let (output, _, _) = run(&mut runner, "invalid".into());
     assert_eq!("true".as_bytes(), output);
@@ -231,7 +231,8 @@ fn test_error_handling(builder: &mut Builder) -> Result<()> {
     let result = runner.exec(vec![]);
     let err = result.err().unwrap().downcast::<RunnerError>().unwrap();
 
-    let expected_log_output = "Error:2:9 error\n    at error (function.mjs:2:9)\n    at <anonymous> (function.mjs:5:1)\n\n";
+    let expected_log_output =
+        "Error: error\n    at error (function.mjs:2:13)\n    at <anonymous> (function.mjs:5:1)\n\n";
 
     assert_eq!(expected_log_output, err.stderr);
     Ok(())
@@ -259,7 +260,7 @@ fn test_exported_default_arrow_fn(builder: &mut Builder) -> Result<()> {
 
     let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", vec![]);
     assert_eq!(logs, "42\n");
-    assert_fuel_consumed_within_threshold(39_004, fuel_consumed);
+    assert_fuel_consumed_within_threshold(37_298, fuel_consumed);
     Ok(())
 }
 
@@ -273,6 +274,15 @@ fn test_exported_default_fn(builder: &mut Builder) -> Result<()> {
     let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", vec![]);
     assert_eq!(logs, "42\n");
     assert_fuel_consumed_within_threshold(39_147, fuel_consumed);
+    Ok(())
+}
+
+#[javy_cli_test]
+fn test_string_normalize(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder.input("normalize.js").build()?;
+    let (_, logs, fuel_consumed) = run(&mut runner, vec![]);
+    assert_eq!(logs, "true\n");
+    assert_fuel_consumed_within_threshold(55_418, fuel_consumed);
     Ok(())
 }
 

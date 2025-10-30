@@ -8,6 +8,20 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Removed
+
+- `big_float`, `big_decimal`, and `string_normalize` on `Config`. For BigFloat
+  and BigDecimal, there is no replacement. `string_normalize` is enabled
+  unconditionally.
+
+### Added
+
+- `weak_ref` and `performance` on `Config`.
+
+### Changed
+
+- The QuickJS bytecode format has changed in a breaking way.
+
 ## [5.1.0] - 2025-10-06
 
 ### Added

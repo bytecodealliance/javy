@@ -11,7 +11,7 @@ use crate::{
 use anyhow::{bail, Result};
 use rquickjs::{
     context::{intrinsic, Intrinsic},
-    Context, Module, Runtime as QRuntime,
+    Context, Module, Runtime as QRuntime, WriteOptions,
 };
 use std::mem::ManuallyDrop;
 
@@ -56,9 +56,7 @@ impl Runtime {
         rt.set_memory_limit(cfg.memory_limit);
         rt.set_max_stack_size(cfg.max_stack_size);
 
-        // Using `Context::base` seems to have a bug where it tries to register
-        // the same intrinsic twice.
-        let context = Context::custom::<()>(rt)?;
+        let context = Context::base(rt)?;
 
         // We use `Context::with` to ensure that there's a proper lock on the
         // context, making it totally safe to add the intrinsics below.
@@ -116,25 +114,17 @@ impl Runtime {
                 unsafe { intrinsic::BigInt::add_intrinsic(ctx.as_raw()) }
             }
 
-            if intrinsics.contains(JSIntrinsics::BIG_FLOAT) {
-                unsafe { intrinsic::BigFloat::add_intrinsic(ctx.as_raw()) }
-            }
-
-            if intrinsics.contains(JSIntrinsics::BIG_DECIMAL) {
-                unsafe { intrinsic::BigDecimal::add_intrinsic(ctx.as_raw()) }
-            }
-
-            if intrinsics.contains(JSIntrinsics::BIGNUM_EXTENSION) {
-                unsafe { intrinsic::BignumExt::add_intrinsic(ctx.as_raw()) }
-            }
-
-            if intrinsics.contains(JSIntrinsics::STRING_NORMALIZE) {
-                unsafe { intrinsic::StringNormalize::add_intrinsic(ctx.as_raw()) }
-            }
-
             if intrinsics.contains(JSIntrinsics::TEXT_ENCODING) {
                 text_encoding::register(ctx.clone())
                     .expect("registering TextEncoding APIs to succeed");
+            }
+
+            if intrinsics.contains(JSIntrinsics::WEAK_REF) {
+                unsafe { intrinsic::WeakRef::add_intrinsic(ctx.as_raw()) };
+            }
+
+            if intrinsics.contains(JSIntrinsics::PERFORMANCE) {
+                unsafe { intrinsic::Performance::add_intrinsic(ctx.as_raw()) };
             }
 
             console::register(ctx.clone(), cfg.log_stream, cfg.err_stream)
@@ -180,7 +170,9 @@ impl Runtime {
     /// Compiles the given module to bytecode.
     pub fn compile_to_bytecode(&self, name: &str, contents: &str) -> Result<Vec<u8>> {
         self.context()
-            .with(|this| Module::declare(this.clone(), name, contents)?.write_le())
+            .with(|this| {
+                Module::declare(this.clone(), name, contents)?.write(WriteOptions::default())
+            })
             .map_err(|e| self.context().with(|cx| from_js_error(cx.clone(), e)))
     }
 }

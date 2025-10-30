@@ -20,12 +20,13 @@ bitflags! {
         const TYPED_ARRAY  = 1 << 7;
         const PROMISE  = 1 << 8;
         const BIG_INT = 1 << 9;
-        const BIG_FLOAT = 1 << 10;
-        const BIG_DECIMAL = 1 << 11;
+        // Removed 10 and 11 representing BIG_FLOAT and BIG_DECIMAL.
         const OPERATORS = 1 << 12;
         const BIGNUM_EXTENSION = 1 << 13;
         const TEXT_ENCODING = 1 << 14;
-        const STRING_NORMALIZE = 1 << 15;
+        // Removed 15 representing STRING_NORMALIZE.
+        const WEAK_REF = 1 << 16;
+        const PERFORMANCE = 1 << 17;
     }
 }
 
@@ -82,6 +83,8 @@ impl Default for Config {
     fn default() -> Self {
         let mut intrinsics = JSIntrinsics::all();
         intrinsics.set(JSIntrinsics::TEXT_ENCODING, false);
+        intrinsics.set(JSIntrinsics::WEAK_REF, false);
+        intrinsics.set(JSIntrinsics::PERFORMANCE, false);
         Self {
             intrinsics,
             javy_intrinsics: JavyIntrinsics::empty(),
@@ -149,18 +152,6 @@ impl Config {
     /// Configures whether supoort for `BigInt` will be available.
     pub fn big_int(&mut self, enable: bool) -> &mut Self {
         self.intrinsics.set(JSIntrinsics::BIG_INT, enable);
-        self
-    }
-
-    /// Configures whether support for `BigFloat` will be available.
-    pub fn big_float(&mut self, enable: bool) -> &mut Self {
-        self.intrinsics.set(JSIntrinsics::BIG_FLOAT, enable);
-        self
-    }
-
-    /// Configures whether supporr for `BigDecimal` will be available.
-    pub fn big_decimal(&mut self, enable: bool) -> &mut Self {
-        self.intrinsics.set(JSIntrinsics::BIG_DECIMAL, enable);
         self
     }
 
@@ -246,9 +237,15 @@ impl Config {
         self
     }
 
-    /// Configures whether `string.normalize` will be available.
-    pub fn string_normalize(&mut self, enable: bool) -> &mut Self {
-        self.intrinsics.set(JSIntrinsics::STRING_NORMALIZE, enable);
+    /// Whether the `WeakRef` instrinsic will be enabled.
+    pub fn weak_ref(&mut self, enable: bool) -> &mut Self {
+        self.intrinsics.set(JSIntrinsics::WEAK_REF, enable);
+        self
+    }
+
+    /// Whether the `Performance` intrinsic will be enabled.
+    pub fn performance(&mut self, enable: bool) -> &mut Self {
+        self.intrinsics.set(JSIntrinsics::PERFORMANCE, enable);
         self
     }
 
