@@ -381,6 +381,8 @@ struct SeqAccess<'a, 'de: 'a> {
     /// The deserializer.
     de: &'a mut Deserializer<'de>,
     /// The sequence, represented as a JavaScript object.
+    // Using Object instead of Array because `SeqAccess` needs to support
+    // proxies of arrays and a proxy Value cannot be converted into Array.
     seq: Object<'de>,
     /// The sequence length.
     length: usize,
