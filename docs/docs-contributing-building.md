@@ -1,6 +1,11 @@
 # Build requirements
 
 - On Ubuntu, `sudo apt-get install curl pkg-config libssl-dev clang`
+- On NixOS (using flakes):
+  - Install [`direnv`](https://direnv.net/)
+  - Run `echo use flake > .envrc`
+  - Run `direnv allow` in the repository root
+  - Finally run `make` or `make cli`
 - [rustup](https://rustup.rs/)
 - Stable Rust, installed via `rustup install stable && rustup default stable`
 - wasm32-wasip2, can be installed via `rustup target add wasm32-wasip2`
