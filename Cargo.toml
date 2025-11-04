@@ -8,7 +8,7 @@ members = [
   "crates/plugin-processing",
   "crates/test-invalid-plugin",
   "crates/test-macros",
-  "crates/test-plugin",
+  "crates/test-plugin-wasip2",
   "crates/runner",
   "fuzz",
 ]

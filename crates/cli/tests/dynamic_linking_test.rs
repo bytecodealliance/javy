@@ -87,9 +87,9 @@ fn test_using_runtime_flag_with_dynamic_triggers_error(builder: &mut Builder) ->
 
 #[javy_cli_test(dyn = true)]
 fn test_using_plugin_with_dynamic_works(builder: &mut Builder) -> Result<()> {
-    let plugin = Plugin::User;
+    let plugin = Plugin::UserWasiP2;
     let mut runner = builder
-        .plugin(Plugin::User)
+        .plugin(Plugin::UserWasiP2)
         .preload(plugin.namespace().into(), plugin.path())
         .input("plugin.js")
         .build()?;
