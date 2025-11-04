@@ -22,7 +22,7 @@ license = "Apache-2.0 WITH LLVM-exception"
 
 [workspace.dependencies]
 brotli = "8.0.2"
-clap = { version = "4.5.48", features = ["derive"] }
+clap = { version = "4.5.51", features = ["derive"] }
 wizer = "10.0.0"
 wasmtime = "36"
 wasmtime-wasi = "36"
