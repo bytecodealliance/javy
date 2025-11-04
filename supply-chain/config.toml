@@ -622,11 +622,11 @@ version = "0.8.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.walrus]]
-version = "0.23.3"
+version = "0.24.3"
 criteria = "safe-to-deploy"
 
 [[exemptions.walrus-macro]]
-version = "0.22.0"
+version = "0.24.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.wasm-encoder]]
