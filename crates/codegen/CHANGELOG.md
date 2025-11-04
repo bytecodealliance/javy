@@ -8,7 +8,13 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
 - `cabi_realloc` will not be removed while generating a statically-linked Wasm module from a JS file.
+
+### Removed
+
+- WIT files without semicolons are no longer supported.
 
 ## [2.0.0] - 2025-08-28
 

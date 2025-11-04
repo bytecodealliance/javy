@@ -1,5 +1,5 @@
-package local:main
+package local:main;
 
 world foo-test {
-  export foo-bar: func()
+  export foo-bar: func();
 }

@@ -65,7 +65,7 @@ pub(crate) fn parse_exports(wit: impl AsRef<Path>, world: &str) -> Result<Vec<St
             WorldItem::Function(f) => {
                 if !f.params.is_empty() {
                     bail!("Exported functions with parameters are not supported")
-                } else if f.results.len() != 0 {
+                } else if f.result.is_some() {
                     bail!("Exported functions with return values are not supported")
                 } else {
                     exported_functions.push(f.name.clone())
