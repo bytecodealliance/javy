@@ -601,13 +601,6 @@ user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
 
-[[publisher.slab]]
-version = "0.4.11"
-when = "2025-08-08"
-user-id = 6741
-user-login = "Darksonn"
-user-name = "Alice Ryhl"
-
 [[publisher.smallvec]]
 version = "1.13.2"
 when = "2024-03-20"
@@ -819,20 +812,8 @@ user-login = "alexcrichton"
 user-name = "Alex Crichton"
 
 [[publisher.wasm-encoder]]
-version = "0.235.0"
-when = "2025-06-13"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wasm-encoder]]
 version = "0.236.0"
 when = "2025-07-28"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wasm-metadata]]
-version = "0.235.0"
-when = "2025-06-13"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -845,12 +826,6 @@ user-login = "wasmtime-publish"
 [[publisher.wasmparser]]
 version = "0.212.0"
 when = "2024-06-27"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wasmparser]]
-version = "0.235.0"
-when = "2025-06-13"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -1201,45 +1176,9 @@ user-id = 6825
 user-login = "sunfishcode"
 user-name = "Dan Gohman"
 
-[[publisher.wit-bindgen]]
-version = "0.43.0"
-when = "2025-06-24"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wit-bindgen-core]]
-version = "0.43.0"
-when = "2025-06-24"
-user-id = 73222
-user-login = "wasmtime-publish"
-
 [[publisher.wit-bindgen-rt]]
 version = "0.39.0"
 when = "2025-02-05"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wit-bindgen-rt]]
-version = "0.43.0"
-when = "2025-06-24"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wit-bindgen-rust]]
-version = "0.43.0"
-when = "2025-06-24"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wit-bindgen-rust-macro]]
-version = "0.43.0"
-when = "2025-06-24"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wit-component]]
-version = "0.235.0"
-when = "2025-06-13"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -1252,12 +1191,6 @@ user-login = "wasmtime-publish"
 [[publisher.wit-parser]]
 version = "0.212.0"
 when = "2024-06-27"
-user-id = 73222
-user-login = "wasmtime-publish"
-
-[[publisher.wit-parser]]
-version = "0.235.0"
-when = "2025-06-13"
 user-id = 73222
 user-login = "wasmtime-publish"
 
@@ -1632,55 +1565,7 @@ start = "2022-11-21"
 end = "2026-08-21"
 notes = "The Bytecode Alliance is the author of this crate."
 
-[[audits.bytecode-alliance.wildcard-audits.wit-bindgen]]
-who = "Alex Crichton <alex@alexcrichton.com>"
-criteria = "safe-to-deploy"
-user-id = 73222 # wasmtime-publish
-start = "2023-01-01"
-end = "2026-06-03"
-notes = """
-The Bytecode Alliance uses the `wasmtime-publish` crates.io account to automate
-publication of this crate from CI. This repository requires all PRs are reviewed
-by a Bytecode Alliance maintainer and it owned by the Bytecode Alliance itself.
-"""
-
-[[audits.bytecode-alliance.wildcard-audits.wit-bindgen-core]]
-who = "Alex Crichton <alex@alexcrichton.com>"
-criteria = "safe-to-deploy"
-user-id = 73222 # wasmtime-publish
-start = "2023-01-01"
-end = "2026-06-03"
-notes = """
-The Bytecode Alliance uses the `wasmtime-publish` crates.io account to automate
-publication of this crate from CI. This repository requires all PRs are reviewed
-by a Bytecode Alliance maintainer and it owned by the Bytecode Alliance itself.
-"""
-
 [[audits.bytecode-alliance.wildcard-audits.wit-bindgen-rt]]
-who = "Alex Crichton <alex@alexcrichton.com>"
-criteria = "safe-to-deploy"
-user-id = 73222 # wasmtime-publish
-start = "2023-01-01"
-end = "2026-06-03"
-notes = """
-The Bytecode Alliance uses the `wasmtime-publish` crates.io account to automate
-publication of this crate from CI. This repository requires all PRs are reviewed
-by a Bytecode Alliance maintainer and it owned by the Bytecode Alliance itself.
-"""
-
-[[audits.bytecode-alliance.wildcard-audits.wit-bindgen-rust]]
-who = "Alex Crichton <alex@alexcrichton.com>"
-criteria = "safe-to-deploy"
-user-id = 73222 # wasmtime-publish
-start = "2023-01-01"
-end = "2026-06-03"
-notes = """
-The Bytecode Alliance uses the `wasmtime-publish` crates.io account to automate
-publication of this crate from CI. This repository requires all PRs are reviewed
-by a Bytecode Alliance maintainer and it owned by the Bytecode Alliance itself.
-"""
-
-[[audits.bytecode-alliance.wildcard-audits.wit-bindgen-rust-macro]]
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
 user-id = 73222 # wasmtime-publish
@@ -2152,6 +2037,12 @@ criteria = "safe-to-deploy"
 delta = "0.238.1 -> 0.239.0"
 notes = "The Bytecode Alliance is the author of this crate"
 
+[[audits.bytecode-alliance.audits.wasm-metadata]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.239.0 -> 0.240.0"
+notes = "The Bytecode Alliance is the author of this crate"
+
 [[audits.bytecode-alliance.audits.wasmparser]]
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
@@ -2218,6 +2109,12 @@ criteria = "safe-to-deploy"
 delta = "0.238.1 -> 0.239.0"
 notes = "The Bytecode Alliance is the author of this crate"
 
+[[audits.bytecode-alliance.audits.wit-component]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.239.0 -> 0.240.0"
+notes = "The Bytecode Alliance is the author of this crate"
+
 [[audits.bytecode-alliance.audits.wit-parser]]
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
@@ -2234,6 +2131,12 @@ notes = "The Bytecode Alliance is the author of this crate"
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
 delta = "0.238.1 -> 0.239.0"
+notes = "The Bytecode Alliance is the author of this crate"
+
+[[audits.bytecode-alliance.audits.wit-parser]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.239.0 -> 0.240.0"
 notes = "The Bytecode Alliance is the author of this crate"
 
 [[audits.embark-studios.audits.cargo_metadata]]

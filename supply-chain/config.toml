@@ -237,15 +237,7 @@ criteria = "safe-to-deploy"
 version = "0.3.30"
 criteria = "safe-to-deploy"
 
-[[exemptions.futures-executor]]
-version = "0.3.30"
-criteria = "safe-to-deploy"
-
 [[exemptions.futures-io]]
-version = "0.3.30"
-criteria = "safe-to-deploy"
-
-[[exemptions.futures-macro]]
 version = "0.3.30"
 criteria = "safe-to-deploy"
 
@@ -679,6 +671,22 @@ criteria = "safe-to-deploy"
 
 [[exemptions.winapi-x86_64-pc-windows-gnu]]
 version = "0.4.0"
+criteria = "safe-to-deploy"
+
+[[exemptions.wit-bindgen]]
+version = "0.47.0"
+criteria = "safe-to-deploy"
+
+[[exemptions.wit-bindgen-core]]
+version = "0.47.0"
+criteria = "safe-to-deploy"
+
+[[exemptions.wit-bindgen-rust]]
+version = "0.47.0"
+criteria = "safe-to-deploy"
+
+[[exemptions.wit-bindgen-rust-macro]]
+version = "0.47.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.wit-parser]]
