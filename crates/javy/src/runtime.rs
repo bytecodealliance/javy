@@ -3,8 +3,8 @@ use super::from_js_error;
 #[cfg(feature = "json")]
 use crate::apis::json;
 use crate::{
-    apis::{console, random, stream_io, text_encoding},
-    config::{JSIntrinsics, JavyIntrinsics},
+    apis::{console, random, text_encoding},
+    config::JSIntrinsics,
     Config,
 };
 
@@ -50,7 +50,6 @@ impl Runtime {
     fn build_from_config(rt: &QRuntime, cfg: Config) -> Result<ManuallyDrop<Context>> {
         let cfg = cfg.validate()?;
         let intrinsics = &cfg.intrinsics;
-        let javy_intrinsics = &cfg.javy_intrinsics;
 
         rt.set_gc_threshold(cfg.gc_threshold);
         rt.set_memory_limit(cfg.memory_limit);
@@ -130,8 +129,12 @@ impl Runtime {
             console::register(ctx.clone(), cfg.log_stream, cfg.err_stream)
                 .expect("registering console to succeed");
 
-            if javy_intrinsics.contains(JavyIntrinsics::STREAM_IO) {
-                stream_io::register(ctx.clone())
+            #[cfg(all(target_family = "wasm", target_os = "wasi", target_env = "p1"))]
+            if cfg
+                .javy_intrinsics
+                .contains(crate::JavyIntrinsics::STREAM_IO)
+            {
+                crate::apis::stream_io::register(ctx.clone())
                     .expect("registering StreamIO functions to succeed");
             }
         });

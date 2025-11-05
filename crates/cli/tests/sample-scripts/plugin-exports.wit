@@ -1,0 +1,5 @@
+package local:test;
+
+world plugin {
+  export fn: func();
+}

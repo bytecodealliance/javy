@@ -11,6 +11,7 @@ mod runtime_config;
 use crate::runtime_config;
 
 thread_local! {
+    static CONFIG_BYTES: OnceCell<Vec<u8>> = const { OnceCell::new() };
     static CONFIG_RET_AREA: OnceCell<[u32; 2]> = const { OnceCell::new() };
 }
 
@@ -19,6 +20,7 @@ runtime_config! {
     #[serde(deny_unknown_fields, rename_all = "kebab-case")]
     pub struct SharedConfig {
         /// Whether to enable the `Javy.readSync` and `Javy.writeSync` builtins.
+        #[cfg(all(target_family = "wasm", target_os = "wasi", target_env = "p1"))]
         javy_stream_io: Option<bool>,
         /// Whether to override the `JSON.parse` and `JSON.stringify`
         /// implementations with an alternative, more performant, SIMD based
@@ -38,6 +40,7 @@ impl SharedConfig {
     }
 
     pub fn apply_to_config(&self, config: &mut Config) {
+        #[cfg(all(target_family = "wasm", target_os = "wasi", target_env = "p1"))]
         if let Some(enable) = self.javy_stream_io {
             config.javy_stream_io(enable);
         }
@@ -53,9 +56,20 @@ impl SharedConfig {
     }
 }
 
-pub fn config_schema() -> Vec<u8> {
-    serde_json::to_string(&SharedConfig::config_schema())
+#[export_name = "config-schema"]
+fn config_schema() -> *const u32 {
+    let bytes = serde_json::to_string(&SharedConfig::config_schema())
         .unwrap()
         .as_bytes()
-        .to_vec()
+        .to_vec();
+    let bytes_len = bytes.len();
+    CONFIG_BYTES.with(|key| key.set(bytes)).unwrap();
+    CONFIG_RET_AREA.with(|key| {
+        key.set([
+            CONFIG_BYTES.with(|key| key.get().unwrap().as_ptr()) as u32,
+            bytes_len as u32,
+        ])
+        .unwrap();
+        key.get().unwrap().as_ptr()
+    })
 }

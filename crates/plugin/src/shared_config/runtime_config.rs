@@ -22,6 +22,9 @@ macro_rules! runtime_config {
                 $(
                     #[doc = $doc:tt]
                 )*
+                $(
+                    #[cfg($cfg:meta)]
+                )?
                 $opt:ident: Option<bool>,
             )+
         }
@@ -32,6 +35,9 @@ macro_rules! runtime_config {
                 $(
                     #[doc = $doc]
                 )*
+                $(
+                    #[cfg($cfg)]
+                )?
                 $opt: Option<bool>,
             )+
         }

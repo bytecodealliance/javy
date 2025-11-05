@@ -17,6 +17,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - `weak_ref` and `performance` on `Config`.
+- Support for WASI preview 1 plugins.
 
 ### Changed
 

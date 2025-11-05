@@ -86,16 +86,65 @@ fn test_using_runtime_flag_with_dynamic_triggers_error(builder: &mut Builder) ->
 }
 
 #[javy_cli_test(dyn = true)]
+fn test_using_wasip1_plugin_with_dynamic_works(builder: &mut Builder) -> Result<()> {
+    let plugin = Plugin::UserWasiP1;
+    let mut runner = builder
+        .plugin(plugin)
+        .preload(plugin.namespace().into(), plugin.path())
+        .input("plugin.js")
+        .build()?;
+
+    let result = runner.exec(vec![]);
+    assert!(result.is_ok(), "Expected ok but got {result:?}");
+
+    Ok(())
+}
+
+#[javy_cli_test(dyn = true)]
+fn test_using_wasip1_plugin_with_export_works(builder: &mut Builder) -> Result<()> {
+    let plugin = Plugin::UserWasiP1;
+    let mut runner = builder
+        .plugin(plugin)
+        .preload(plugin.namespace().into(), plugin.path())
+        .input("plugin-exports.js")
+        .wit("plugin-exports.wit")
+        .world("plugin")
+        .build()?;
+
+    let result = runner.exec_func("fn", vec![]);
+    assert!(result.is_ok(), "Expected ok but got {result:?}");
+
+    Ok(())
+}
+
+#[javy_cli_test(dyn = true)]
 fn test_using_wasip2_plugin_with_dynamic_works(builder: &mut Builder) -> Result<()> {
     let plugin = Plugin::UserWasiP2;
     let mut runner = builder
-        .plugin(Plugin::UserWasiP2)
+        .plugin(plugin)
         .preload(plugin.namespace().into(), plugin.path())
         .input("plugin.js")
         .build()?;
 
     let result = runner.exec(vec![]);
     assert!(result.is_ok());
+
+    Ok(())
+}
+
+#[javy_cli_test(dyn = true)]
+fn test_using_wasip2_plugin_with_export_works(builder: &mut Builder) -> Result<()> {
+    let plugin = Plugin::UserWasiP2;
+    let mut runner = builder
+        .plugin(plugin)
+        .preload(plugin.namespace().into(), plugin.path())
+        .input("plugin-exports.js")
+        .wit("plugin-exports.wit")
+        .world("plugin")
+        .build()?;
+
+    let result = runner.exec_func("fn", vec![]);
+    assert!(result.is_ok(), "Expected ok but got {result:?}");
 
     Ok(())
 }

@@ -49,7 +49,8 @@
 //! ### `StreamIO`
 //!
 //! Provides an implementation of `Javy.IO.readSync` and `Javy.IO.writeSync`.
-//! Disabled by default.
+//! Disabled by default. Only available when targeting WASI preview 1 since it
+//! will always error when targeting later WASI previews.
 //!
 //! ###  `JSON`
 //! Provides an efficient implementation of JSON functions based on [`simd-json`](https://crates.io/crates/simd-json/0.13.10)
@@ -60,5 +61,6 @@ pub(crate) mod console;
 #[cfg(feature = "json")]
 pub(crate) mod json;
 pub(crate) mod random;
+#[cfg(all(target_family = "wasm", target_os = "wasi", target_env = "p1"))]
 pub(crate) mod stream_io;
 pub(crate) mod text_encoding;
