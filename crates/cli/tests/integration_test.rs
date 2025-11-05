@@ -87,7 +87,7 @@ fn test_console_log(builder: &mut Builder) -> Result<()> {
 }
 
 #[javy_cli_test]
-fn test_using_plugin_with_static_build(builder: &mut Builder) -> Result<()> {
+fn test_using_wasip2_plugin_with_static_build(builder: &mut Builder) -> Result<()> {
     let mut runner = builder
         .plugin(Plugin::UserWasiP2)
         .input("plugin.js")
@@ -100,7 +100,7 @@ fn test_using_plugin_with_static_build(builder: &mut Builder) -> Result<()> {
 }
 
 #[javy_cli_test]
-fn test_using_plugin_with_static_build_fails_with_runtime_config(
+fn test_using_wasip2_plugin_with_static_build_fails_with_runtime_config(
     builder: &mut Builder,
 ) -> Result<()> {
     let result = builder
