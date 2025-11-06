@@ -36,7 +36,3 @@ anyhow = { workspace = true }
 javy-plugin-processing = { path = "../plugin-processing" }
 tempfile = { workspace = true }
 wasm-opt = { workspace = true }
-
-[[bench]]
-name = "benchmark"
-harness = false
