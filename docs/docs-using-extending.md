@@ -11,7 +11,7 @@ will compile to a library (that is, `cargo init --lib`). Javy plugins are
 written as Wasm components but converted to Wasm modules during the
 initialization process.
 
-Your `Cargo.toml` should look like the following data :
+Your `Cargo.toml` should look like the following data:
 
 ```toml
 [package]
@@ -27,7 +27,7 @@ javy-plugin-api = "4.0.0"
 wit-bindgen = "0.44.0"
 ```
 
-You'll need a WIT file in `wit/world.wit` that looks like the following code :
+You'll need a WIT file in `wit/world.wit` that looks like the following code:
 
 ```wit
 package yournamespace:my-javy-plugin@1.0.0;
@@ -39,7 +39,7 @@ world my-javy-plugin {
 }
 ```
 
-If you want to use hostcalls in your plugin, you'll also need to include imports in your world. For example, if you wanted to import a function named `imported-function` that takes no arguments and doesn't return anything, it'll look like :
+If you want to use hostcalls in your plugin, you'll also need to include imports in your world. For example, if you wanted to import a function named `imported-function` that takes no arguments and doesn't return anything, it'll look like:
 
 ```wit
 package yournamespace:my-javy-plugin@1.0.0;
@@ -62,7 +62,7 @@ modules. See our documentation on
 [using complex data types in Wasm functions](./contributing-complex-data-types.md)
 for more details.
 
-For the world with the imported function, the `src/lib.rs` should look like :
+For the world with the imported function, the `src/lib.rs` should look like:
 
 ```rust
 use javy_plugin_api::{
@@ -102,7 +102,7 @@ javy_plugin!("my-javy-plugin", Component, config, modify_runtime);
 export!(Component);
 ```
 
-If you do not want to use the `javy_plugin!` macro for whatever reason, you can use the underlying APIs in `src/lib.rs` directly :
+If you do not want to use the `javy_plugin!` macro for whatever reason, you can use the underlying APIs in `src/lib.rs` directly:
 
 ```rust
 use std::process;
