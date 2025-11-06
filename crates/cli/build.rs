@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use anyhow::Result;
 
 fn main() -> Result<()> {
-    if let Ok("cargo-clippy") = env::var("CARGO_CFG_FEATURE").as_ref().map(String::as_str) {
+    if env::var("CLIPPY_ARGS").is_ok() {
         stub_plugin_for_clippy()
     } else {
         copy_plugin()
