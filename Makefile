@@ -10,34 +10,34 @@ fmt:
 # === Lint & Test WASI Targets ===
 lint-wasi-targets:
 	cargo clippy --workspace \
-          --exclude=javy-cli \
-          --exclude=javy-codegen \
-          --exclude=javy-plugin-processing \
-          --exclude=javy-runner \
-	  --exclude=javy-fuzz \
-          --target=wasm32-wasip2 --all-targets --all-features -- -D warnings
+	--exclude=javy-cli \
+	--exclude=javy-codegen \
+	--exclude=javy-plugin-processing \
+	--exclude=javy-runner \
+	--exclude=javy-fuzz \
+	--target=wasm32-wasip2 --all-targets --all-features -- -D warnings
 
 test-wasi-targets:
 	cargo hack test --workspace \
-          --exclude=javy-cli \
-          --exclude=javy-codegen \
-          --exclude=javy-plugin-processing \
-          --exclude=javy-runner \
-	  --exclude=javy-fuzz \
-          --exclude=javy-test-plugin-wasip2 \
-          --exclude=javy-test-invalid-plugin \
-          --target=wasm32-wasip2 --each-feature -- --nocapture
+	--exclude=javy-cli \
+	--exclude=javy-codegen \
+	--exclude=javy-plugin-processing \
+	--exclude=javy-runner \
+	--exclude=javy-fuzz \
+	--exclude=javy-test-plugin-wasip2 \
+	--exclude=javy-test-invalid-plugin \
+	--target=wasm32-wasip2 --each-feature -- --nocapture
 
 wasi-targets: lint-wasi-targets test-wasi-targets
 
 # === Lint & Test Native Targets ===
 lint-native-targets:
 	CARGO_PROFILE_RELEASE_LTO=off cargo clippy --workspace \
-          --exclude=javy \
-          --exclude=javy-plugin-api \
-          --exclude=javy-plugin \
-          --exclude=javy-test-plugin-wasip2 \
-          --release --all-targets --all-features -- -D warnings
+	--exclude=javy \
+	--exclude=javy-plugin-api \
+	--exclude=javy-plugin \
+	--exclude=javy-test-plugin-wasip2 \
+	--release --all-targets --all-features -- -D warnings
 
 test-native-targets: build-default-plugin build-test-plugins test-native-targets-ci
 
@@ -46,11 +46,11 @@ test-native-targets: build-default-plugin build-test-plugins test-native-targets
 # This ensures that we can recycle CI time.
 test-native-targets-ci:
 	CARGO_PROFILE_RELEASE_LTO=off cargo hack test --workspace \
-          --exclude=javy \
-          --exclude=javy-plugin-api \
-	  --exclude=javy-plugin \
-	  --exclude=javy-test-plugin-wasip2 \
-	  --release --each-feature -- --nocapture
+	--exclude=javy \
+	--exclude=javy-plugin-api \
+	--exclude=javy-plugin \
+	--exclude=javy-test-plugin-wasip2 \
+	--release --each-feature -- --nocapture
 
 
 native-targets: lint-native-targets test-native-targets
