@@ -1,80 +1,90 @@
-.PHONY: cli plugin test fmt clean
+.PHONY: fmt fmt-check lint-wasi-targets test-wasi-targets wasi-targets lint-native-targets test-native-targets native-targets test-wpt test clean cli plugin build-test-plugins
 .DEFAULT_GOAL := cli
 
-install:
-	cargo install --path crates/cli
+# === Format checks ===
+fmt-check:
+	cargo fmt --all --check
+fmt:
+	cargo fmt --all
 
-# Disabling LTO substantially improves compile time
-cli: plugin
-	CARGO_PROFILE_RELEASE_LTO=off cargo build --package=javy-cli --release
+# === Lint & Test WASI Targets ===
+lint-wasi-targets:
+	cargo clippy --workspace \
+	--exclude=javy-cli \
+	--exclude=javy-codegen \
+	--exclude=javy-plugin-processing \
+	--exclude=javy-runner \
+	--exclude=javy-fuzz \
+	--target=wasm32-wasip2 --all-targets --all-features -- -D warnings
 
-plugin:
-	cargo build --package=javy-plugin --release --target=wasm32-wasip2
-	cargo run --package=javy-plugin-processing --release target/wasm32-wasip2/release/plugin.wasm target/wasm32-wasip2/release/plugin_wizened.wasm
+test-wasi-targets:
+	cargo hack test --workspace \
+	--exclude=javy-cli \
+	--exclude=javy-codegen \
+	--exclude=javy-plugin-processing \
+	--exclude=javy-runner \
+	--exclude=javy-fuzz \
+	--exclude=javy-test-plugin-wasip2 \
+	--exclude=javy-test-invalid-plugin \
+	--target=wasm32-wasip2 --each-feature -- --nocapture
 
-build-test-plugins: cli
-	cargo build --package=javy-test-plugin-wasip2 --target=wasm32-wasip2 --release
-	cargo build --package=javy-test-invalid-plugin --target=wasm32-unknown-unknown --release
-	cargo run --package=javy-plugin-processing --release -- target/wasm32-wasip2/release/test_plugin.wasm target/wasm32-wasip2/release/test_plugin.wasm
+wasi-targets: lint-wasi-targets test-wasi-targets
 
-docs:
-	cargo doc --package=javy-cli --open
-	cargo doc --package=javy-plugin --open --target=wasm32-wasip2
+# === Lint & Test Native Targets ===
+lint-native-targets:
+	CARGO_PROFILE_RELEASE_LTO=off cargo clippy --workspace \
+	--exclude=javy \
+	--exclude=javy-plugin-api \
+	--exclude=javy-plugin \
+	--exclude=javy-test-plugin-wasip2 \
+	--release --all-targets --all-features -- -D warnings
 
-test-javy:
-	cargo hack test --package=javy --target=wasm32-wasip2 --each-feature -- --nocapture
+test-native-targets: build-default-plugin build-test-plugins test-native-targets-ci
 
-test-plugin-api:
-	cargo hack test --package=javy-plugin-api --target=wasm32-wasip2 --each-feature -- --nocapture
+# This command assumes a CI environment in which the test plugin
+# assets have been previously created in the expected directories.
+# This ensures that we can recycle CI time.
+test-native-targets-ci:
+	CARGO_PROFILE_RELEASE_LTO=off cargo hack test --workspace \
+	--exclude=javy \
+	--exclude=javy-plugin-api \
+	--exclude=javy-plugin \
+	--exclude=javy-test-plugin-wasip2 \
+	--release --each-feature -- --nocapture
 
-test-plugin:
-	cargo test --package=javy-plugin --target=wasm32-wasip2 -- --nocapture
 
-test-plugin-processing:
-	cargo test --package=javy-plugin-processing --release -- --nocapture
+native-targets: lint-native-targets test-native-targets
 
-test-codegen: cli
-	CARGO_PROFILE_RELEASE_LTO=off cargo hack test --package=javy-codegen --release --each-feature -- --nocapture
+# === Web Platform Tests
 
-# Test in release mode to skip some debug assertions
-# Note: to make this faster, the engine should be optimized beforehand (wasm-strip + wasm-opt).
-# Disabling LTO substantially improves compile time
-test-cli: plugin build-test-plugins
-	CARGO_PROFILE_RELEASE_LTO=off cargo test --package=javy-cli --release -- --nocapture
-
-test-runner:
-	cargo test --package=javy-runner -- --nocapture
-
-test-wpt: cli
+# For usage in CI, in which we assume pre-existing assets.
+test-wpt-ci:
 	npm install --prefix wpt
 	npm test --prefix wpt
 
-tests: test-javy test-plugin-api test-plugin test-plugin-processing test-runner test-codegen test-cli test-wpt
+test-wpt: cli test-wpt-ci
 
-fmt: fmt-javy fmt-plugin-api fmt-plugin fmt-plugin-processing fmt-cli fmt-codegen
+# === All tests ===
+test-all: wasi-targets native-targets test-wpt
 
-fmt-javy:
-	cargo fmt --package=javy -- --check
-	cargo clippy --package=javy --target=wasm32-wasip2 --all-targets --all-features -- -D warnings
 
-fmt-plugin-api:
-	cargo fmt --package=javy-plugin-api -- --check
-	cargo clippy --package=javy-plugin-api --target=wasm32-wasip2 --all-targets --all-features -- -D warnings
 
-fmt-plugin:
-	cargo fmt --package=javy-plugin -- --check
-	cargo clippy --package=javy-plugin --target=wasm32-wasip2 --all-targets --all-features -- -D warnings
+# === Misc ===
+clean:
+	cargo clean
 
-fmt-plugin-processing:
-	cargo fmt --package=javy-plugin-processing -- --check
-	cargo clippy --package=javy-plugin-processing --release --all-targets --all-features -- -D warnings
+# First, build the default plugin, which is a dependency to the CLI.
+# No need to run `javy_plugin_processing`, the CLI build.rs will take
+# care of doing that.
+cli: build-default-plugin
+	CARGO_PROFILE_RELEASE_LTO=off cargo build -p=javy-cli --release
 
-# Use `--release` on CLI clippy to align with `test-cli`.
-# This reduces the size of the target directory which improves CI stability.
-fmt-cli:
-	cargo fmt --package=javy-cli -- --check
-	CARGO_PROFILE_RELEASE_LTO=off cargo clippy --package=javy-cli --release --all-targets -- -D warnings
+# Build the default plugin
+build-default-plugin:
+	cargo build -p=javy-plugin --target=wasm32-wasip2 --release
 
-fmt-codegen:
-	cargo fmt --package=javy-codegen -- --check
-	cargo clippy --package=javy-codegen --release --all-targets --all-features -- -D warnings
+# Build auxiliary plugins, for testing
+build-test-plugins:
+	cargo build --package=javy-test-plugin-wasip2 --target=wasm32-wasip2 --release
+	cargo build --package=javy-test-invalid-plugin --target=wasm32-unknown-unknown --release
+	cargo run --package=javy-plugin-processing --release -- target/wasm32-wasip2/release/test_plugin.wasm target/wasm32-wasip2/release/test_plugin.wasm
