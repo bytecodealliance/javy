@@ -24,3 +24,6 @@ tests/target/*.wasm
 
 .idea
 .vscode
+
+*~
+\#*\#
