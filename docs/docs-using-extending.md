@@ -27,7 +27,7 @@ javy-plugin-api = "4.0.0"
 wit-bindgen = "0.44.0"
 ```
 
-You'll need a WIT file in `wit/world.wit` that looks like the following data :
+You'll need a WIT file in `wit/world.wit` that looks like the following code :
 
 ```wit
 package yournamespace:my-javy-plugin@1.0.0;
