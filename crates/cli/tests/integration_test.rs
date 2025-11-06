@@ -87,8 +87,11 @@ fn test_console_log(builder: &mut Builder) -> Result<()> {
 }
 
 #[javy_cli_test]
-fn test_using_plugin_with_static_build(builder: &mut Builder) -> Result<()> {
-    let mut runner = builder.plugin(Plugin::User).input("plugin.js").build()?;
+fn test_using_wasip2_plugin_with_static_build(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder
+        .plugin(Plugin::UserWasiP2)
+        .input("plugin.js")
+        .build()?;
 
     let result = runner.exec(vec![]);
     assert!(result.is_ok());
@@ -97,11 +100,11 @@ fn test_using_plugin_with_static_build(builder: &mut Builder) -> Result<()> {
 }
 
 #[javy_cli_test]
-fn test_using_plugin_with_static_build_fails_with_runtime_config(
+fn test_using_wasip2_plugin_with_static_build_fails_with_runtime_config(
     builder: &mut Builder,
 ) -> Result<()> {
     let result = builder
-        .plugin(Plugin::User)
+        .plugin(Plugin::UserWasiP2)
         .simd_json_builtins(true)
         .build();
     let err = result.err().unwrap();
