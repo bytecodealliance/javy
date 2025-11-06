@@ -211,17 +211,6 @@ fn test_exported_functions_without_flag(builder: &mut Builder) -> Result<()> {
 }
 
 #[javy_cli_test]
-fn test_exported_function_without_semicolons(builder: &mut Builder) -> Result<()> {
-    let mut runner = builder
-        .input("exported-fn-no-semicolon.js")
-        .wit("exported-fn-no-semicolon.wit")
-        .world("exported-fn")
-        .build()?;
-    run_fn(&mut runner, "foo", vec![]);
-    Ok(())
-}
-
-#[javy_cli_test]
 fn test_producers_section_present(builder: &mut Builder) -> Result<()> {
     let runner = builder.input("readme.js").build()?;
 

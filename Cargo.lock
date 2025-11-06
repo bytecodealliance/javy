@@ -1759,7 +1759,7 @@ dependencies = [
 
 [[package]]
 name = "javy-codegen"
-version = "2.1.0-alpha.1"
+version = "3.0.0-alpha.1"
 dependencies = [
  "anyhow",
  "brotli",
@@ -1773,7 +1773,7 @@ dependencies = [
  "wasmprinter 0.240.0",
  "wasmtime",
  "wasmtime-wasi",
- "wit-parser 0.212.0",
+ "wit-parser 0.239.0",
  "wizer",
 ]
 
@@ -3649,19 +3649,6 @@ dependencies = [
 
 [[package]]
 name = "wasmparser"
-version = "0.212.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8d28bc49ba1e5c5b61ffa7a2eace10820443c4b7d1c0b144109261d14570fdf8"
-dependencies = [
- "ahash",
- "bitflags",
- "hashbrown 0.14.5",
- "indexmap 2.12.0",
- "semver",
-]
-
-[[package]]
-name = "wasmparser"
 version = "0.236.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a9b1e81f3eb254cf7404a82cee6926a4a3ccc5aad80cc3d43608a070c67aa1d7"
@@ -3684,6 +3671,17 @@ dependencies = [
  "indexmap 2.12.0",
  "semver",
  "serde",
+]
+
+[[package]]
+name = "wasmparser"
+version = "0.239.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8c9d90bb93e764f6beabf1d02028c70a2156a6583e63ac4218dd07ef733368b0"
+dependencies = [
+ "bitflags",
+ "indexmap 2.12.0",
+ "semver",
 ]
 
 [[package]]
@@ -4453,24 +4451,6 @@ dependencies = [
 
 [[package]]
 name = "wit-parser"
-version = "0.212.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ceeb0424aa8679f3fcf2d6e3cfa381f3d6fa6179976a2c05a6249dd2bb426716"
-dependencies = [
- "anyhow",
- "id-arena",
- "indexmap 2.12.0",
- "log",
- "semver",
- "serde",
- "serde_derive",
- "serde_json",
- "unicode-xid",
- "wasmparser 0.212.0",
-]
-
-[[package]]
-name = "wit-parser"
 version = "0.236.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "16e4833a20cd6e85d6abfea0e63a399472d6f88c6262957c17f546879a80ba15"
@@ -4485,6 +4465,24 @@ dependencies = [
  "serde_json",
  "unicode-xid",
  "wasmparser 0.236.1",
+]
+
+[[package]]
+name = "wit-parser"
+version = "0.239.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "55c92c939d667b7bf0c6bf2d1f67196529758f99a2a45a3355cc56964fd5315d"
+dependencies = [
+ "anyhow",
+ "id-arena",
+ "indexmap 2.12.0",
+ "log",
+ "semver",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "unicode-xid",
+ "wasmparser 0.239.0",
 ]
 
 [[package]]
