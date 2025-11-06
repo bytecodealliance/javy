@@ -4,6 +4,8 @@ javy.wasm
 /index.js
 index.wasm
 index.wit
+.envrc
+.direnv/
 
 .DS_Store
 
