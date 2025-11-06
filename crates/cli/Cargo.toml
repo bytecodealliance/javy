@@ -23,8 +23,6 @@ javy-plugin-processing = { path = "../plugin-processing" }
 
 [dev-dependencies]
 brotli = { workspace = true }
-criterion = "0.7"
-num-format = "0.4.4"
 wasmparser = { workspace = true }
 javy-runner = { path = "../runner/" }
 javy-test-macros = { path = "../test-macros/" }
