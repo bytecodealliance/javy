@@ -254,37 +254,37 @@ end = "2024-10-03"
 
 [[trusted.http]]
 criteria = "safe-to-deploy"
-user-id = 359 # Sean McArthur (seanmonstar)
+user-id = 359
 start = "2019-04-05"
 end = "2024-10-26"
 
 [[trusted.http-body-util]]
 criteria = "safe-to-deploy"
-user-id = 359 # Sean McArthur (seanmonstar)
+user-id = 359
 start = "2022-10-25"
 end = "2024-10-26"
 
 [[trusted.httparse]]
 criteria = "safe-to-deploy"
-user-id = 359 # Sean McArthur (seanmonstar)
+user-id = 359
 start = "2019-07-03"
 end = "2024-10-26"
 
 [[trusted.hyper]]
 criteria = "safe-to-deploy"
-user-id = 359 # Sean McArthur (seanmonstar)
+user-id = 359
 start = "2019-03-01"
 end = "2024-10-26"
 
 [[trusted.hyper-tls]]
 criteria = "safe-to-deploy"
-user-id = 359 # Sean McArthur (seanmonstar)
+user-id = 359
 start = "2019-03-19"
 end = "2024-10-27"
 
 [[trusted.hyper-util]]
 criteria = "safe-to-deploy"
-user-id = 359 # Sean McArthur (seanmonstar)
+user-id = 359
 start = "2022-01-15"
 end = "2024-12-01"
 
@@ -338,7 +338,7 @@ end = "2024-07-25"
 
 [[trusted.libc]]
 criteria = "safe-to-deploy"
-user-id = 51017 # Yuki Okushi (JohnTitor)
+user-id = 51017
 start = "2020-03-17"
 end = "2024-10-30"
 
@@ -368,7 +368,7 @@ end = "2024-07-12"
 
 [[trusted.num_cpus]]
 criteria = "safe-to-deploy"
-user-id = 359 # Sean McArthur (seanmonstar)
+user-id = 359
 start = "2019-06-10"
 end = "2024-10-26"
 
@@ -536,7 +536,7 @@ end = "2026-07-18"
 
 [[trusted.smallvec]]
 criteria = "safe-to-deploy"
-user-id = 2017 # Matt Brubeck (mbrubeck)
+user-id = 2017
 start = "2019-10-28"
 end = "2025-01-03"
 
@@ -578,7 +578,7 @@ end = "2026-09-02"
 
 [[trusted.tokio]]
 criteria = "safe-to-deploy"
-user-id = 10 # Carl Lerche (carllerche)
+user-id = 10
 start = "2019-03-02"
 end = "2026-04-09"
 
@@ -590,7 +590,7 @@ end = "2025-01-04"
 
 [[trusted.tokio-macros]]
 criteria = "safe-to-deploy"
-user-id = 10 # Carl Lerche (carllerche)
+user-id = 10
 start = "2019-04-24"
 end = "2024-12-04"
 
