@@ -4,12 +4,6 @@
 install:
 	cargo install --path crates/cli
 
-bench: cli
-	cargo bench --package=javy-cli
-
-check-bench:
-	CARGO_PROFILE_RELEASE_LTO=off cargo check --package=javy-cli --release --benches
-
 # Disabling LTO substantially improves compile time
 cli: plugin
 	CARGO_PROFILE_RELEASE_LTO=off cargo build --package=javy-cli --release

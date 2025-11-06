@@ -82,9 +82,6 @@ jobs:
           name: plugins
           path: target/
 
-      - name: Check benchmarks
-        run: cargo check --package=javy-cli --release --benches
-
       - name: Lint
         run: |
           cargo clippy --workspace \
