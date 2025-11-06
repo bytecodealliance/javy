@@ -11,7 +11,7 @@ will compile to a library (that is, `cargo init --lib`). Javy plugins are
 written as Wasm components but converted to Wasm modules during the
 initialization process.
 
-Your `Cargo.toml` should look like the following data:
+Your `Cargo.toml` should look like the following:
 
 ```toml
 [package]
