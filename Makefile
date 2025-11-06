@@ -19,9 +19,9 @@ plugin:
 	cargo run --package=javy-plugin-processing --release target/wasm32-wasip2/release/plugin.wasm target/wasm32-wasip2/release/plugin_wizened.wasm
 
 build-test-plugins: cli
-	cargo build --package=javy-test-plugin --target=wasm32-wasip2 --release
+	cargo build --package=javy-test-plugin-wasip2 --target=wasm32-wasip2 --release
 	cargo build --package=javy-test-invalid-plugin --target=wasm32-unknown-unknown --release
-	cargo run --package=javy-plugin-processing --release -- target/wasm32-wasip2/release/test_plugin.wasm crates/runner/test_plugin.wasm
+	cargo run --package=javy-plugin-processing --release -- target/wasm32-wasip2/release/test_plugin.wasm target/wasm32-wasip2/release/test_plugin.wasm
 
 docs:
 	cargo doc --package=javy-cli --open

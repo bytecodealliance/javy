@@ -92,11 +92,11 @@ impl JS {
                         if let ExportSpecifier::Named(n) = specifier {
                             let orig = match n.orig {
                                 ModuleExportName::Ident(i) => i.sym,
-                                ModuleExportName::Str(s) => s.value,
+                                ModuleExportName::Str(s) => s.value.to_atom_lossy().into_owned(),
                             };
                             let exported_name = n.exported.map(|e| match e {
                                 ModuleExportName::Ident(i) => i.sym,
-                                ModuleExportName::Str(s) => s.value,
+                                ModuleExportName::Str(s) => s.value.to_atom_lossy().into_owned(),
                             });
                             named_exports.push((orig, exported_name));
                         }

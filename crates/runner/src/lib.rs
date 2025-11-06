@@ -14,7 +14,7 @@ use wasmtime_wasi::{preview1::WasiP1Ctx, WasiCtxBuilder};
 #[derive(Debug, Clone)]
 pub enum Plugin {
     Default,
-    User,
+    UserWasiP2,
     /// Pass the default plugin on the CLI as a user plugin.
     DefaultAsUser,
     InvalidUser,
@@ -34,30 +34,28 @@ impl Plugin {
             // Could try and derive this but not going to for now since tests
             // will break if it changes.
             Self::Default | Self::DefaultAsUser => "javy-default-plugin-v2",
-            Self::User { .. } => "test-plugin",
+            Self::UserWasiP2 { .. } => "test-plugin-wasip2",
         }
     }
 
     pub fn path(&self) -> PathBuf {
         let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let target = root.join("..").join("..").join("target");
+        let wasip2 = target.join("wasm32-wasip2").join("release");
         match self {
             Self::InvalidUser => target
                 .join("wasm32-unknown-unknown")
                 .join("release")
                 .join("test_invalid_plugin.wasm"),
-            Self::User => root.join("test_plugin.wasm"),
-            Self::Default | Self::DefaultAsUser => target
-                .join("wasm32-wasip2")
-                .join("release")
-                .join("plugin_wizened.wasm"),
+            Self::UserWasiP2 => wasip2.join("test_plugin.wasm"),
+            Self::Default | Self::DefaultAsUser => wasip2.join("plugin_wizened.wasm"),
         }
     }
 
     pub fn needs_plugin_arg(&self) -> bool {
         match self {
             Plugin::Default => false,
-            Plugin::User | Plugin::DefaultAsUser | Plugin::InvalidUser => true,
+            Plugin::UserWasiP2 | Plugin::DefaultAsUser | Plugin::InvalidUser => true,
         }
     }
 }

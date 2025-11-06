@@ -1,5 +1,5 @@
 [package]
-name = "javy-test-plugin"
+name = "javy-test-plugin-wasip2"
 version = "0.1.0"
 authors.workspace = true
 edition.workspace = true
