@@ -10,9 +10,16 @@
         {
           devShells.default = pkgs.mkShell {
             packages = with pkgs; [
+              wasmtime
               llvmPackages_latest.libclang
             ];
 
+            BINDGEN_EXTRA_CLANG_ARGS = builtins.concatStringsSep " " [
+              "-isystem ${pkgs.llvmPackages_latest.libclang.lib}/lib/clang/${pkgs.llvmPackages_latest.libclang.version}/include"
+              "-isystem ${pkgs.glibc.dev}/include"
+            ];
+            # rquickjs automatically installs the WASI SDK.
+            BINDGEN_EXTRA_CLANG_ARGS_wasm32_wasip2 = "";
             LIBCLANG_PATH = "${pkgs.llvmPackages_latest.libclang.lib}/lib";
           };
         });
