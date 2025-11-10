@@ -24,8 +24,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Make plugin
-        run: make plugin
+      - name: Build default plugin
+        run: make build-default-plugin
 
       - name: Upload plugin to artifacts
         uses: actions/upload-artifact@v5
