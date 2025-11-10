@@ -1594,7 +1594,6 @@ dependencies = [
  "serde_json",
  "tempfile",
  "walrus",
- "wasm-opt",
  "wasmparser 0.240.0",
  "wasmtime",
  "wasmtime-wasi",
