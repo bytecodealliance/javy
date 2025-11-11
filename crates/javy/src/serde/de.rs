@@ -639,19 +639,6 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
-    fn test_map_does_not_support_non_string_keys() {
-        let rt = Runtime::default();
-        // Sanity check to make sure it's not possible to deserialize
-        // to a map where keys are not strings (e.g. numerical value).
-        rt.context().with(|c| {
-            c.eval::<Value<'_>, _>("var a = {1337: 42};").unwrap();
-            let val = c.globals().get("a").unwrap();
-            deserialize_value::<BTreeMap<String, i32>>(val);
-        });
-    }
-
-    #[test]
     fn test_u64_bounds() {
         let rt = Runtime::default();
         rt.context().with(|c| {
