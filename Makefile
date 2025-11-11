@@ -36,6 +36,7 @@ lint-native-targets: build-default-plugin
 	--exclude=javy \
 	--exclude=javy-plugin-api \
 	--exclude=javy-plugin \
+	--exclude=javy-test-invalid-plugin \
 	--exclude=javy-test-plugin-wasip2 \
 	--release --all-targets --all-features -- -D warnings
 
@@ -44,6 +45,7 @@ test-native-targets: build-default-plugin build-test-plugins
 	--exclude=javy \
 	--exclude=javy-plugin-api \
 	--exclude=javy-plugin \
+	--exclude=javy-test-invalid-plugin \
 	--exclude=javy-test-plugin-wasip2 \
 	--release --each-feature -- --nocapture
 
