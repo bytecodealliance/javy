@@ -58,7 +58,7 @@ unsafe extern "C" fn cabi_realloc(
 }
 
 #[export_name = "compile-src"]
-unsafe fn compile_src(src_ptr: *const u8, src_len: usize) -> *const u32 {
+unsafe extern "C" fn compile_src(src_ptr: *const u8, src_len: usize) -> *const u32 {
     let src = slice::from_raw_parts(src_ptr, src_len);
     let (res, bytes) = match crate::compile_src(src) {
         Ok(bytecode) => (0, bytecode),
@@ -73,7 +73,7 @@ unsafe fn compile_src(src_ptr: *const u8, src_len: usize) -> *const u32 {
 }
 
 #[export_name = "invoke"]
-fn invoke(
+extern "C" fn invoke(
     bytecode_ptr: *const u8,
     bytecode_len: usize,
     fn_name_discriminator: u32,
