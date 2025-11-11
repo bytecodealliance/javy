@@ -91,4 +91,8 @@ clean:
 vet:
 	cargo vet --locked
 
+# Intended to simulate what the GitHub Actions CI workflow will run.
+# We don't invoke this directly because we often run out of disk space in
+# GitHub Actions if we try to compile native targets in the same workflow as
+# WASI targets so we have to use a multi-step process in GitHub to avoid that.
 ci: lint-wasi-targets lint-native-targets vet test-all
