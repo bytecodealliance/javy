@@ -32,7 +32,7 @@ const ZERO_SIZE_ALLOCATION_PTR: *mut u8 = 1 as _;
 /// * If `original_ptr` is not 0, it must be properly aligned.
 /// * If `original_size` is not 0, it must match the `new_size` value provided
 ///   in the original `cabi_realloc` call that returned `original_ptr`.
-#[export_name = "cabi_realloc"]
+#[unsafe(export_name = "cabi_realloc")]
 unsafe extern "C" fn cabi_realloc(
     original_ptr: *mut u8,
     original_size: usize,
@@ -57,7 +57,7 @@ unsafe extern "C" fn cabi_realloc(
     new_mem as _
 }
 
-#[export_name = "compile-src"]
+#[unsafe(export_name = "compile-src")]
 unsafe extern "C" fn compile_src(src_ptr: *const u8, src_len: usize) -> *const u32 {
     let src = slice::from_raw_parts(src_ptr, src_len);
     let (res, bytes) = match crate::compile_src(src) {
@@ -72,7 +72,7 @@ unsafe extern "C" fn compile_src(src_ptr: *const u8, src_len: usize) -> *const u
     COMPILE_SRC_RET_AREA.as_ptr()
 }
 
-#[export_name = "invoke"]
+#[unsafe(export_name = "invoke")]
 extern "C" fn invoke(
     bytecode_ptr: *const u8,
     bytecode_len: usize,
