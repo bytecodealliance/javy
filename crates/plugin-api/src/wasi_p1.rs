@@ -19,8 +19,8 @@ const ZERO_SIZE_ALLOCATION_PTR: *mut u8 = 1 as _;
 /// Allocates memory in instance.
 ///
 /// 1. Allocate memory of new_size with alignment.
-/// 2. If original_ptr != 0.  
-///    a. copy min(new_size, original_size) bytes from original_ptr to new memory.  
+/// 2. If original_ptr != 0.
+///    a. copy min(new_size, original_size) bytes from original_ptr to new memory.
 ///    b. de-allocate original_ptr.
 /// 3. Return new memory ptr.
 ///
