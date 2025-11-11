@@ -1,4 +1,4 @@
-.PHONY: fmt fmt-check lint-wasi-targets test-wasi-targets wasi-targets lint-native-targets test-native-targets native-targets test-wpt test clean cli plugin build-test-plugins build-default-plugin
+.PHONY: fmt fmt-check lint-wasi-targets test-wasi-targets wasi-targets lint-native-targets test-native-targets native-targets test-wpt test clean cli plugin build-test-plugins build-default-plugin vet ci
 .DEFAULT_GOAL := cli
 
 # === Format checks ===
@@ -88,3 +88,7 @@ build-test-plugins: target/wasm32-wasip2/release/plugin.wasm target/wasm32-wasip
 clean:
 	cargo clean
 
+vet:
+	cargo vet --locked
+
+ci: lint-wasi-targets lint-native-targets vet test-all
