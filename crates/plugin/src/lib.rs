@@ -16,9 +16,10 @@ fn config() -> Config {
     // variable in subsequent invocations so a different value can't be used to
     // initialize a runtime with a different configuration.
     let mut config = Config::default();
-    config.text_encoding(true).simd_json_builtins(true);
-    #[cfg(all(target_family = "wasm", target_os = "wasi", target_env = "p1"))]
-    config.javy_stream_io(true);
+    config
+        .text_encoding(true)
+        .javy_stream_io(true)
+        .simd_json_builtins(true);
 
     let mut config_bytes = vec![];
     let shared_config = match io::stdin().read_to_end(&mut config_bytes) {

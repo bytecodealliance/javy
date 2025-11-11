@@ -20,7 +20,6 @@ runtime_config! {
     #[serde(deny_unknown_fields, rename_all = "kebab-case")]
     pub struct SharedConfig {
         /// Whether to enable the `Javy.readSync` and `Javy.writeSync` builtins.
-        #[cfg(all(target_family = "wasm", target_os = "wasi", target_env = "p1"))]
         javy_stream_io: Option<bool>,
         /// Whether to override the `JSON.parse` and `JSON.stringify`
         /// implementations with an alternative, more performant, SIMD based
@@ -40,7 +39,6 @@ impl SharedConfig {
     }
 
     pub fn apply_to_config(&self, config: &mut Config) {
-        #[cfg(all(target_family = "wasm", target_os = "wasi", target_env = "p1"))]
         if let Some(enable) = self.javy_stream_io {
             config.javy_stream_io(enable);
         }

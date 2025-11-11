@@ -45,7 +45,6 @@ bitflags! {
     /// moved out.
     #[derive(Debug)]
     pub(crate) struct JavyIntrinsics: u32 {
-        #[cfg(all(target_family = "wasm", target_os = "wasi", target_env = "p1"))]
         const STREAM_IO = 1;
     }
 }
@@ -58,7 +57,6 @@ pub struct Config {
     /// JavaScript features.
     pub(crate) intrinsics: JSIntrinsics,
     /// Intrinsics exposed through the `Javy` namespace.
-    #[cfg(all(target_family = "wasm", target_os = "wasi", target_env = "p1"))]
     pub(crate) javy_intrinsics: JavyIntrinsics,
     /// Whether to override the implementation of JSON.parse and JSON.stringify
     /// with a Rust implementation that uses a combination for Serde transcoding
@@ -89,7 +87,6 @@ impl Default for Config {
         intrinsics.set(JSIntrinsics::PERFORMANCE, false);
         Self {
             intrinsics,
-            #[cfg(all(target_family = "wasm", target_os = "wasi", target_env = "p1"))]
             javy_intrinsics: JavyIntrinsics::empty(),
             simd_json_builtins: false,
             gc_threshold: usize::MAX,
@@ -179,7 +176,6 @@ impl Config {
 
     /// Whether the `Javy.IO` intrinsic will be available.
     /// Disabled by default.
-    #[cfg(all(target_family = "wasm", target_os = "wasi", target_env = "p1"))]
     pub fn javy_stream_io(&mut self, enable: bool) -> &mut Self {
         self.javy_intrinsics.set(JavyIntrinsics::STREAM_IO, enable);
         self
