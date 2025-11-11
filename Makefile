@@ -8,7 +8,7 @@ fmt:
 	cargo fmt --all
 
 # === Lint & Test WASI Targets ===
-lint-wasi-targets:
+lint-wasi-targets: fmt-check
 	cargo clippy --workspace \
 	--exclude=javy-cli \
 	--exclude=javy-codegen \
@@ -31,7 +31,7 @@ test-wasi-targets:
 wasi-targets: lint-wasi-targets test-wasi-targets
 
 # === Lint & Test Native Targets ===
-lint-native-targets: build-default-plugin
+lint-native-targets: fmt-check build-default-plugin
 	CARGO_PROFILE_RELEASE_LTO=off cargo clippy --workspace \
 	--exclude=javy \
 	--exclude=javy-plugin-api \
