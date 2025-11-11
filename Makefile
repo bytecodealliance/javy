@@ -1,4 +1,4 @@
-.PHONY: fmt fmt-check lint-wasi-targets test-wasi-targets wasi-targets lint-native-targets test-native-targets native-targets test-wpt test clean cli plugin build-test-plugins build-default-plugin
+.PHONY: fmt fmt-check lint-wasi-targets test-wasi-targets wasi-targets lint-native-targets test-native-targets native-targets test-wpt test clean cli plugin build-test-plugins build-default-plugin vet ci
 .DEFAULT_GOAL := cli
 
 # === Format checks ===
@@ -88,3 +88,11 @@ build-test-plugins: target/wasm32-wasip2/release/plugin.wasm target/wasm32-wasip
 clean:
 	cargo clean
 
+vet:
+	cargo vet --locked
+
+# Intended to simulate what the GitHub Actions CI workflow will run.
+# We don't invoke this directly because we often run out of disk space in
+# GitHub Actions if we try to compile native targets in the same workflow as
+# WASI targets so we have to use a multi-step process in GitHub to avoid that.
+ci: lint-wasi-targets lint-native-targets vet test-all
