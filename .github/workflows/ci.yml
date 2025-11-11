@@ -66,9 +66,7 @@ jobs:
         run: make lint-native-targets
 
       - name: Test
-        run: make test-native-targets-ci
+        run: make test-native-targets
 
       - name: WPT
-        run: |
-          npm install --prefix wpt
-          npm test --prefix wpt
+        run: make test-wpt
