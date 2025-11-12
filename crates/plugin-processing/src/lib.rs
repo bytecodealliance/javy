@@ -1,9 +1,9 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use std::{borrow::Cow, fs, rc::Rc};
 use walrus::{FunctionId, ImportKind, ValType};
 use wasmparser::{Parser, Payload};
 use wasmtime_wasi::WasiCtxBuilder;
-use wizer::{wasmtime::Module, Linker, Wizer};
+use wizer::{Linker, Wizer, wasmtime::Module};
 
 /// Extract core module if it's a component, then run wasm-opt and Wizer to
 /// initialize a plugin.

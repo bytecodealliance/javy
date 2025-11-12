@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Result};
+use anyhow::{Result, anyhow, bail};
 use std::{borrow::Cow, fs, path::Path, str};
 use walrus::{ExportItem, ValType};
 use wasmparser::Parser;
@@ -221,7 +221,9 @@ mod tests {
         let expected_part_of_error =
             "Could not process plugin: type for function `initialize-runtime` is incorrect,";
         if !error.to_string().contains(expected_part_of_error) {
-            panic!("Expected error to contain '{expected_part_of_error}' but it did not. Full error is: '{error}'");
+            panic!(
+                "Expected error to contain '{expected_part_of_error}' but it did not. Full error is: '{error}'"
+            );
         }
         Ok(())
     }
@@ -239,7 +241,9 @@ mod tests {
         let expected_part_of_error =
             "Could not process plugin: type for function `initialize-runtime` is incorrect,";
         if !error.to_string().contains(expected_part_of_error) {
-            panic!("Expected error to contain '{expected_part_of_error}' but it did not. Full error is: '{error}'");
+            panic!(
+                "Expected error to contain '{expected_part_of_error}' but it did not. Full error is: '{error}'"
+            );
         }
         Ok(())
     }

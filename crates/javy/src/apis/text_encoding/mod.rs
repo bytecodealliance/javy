@@ -1,13 +1,13 @@
 use std::str;
 
 use crate::{
-    hold, hold_and_release,
+    Args, hold, hold_and_release,
     quickjs::{
-        context::EvalOptions, Ctx, Exception, Function, String as JSString, TypedArray, Value,
+        Ctx, Exception, Function, String as JSString, TypedArray, Value, context::EvalOptions,
     },
-    to_js_error, to_string_lossy, Args,
+    to_js_error, to_string_lossy,
 };
-use anyhow::{anyhow, bail, Error, Result};
+use anyhow::{Error, Result, anyhow, bail};
 
 /// Register `TextDecoder` and `TextEncoder` classes.
 pub(crate) fn register(this: Ctx<'_>) -> Result<()> {
@@ -113,7 +113,7 @@ fn encode(args: Args<'_>) -> Result<Value<'_>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{quickjs::Value, Config, Runtime};
+    use crate::{Config, Runtime, quickjs::Value};
     use anyhow::{Error, Result};
 
     #[test]

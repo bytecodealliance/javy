@@ -54,7 +54,7 @@ impl SharedConfig {
     }
 }
 
-#[export_name = "config-schema"]
+#[unsafe(export_name = "config-schema")]
 fn config_schema() -> *const u32 {
     let bytes = serde_json::to_string(&SharedConfig::config_schema())
         .unwrap()

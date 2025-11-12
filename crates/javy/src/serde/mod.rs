@@ -27,8 +27,8 @@ fn as_key(v: &Value) -> anyhow::Result<String> {
 mod tests {
     use super::de::Deserializer as ValueDeserializer;
     use super::ser::Serializer as ValueSerializer;
-    use crate::serde::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER};
     use crate::Runtime;
+    use crate::serde::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER};
     use anyhow::Result;
     use quickcheck::quickcheck;
     use serde::de::DeserializeOwned;
@@ -297,8 +297,7 @@ mod tests {
             let mut serializer = ValueSerializer::from_context(cx).unwrap();
             expected.serialize(&mut serializer).unwrap();
             let mut deserializer = ValueDeserializer::from(serializer.value);
-            let actual = A::deserialize(&mut deserializer).unwrap();
-            actual
+            A::deserialize(&mut deserializer).unwrap()
         })
     }
 }

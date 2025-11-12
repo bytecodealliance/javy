@@ -48,11 +48,12 @@ fn test_errors_in_exported_functions_are_correctly_reported(builder: &mut Builde
 
     let res = runner.exec_func("foo", vec![]);
 
-    assert!(res
-        .err()
-        .unwrap()
-        .to_string()
-        .contains("error while executing"));
+    assert!(
+        res.err()
+            .unwrap()
+            .to_string()
+            .contains("error while executing")
+    );
     Ok(())
 }
 
@@ -79,9 +80,10 @@ fn test_producers_section_present(builder: &mut Builder) -> Result<()> {
 #[javy_cli_test(dyn = true, root = "tests/dynamic-linking-scripts")]
 fn test_using_runtime_flag_with_dynamic_triggers_error(builder: &mut Builder) -> Result<()> {
     let build_result = builder.input("console.js").text_encoding(false).build();
-    assert!(build_result.is_err_and(|e| e
-        .to_string()
-        .contains("error: Property text-encoding is not supported for runtime configuration")));
+    assert!(build_result.is_err_and(|e| {
+        e.to_string()
+            .contains("error: Property text-encoding is not supported for runtime configuration")
+    }));
     Ok(())
 }
 

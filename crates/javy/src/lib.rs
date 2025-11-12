@@ -55,10 +55,10 @@ mod config;
 mod runtime;
 mod serde;
 
-use anyhow::{anyhow, Error, Result};
+use anyhow::{Error, Result, anyhow};
 use rquickjs::{
-    convert, prelude::Rest, qjs, Ctx, Error as JSError, Exception, FromJs, String as JSString,
-    Value,
+    Ctx, Error as JSError, Exception, FromJs, String as JSString, Value, convert, prelude::Rest,
+    qjs,
 };
 
 #[cfg(feature = "messagepack")]

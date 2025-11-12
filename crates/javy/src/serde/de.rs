@@ -1,20 +1,20 @@
 use crate::quickjs::{
+    Exception, Filter, Object, String as JSString, Value,
     function::This,
     object::ObjectIter,
     qjs::{JS_GetClassID, JS_GetProperty},
-    Exception, Filter, Object, String as JSString, Value,
 };
 use crate::serde::err::{Error, Result};
 use crate::serde::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER};
 use crate::to_string_lossy;
 use anyhow::{anyhow, bail};
 use rquickjs::{
+    Function, Null,
     atom::PredefinedAtom,
     qjs::{
         JS_GetPropertyUint32, JS_GetProxyTarget, JS_IsArray, JS_IsProxy, JS_TAG_EXCEPTION,
         JS_VALUE_GET_NORM_TAG,
     },
-    Function, Null,
 };
 use serde::de::{self, Error as SerError};
 use serde::forward_to_deserialize_any;
@@ -219,14 +219,13 @@ impl<'de> de::Deserializer<'de> for &mut Deserializer<'de> {
             return result;
         }
 
-        if get_class_id(&self.value) == ClassId::BigInt as u32
-            || self.value.type_of() == rquickjs::Type::BigInt
+        if (get_class_id(&self.value) == ClassId::BigInt as u32
+            || self.value.type_of() == rquickjs::Type::BigInt)
+            && let Some(f) = get_to_json(&self.value)
         {
-            if let Some(f) = get_to_json(&self.value) {
-                let v: Value = f.call((This(self.value.clone()),))?;
-                self.value = v;
-                return self.deserialize_any(visitor);
-            }
+            let v: Value = f.call((This(self.value.clone()),))?;
+            self.value = v;
+            return self.deserialize_any(visitor);
         }
 
         Err(Error::from(Exception::throw_type(
@@ -564,7 +563,7 @@ mod tests {
     use std::collections::BTreeMap;
 
     use super::Deserializer as ValueDeserializer;
-    use crate::{quickjs::Value, serde::MAX_SAFE_INTEGER, Runtime};
+    use crate::{Runtime, quickjs::Value, serde::MAX_SAFE_INTEGER};
     use serde::de::DeserializeOwned;
 
     fn deserialize_value<T>(v: Value<'_>) -> T

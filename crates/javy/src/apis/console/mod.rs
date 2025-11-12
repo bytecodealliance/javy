@@ -1,9 +1,9 @@
 use std::io::Write;
 
 use crate::{
-    hold, hold_and_release,
-    quickjs::{prelude::MutFn, Ctx, Function, Object, Value},
-    to_js_error, val_to_string, Args,
+    Args, hold, hold_and_release,
+    quickjs::{Ctx, Function, Object, Value, prelude::MutFn},
+    to_js_error, val_to_string,
 };
 use anyhow::Result;
 
@@ -61,9 +61,9 @@ fn log<'js, T: Write>(args: Args<'js>, stream: &mut T) -> Result<Value<'js>> {
 #[cfg(test)]
 mod tests {
     use crate::{
+        Runtime,
         apis::console::register,
         quickjs::{Object, Value},
-        Runtime,
     };
     use anyhow::{Error, Result};
     use std::cell::RefCell;

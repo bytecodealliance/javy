@@ -1,7 +1,7 @@
 use std::io::{self, Read};
 
 use javy_plugin_api::javy::Runtime;
-use javy_plugin_api::{import_namespace, Config};
+use javy_plugin_api::{Config, import_namespace};
 
 use crate::shared_config::SharedConfig;
 
@@ -37,7 +37,7 @@ fn modify_runtime(runtime: Runtime) -> Runtime {
     runtime
 }
 
-#[export_name = "initialize-runtime"]
+#[unsafe(export_name = "initialize-runtime")]
 fn initialize_runtime() {
     javy_plugin_api::initialize_runtime(config, modify_runtime).unwrap();
 }

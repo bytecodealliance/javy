@@ -1,8 +1,8 @@
-use crate::quickjs::{object::Property, Array, Ctx, Object, String as JSString, Value};
+use crate::quickjs::{Array, Ctx, Object, String as JSString, Value, object::Property};
 use crate::serde::err::{Error, Result};
 use anyhow::anyhow;
 
-use serde::{ser, ser::Error as SerError, Serialize};
+use serde::{Serialize, ser, ser::Error as SerError};
 
 /// `Serializer` is a serializer for [Value] values, implementing the `serde::Serializer` trait.
 ///
@@ -409,8 +409,8 @@ mod tests {
     use std::collections::BTreeMap;
 
     use super::Serializer as ValueSerializer;
-    use crate::serde::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER};
     use crate::Runtime;
+    use crate::serde::{MAX_SAFE_INTEGER, MIN_SAFE_INTEGER};
     use anyhow::Result;
     use quickcheck::quickcheck;
     use serde::{Serialize, Serializer};

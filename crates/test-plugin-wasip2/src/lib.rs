@@ -2,8 +2,9 @@
 //! to validate a plugin is actually used when it should be.
 
 use javy_plugin_api::{
-    javy::{quickjs::prelude::Func, Runtime},
-    javy_plugin, Config,
+    Config,
+    javy::{Runtime, quickjs::prelude::Func},
+    javy_plugin,
 };
 
 wit_bindgen::generate!({ world: "javy-test-plugin", generate_all });

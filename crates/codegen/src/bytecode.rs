@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Result};
+use anyhow::{Result, anyhow, bail};
 use wasmtime::{AsContext, AsContextMut, Engine, Instance, Linker, Memory, Module, Store};
 
 use crate::Plugin;

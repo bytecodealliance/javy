@@ -1,13 +1,14 @@
 use crate::{
+    CliPlugin, WitOptions,
     js_config::{ConfigSchema, JsConfig},
     option::OptionMeta,
-    option_group, CliPlugin, WitOptions,
+    option_group,
 };
-use anyhow::{anyhow, bail, Result};
+use anyhow::{Result, anyhow, bail};
 use clap::{
+    CommandFactory, Parser, Subcommand,
     builder::{StringValueParser, TypedValueParser, ValueParserFactory},
     error::ErrorKind,
-    CommandFactory, Parser, Subcommand,
 };
 use std::{
     collections::{HashMap, HashSet},
@@ -15,7 +16,7 @@ use std::{
 };
 
 use crate::option::{
-    fmt_help, GroupDescriptor, GroupOption, GroupOptionBuilder, GroupOptionParser, OptionValue,
+    GroupDescriptor, GroupOption, GroupOptionBuilder, GroupOptionParser, OptionValue, fmt_help,
 };
 
 #[derive(Debug, Parser)]
@@ -378,10 +379,10 @@ mod tests {
     use std::path::PathBuf;
 
     use crate::{
+        CliPlugin, Plugin, PluginKind,
         commands::{JsGroupOption, JsGroupValue, Source},
         js_config::JsConfig,
         plugin::PLUGIN_MODULE,
-        CliPlugin, Plugin, PluginKind,
     };
 
     use super::{CodegenOption, CodegenOptionGroup, GroupOption};
