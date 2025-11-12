@@ -1,6 +1,6 @@
 [package]
 name = "javy-plugin-api"
-version = "5.0.0-alpha.1"
+version = "5.0.0"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
