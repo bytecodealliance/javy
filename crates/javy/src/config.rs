@@ -175,7 +175,11 @@ impl Config {
     }
 
     /// Whether the `Javy.IO` intrinsic will be available.
-    /// Disabled by default.
+    /// Disabled by default. Note that it is strongly recommended to target
+    /// WASI preview 1 when enabling this configuration. To use this
+    /// configuration with WASI preview 2 or later, you cannot use Javy's
+    /// plugin initialization and it will not be compatible for use with the
+    /// Javy CLI.
     pub fn javy_stream_io(&mut self, enable: bool) -> &mut Self {
         self.javy_intrinsics.set(JavyIntrinsics::STREAM_IO, enable);
         self

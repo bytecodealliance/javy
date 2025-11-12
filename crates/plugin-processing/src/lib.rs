@@ -1,14 +1,14 @@
 use anyhow::{bail, Result};
-use std::{fs, rc::Rc};
-use walrus::{FunctionId, ImportKind};
+use std::{borrow::Cow, fs, rc::Rc};
+use walrus::{FunctionId, ImportKind, ValType};
 use wasmparser::{Parser, Payload};
 use wasmtime_wasi::WasiCtxBuilder;
 use wizer::{wasmtime::Module, Linker, Wizer};
 
-/// Extract core module, then run wasm-opt and Wizer to initialize a plugin.
+/// Extract core module if it's a component, then run wasm-opt and Wizer to
+/// initialize a plugin.
 pub fn initialize_plugin(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
-    let wasm_bytes = extract_core_module(wasm_bytes)?;
-    let wasm_bytes = strip_wasi_p2_imports(&wasm_bytes)?;
+    let wasm_bytes = extract_core_module_if_necessary(wasm_bytes)?;
     // Re-encode overlong indexes with wasm-opt before running Wizer.
     let wasm_bytes = optimize_module(&wasm_bytes)?;
     let wasm_bytes = preinitialize_module(&wasm_bytes)?;
@@ -16,13 +16,21 @@ pub fn initialize_plugin(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
 }
 
 /// Extracts core plugin module from a plugin component.
-pub fn extract_core_module(component_bytes: &[u8]) -> Result<Vec<u8>> {
-    if !Parser::is_component(component_bytes) && Parser::is_core_wasm(component_bytes) {
-        bail!("Expected Wasm component, received Wasm module");
-    } else if !Parser::is_component(component_bytes) {
-        bail!("Expected Wasm component, received unknown file type");
+pub fn extract_core_module_if_necessary(wasm_bytes: &[u8]) -> Result<Cow<'_, [u8]>> {
+    let is_component = Parser::is_component(wasm_bytes);
+    if !is_component && !Parser::is_core_wasm(wasm_bytes) {
+        bail!("Expected Wasm module or component, received unknown file type");
+    }
+    if !is_component {
+        return Ok(wasm_bytes.into());
     }
 
+    let wasm_bytes = extract_core_module(wasm_bytes)?;
+    let wasm_bytes = strip_wasi_p2_imports(&wasm_bytes)?;
+    Ok(wasm_bytes.into())
+}
+
+fn extract_core_module(component_bytes: &[u8]) -> Result<Vec<u8>> {
     let parser = Parser::new(0);
 
     for payload in parser.parse_all(component_bytes) {
@@ -72,8 +80,32 @@ fn strip_wasi_p2_imports(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
         .collect::<Vec<FunctionId>>();
 
     for import in wasi_p2_imports {
+        let results = module
+            .types
+            .get(module.funcs.get(import).ty())
+            .results()
+            .to_vec();
         module.replace_imported_func(import, |(builder, _)| {
-            builder.func_body().unreachable();
+            let mut func_body = builder.func_body();
+            for result in results {
+                match result {
+                    ValType::I32 => {
+                        func_body.i32_const(0);
+                    }
+                    ValType::I64 => {
+                        func_body.i64_const(0);
+                    }
+                    ValType::F32 => {
+                        func_body.f32_const(0.0);
+                    }
+                    ValType::F64 => {
+                        func_body.f64_const(0.0);
+                    }
+                    ValType::V128 | ValType::Ref(_) => {
+                        func_body.unreachable();
+                    }
+                }
+            }
         })?;
     }
     Ok(module.emit_wasm())

@@ -1,7 +1,6 @@
 use anyhow::{bail, Result};
 use javy_runner::{Builder, Plugin, Runner, RunnerError, Source};
-use std::{fs, io::Read, path::PathBuf, process::Command, str};
-use wasmparser::Parser;
+use std::{io::Read, path::PathBuf, process::Command, str};
 use wasmtime::{AsContextMut, Engine, Linker, Module, Store};
 use wasmtime_wasi::WasiCtxBuilder;
 
@@ -52,7 +51,7 @@ fn test_str(builder: &mut Builder) -> Result<()> {
 
     let (output, _, fuel_consumed) = run(&mut runner, "hello".into());
     assert_eq!("world".as_bytes(), output);
-    assert_fuel_consumed_within_threshold(146_027, fuel_consumed);
+    assert_fuel_consumed_within_threshold(141_629, fuel_consumed);
     Ok(())
 }
 
@@ -87,6 +86,34 @@ fn test_console_log(builder: &mut Builder) -> Result<()> {
 }
 
 #[javy_cli_test]
+fn test_using_wasip1_plugin_with_static_build(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder
+        .plugin(Plugin::UserWasiP1)
+        .input("plugin.js")
+        .build()?;
+
+    let result = runner.exec(vec![]);
+    assert!(result.is_ok());
+
+    Ok(())
+}
+
+#[javy_cli_test]
+fn test_using_wasip1_plugin_with_export_with_static_build(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder
+        .plugin(Plugin::UserWasiP1)
+        .input("plugin-exports.js")
+        .wit("plugin-exports.wit")
+        .world("plugin")
+        .build()?;
+
+    let result = runner.exec(vec![]);
+    assert!(result.is_ok());
+
+    Ok(())
+}
+
+#[javy_cli_test]
 fn test_using_wasip2_plugin_with_static_build(builder: &mut Builder) -> Result<()> {
     let mut runner = builder
         .plugin(Plugin::UserWasiP2)
@@ -95,6 +122,37 @@ fn test_using_wasip2_plugin_with_static_build(builder: &mut Builder) -> Result<(
 
     let result = runner.exec(vec![]);
     assert!(result.is_ok());
+
+    Ok(())
+}
+
+#[javy_cli_test]
+fn test_using_wasip2_plugin_with_export_with_static_build(builder: &mut Builder) -> Result<()> {
+    let mut runner = builder
+        .plugin(Plugin::UserWasiP2)
+        .input("plugin-exports.js")
+        .wit("plugin-exports.wit")
+        .world("plugin")
+        .build()?;
+
+    let result = runner.exec_func("fn", vec![]);
+    assert!(result.is_ok());
+
+    Ok(())
+}
+
+#[javy_cli_test]
+fn test_using_wasip1_plugin_with_static_build_fails_with_runtime_config(
+    builder: &mut Builder,
+) -> Result<()> {
+    let result = builder
+        .plugin(Plugin::UserWasiP1)
+        .simd_json_builtins(true)
+        .build();
+    let err = result.err().unwrap();
+    assert!(err
+        .to_string()
+        .contains("Property simd-json-builtins is not supported for runtime configuration"));
 
     Ok(())
 }
@@ -340,16 +398,19 @@ fn test_init_plugin() -> Result<()> {
         .join("..")
         .join(
             std::path::Path::new("target")
-                .join("wasm32-wasip2")
+                .join("wasm32-wasip1")
                 .join("release")
                 .join("plugin.wasm"),
         );
 
-    // Check that plugin is in fact uninitialized at this point by seeing if it's a component.
-    assert!(
-        Parser::is_component(&fs::read(&uninitialized_plugin)?),
-        "Expected Wasm file to be component but was not a component"
-    );
+    // Check that plugin is in fact uninitialized at this point.
+    let module = Module::from_file(&engine, &uninitialized_plugin)?;
+    let instance = linker.instantiate(store.as_context_mut(), &module)?;
+    let result = instance
+        .get_typed_func::<(i32, i32), i32>(store.as_context_mut(), "compile-src")?
+        .call(store.as_context_mut(), (0, 0));
+    // This should fail because the runtime is uninitialized.
+    assert!(result.is_err());
 
     // Initialize the plugin.
     let output = Command::new(env!("CARGO_BIN_EXE_javy"))

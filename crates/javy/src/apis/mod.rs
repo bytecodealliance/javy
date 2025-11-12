@@ -49,7 +49,12 @@
 //! ### `StreamIO`
 //!
 //! Provides an implementation of `Javy.IO.readSync` and `Javy.IO.writeSync`.
-//! Disabled by default.
+//! Disabled by default. Note that it is strongly recommended to target
+//! WASI preview 1 when enabling this configuration. To use this
+//! configuration with WASI preview 2 or later, you cannot use Javy's
+//! plugin initialization and it will not be compatible for use with the
+//! Javy CLI. See [the extending Javy docs](/docs/docs-using-extending.md) for
+//! more details on using a WASI preview 1 plugin.
 //!
 //! ###  `JSON`
 //! Provides an efficient implementation of JSON functions based on [`simd-json`](https://crates.io/crates/simd-json/0.13.10)
