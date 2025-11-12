@@ -51,10 +51,10 @@
 // and we can safely reason about the accesses to the Javy Runtime. We also
 // don't want to introduce overhead from taking unnecessary mutex locks.
 #![allow(static_mut_refs)]
-use anyhow::{anyhow, bail, Result};
+use anyhow::{Result, anyhow, bail};
 pub use config::Config;
 use javy::quickjs::{self, Ctx, Error as JSError, Function, Module, Value};
-use javy::{from_js_error, Runtime};
+use javy::{Runtime, from_js_error};
 use std::cell::OnceCell;
 use std::str;
 

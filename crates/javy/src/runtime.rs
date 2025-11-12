@@ -3,15 +3,15 @@ use super::from_js_error;
 #[cfg(feature = "json")]
 use crate::apis::json;
 use crate::{
+    Config,
     apis::{console, random, stream_io, text_encoding},
     config::{JSIntrinsics, JavyIntrinsics},
-    Config,
 };
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use rquickjs::{
-    context::{intrinsic, Intrinsic},
     Context, Module, Runtime as QRuntime, WriteOptions,
+    context::{Intrinsic, intrinsic},
 };
 use std::mem::ManuallyDrop;
 

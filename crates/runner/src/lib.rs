@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use std::error::Error;
 use std::fmt::{self, Display, Formatter};
 use std::fs;
@@ -9,7 +9,7 @@ use std::str;
 use tempfile::TempDir;
 use wasmtime::{AsContextMut, Config, Engine, Instance, Linker, Module, OptLevel, Store};
 use wasmtime_wasi::p2::pipe::{MemoryInputPipe, MemoryOutputPipe};
-use wasmtime_wasi::{preview1::WasiP1Ctx, WasiCtxBuilder};
+use wasmtime_wasi::{WasiCtxBuilder, preview1::WasiP1Ctx};
 
 #[derive(Debug, Clone)]
 pub enum Plugin {
@@ -340,10 +340,10 @@ impl Runner {
         let producers_section = wasmparser::Parser::new(0)
             .parse_all(&self.wasm)
             .find_map(|payload| {
-                if let Ok(wasmparser::Payload::CustomSection(c)) = payload {
-                    if let wasmparser::KnownCustom::Producers(r) = c.as_known() {
-                        return Some(r);
-                    }
+                if let Ok(wasmparser::Payload::CustomSection(c)) = payload
+                    && let wasmparser::KnownCustom::Producers(r) = c.as_known()
+                {
+                    return Some(r);
                 }
                 None
             })
@@ -378,10 +378,10 @@ impl Runner {
         wasmparser::Parser::new(0)
             .parse_all(&self.wasm)
             .find_map(|payload| {
-                if let Ok(wasmparser::Payload::CustomSection(c)) = payload {
-                    if c.name() == "javy_source" {
-                        return Some(c.data());
-                    }
+                if let Ok(wasmparser::Payload::CustomSection(c)) = payload
+                    && c.name() == "javy_source"
+                {
+                    return Some(c.data());
                 }
                 None
             })
@@ -389,8 +389,7 @@ impl Runner {
 
     fn out_wasm(dir: &TempDir) -> PathBuf {
         let name = format!("{}.wasm", uuid::Uuid::new_v4());
-        let file = dir.path().join(name);
-        file
+        dir.path().join(name)
     }
 
     // TODO: Some of the methods in the Runner (`build`, `build_args`)  could be

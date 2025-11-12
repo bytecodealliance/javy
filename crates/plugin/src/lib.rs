@@ -2,7 +2,7 @@ use std::io::{self, Read};
 use std::process;
 
 use javy_plugin_api::javy::Runtime;
-use javy_plugin_api::{import_namespace, Config};
+use javy_plugin_api::{Config, import_namespace};
 
 use crate::shared_config::SharedConfig;
 

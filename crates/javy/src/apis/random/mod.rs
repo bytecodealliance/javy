@@ -1,4 +1,4 @@
-use crate::quickjs::{prelude::Func, Ctx, Object};
+use crate::quickjs::{Ctx, Object, prelude::Func};
 use anyhow::{Error, Result};
 
 /// Register a `random` object on the global object that seeds itself at first
@@ -14,8 +14,8 @@ pub(crate) fn register(cx: Ctx) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        quickjs::{context::EvalOptions, Value},
         Runtime,
+        quickjs::{Value, context::EvalOptions},
     };
     use anyhow::{Error, Result};
 

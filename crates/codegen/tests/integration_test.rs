@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use anyhow::Result;
-use javy_codegen::{Generator, LinkingKind, Plugin, WitOptions, JS};
+use javy_codegen::{Generator, JS, LinkingKind, Plugin, WitOptions};
 
 #[test]
 fn test_empty() -> Result<()> {

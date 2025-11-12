@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use serde::Deserialize;
 use std::{collections::HashMap, str};
 use wasmtime::{AsContext, AsContextMut, Engine, Linker};

@@ -1,9 +1,9 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use std::{fs, rc::Rc};
 use walrus::{FunctionId, ImportKind};
 use wasmparser::{Parser, Payload};
 use wasmtime_wasi::WasiCtxBuilder;
-use wizer::{wasmtime::Module, Linker, Wizer};
+use wizer::{Linker, Wizer, wasmtime::Module};
 
 /// Extract core module, then run wasm-opt and Wizer to initialize a plugin.
 pub fn initialize_plugin(wasm_bytes: &[u8]) -> Result<Vec<u8>> {

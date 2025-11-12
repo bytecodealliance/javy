@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use javy_runner::{Builder, Plugin, Runner, RunnerError, Source};
 use std::{fs, io::Read, path::PathBuf, process::Command, str};
 use wasmparser::Parser;
@@ -108,9 +108,10 @@ fn test_using_wasip2_plugin_with_static_build_fails_with_runtime_config(
         .simd_json_builtins(true)
         .build();
     let err = result.err().unwrap();
-    assert!(err
-        .to_string()
-        .contains("Property simd-json-builtins is not supported for runtime configuration"));
+    assert!(
+        err.to_string()
+            .contains("Property simd-json-builtins is not supported for runtime configuration")
+    );
 
     Ok(())
 }
