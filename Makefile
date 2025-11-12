@@ -1,4 +1,4 @@
-.PHONY: fmt fmt-check lint-wasi-targets test-wasi-targets wasi-targets lint-native-targets test-native-targets native-targets test-wpt test clean cli plugin build-test-plugins build-default-plugin
+.PHONY: fmt fmt-check lint-wasi-targets test-wasi-targets wasi-targets lint-native-targets test-native-targets native-targets test-wpt test clean cli plugin build-test-plugins build-default-plugin vet ci
 .DEFAULT_GOAL := cli
 
 # === Format checks ===
@@ -8,7 +8,7 @@ fmt:
 	cargo fmt --all
 
 # === Lint & Test WASI Targets ===
-lint-wasi-targets:
+lint-wasi-targets: fmt-check
 	cargo clippy --workspace \
 	--exclude=javy-cli \
 	--exclude=javy-codegen \
@@ -53,11 +53,12 @@ test-wasi-targets:
 wasi-targets: lint-wasi-targets test-wasi-targets
 
 # === Lint & Test Native Targets ===
-lint-native-targets: build-default-plugin
+lint-native-targets: fmt-check build-default-plugin
 	CARGO_PROFILE_RELEASE_LTO=off cargo clippy --workspace \
 	--exclude=javy \
 	--exclude=javy-plugin-api \
 	--exclude=javy-plugin \
+	--exclude=javy-test-invalid-plugin \
 	--exclude=javy-test-plugin-wasip1 \
 	--exclude=javy-test-plugin-wasip2 \
 	--release --all-targets --all-features -- -D warnings
@@ -67,6 +68,7 @@ test-native-targets: build-default-plugin build-test-plugins
 	--exclude=javy \
 	--exclude=javy-plugin-api \
 	--exclude=javy-plugin \
+	--exclude=javy-test-invalid-plugin \
 	--exclude=javy-test-plugin-wasip1 \
 	--exclude=javy-test-plugin-wasip2 \
 	--release --each-feature -- --nocapture
@@ -115,3 +117,12 @@ build-test-plugins: build-default-plugin target/wasm32-wasip1/release/test_plugi
 # === Misc ===
 clean:
 	cargo clean
+
+vet:
+	cargo vet --locked
+
+# Intended to simulate what the GitHub Actions CI workflow will run.
+# We don't invoke this directly because we often run out of disk space in
+# GitHub Actions if we try to compile native targets in the same workflow as
+# WASI targets so we have to use a multi-step process in GitHub to avoid that.
+ci: lint-wasi-targets lint-native-targets vet test-all
