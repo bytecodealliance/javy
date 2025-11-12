@@ -14,6 +14,16 @@ lint-wasi-targets: fmt-check
 	--exclude=javy-codegen \
 	--exclude=javy-plugin-processing \
 	--exclude=javy-runner \
+	--exclude=javy-test-plugin-wasip2
+	--exclude=javy-fuzz \
+	--target=wasm32-wasip1 --all-targets --all-features -- -D warnings
+	cargo clippy --workspace \
+	--exclude=javy-cli \
+	--exclude=javy-codegen \
+	--exclude=javy-plugin \
+	--exclude=javy-plugin-processing \
+	--exclude=javy-runner \
+	--exclude=javy-test-plugin-wasip1 \
 	--exclude=javy-fuzz \
 	--target=wasm32-wasip2 --all-targets --all-features -- -D warnings
 
@@ -24,6 +34,18 @@ test-wasi-targets:
 	--exclude=javy-plugin-processing \
 	--exclude=javy-runner \
 	--exclude=javy-fuzz \
+	--exclude=javy-test-plugin-wasip1 \
+	--exclude=javy-test-plugin-wasip2 \
+	--exclude=javy-test-invalid-plugin \
+	--target=wasm32-wasip1 --each-feature -- --nocapture
+	cargo hack test --workspace \
+	--exclude=javy-cli \
+	--exclude=javy-codegen \
+	--exclude=javy-plugin \
+	--exclude=javy-plugin-processing \
+	--exclude=javy-runner \
+	--exclude=javy-fuzz \
+	--exclude=javy-test-plugin-wasip1 \
 	--exclude=javy-test-plugin-wasip2 \
 	--exclude=javy-test-invalid-plugin \
 	--target=wasm32-wasip2 --each-feature -- --nocapture
@@ -37,6 +59,7 @@ lint-native-targets: fmt-check build-default-plugin
 	--exclude=javy-plugin-api \
 	--exclude=javy-plugin \
 	--exclude=javy-test-invalid-plugin \
+	--exclude=javy-test-plugin-wasip1 \
 	--exclude=javy-test-plugin-wasip2 \
 	--release --all-targets --all-features -- -D warnings
 
@@ -46,6 +69,7 @@ test-native-targets: build-default-plugin build-test-plugins
 	--exclude=javy-plugin-api \
 	--exclude=javy-plugin \
 	--exclude=javy-test-invalid-plugin \
+	--exclude=javy-test-plugin-wasip1 \
 	--exclude=javy-test-plugin-wasip2 \
 	--release --each-feature -- --nocapture
 
@@ -68,8 +92,12 @@ test-all: wasi-targets native-targets test-wpt
 target/release/javy: build-default-plugin
 	CARGO_PROFILE_RELEASE_LTO=off cargo build -p=javy-cli --release
 
-target/wasm32-wasip2/release/plugin.wasm:
-	cargo build -p=javy-plugin --target=wasm32-wasip2 --release
+target/wasm32-wasip1/release/plugin.wasm:
+	cargo build -p=javy-plugin --target=wasm32-wasip1 --release
+
+target/wasm32-wasip1/release/test_plugin.wasm:
+	cargo build -p=javy-test-plugin-wasip1 --target=wasm32-wasip1 --release
+	cargo run --package=javy-plugin-processing --release -- target/wasm32-wasip1/release/test_plugin.wasm target/wasm32-wasip1/release/test_plugin.wasm
 
 target/wasm32-wasip2/release/test_plugin.wasm:
 	cargo build -p=javy-test-plugin-wasip2 --target=wasm32-wasip2 --release
@@ -81,10 +109,10 @@ target/wasm32-unknown-unknown/release/test_invalid_plugin.wasm:
 cli: target/release/javy
 
 # Build the default plugin
-build-default-plugin: target/wasm32-wasip2/release/plugin.wasm
+build-default-plugin: target/wasm32-wasip1/release/plugin.wasm
 
 # Build auxiliary plugins, for testing
-build-test-plugins: target/wasm32-wasip2/release/plugin.wasm target/wasm32-wasip2/release/test_plugin.wasm target/wasm32-unknown-unknown/release/test_invalid_plugin.wasm
+build-test-plugins: build-default-plugin target/wasm32-wasip1/release/test_plugin.wasm target/wasm32-wasip2/release/test_plugin.wasm target/wasm32-unknown-unknown/release/test_invalid_plugin.wasm
 
 # === Misc ===
 clean:

@@ -1592,7 +1592,6 @@ dependencies = [
  "serde_json",
  "tempfile",
  "walrus",
- "wasmparser 0.240.0",
  "wasmtime",
  "wasmtime-wasi",
  "wit-component",
@@ -1637,7 +1636,6 @@ dependencies = [
  "javy-plugin-api",
  "serde",
  "serde_json",
- "wit-bindgen 0.47.0",
 ]
 
 [[package]]
@@ -1686,6 +1684,14 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.109",
+]
+
+[[package]]
+name = "javy-test-plugin-wasip1"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "javy-plugin-api",
 ]
 
 [[package]]
