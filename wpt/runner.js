@@ -1,6 +1,10 @@
 import "./global_fix.js";
 import "./upstream/resources/testharness.js";
-import { failedTestCount, resultReporter, completionReporter } from "./reporter.js";
+import {
+   failedTestCount,
+   resultReporter,
+   completionReporter
+} from "./reporter.js";
 
 /* This is not a normal import and will be handled
    by a custom rollup plugin in `rollup.config.js`. */
