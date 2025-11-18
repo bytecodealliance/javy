@@ -8,15 +8,19 @@ fmt:
 	cargo fmt --all
 
 # === Lint & Test WASI Targets ===
-lint-wasi-targets: fmt-check
+lint-wasi-targets: fmt-check lint-wasip1-targets lint-wasip2-targets
+
+lint-wasip1-targets:
 	cargo clippy --workspace \
 	--exclude=javy-cli \
 	--exclude=javy-codegen \
 	--exclude=javy-plugin-processing \
 	--exclude=javy-runner \
-	--exclude=javy-test-plugin-wasip2
+	--exclude=javy-test-plugin-wasip2 \
 	--exclude=javy-fuzz \
 	--target=wasm32-wasip1 --all-targets --all-features -- -D warnings
+
+lint-wasip2-targets:
 	cargo clippy --workspace \
 	--exclude=javy-cli \
 	--exclude=javy-codegen \
@@ -27,7 +31,9 @@ lint-wasi-targets: fmt-check
 	--exclude=javy-fuzz \
 	--target=wasm32-wasip2 --all-targets --all-features -- -D warnings
 
-test-wasi-targets:
+test-wasi-targets: test-wasip1-targets test-wasip2-targets
+
+test-wasip1-targets:
 	cargo hack test --workspace \
 	--exclude=javy-cli \
 	--exclude=javy-codegen \
@@ -38,6 +44,8 @@ test-wasi-targets:
 	--exclude=javy-test-plugin-wasip2 \
 	--exclude=javy-test-invalid-plugin \
 	--target=wasm32-wasip1 --each-feature -- --nocapture
+
+test-wasip2-targets:
 	cargo hack test --workspace \
 	--exclude=javy-cli \
 	--exclude=javy-codegen \
