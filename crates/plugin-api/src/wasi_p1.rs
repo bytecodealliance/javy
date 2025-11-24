@@ -44,32 +44,36 @@ unsafe extern "C" fn cabi_realloc(
     let new_mem = match new_size {
         0 => ZERO_SIZE_ALLOCATION_PTR,
         // this call to `alloc` is safe since `new_size` must be > 0
-        _ => alloc::alloc(Layout::from_size_align(new_size, alignment).unwrap()),
+        _ => unsafe { alloc::alloc(Layout::from_size_align(new_size, alignment).unwrap()) },
     };
 
     if !original_ptr.is_null() && original_size != 0 {
-        ptr::copy_nonoverlapping(original_ptr, new_mem, original_size);
-        alloc::dealloc(
-            original_ptr,
-            Layout::from_size_align(original_size, alignment).unwrap(),
-        );
+        unsafe { ptr::copy_nonoverlapping(original_ptr, new_mem, original_size) };
+        unsafe {
+            alloc::dealloc(
+                original_ptr,
+                Layout::from_size_align(original_size, alignment).unwrap(),
+            )
+        };
     }
     new_mem as _
 }
 
 #[unsafe(export_name = "compile-src")]
 unsafe extern "C" fn compile_src(src_ptr: *const u8, src_len: usize) -> *const u32 {
-    let src = slice::from_raw_parts(src_ptr, src_len);
+    let src = unsafe { slice::from_raw_parts(src_ptr, src_len) };
     let (res, bytes) = match crate::compile_src(src) {
         Ok(bytecode) => (0, bytecode),
         Err(err) => (1, err.to_string().into_bytes()),
     };
     let len = bytes.len();
-    BYTECODE.with(|key| key.set(bytes)).unwrap();
-    COMPILE_SRC_RET_AREA[0] = res;
-    COMPILE_SRC_RET_AREA[1] = BYTECODE.with(|key| key.get().unwrap().as_ptr()) as u32;
-    COMPILE_SRC_RET_AREA[2] = len as u32;
-    COMPILE_SRC_RET_AREA.as_ptr()
+    unsafe {
+        BYTECODE.with(|key| key.set(bytes)).unwrap();
+        COMPILE_SRC_RET_AREA[0] = res;
+        COMPILE_SRC_RET_AREA[1] = BYTECODE.with(|key| key.get().unwrap().as_ptr()) as u32;
+        COMPILE_SRC_RET_AREA[2] = len as u32;
+        COMPILE_SRC_RET_AREA.as_ptr()
+    }
 }
 
 #[unsafe(export_name = "invoke")]
