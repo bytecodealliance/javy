@@ -1,10 +1,10 @@
-use anyhow::{anyhow, bail, Error, Result};
+use anyhow::{Error, Result, anyhow, bail};
 use std::io::{Read, Stdin, Write};
 
 use crate::{
-    hold, hold_and_release,
-    quickjs::{qjs::JS_GetArrayBuffer, Ctx, Function, Object, Value},
-    to_js_error, Args,
+    Args, hold, hold_and_release,
+    quickjs::{Ctx, Function, Object, Value, qjs::JS_GetArrayBuffer},
+    to_js_error,
 };
 
 /// Register `Javy.IO.readSync` and `Javy.IO.writeSync` functions on the

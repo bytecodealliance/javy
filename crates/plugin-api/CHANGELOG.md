@@ -8,6 +8,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [5.0.0] - 2025-11-12
+
 ### Removed
 
 - `big_float`, `big_decimal`, and `string_normalize` on `Config`. For BigFloat
@@ -17,6 +19,7 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - `weak_ref` and `performance` on `Config`.
+- Support for WASI preview 1 plugins.
 
 ### Changed
 

@@ -1,6 +1,6 @@
 //! A crate for creating Javy plugins
 //!
-//! Example usage:
+//! Example usage for creating WASI preview2 plugins:
 //! ```ignore
 //! use javy_plugin_api::{
 //!     javy::{quickjs::prelude::Func, Runtime},
@@ -33,14 +33,57 @@
 //! export!(Component);
 //! ```
 //!
+//! //! Example for creating WASI preview 1 plugins:
+//! ```ignore
+//! use javy_plugin_api::{
+//!     import_namespace,
+//!     javy::{quickjs::prelude::Func, Runtime},
+//!     Config,
+//! };
+//!
+//! import_namespace!("test-plugin-wasip1");
+//!
+//! #[link(wasm_import_module = "some_host")]
+//! extern "C" {
+//!     fn imported_function();
+//! }
+//!
+//! fn config() -> Config {
+//!     Config::default()
+//! }
+//!
+//! fn modify_runtime(runtime: Runtime) -> Runtime {
+//!     runtime.context().with(|ctx| {
+//!         ctx.globals().set("plugin", true).unwrap();
+//!         ctx.globals()
+//!             .set(
+//!                 "func",
+//!                 Func::from(|| {
+//!                     unsafe { crate::imported_function() };
+//!                 }),
+//!             )
+//!             .unwrap();
+//!     });
+//!     runtime
+//! }
+//!
+//! #[export_name = "initialize-runtime"]
+//! fn initialize_runtime() {
+//!     javy_plugin_api::initialize_runtime(config, modify_runtime).unwrap()
+//! }
+//! ```
+//!
 //! The crate will automatically add exports for a number of Wasm functions in
 //! your crate that Javy needs to work.
 //!
 //! # Core concepts
 //! * [`javy`] - a re-export of the [`javy`] crate.
-//! * [`javy_plugin`] - Takes a namespace to use for the module name for
-//!   imports, a struct to add function exports to, a config method, and a
-//!   method for updating the Javy runtime.
+//! * [`javy_plugin`] - Used for WASI preview 2 plugins and not WASI preview 1
+//!   plugins. Takes a namespace to use for the module name for imports, a
+//!   struct to add function exports to, a config method, and a method for
+//!   updating the Javy runtime.
+//! * [`import_namespace`] - Used for WASI preview 1 plugins. Takes a namespace
+//!   to use for the module name for imports.
 //! * [`Config`] - to add behavior to the created [`javy::Runtime`].
 //!
 //! # Features
@@ -51,10 +94,10 @@
 // and we can safely reason about the accesses to the Javy Runtime. We also
 // don't want to introduce overhead from taking unnecessary mutex locks.
 #![allow(static_mut_refs)]
-use anyhow::{anyhow, bail, Result};
+use anyhow::{Result, anyhow, bail};
 pub use config::Config;
 use javy::quickjs::{self, Ctx, Error as JSError, Function, Module, Value};
-use javy::{from_js_error, Runtime};
+use javy::{Runtime, from_js_error};
 use std::cell::OnceCell;
 use std::str;
 
@@ -63,6 +106,8 @@ pub use javy;
 mod config;
 mod javy_plugin;
 mod namespace;
+#[cfg(all(target_family = "wasm", target_os = "wasi", target_env = "p1"))]
+mod wasi_p1;
 
 const FUNCTION_MODULE_NAME: &str = "function.mjs";
 

@@ -1,7 +1,7 @@
 #[cfg(feature = "json")]
 use anyhow::Result;
 #[cfg(feature = "json")]
-use javy::{quickjs::context::EvalOptions, Config, Runtime};
+use javy::{Config, Runtime, quickjs::context::EvalOptions};
 
 #[cfg(feature = "json")]
 #[test]

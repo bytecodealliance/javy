@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use std::error::Error;
 use std::fmt::{self, Display, Formatter};
 use std::fs;
@@ -9,11 +9,12 @@ use std::str;
 use tempfile::TempDir;
 use wasmtime::{AsContextMut, Config, Engine, Instance, Linker, Module, OptLevel, Store};
 use wasmtime_wasi::p2::pipe::{MemoryInputPipe, MemoryOutputPipe};
-use wasmtime_wasi::{preview1::WasiP1Ctx, WasiCtxBuilder};
+use wasmtime_wasi::{WasiCtxBuilder, preview1::WasiP1Ctx};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum Plugin {
     Default,
+    UserWasiP1,
     UserWasiP2,
     /// Pass the default plugin on the CLI as a user plugin.
     DefaultAsUser,
@@ -34,6 +35,7 @@ impl Plugin {
             // Could try and derive this but not going to for now since tests
             // will break if it changes.
             Self::Default | Self::DefaultAsUser => "javy-default-plugin-v2",
+            Self::UserWasiP1 { .. } => "test-plugin-wasip1",
             Self::UserWasiP2 { .. } => "test-plugin-wasip2",
         }
     }
@@ -41,21 +43,26 @@ impl Plugin {
     pub fn path(&self) -> PathBuf {
         let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         let target = root.join("..").join("..").join("target");
+        let wasip1 = target.join("wasm32-wasip1").join("release");
         let wasip2 = target.join("wasm32-wasip2").join("release");
         match self {
             Self::InvalidUser => target
                 .join("wasm32-unknown-unknown")
                 .join("release")
                 .join("test_invalid_plugin.wasm"),
+            Self::UserWasiP1 => wasip1.join("test_plugin.wasm"),
             Self::UserWasiP2 => wasip2.join("test_plugin.wasm"),
-            Self::Default | Self::DefaultAsUser => wasip2.join("plugin_wizened.wasm"),
+            Self::Default | Self::DefaultAsUser => wasip1.join("plugin_wizened.wasm"),
         }
     }
 
     pub fn needs_plugin_arg(&self) -> bool {
         match self {
             Plugin::Default => false,
-            Plugin::UserWasiP2 | Plugin::DefaultAsUser | Plugin::InvalidUser => true,
+            Plugin::UserWasiP1
+            | Plugin::UserWasiP2
+            | Plugin::DefaultAsUser
+            | Plugin::InvalidUser => true,
         }
     }
 }
@@ -340,10 +347,10 @@ impl Runner {
         let producers_section = wasmparser::Parser::new(0)
             .parse_all(&self.wasm)
             .find_map(|payload| {
-                if let Ok(wasmparser::Payload::CustomSection(c)) = payload {
-                    if let wasmparser::KnownCustom::Producers(r) = c.as_known() {
-                        return Some(r);
-                    }
+                if let Ok(wasmparser::Payload::CustomSection(c)) = payload
+                    && let wasmparser::KnownCustom::Producers(r) = c.as_known()
+                {
+                    return Some(r);
                 }
                 None
             })
@@ -378,10 +385,10 @@ impl Runner {
         wasmparser::Parser::new(0)
             .parse_all(&self.wasm)
             .find_map(|payload| {
-                if let Ok(wasmparser::Payload::CustomSection(c)) = payload {
-                    if c.name() == "javy_source" {
-                        return Some(c.data());
-                    }
+                if let Ok(wasmparser::Payload::CustomSection(c)) = payload
+                    && c.name() == "javy_source"
+                {
+                    return Some(c.data());
                 }
                 None
             })
@@ -389,8 +396,7 @@ impl Runner {
 
     fn out_wasm(dir: &TempDir) -> PathBuf {
         let name = format!("{}.wasm", uuid::Uuid::new_v4());
-        let file = dir.path().join(name);
-        file
+        dir.path().join(name)
     }
 
     // TODO: Some of the methods in the Runner (`build`, `build_args`)  could be

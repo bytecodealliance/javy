@@ -3,9 +3,8 @@
 use anyhow::Result;
 use arbitrary_json::ArbitraryValue;
 use javy::{
-    from_js_error,
+    Config, Runtime, from_js_error,
     quickjs::{Error, String as JSString},
-    Config, Runtime,
 };
 use libfuzzer_sys::fuzz_target;
 use std::sync::Once;

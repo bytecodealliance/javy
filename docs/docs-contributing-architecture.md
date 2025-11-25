@@ -20,9 +20,10 @@ We anticipate most changes will be to the `javy-cli`, `javy-codegen`, and
 ### `javy`
 
 The entrypoint for working with Javy as a library for third parties. This crate
-is intended to compile to `wasm32-wasip2` and provide ergonomic APIs for
-configuring a QuickJS-based runtime. If there is a configuration option for
-QuickJS that would be helpful, this is the place to add it.
+is intended to compile to `wasm32-wasip1` or `wasm32-wasip2` and provide
+ergonomic APIs for configuring a QuickJS-based runtime. If there is a
+configuration option for QuickJS that would be helpful, this is the place to
+add it.
 
 #### Important concepts
 

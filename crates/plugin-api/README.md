@@ -11,7 +11,7 @@
 
 Refer to the [crate level documentation](https://docs.rs/javy-plugin-api) to learn more.
 
-Example usage:
+Example usage for WASI preview 2 plugins:
 
 ```rust
 use javy_plugin_api::{
@@ -44,6 +44,8 @@ javy_plugin!("my-javy-plugin-v1", Component, config, modify_runtime);
 
 export!(Component);
 ```
+
+See the crate documentation for WASI preview 1 plugins.
 
 ## Migration for v2.0.0
 

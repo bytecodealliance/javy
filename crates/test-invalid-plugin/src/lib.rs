@@ -1,4 +1,4 @@
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn canonical_abi_realloc(
     _old_ptr: u32,
     _old_len: u32,
@@ -8,12 +8,12 @@ pub extern "C" fn canonical_abi_realloc(
     unimplemented!()
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn compile_src(_src_ptr: u32, _src_len: u32) -> u32 {
     unimplemented!()
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn invoke(
     _bytecode_ptr: u32,
     _bytecode_len: u32,

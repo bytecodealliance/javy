@@ -11,6 +11,7 @@ mod runtime_config;
 use crate::runtime_config;
 
 thread_local! {
+    static CONFIG_BYTES: OnceCell<Vec<u8>> = const { OnceCell::new() };
     static CONFIG_RET_AREA: OnceCell<[u32; 2]> = const { OnceCell::new() };
 }
 
@@ -53,9 +54,20 @@ impl SharedConfig {
     }
 }
 
-pub fn config_schema() -> Vec<u8> {
-    serde_json::to_string(&SharedConfig::config_schema())
+#[unsafe(export_name = "config-schema")]
+fn config_schema() -> *const u32 {
+    let bytes = serde_json::to_string(&SharedConfig::config_schema())
         .unwrap()
         .as_bytes()
-        .to_vec()
+        .to_vec();
+    let bytes_len = bytes.len();
+    CONFIG_BYTES.with(|key| key.set(bytes)).unwrap();
+    CONFIG_RET_AREA.with(|key| {
+        key.set([
+            CONFIG_BYTES.with(|key| key.get().unwrap().as_ptr()) as u32,
+            bytes_len as u32,
+        ])
+        .unwrap();
+        key.get().unwrap().as_ptr()
+    })
 }

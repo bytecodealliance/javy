@@ -15,7 +15,7 @@ use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
 use std::{env, path::PathBuf};
-use syn::{meta::ParseNestedMeta, parse_macro_input, Ident, LitBool, LitStr, Result, ReturnType};
+use syn::{Ident, LitBool, LitStr, Result, ReturnType, meta::ParseNestedMeta, parse_macro_input};
 
 #[derive(Debug)]
 struct Config262 {

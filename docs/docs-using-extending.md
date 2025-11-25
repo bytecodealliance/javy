@@ -8,8 +8,29 @@ Javy Wasm modules as a `-C plugin` flag when using `javy build`.
 
 To create your own Javy plugin Wasm module, create a new Rust project that
 will compile to a library (that is, `cargo init --lib`). Javy plugins are
-written as Wasm components but converted to Wasm modules during the
-initialization process.
+written as WASI preview 1 modules or WASI preview 2 Wasm components but
+converted to Wasm modules during the initialization process.
+
+## When to use WASI preview 1 or WASI preview 2
+
+You should write your plugin as a WASI preview 1 plugin if you want to use WASI
+preview 1 APIs to interact with modules generated with your plugin. These APIs
+include reading from standard input and writing to standard output or standard 
+error. The drawback to using WASI preview 1 is support may not continue to be
+available in various tools because this is a preview API and maintainers for
+some tools and the Rust toolchain may opt to discontinue support.
+
+You should write your plugin as a WASI preview 2 plugin if you can support
+using a `wasm32-unknown-unknown` module in your environment. The plugin
+initialization process will strip off any WASI preview 2 imports so the
+initialized plugin will be a `wasm32-unknown-unknown` module. This means you
+will need to create and import your own hostcalls to handle input and output
+and cannot rely on WASI preview 1 hostcalls to be available. While using
+preview 2 requires more effort since you need to define hostcalls to handle
+input and output, it should be more future-proof since you will not be relying
+on third parties to continue to provide support for WASI preview 1.
+
+## WASI preview 1 plugins
 
 Your `Cargo.toml` should look like the following:
 
@@ -23,8 +44,72 @@ name = "my_plugin_name"
 crate-type = ["cdylib"]
 
 [dependencies]
-javy-plugin-api = "4.0.0"
-wit-bindgen = "0.44.0"
+javy-plugin-api = "5.0.0"
+```
+
+And `src/lib.rs` should look like:
+
+```rust
+use javy_plugin_api::{import_namespace, javy::quickjs::prelude::Func, Config};
+
+// Set your plugin's import namespace.
+import_namespace!("my_plugin_name");
+
+// If you want to import a function from the host, here's how to do it.
+#[link(wasm_import_module = "some_other_namespace")]
+extern "C" {
+    fn imported_function();
+}
+
+#[export_name = "initialize-runtime"]
+pub extern "C" fn initialize_runtime() {
+    let config = Config::default();
+    javy_plugin_api::initialize_runtime(config, |runtime| {
+        runtime.context().with(|ctx| {
+            // Creates a `plugin` variable on the global set to `true`.
+            ctx.globals().set("plugin", true).unwrap();
+            // Creates an `importedFunc` function on the global which will call
+            // the imported function.
+            ctx.globals()
+                .set("importedFunc", Func::from(|| unsafe { imported_function() }))
+                .unwrap();
+        });
+        runtime
+    })
+    .unwrap();
+}
+```
+
+You can then run `cargo build --target=wasm32-wasip1 --release` to create a
+Wasm module. Then you need to run
+
+```
+javy init-plugin <path_to_plugin> -o <path_to_initialized_module>
+```
+
+which will validate and initialize the Javy runtime. This `javy init-plugin`
+step is required for the plugin to be useable by the Javy CLI.
+
+See our documentation on [using complex data types in Wasm
+functions](./contributing-complex-data-types.md) for how to support Wasm
+functions that need to use byte arrays, strings, or structured data.
+
+## WASI preview 2 plugins
+
+Your `Cargo.toml` should look like:
+
+```toml
+[package]
+name = "my-plugin-name"
+version = "0.1.0"
+
+[lib]
+name = "my_plugin_name"
+crate-type = ["cdylib"]
+
+[dependencies]
+javy-plugin-api = "5.0.0"
+wit-bindgen = "0.47.0"
 ```
 
 You'll need a WIT file in `wit/world.wit` that looks like the following code:
@@ -150,7 +235,7 @@ You can then run `cargo build --target=wasm32-wasip2 --release` to create a
 Wasm module. Then you need to run
 
 ```
-javy init-plugin <path_to_plugin> -o <path_to_initialized_module>`
+javy init-plugin <path_to_plugin> -o <path_to_initialized_module>
 ```
 
 which will validate and initialize the Javy runtime. This `javy init-plugin`

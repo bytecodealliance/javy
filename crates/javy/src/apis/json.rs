@@ -18,20 +18,20 @@
 //! hotpath and doing any sort of inline processing of the parsed or stringified
 //! values is likely to void any performance benefits.
 use crate::{
-    hold, json,
+    Args, hold, json,
     quickjs::{
+        Ctx, Exception, Function, Object, String as JSString, Value,
         function::This,
         prelude::{MutFn, Rest},
-        Ctx, Exception, Function, Object, String as JSString, Value,
     },
-    to_js_error, val_to_string, Args,
+    to_js_error, val_to_string,
 };
 
 use crate::serde::de::get_to_json;
 
 use simd_json::Error as SError;
 
-use anyhow::{anyhow, bail, Result};
+use anyhow::{Result, anyhow, bail};
 use std::{sync::OnceLock, time::SystemTime};
 
 static DEFAULT_PARSE_KEY: OnceLock<String> = OnceLock::new();

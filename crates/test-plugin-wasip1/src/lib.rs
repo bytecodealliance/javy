@@ -1,13 +1,14 @@
-//! Plugin used for testing. We need a plugin with slightly different behavior
-//! to validate a plugin is actually used when it should be.
-
 use javy_plugin_api::{
-    Config,
+    Config, import_namespace,
     javy::{Runtime, quickjs::prelude::Func},
-    javy_plugin,
 };
 
-wit_bindgen::generate!({ world: "javy-test-plugin", generate_all });
+import_namespace!("test-plugin-wasip1");
+
+#[link(wasm_import_module = "some_host")]
+unsafe extern "C" {
+    fn imported_function();
+}
 
 fn config() -> Config {
     Config::default()
@@ -20,7 +21,7 @@ fn modify_runtime(runtime: Runtime) -> Runtime {
             .set(
                 "func",
                 Func::from(|| {
-                    crate::imported_function();
+                    unsafe { crate::imported_function() };
                 }),
             )
             .unwrap();
@@ -28,8 +29,7 @@ fn modify_runtime(runtime: Runtime) -> Runtime {
     runtime
 }
 
-struct Component;
-
-javy_plugin!("test-plugin-wasip2", Component, config, modify_runtime);
-
-export!(Component);
+#[unsafe(export_name = "initialize-runtime")]
+fn initialize_runtime() {
+    javy_plugin_api::initialize_runtime(config, modify_runtime).unwrap()
+}

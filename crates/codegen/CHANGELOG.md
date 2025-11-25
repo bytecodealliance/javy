@@ -8,6 +8,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [3.0.0] - 2025-11-12
+
 ### Changed
 
 - `cabi_realloc` will not be removed while generating a statically-linked Wasm module from a JS file.

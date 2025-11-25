@@ -90,7 +90,7 @@ use walrus::{
     DataId, DataKind, ExportItem, FunctionBuilder, FunctionId, LocalId, MemoryId, Module, ValType,
 };
 use wasm_opt::{OptimizationOptions, ShrinkLevel};
-use wasmtime_wasi::{p2::pipe::MemoryInputPipe, WasiCtxBuilder};
+use wasmtime_wasi::{WasiCtxBuilder, p2::pipe::MemoryInputPipe};
 use wizer::{Linker, Wizer};
 
 use anyhow::Result;

@@ -8,9 +8,9 @@ use anyhow::Result;
 use clap::Parser;
 
 use commands::CodegenOptionGroup;
-use javy_codegen::{Generator, LinkingKind, Plugin, SourceEmbedding, WitOptions, JS};
+use javy_codegen::{Generator, JS, LinkingKind, Plugin, SourceEmbedding, WitOptions};
 use js_config::JsConfig;
-use plugin::{CliPlugin, PluginKind, UninitializedPlugin, PLUGIN_MODULE};
+use plugin::{CliPlugin, PLUGIN_MODULE, PluginKind, UninitializedPlugin};
 use std::fs;
 use std::fs::File;
 use std::io::Write;

@@ -48,11 +48,12 @@ fn test_errors_in_exported_functions_are_correctly_reported(builder: &mut Builde
 
     let res = runner.exec_func("foo", vec![]);
 
-    assert!(res
-        .err()
-        .unwrap()
-        .to_string()
-        .contains("error while executing"));
+    assert!(
+        res.err()
+            .unwrap()
+            .to_string()
+            .contains("error while executing")
+    );
     Ok(())
 }
 
@@ -79,9 +80,42 @@ fn test_producers_section_present(builder: &mut Builder) -> Result<()> {
 #[javy_cli_test(dyn = true, root = "tests/dynamic-linking-scripts")]
 fn test_using_runtime_flag_with_dynamic_triggers_error(builder: &mut Builder) -> Result<()> {
     let build_result = builder.input("console.js").text_encoding(false).build();
-    assert!(build_result.is_err_and(|e| e
-        .to_string()
-        .contains("error: Property text-encoding is not supported for runtime configuration")));
+    assert!(build_result.is_err_and(|e| {
+        e.to_string()
+            .contains("error: Property text-encoding is not supported for runtime configuration")
+    }));
+    Ok(())
+}
+
+#[javy_cli_test(dyn = true)]
+fn test_using_wasip1_plugin_with_dynamic_works(builder: &mut Builder) -> Result<()> {
+    let plugin = Plugin::UserWasiP1;
+    let mut runner = builder
+        .plugin(plugin)
+        .preload(plugin.namespace().into(), plugin.path())
+        .input("plugin.js")
+        .build()?;
+
+    let result = runner.exec(vec![]);
+    assert!(result.is_ok(), "Expected ok but got {result:?}");
+
+    Ok(())
+}
+
+#[javy_cli_test(dyn = true)]
+fn test_using_wasip1_plugin_with_export_works(builder: &mut Builder) -> Result<()> {
+    let plugin = Plugin::UserWasiP1;
+    let mut runner = builder
+        .plugin(plugin)
+        .preload(plugin.namespace().into(), plugin.path())
+        .input("plugin-exports.js")
+        .wit("plugin-exports.wit")
+        .world("plugin")
+        .build()?;
+
+    let result = runner.exec_func("fn", vec![]);
+    assert!(result.is_ok(), "Expected ok but got {result:?}");
+
     Ok(())
 }
 
@@ -89,13 +123,30 @@ fn test_using_runtime_flag_with_dynamic_triggers_error(builder: &mut Builder) ->
 fn test_using_wasip2_plugin_with_dynamic_works(builder: &mut Builder) -> Result<()> {
     let plugin = Plugin::UserWasiP2;
     let mut runner = builder
-        .plugin(Plugin::UserWasiP2)
+        .plugin(plugin)
         .preload(plugin.namespace().into(), plugin.path())
         .input("plugin.js")
         .build()?;
 
     let result = runner.exec(vec![]);
     assert!(result.is_ok());
+
+    Ok(())
+}
+
+#[javy_cli_test(dyn = true)]
+fn test_using_wasip2_plugin_with_export_works(builder: &mut Builder) -> Result<()> {
+    let plugin = Plugin::UserWasiP2;
+    let mut runner = builder
+        .plugin(plugin)
+        .preload(plugin.namespace().into(), plugin.path())
+        .input("plugin-exports.js")
+        .wit("plugin-exports.wit")
+        .world("plugin")
+        .build()?;
+
+    let result = runner.exec_func("fn", vec![]);
+    assert!(result.is_ok(), "Expected ok but got {result:?}");
 
     Ok(())
 }

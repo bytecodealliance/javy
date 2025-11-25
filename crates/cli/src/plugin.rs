@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use javy_codegen::Plugin;
 
 pub const PLUGIN_MODULE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/plugin.wasm"));
@@ -53,10 +53,11 @@ impl<'a> UninitializedPlugin<'a> {
     }
 
     fn validate(plugin_bytes: &'a [u8]) -> Result<()> {
-        let plugin_bytes = match javy_plugin_processing::extract_core_module(plugin_bytes) {
-            Err(e) => bail!("Could not process plugin: {e}"),
-            Ok(plugin_bytes) => plugin_bytes,
-        };
+        let plugin_bytes =
+            match javy_plugin_processing::extract_core_module_if_necessary(plugin_bytes) {
+                Err(e) => bail!("Could not process plugin: {e}"),
+                Ok(plugin_bytes) => plugin_bytes,
+            };
         Plugin::validate(&plugin_bytes)
     }
 }
@@ -74,25 +75,25 @@ mod tests {
         let error = UninitializedPlugin::new(&[]).err().unwrap();
         assert_eq!(
             error.to_string(),
-            "Could not process plugin: Expected Wasm component, received unknown file type"
+            "Could not process plugin: Expected Wasm module or component, received unknown file type"
         );
         Ok(())
     }
 
     #[test]
-    fn test_validate_plugin_with_module() -> Result<()> {
+    fn test_validate_plugin_with_module_with_everything_missing() -> Result<()> {
         let mut module = walrus::Module::with_config(ModuleConfig::default());
         let plugin_bytes = module.emit_wasm();
         let error = UninitializedPlugin::new(&plugin_bytes).err().unwrap();
         assert_eq!(
             error.to_string(),
-            "Could not process plugin: Expected Wasm component, received Wasm module"
+            "Could not process plugin: missing export for function named `initialize-runtime`, missing export for function named `compile-src`, missing export for function named `invoke`, missing exported memory named `memory`, missing custom section named `import_namespace`"
         );
         Ok(())
     }
 
     #[test]
-    fn test_validate_plugin_with_everything_missing() -> Result<()> {
+    fn test_validate_plugin_with_component_with_everything_missing() -> Result<()> {
         let mut empty_module = walrus::Module::with_config(ModuleConfig::default());
         let plugin_bytes = encode_as_component(&empty_module.emit_wasm())?;
         let error = UninitializedPlugin::new(&plugin_bytes).err().unwrap();

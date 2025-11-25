@@ -10,7 +10,7 @@ use std::{
     path::Path,
 };
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{Context, Result, anyhow, bail};
 use brotli::enc::{self, BrotliEncoderParams};
 use swc_core::{
     common::{FileName, SourceMap},
