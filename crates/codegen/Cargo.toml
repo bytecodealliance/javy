@@ -32,4 +32,4 @@ wasmparser = { workspace = true }
 
 [dev-dependencies]
 insta = "1.43.2"
-wasmprinter = "0.240.0"
+wasmprinter = "0.242.0"
