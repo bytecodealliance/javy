@@ -31,5 +31,5 @@ tempfile = { workspace = true }
 wasmparser = { workspace = true }
 
 [dev-dependencies]
-insta = "1.43.2"
+insta = "1.44.3"
 wasmprinter = "0.240.0"
