@@ -528,6 +528,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "convert_case"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "633458d4ef8c78b72454de2d54fd6ab2e60f9e02be22f3c6104cdc8a4e0fceb9"
+dependencies = [
+ "unicode-segmentation",
+]
+
+[[package]]
 name = "core-foundation-sys"
 version = "0.8.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1603,7 +1612,7 @@ version = "3.0.1-alpha.1"
 dependencies = [
  "anyhow",
  "brotli",
- "convert_case",
+ "convert_case 0.10.0",
  "insta",
  "swc_core",
  "tempfile",
@@ -2318,7 +2327,7 @@ version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "89f93602cc3112c7f30bf5f29e722784232138692c7df4c52ebbac7e035d900d"
 dependencies = [
- "convert_case",
+ "convert_case 0.8.0",
  "fnv",
  "ident_case",
  "indexmap 2.12.0",
