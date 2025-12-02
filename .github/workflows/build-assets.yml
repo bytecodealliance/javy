@@ -22,7 +22,7 @@ jobs:
     name: compile_plugin
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Build default plugin
         run: make build-default-plugin
@@ -110,7 +110,7 @@ jobs:
             target: aarch64-pc-windows-msvc
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       # Should no-op except for macos-arm and linux-arm cases where that target won't be installed
       - name: Install target
