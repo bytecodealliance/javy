@@ -11,7 +11,7 @@ jobs:
     name: javy_npm_test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Read wasmtime version
         id: wasmtime_version
