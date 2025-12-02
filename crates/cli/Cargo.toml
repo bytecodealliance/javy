@@ -27,7 +27,7 @@ brotli = { workspace = true }
 javy-runner = { path = "../runner/" }
 javy-test-macros = { path = "../test-macros/" }
 wasmtime-wasi = { workspace = true }
-wit-component = "0.240.0"
+wit-component = "0.242.0"
 
 [build-dependencies]
 anyhow = { workspace = true }
