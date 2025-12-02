@@ -19,17 +19,17 @@ brotli = { workspace = true }
 wasmtime = { workspace = true }
 wasmtime-wasi = { workspace = true }
 walrus = { workspace = true }
-swc_core = { version = "46.0.3", features = [
+swc_core = { version = "49.0.0", features = [
   "common_sourcemap",
   "ecma_ast",
   "ecma_parser",
 ] }
 wit-parser = "0.242.0"
-convert_case = "0.8.0"
+convert_case = "0.10.0"
 wasm-opt = { workspace = true }
 tempfile = { workspace = true }
 wasmparser = { workspace = true }
 
 [dev-dependencies]
-insta = "1.43.2"
-wasmprinter = "0.240.0"
+insta = "1.44.3"
+wasmprinter = "0.242.0"
