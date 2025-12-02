@@ -1,6 +1,6 @@
 [package]
 name = "javy-codegen"
-version = "3.0.1-alpha.1"
+version = "4.0.0-alpha.1"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -13,11 +13,11 @@ categories = ["wasm"]
 plugin_internal = []
 
 [dependencies]
-wizer = { workspace = true }
 anyhow = { workspace = true }
 brotli = { workspace = true }
 wasmtime = { workspace = true }
 wasmtime-wasi = { workspace = true }
+wasmtime-wizer = { workspace = true, features = ["wasmtime"] }
 walrus = { workspace = true }
 swc_core = { version = "49.0.0", features = [
   "common_sourcemap",
@@ -31,5 +31,6 @@ tempfile = { workspace = true }
 wasmparser = { workspace = true }
 
 [dev-dependencies]
-insta = "1.44.3"
+insta = "1.43.3"
+tokio = { workspace = true, features = ["macros"] }
 wasmprinter = "0.240.0"

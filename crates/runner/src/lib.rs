@@ -9,7 +9,7 @@ use std::str;
 use tempfile::TempDir;
 use wasmtime::{AsContextMut, Config, Engine, Instance, Linker, Module, OptLevel, Store};
 use wasmtime_wasi::p2::pipe::{MemoryInputPipe, MemoryOutputPipe};
-use wasmtime_wasi::{WasiCtxBuilder, preview1::WasiP1Ctx};
+use wasmtime_wasi::{WasiCtxBuilder, p1::WasiP1Ctx};
 
 #[derive(Debug, Clone, Copy)]
 pub enum Plugin {
@@ -508,7 +508,7 @@ impl Runner {
     fn setup_linker(engine: &Engine) -> Result<Linker<StoreContext>> {
         let mut linker = Linker::new(engine);
 
-        wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |ctx: &mut StoreContext| {
+        wasmtime_wasi::p1::add_to_linker_sync(&mut linker, |ctx: &mut StoreContext| {
             ctx.wasi.as_mut().unwrap()
         })?;
 

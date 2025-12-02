@@ -1,17 +1,18 @@
 use anyhow::{Result, bail};
-use std::{borrow::Cow, fs, rc::Rc};
+use std::{borrow::Cow, fs};
 use walrus::{FunctionId, ImportKind, ValType};
 use wasmparser::{Parser, Payload};
+use wasmtime::{Config, Engine, Linker, Store};
 use wasmtime_wasi::WasiCtxBuilder;
-use wizer::{Linker, Wizer, wasmtime::Module};
+use wasmtime_wizer::Wizer;
 
 /// Extract core module if it's a component, then run wasm-opt and Wizer to
 /// initialize a plugin.
-pub fn initialize_plugin(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
+pub async fn initialize_plugin(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
     let wasm_bytes = extract_core_module_if_necessary(wasm_bytes)?;
     // Re-encode overlong indexes with wasm-opt before running Wizer.
     let wasm_bytes = optimize_module(&wasm_bytes)?;
-    let wasm_bytes = preinitialize_module(&wasm_bytes)?;
+    let wasm_bytes = preinitialize_module(&wasm_bytes).await?;
     Ok(wasm_bytes)
 }
 
@@ -124,22 +125,23 @@ fn optimize_module(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
     Ok(optimized_wasm_bytes)
 }
 
-fn preinitialize_module(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
-    let mut wizer = Wizer::new();
-    let owned_wasm_bytes = wasm_bytes.to_vec();
-    wizer
+async fn preinitialize_module(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
+    let mut cfg = Config::new();
+    cfg.async_support(true);
+    let engine = Engine::new(&cfg)?;
+    let wasi = WasiCtxBuilder::new().inherit_stderr().build_p1();
+    let mut store = Store::new(&engine, wasi);
+
+    Wizer::new()
         .init_func("initialize-runtime")
         .keep_init_func(true)
-        .make_linker(Some(Rc::new(move |engine| {
+        .run(&mut store, wasm_bytes, async |store, module| {
+            let engine = store.engine();
             let mut linker = Linker::new(engine);
-            wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |ctx| {
-                if ctx.wasi_ctx.is_none() {
-                    ctx.wasi_ctx = Some(WasiCtxBuilder::new().inherit_stderr().build_p1());
-                }
-                ctx.wasi_ctx.as_mut().unwrap()
-            })?;
-            linker.define_unknown_imports_as_traps(&Module::new(engine, &owned_wasm_bytes)?)?;
-            Ok(linker)
-        })))?
-        .run(wasm_bytes)
+            wasmtime_wasi::p1::add_to_linker_async(&mut linker, |cx| cx)?;
+            linker.define_unknown_imports_as_traps(module)?;
+            let instance = linker.instantiate_async(store, module).await?;
+            Ok(instance)
+        })
+        .await
 }

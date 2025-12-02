@@ -17,7 +17,8 @@ Example usage:
 use std::path::Path;
 use javy_codegen::{Generator, LinkingKind, Plugin, JS};
 
-fn main() {
+#[tokio::main]
+async fn main() {
   // Load your target Javascript.
   let js = JS::from_file(Path::new("example.js"));
 
@@ -30,6 +31,6 @@ fn main() {
   generator.linking(LinkingKind::Static);
 
   // Generate your Wasm module.
-  let wasm = generator.generate(&js)?;
+  let wasm = generator.generate(&js).await?;
 }
 ```

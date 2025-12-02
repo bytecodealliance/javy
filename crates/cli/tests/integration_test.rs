@@ -391,7 +391,7 @@ fn test_source_code_omitted(builder: &mut Builder) -> Result<()> {
 fn test_init_plugin() -> Result<()> {
     let engine = Engine::default();
     let mut linker = Linker::new(&engine);
-    wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |s| s)?;
+    wasmtime_wasi::p1::add_to_linker_sync(&mut linker, |s| s)?;
     let wasi = WasiCtxBuilder::new().build_p1();
     let mut store = Store::new(&engine, wasi);
 

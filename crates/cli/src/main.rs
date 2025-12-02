@@ -15,7 +15,8 @@ use std::fs;
 use std::fs::File;
 use std::io::Write;
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     let args = Cli::parse();
 
     match &args.command {
@@ -54,7 +55,7 @@ fn main() -> Result<()> {
                 generator.linking(LinkingKind::Static);
             };
 
-            let wasm = generator.generate(&js)?;
+            let wasm = generator.generate(&js).await?;
 
             fs::write(&opts.output, wasm)?;
             Ok(())
@@ -63,7 +64,7 @@ fn main() -> Result<()> {
             let plugin_bytes = fs::read(&opts.plugin)?;
 
             let uninitialized_plugin = UninitializedPlugin::new(&plugin_bytes)?;
-            let initialized_plugin_bytes = uninitialized_plugin.initialize()?;
+            let initialized_plugin_bytes = uninitialized_plugin.initialize().await?;
 
             let mut out: Box<dyn Write> = match opts.out.as_ref() {
                 Some(path) => Box::new(File::create(path)?),
