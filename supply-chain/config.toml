@@ -78,7 +78,7 @@ version = "0.1.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.ast_node]]
-version = "4.0.0"
+version = "5.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.async-trait]]
@@ -262,7 +262,7 @@ version = "0.10.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.from_variant]]
-version = "2.0.2"
+version = "3.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.fs-set-times]]
@@ -610,35 +610,35 @@ version = "4.0.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_atoms]]
-version = "8.0.2"
+version = "9.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_common]]
-version = "16.0.0"
+version = "18.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_core]]
-version = "46.0.3"
+version = "49.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_ast]]
-version = "17.0.0"
+version = "19.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_parser]]
-version = "26.0.1"
+version = "28.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_transforms_base]]
-version = "29.0.0"
+version = "31.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_utils]]
-version = "23.0.0"
+version = "25.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_visit]]
-version = "17.0.0"
+version = "19.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_eq_ignore_macros]]
