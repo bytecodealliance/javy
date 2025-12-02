@@ -93,15 +93,15 @@ user-login = "emilio"
 user-name = "Emilio Cobos Álvarez"
 
 [[publisher.clap]]
-version = "4.5.51"
-when = "2025-10-29"
+version = "4.5.53"
+when = "2025-11-19"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.clap_builder]]
-version = "4.5.51"
-when = "2025-10-29"
+version = "4.5.53"
+when = "2025-11-19"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
@@ -315,8 +315,8 @@ user-login = "BurntSushi"
 user-name = "Andrew Gallant"
 
 [[publisher.quote]]
-version = "1.0.41"
-when = "2025-09-29"
+version = "1.0.42"
+when = "2025-11-06"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -392,8 +392,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.syn]]
-version = "2.0.109"
-when = "2025-11-05"
+version = "2.0.111"
+when = "2025-11-23"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -485,13 +485,6 @@ user-name = "Ed Page"
 [[publisher.unicode-segmentation]]
 version = "1.12.0"
 when = "2024-09-13"
-user-id = 1139
-user-login = "Manishearth"
-user-name = "Manish Goregaokar"
-
-[[publisher.unicode-width]]
-version = "0.1.14"
-when = "2024-09-19"
 user-id = 1139
 user-login = "Manishearth"
 user-name = "Manish Goregaokar"
