@@ -1622,7 +1622,7 @@ dependencies = [
  "wasmprinter 0.242.0",
  "wasmtime",
  "wasmtime-wasi",
- "wit-parser 0.240.0",
+ "wit-parser 0.242.0",
  "wizer",
 ]
 
