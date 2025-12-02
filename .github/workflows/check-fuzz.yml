@@ -14,7 +14,7 @@ jobs:
     name: Build fuzz targets
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Read pinned nightly version
         id: nightly_version
         shell: bash
