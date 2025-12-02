@@ -342,7 +342,7 @@ version = "1.0.3"
 criteria = "safe-to-deploy"
 
 [[exemptions.insta]]
-version = "1.43.2"
+version = "1.44.3"
 criteria = "safe-to-run"
 
 [[exemptions.io-lifetimes]]
