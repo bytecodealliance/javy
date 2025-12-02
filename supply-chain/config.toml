@@ -802,19 +802,19 @@ version = "0.5.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.wit-bindgen]]
-version = "0.47.0"
+version = "0.48.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.wit-bindgen-core]]
-version = "0.47.0"
+version = "0.48.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.wit-bindgen-rust]]
-version = "0.47.0"
+version = "0.48.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.wit-bindgen-rust-macro]]
-version = "0.47.0"
+version = "0.48.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.wit-parser]]
