@@ -693,6 +693,10 @@ criteria = "safe-to-deploy"
 version = "0.243.0"
 criteria = "safe-to-run"
 
+[[exemptions.wasmprinter]]
+version = "0.243.0"
+criteria = "safe-to-run"
+
 [[exemptions.winapi]]
 version = "0.3.9"
 criteria = "safe-to-deploy"
