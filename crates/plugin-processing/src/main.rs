@@ -13,10 +13,11 @@ struct Args {
     output: PathBuf,
 }
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     let args = Args::parse();
     let wasm_bytes = fs::read(&args.input)?;
-    let wasm_bytes = javy_plugin_processing::initialize_plugin(&wasm_bytes)?;
+    let wasm_bytes = javy_plugin_processing::initialize_plugin(&wasm_bytes).await?;
     fs::write(&args.output, wasm_bytes)?;
     Ok(())
 }

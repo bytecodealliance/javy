@@ -4,11 +4,12 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     if let Ok("cargo-clippy") = env::var("CARGO_CFG_FEATURE").as_ref().map(String::as_str) {
         stub_plugin_for_clippy()
     } else {
-        copy_plugin()
+        copy_plugin().await
     }
 }
 
@@ -27,7 +28,7 @@ fn stub_plugin_for_clippy() -> Result<()> {
 }
 
 // Copy the plugin binary build from the `plugin` crate
-fn copy_plugin() -> Result<()> {
+async fn copy_plugin() -> Result<()> {
     let cargo_manifest_dir = env::var("CARGO_MANIFEST_DIR")?;
     let module_path = PathBuf::from(&cargo_manifest_dir)
         .parent()
@@ -38,7 +39,8 @@ fn copy_plugin() -> Result<()> {
     let plugin_path = module_path.join("plugin.wasm");
     let plugin_wizened_path = module_path.join("plugin_wizened.wasm");
 
-    let initialized_plugin = javy_plugin_processing::initialize_plugin(&fs::read(&plugin_path)?)?;
+    let initialized_plugin =
+        javy_plugin_processing::initialize_plugin(&fs::read(&plugin_path)?).await?;
     fs::write(&plugin_wizened_path, &initialized_plugin)?;
 
     println!("cargo:rerun-if-changed={}", plugin_path.to_str().unwrap());

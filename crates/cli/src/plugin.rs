@@ -48,8 +48,8 @@ impl<'a> UninitializedPlugin<'a> {
     }
 
     /// Initializes the plugin.
-    pub(crate) fn initialize(&self) -> Result<Vec<u8>> {
-        javy_plugin_processing::initialize_plugin(self.bytes)
+    pub(crate) async fn initialize(&self) -> Result<Vec<u8>> {
+        javy_plugin_processing::initialize_plugin(self.bytes).await
     }
 
     fn validate(plugin_bytes: &'a [u8]) -> Result<()> {

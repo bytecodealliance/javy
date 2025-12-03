@@ -8,6 +8,10 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- The `generate` method on `Generator` is now async.
+
 ## [3.0.0] - 2025-11-12
 
 ### Changed

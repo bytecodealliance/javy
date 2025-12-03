@@ -40,7 +40,8 @@
 //! use std::path::Path;
 //! use javy_codegen::{Generator, LinkingKind, Plugin, JS};
 //!
-//! fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! #[tokio::main]
+//! async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     // Load your target Javascript.
 //!     let js = JS::from_file(Path::new("example.js"))?;
 //!
@@ -52,7 +53,7 @@
 //!     generator.linking(LinkingKind::Static);
 //!
 //!     // Generate your Wasm module.
-//!     let wasm = generator.generate(&js);
+//!     let wasm = generator.generate(&js).await?;
 //!
 //!     Ok(())
 //! }
@@ -70,7 +71,7 @@
 //!   unstable API's exposed by this future may break in the future without
 //!   notice.
 
-use std::{fs, rc::Rc, sync::OnceLock};
+use std::fs;
 
 pub(crate) mod bytecode;
 pub(crate) mod exports;
@@ -90,12 +91,11 @@ use walrus::{
     DataId, DataKind, ExportItem, FunctionBuilder, FunctionId, LocalId, MemoryId, Module, ValType,
 };
 use wasm_opt::{OptimizationOptions, ShrinkLevel};
+use wasmtime::{Config, Engine, Linker, Store};
 use wasmtime_wasi::{WasiCtxBuilder, p2::pipe::MemoryInputPipe};
-use wizer::{Linker, Wizer};
 
 use anyhow::Result;
-
-static STDIN_PIPE: OnceLock<MemoryInputPipe> = OnceLock::new();
+use wasmtime_wizer::Wizer;
 
 /// The kind of linking to use.
 #[derive(Debug, Clone, Default)]
@@ -219,37 +219,30 @@ impl Generator {
 
 impl Generator {
     /// Generate the starting module.
-    fn generate_initial_module(&self) -> Result<Module> {
+    async fn generate_initial_module(&self) -> Result<Module> {
         let config = transform::module_config();
         let module = match &self.linking {
             LinkingKind::Static => {
-                // Copy config JSON into stdin for `initialize-runtime` function.
-                STDIN_PIPE
-                    .set(MemoryInputPipe::new(self.js_runtime_config.clone()))
-                    .unwrap();
+                let mut cfg = Config::new();
+                cfg.async_support(true);
+                let engine = Engine::new(&cfg)?;
+                let wasi = WasiCtxBuilder::new()
+                    .stdin(MemoryInputPipe::new(self.js_runtime_config.clone()))
+                    .inherit_stdout()
+                    .inherit_stderr()
+                    .build_p1();
+                let mut store = Store::new(&engine, wasi);
                 let wasm = Wizer::new()
                     .init_func("initialize-runtime")
-                    .make_linker(Some(Rc::new(move |engine| {
+                    .run(&mut store, self.plugin.as_bytes(), async |store, module| {
+                        let engine = store.engine();
                         let mut linker = Linker::new(engine);
-                        wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, move |cx| {
-                            if cx.wasi_ctx.is_none() {
-                                // The underlying buffer backing the pipe is an Arc
-                                // so the cloning should be fast.
-                                let config = STDIN_PIPE.get().unwrap().clone();
-                                cx.wasi_ctx = Some(
-                                    WasiCtxBuilder::new()
-                                        .stdin(config)
-                                        .inherit_stdout()
-                                        .inherit_stderr()
-                                        .build_p1(),
-                                );
-                            }
-                            cx.wasi_ctx.as_mut().unwrap()
-                        })?;
-                        Ok(linker)
-                    })))?
-                    .wasm_bulk_memory(true)
-                    .run(self.plugin.as_bytes())?;
+                        wasmtime_wasi::p1::add_to_linker_async(&mut linker, |cx| cx)?;
+                        linker.define_unknown_imports_as_traps(module)?;
+                        let instance = linker.instantiate_async(store, module).await?;
+                        Ok(instance)
+                    })
+                    .await?;
                 config.parse(&wasm)?
             }
             LinkingKind::Dynamic => Module::with_config(config),
@@ -442,7 +435,7 @@ impl Generator {
     }
 
     /// Generate a Wasm module which will run the provided JS source code.
-    pub fn generate(&mut self, js: &js::JS) -> Result<Vec<u8>> {
+    pub async fn generate(&mut self, js: &js::JS) -> Result<Vec<u8>> {
         if self.wit_opts.defined() {
             self.function_exports = exports::process_exports(
                 js,
@@ -451,7 +444,7 @@ impl Generator {
             )?;
         }
 
-        let mut module = self.generate_initial_module()?;
+        let mut module = self.generate_initial_module().await?;
         let identifiers = self.resolve_identifiers(&mut module)?;
         let bc_metadata = self.generate_main(&mut module, js, &identifiers)?;
         self.generate_exports(&mut module, &identifiers, &bc_metadata)?;

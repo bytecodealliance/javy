@@ -13,8 +13,10 @@ categories = ["wasm"]
 anyhow = { workspace = true }
 clap = { workspace = true }
 tempfile = { workspace = true }
+tokio = { workspace = true, features = ["macros"] }
 walrus = { workspace = true }
 wasmparser = { workspace = true }
 wasm-opt = { workspace = true }
+wasmtime = { workspace = true }
 wasmtime-wasi = { workspace = true }
-wizer = { workspace = true }
+wasmtime-wizer = { workspace = true, features = ["wasmtime"] }
