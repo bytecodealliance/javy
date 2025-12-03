@@ -6,6 +6,9 @@ updates:
       interval: "monthly"
     open-pull-requests-limit: 100
     groups:
+      wasmtime:
+        patterns:
+          - "wasmtime*"
       nonbreaking:
         exclude-patterns:
           - "rquickjs*"
