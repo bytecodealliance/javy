@@ -16,6 +16,7 @@ rquickjs = { version = "0.10.0", features = [
     "bindgen",
     "disable-assertions",
 ] }
+rquickjs-serde = "0.2.0"
 serde = { workspace = true, default-features = true, features = ["derive"] }
 serde_json = { workspace = true, optional = true }
 serde-transcode = { version = "1.1", optional = true }

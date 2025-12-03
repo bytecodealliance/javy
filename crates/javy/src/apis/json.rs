@@ -21,13 +21,13 @@ use crate::{
     Args, hold, json,
     quickjs::{
         Ctx, Exception, Function, Object, String as JSString, Value,
+        atom::PredefinedAtom,
         function::This,
         prelude::{MutFn, Rest},
+        qjs::JS_GetProperty,
     },
     to_js_error, val_to_string,
 };
-
-use crate::serde::de::get_to_json;
 
 use simd_json::Error as SError;
 
@@ -167,5 +167,23 @@ fn call_json_stringify(args: Args<'_>) -> Result<Value<'_>> {
                 || Value::new_undefined(this.clone()),
                 |str| str.into_value(),
             )),
+    }
+}
+
+fn get_to_json<'a>(value: &Value<'a>) -> Option<Function<'a>> {
+    let f = unsafe {
+        JS_GetProperty(
+            value.ctx().as_raw().as_ptr(),
+            value.as_raw(),
+            PredefinedAtom::ToJSON as u32,
+        )
+    };
+    let f = unsafe { Value::from_raw(value.ctx().clone(), f) };
+    if f.is_function()
+        && let Some(f) = f.into_function()
+    {
+        Some(f)
+    } else {
+        None
     }
 }
