@@ -691,7 +691,7 @@ criteria = "safe-to-deploy"
 
 [[exemptions.wasmparser]]
 version = "0.243.0"
-criteria = "safe-to-run"
+criteria = "safe-to-deploy"
 
 [[exemptions.wasmprinter]]
 version = "0.243.0"
@@ -755,7 +755,7 @@ criteria = "safe-to-run"
 
 [[exemptions.wit-parser]]
 version = "0.243.0"
-criteria = "safe-to-run"
+criteria = "safe-to-deploy"
 
 [[exemptions.witx]]
 version = "0.9.1"
