@@ -533,15 +533,18 @@ fn is_array_or_proxy_of_array(val: &Value) -> bool {
     if val.is_array() {
         return true;
     }
-    let ctx = val.ctx().as_raw().as_ptr();
-    let mut val = val.as_raw();
+    let ctx = val.ctx();
+    let mut val = val.clone();
     loop {
-        let is_proxy = unsafe { JS_IsProxy(val) };
+        let is_proxy = unsafe { JS_IsProxy(val.as_raw()) };
         if !is_proxy {
             return false;
         }
-        val = unsafe { JS_GetProxyTarget(ctx, val) };
-        if unsafe { JS_IsArray(val) } {
+        val = unsafe {
+            let target = JS_GetProxyTarget(ctx.as_raw().as_ptr(), val.as_raw());
+            Value::from_raw(ctx.clone(), target)
+        };
+        if unsafe { JS_IsArray(val.as_raw()) } {
             return true;
         }
     }
