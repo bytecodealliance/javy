@@ -622,7 +622,7 @@ version = "1.4.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.uuid]]
-version = "1.18.1"
+version = "1.19.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.value-trait]]
@@ -668,6 +668,14 @@ criteria = "safe-to-deploy"
 [[exemptions.wasm-bindgen-shared]]
 version = "0.2.105"
 criteria = "safe-to-deploy"
+
+[[exemptions.wasm-encoder]]
+version = "0.243.0"
+criteria = "safe-to-run"
+
+[[exemptions.wasm-metadata]]
+version = "0.243.0"
+criteria = "safe-to-run"
 
 [[exemptions.wasm-opt]]
 version = "0.116.1"
@@ -736,6 +744,10 @@ criteria = "safe-to-deploy"
 [[exemptions.wit-bindgen-rust-macro]]
 version = "0.48.1"
 criteria = "safe-to-deploy"
+
+[[exemptions.wit-component]]
+version = "0.243.0"
+criteria = "safe-to-run"
 
 [[exemptions.wit-parser]]
 version = "0.243.0"
