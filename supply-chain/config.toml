@@ -669,6 +669,14 @@ criteria = "safe-to-deploy"
 version = "0.2.105"
 criteria = "safe-to-deploy"
 
+[[exemptions.wasm-encoder]]
+version = "0.243.0"
+criteria = "safe-to-run"
+
+[[exemptions.wasm-metadata]]
+version = "0.243.0"
+criteria = "safe-to-run"
+
 [[exemptions.wasm-opt]]
 version = "0.116.1"
 criteria = "safe-to-deploy"
@@ -680,6 +688,10 @@ criteria = "safe-to-deploy"
 [[exemptions.wasm-opt-sys]]
 version = "0.116.0"
 criteria = "safe-to-deploy"
+
+[[exemptions.wasmparser]]
+version = "0.243.0"
+criteria = "safe-to-run"
 
 [[exemptions.winapi]]
 version = "0.3.9"
@@ -732,6 +744,14 @@ criteria = "safe-to-deploy"
 [[exemptions.wit-bindgen-rust-macro]]
 version = "0.48.1"
 criteria = "safe-to-deploy"
+
+[[exemptions.wit-component]]
+version = "0.243.0"
+criteria = "safe-to-run"
+
+[[exemptions.wit-parser]]
+version = "0.243.0"
+criteria = "safe-to-run"
 
 [[exemptions.witx]]
 version = "0.9.1"
