@@ -48,12 +48,12 @@
 
 pub use config::*;
 pub use rquickjs as quickjs;
+use rquickjs_serde as serde;
 pub use runtime::Runtime;
 use std::str;
 
 mod config;
 mod runtime;
-mod serde;
 
 use anyhow::{Error, Result, anyhow};
 use rquickjs::{
