@@ -490,7 +490,7 @@ version = "0.10.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.rquickjs-serde]]
-version = "0.2.0"
+version = "0.3.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.rquickjs-sys]]
