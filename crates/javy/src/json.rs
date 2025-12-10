@@ -1,6 +1,6 @@
 use crate::quickjs::{Ctx, Value};
-use crate::serde::{de::Deserializer, ser::Serializer};
 use anyhow::Result;
+use rquickjs_serde::{de::Deserializer, ser::Serializer};
 
 /// Transcodes a byte slice containing a JSON encoded payload into a [Value].
 pub fn parse<'js>(context: Ctx<'js>, bytes: &mut [u8]) -> Result<Value<'js>> {
@@ -14,7 +14,7 @@ pub fn parse<'js>(context: Ctx<'js>, bytes: &mut [u8]) -> Result<Value<'js>> {
 /// Transcodes a [Value] into a slice of JSON bytes.
 pub fn stringify(val: Value<'_>) -> Result<Vec<u8>> {
     let mut output: Vec<u8> = Vec::new();
-    let mut deserializer = Deserializer::from(val);
+    let mut deserializer = Deserializer::from(val).with_strict();
     let mut serializer = serde_json::Serializer::new(&mut output);
     serde_transcode::transcode(&mut deserializer, &mut serializer)?;
     Ok(output)

@@ -53,7 +53,6 @@ use std::str;
 
 mod config;
 mod runtime;
-mod serde;
 
 use anyhow::{Error, Result, anyhow};
 use rquickjs::{
@@ -129,7 +128,7 @@ pub fn to_js_error(cx: Ctx, e: Error) -> JSError {
         Ok(e) => e,
         Err(e) => {
             // In some cases the original error context is lost i.e. we can't
-            // retain the orginal JSError when invoking serde_transcode,
+            // retain the original JSError when invoking serde_transcode,
             // particularly for json::stringify. The process of transcoding will
             // report the Serializer error, which is totally implementation
             // dependent, in this case particular to serde_json::Error. To

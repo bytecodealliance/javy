@@ -16,6 +16,7 @@ rquickjs = { version = "0.10.0", features = [
     "bindgen",
     "disable-assertions",
 ] }
+rquickjs-serde = { version = "0.3.0", optional = true }
 serde = { workspace = true, default-features = true, features = ["derive"] }
 serde_json = { workspace = true, optional = true }
 serde-transcode = { version = "1.1", optional = true }
@@ -34,7 +35,7 @@ simd-json = { version = "0.17.0", optional = true, default-features = false, fea
 javy-test-macros = { path = "../test-macros/" }
 
 [features]
-messagepack = ["rmp-serde", "serde-transcode"]
+messagepack = ["rmp-serde", "serde-transcode", "rquickjs-serde"]
 # According to our benchmarks and experiments, the fastest and most efficient
 # JSON implementation comes from:
 # * Using SIMD JSON for parsing
@@ -42,4 +43,4 @@ messagepack = ["rmp-serde", "serde-transcode"]
 # This implementation is behind a feature flag, because of the code size
 # implications of enabling by default (due to the extra dependencies) and also
 # because the native implementation is probably fine for most use-cases.
-json = ["serde_json", "serde-transcode", "simd-json"]
+json = ["serde_json", "serde-transcode", "simd-json", "rquickjs-serde"]
