@@ -554,11 +554,11 @@ version = "9.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_common]]
-version = "18.0.0"
+version = "18.0.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_core]]
-version = "49.0.0"
+version = "54.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_ast]]
@@ -566,11 +566,11 @@ version = "19.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_parser]]
-version = "28.0.0"
+version = "32.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_transforms_base]]
-version = "31.0.0"
+version = "35.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_utils]]
