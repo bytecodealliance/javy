@@ -28,7 +28,7 @@ jobs:
         run: make build-default-plugin
 
       - name: Upload plugin to artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: plugin
           path: target/wasm32-wasip1/release/plugin.wasm
@@ -39,7 +39,7 @@ jobs:
           gzip -k -f target/wasm32-wasip1/release/plugin_wizened.wasm && mv target/wasm32-wasip1/release/plugin_wizened.wasm.gz plugin.wasm.gz
 
       - name: Upload archived plugin to artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: plugin.wasm.gz
           path: plugin.wasm.gz
@@ -54,7 +54,7 @@ jobs:
         run: shasum -a 256 plugin.wasm.gz | awk '{ print $1 }' > plugin.wasm.gz.sha256
 
       - name: Upload asset hash to artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: plugin.wasm.gz.sha256
           path: plugin.wasm.gz.sha256
@@ -121,7 +121,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get --assume-yes install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
         if: matrix.target == 'aarch64-unknown-linux-gnu'
 
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           name: plugin
           path: target/wasm32-wasip1/release/
@@ -135,7 +135,7 @@ jobs:
         run: gzip -k -f ${{ matrix.path }} && mv ${{ matrix.path }}.gz ${{ matrix.asset_name }}.gz
 
       - name: Upload assets to artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.asset_name }}.gz
           path: ${{ matrix.asset_name }}.gz
@@ -150,7 +150,7 @@ jobs:
         run: ${{ matrix.shasum_cmd }} ${{ matrix.asset_name }}.gz | awk '{ print $1 }' > ${{ matrix.asset_name }}.gz.sha256
 
       - name: Upload asset hash to artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.asset_name }}.gz.sha256
           path: ${{ matrix.asset_name }}.gz.sha256
