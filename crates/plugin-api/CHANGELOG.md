@@ -8,6 +8,11 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- Bumped rquickjs to 0.11. If you are using a plugin for dynamic linking, you
+  are strongly encouraged to change the import namespace.
+
 ### Fixed
 
 - Fixed memory leak in Serde deserializer implementation for RQuickJS values.

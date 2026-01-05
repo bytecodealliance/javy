@@ -7,7 +7,7 @@ use crate::shared_config::SharedConfig;
 
 mod shared_config;
 
-import_namespace!("javy-default-plugin-v2");
+import_namespace!("javy-default-plugin-v3");
 
 fn config() -> Config {
     // Read shared config JSON in from stdin.

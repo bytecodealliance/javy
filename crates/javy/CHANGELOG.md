@@ -8,6 +8,10 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- Bumped rquickjs to 0.11.0.
+
 ### Fixed
 
 - Fixed memory leak in Serde deserializer implementation for RQuickJS values.

@@ -130,10 +130,6 @@ version = "0.15.11"
 criteria = "safe-to-run"
 
 [[exemptions.convert_case]]
-version = "0.8.0"
-criteria = "safe-to-deploy"
-
-[[exemptions.convert_case]]
 version = "0.10.0"
 criteria = "safe-to-deploy"
 
@@ -474,23 +470,23 @@ version = "2.0.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.rquickjs]]
-version = "0.10.0"
+version = "0.11.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.rquickjs-core]]
-version = "0.10.0"
+version = "0.11.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.rquickjs-macro]]
-version = "0.10.0"
+version = "0.11.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.rquickjs-serde]]
-version = "0.3.0"
+version = "0.4.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.rquickjs-sys]]
-version = "0.10.0"
+version = "0.11.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.rustc-demangle]]
