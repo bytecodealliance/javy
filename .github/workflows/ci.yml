@@ -63,10 +63,12 @@ jobs:
           path: target/
 
       - name: Lint
-        run: make lint-native-targets
+        run: make lint-native-targets-ci
 
       - name: Test
-        run: make test-native-targets
+        run: make test-native-targets-ci
 
       - name: WPT
-        run: make test-wpt
+        run: |
+          npm install --prefix wpt
+          npm test --prefix wpt
