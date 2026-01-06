@@ -11,7 +11,7 @@ categories = ["wasm"]
 
 [dependencies]
 anyhow = { workspace = true }
-rquickjs = { version = "0.10.0", features = [
+rquickjs = { version = "0.11.0", features = [
     "array-buffer",
     "bindgen",
     "disable-assertions",
