@@ -229,10 +229,6 @@ criteria = "safe-to-deploy"
 version = "3.0.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.fs-set-times]]
-version = "0.20.3"
-criteria = "safe-to-deploy"
-
 [[exemptions.funty]]
 version = "2.0.0"
 criteria = "safe-to-deploy"
@@ -310,12 +306,8 @@ version = "15.1.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.insta]]
-version = "1.44.3"
+version = "1.46.0"
 criteria = "safe-to-run"
-
-[[exemptions.io-lifetimes]]
-version = "2.0.4"
-criteria = "safe-to-deploy"
 
 [[exemptions.ipnet]]
 version = "2.11.0"
@@ -473,6 +465,10 @@ criteria = "safe-to-deploy"
 version = "2.0.1"
 criteria = "safe-to-deploy"
 
+[[exemptions.rmp-serde]]
+version = "1.3.1"
+criteria = "safe-to-deploy"
+
 [[exemptions.rquickjs]]
 version = "0.10.0"
 criteria = "safe-to-deploy"
@@ -598,15 +594,11 @@ version = "2.0.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.tempfile]]
-version = "3.23.0"
+version = "3.24.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.tinystr]]
 version = "0.8.2"
-criteria = "safe-to-deploy"
-
-[[exemptions.tokio]]
-version = "1.48.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.triomphe]]
