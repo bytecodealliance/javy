@@ -19,7 +19,7 @@ wasmtime = { workspace = true }
 wasmtime-wasi = { workspace = true }
 wasmtime-wizer = { workspace = true, features = ["wasmtime"] }
 walrus = { workspace = true }
-swc_core = { version = "49.0.0", features = [
+swc_core = { version = "54.0.0", features = [
   "common_sourcemap",
   "ecma_ast",
   "ecma_parser",

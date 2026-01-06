@@ -1,4 +1,8 @@
-.PHONY: fmt fmt-check lint-wasi-targets test-wasi-targets wasi-targets lint-native-targets test-native-targets native-targets test-wpt test clean cli plugin build-test-plugins build-default-plugin vet ci
+.PHONY: fmt fmt-check lint-wasi-targets lint-wasip1-targets lint-wasip2-targets \
+	test-wasi-targets test-wasip1-targets test-wasip2-targets wasi-targets \
+	lint-native-targets test-native-targets test-native-targets-ci native-targets \
+	test-wpt test-wpt-ci test-all clean cli build-default-plugin build-test-plugins \
+	vet ci
 .DEFAULT_GOAL := cli
 
 # === Format checks ===
@@ -61,7 +65,9 @@ test-wasip2-targets:
 wasi-targets: lint-wasi-targets test-wasi-targets
 
 # === Lint & Test Native Targets ===
-lint-native-targets: fmt-check build-default-plugin
+lint-native-targets: build-default-plugin lint-native-targets-ci
+
+lint-native-targets-ci: fmt-check
 	CARGO_PROFILE_RELEASE_LTO=off cargo clippy --workspace \
 	--exclude=javy \
 	--exclude=javy-plugin-api \
@@ -71,7 +77,12 @@ lint-native-targets: fmt-check build-default-plugin
 	--exclude=javy-test-plugin-wasip2 \
 	--release --all-targets --all-features -- -D warnings
 
-test-native-targets: build-default-plugin build-test-plugins
+test-native-targets: build-default-plugin build-test-plugins test-native-targets-ci
+
+# This command assumes a CI environment in which the test plugin
+# assets have been previously created in the expected directories.
+# This ensures that we can recycle CI time.
+test-native-targets-ci:
 	CARGO_PROFILE_RELEASE_LTO=off cargo hack test --workspace \
 	--exclude=javy \
 	--exclude=javy-plugin-api \
@@ -81,46 +92,21 @@ test-native-targets: build-default-plugin build-test-plugins
 	--exclude=javy-test-plugin-wasip2 \
 	--release --each-feature -- --nocapture
 
+
 native-targets: lint-native-targets test-native-targets
 
 # === Web Platform Tests
 
-test-wpt: cli
+# For usage in CI, in which we assume pre-existing assets.
+test-wpt-ci:
 	npm install --prefix wpt
 	npm test --prefix wpt
+
+test-wpt: cli test-wpt-ci
 
 # === All tests ===
 test-all: wasi-targets native-targets test-wpt
 
-# === Binaries ===
-
-# First, build the default plugin, which is a dependency to the CLI.
-# No need to run `javy_plugin_processing`, the CLI build.rs will take
-# care of doing that.
-target/release/javy: build-default-plugin
-	CARGO_PROFILE_RELEASE_LTO=off cargo build -p=javy-cli --release
-
-target/wasm32-wasip1/release/plugin.wasm:
-	cargo build -p=javy-plugin --target=wasm32-wasip1 --release
-
-target/wasm32-wasip1/release/test_plugin.wasm:
-	cargo build -p=javy-test-plugin-wasip1 --target=wasm32-wasip1 --release
-	cargo run --package=javy-plugin-processing --release -- target/wasm32-wasip1/release/test_plugin.wasm target/wasm32-wasip1/release/test_plugin.wasm
-
-target/wasm32-wasip2/release/test_plugin.wasm:
-	cargo build -p=javy-test-plugin-wasip2 --target=wasm32-wasip2 --release
-	cargo run --package=javy-plugin-processing --release -- target/wasm32-wasip2/release/test_plugin.wasm target/wasm32-wasip2/release/test_plugin.wasm
-
-target/wasm32-unknown-unknown/release/test_invalid_plugin.wasm:
-	cargo build -p=javy-test-invalid-plugin --target=wasm32-unknown-unknown --release
-
-cli: target/release/javy
-
-# Build the default plugin
-build-default-plugin: target/wasm32-wasip1/release/plugin.wasm
-
-# Build auxiliary plugins, for testing
-build-test-plugins: build-default-plugin target/wasm32-wasip1/release/test_plugin.wasm target/wasm32-wasip2/release/test_plugin.wasm target/wasm32-unknown-unknown/release/test_invalid_plugin.wasm
 
 # === Misc ===
 clean:
@@ -134,3 +120,21 @@ vet:
 # GitHub Actions if we try to compile native targets in the same workflow as
 # WASI targets so we have to use a multi-step process in GitHub to avoid that.
 ci: lint-wasi-targets lint-native-targets vet test-all
+
+# First, build the default plugin, which is a dependency to the CLI.
+# No need to run `javy_plugin_processing`, the CLI build.rs will take
+# care of doing that.
+cli: build-default-plugin
+	CARGO_PROFILE_RELEASE_LTO=off cargo build -p=javy-cli --release
+
+# Build the default plugin
+build-default-plugin:
+	cargo build -p=javy-plugin --target=wasm32-wasip1 --release
+
+# Build auxiliary plugins, for testing
+build-test-plugins:
+	cargo build --package=javy-test-plugin-wasip1 --target=wasm32-wasip1 --release
+	cargo build --package=javy-test-plugin-wasip2 --target=wasm32-wasip2 --release
+	cargo build --package=javy-test-invalid-plugin --target=wasm32-unknown-unknown --release
+	cargo run --package=javy-plugin-processing --release -- target/wasm32-wasip1/release/test_plugin.wasm target/wasm32-wasip1/release/test_plugin.wasm
+	cargo run --package=javy-plugin-processing --release -- target/wasm32-wasip2/release/test_plugin.wasm target/wasm32-wasip2/release/test_plugin.wasm
