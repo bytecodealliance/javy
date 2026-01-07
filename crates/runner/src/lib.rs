@@ -34,7 +34,7 @@ impl Plugin {
             Self::InvalidUser => "invalid-plugin",
             // Could try and derive this but not going to for now since tests
             // will break if it changes.
-            Self::Default | Self::DefaultAsUser => "javy-default-plugin-v2",
+            Self::Default | Self::DefaultAsUser => "javy-default-plugin-v3",
             Self::UserWasiP1 { .. } => "test-plugin-wasip1",
             Self::UserWasiP2 { .. } => "test-plugin-wasip2",
         }

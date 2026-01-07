@@ -529,15 +529,6 @@ dependencies = [
 
 [[package]]
 name = "convert_case"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "baaaa0ecca5b51987b9423ccdc971514dd8b0bb7b4060b983d3664dad3f1f89f"
-dependencies = [
- "unicode-segmentation",
-]
-
-[[package]]
-name = "convert_case"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "633458d4ef8c78b72454de2d54fd6ab2e60f9e02be22f3c6104cdc8a4e0fceb9"
@@ -1597,7 +1588,7 @@ dependencies = [
 
 [[package]]
 name = "javy"
-version = "6.0.1-alpha.1"
+version = "7.0.0-alpha.1"
 dependencies = [
  "anyhow",
  "bitflags",
@@ -1640,7 +1631,7 @@ version = "4.0.0-alpha.1"
 dependencies = [
  "anyhow",
  "brotli",
- "convert_case 0.10.0",
+ "convert_case",
  "insta",
  "swc_core",
  "tempfile",
@@ -1678,7 +1669,7 @@ dependencies = [
 
 [[package]]
 name = "javy-plugin-api"
-version = "5.0.1-alpha.1"
+version = "6.0.0-alpha.1"
 dependencies = [
  "anyhow",
  "javy",
@@ -2351,9 +2342,9 @@ dependencies = [
 
 [[package]]
 name = "rquickjs"
-version = "0.10.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a135375fbac5ba723bb6a48f432a72f81539cedde422f0121a86c7c4e96d8e0d"
+checksum = "c50dc6d6c587c339edb4769cf705867497a2baf0eca8b4645fa6ecd22f02c77a"
 dependencies = [
  "rquickjs-core",
  "rquickjs-macro",
@@ -2361,9 +2352,9 @@ dependencies = [
 
 [[package]]
 name = "rquickjs-core"
-version = "0.10.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bccb7121a123865c8ace4dea42e7ed84d78b90cbaf4ca32c59849d8d210c9672"
+checksum = "b8bf7840285c321c3ab20e752a9afb95548c75cd7f4632a0627cea3507e310c1"
 dependencies = [
  "hashbrown 0.16.0",
  "relative-path",
@@ -2372,11 +2363,11 @@ dependencies = [
 
 [[package]]
 name = "rquickjs-macro"
-version = "0.10.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89f93602cc3112c7f30bf5f29e722784232138692c7df4c52ebbac7e035d900d"
+checksum = "7106215ff41a5677b104906a13e1a440b880f4b6362b5dc4f3978c267fad2b80"
 dependencies = [
- "convert_case 0.8.0",
+ "convert_case",
  "fnv",
  "ident_case",
  "indexmap 2.12.0",
@@ -2389,9 +2380,9 @@ dependencies = [
 
 [[package]]
 name = "rquickjs-serde"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "20c45e5074bb11affd5147f9760f116f1ba415b8f153e6d3b24d9595767aae2c"
+checksum = "8df908bfc058ac1fb7e7b4609afe712bf2ce4ea86b49cd06e041a86c89220e8b"
 dependencies = [
  "rquickjs",
  "serde",
@@ -2399,9 +2390,9 @@ dependencies = [
 
 [[package]]
 name = "rquickjs-sys"
-version = "0.10.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57b1b6528590d4d65dc86b5159eae2d0219709546644c66408b2441696d1d725"
+checksum = "27344601ef27460e82d6a4e1ecb9e7e99f518122095f3c51296da8e9be2b9d83"
 dependencies = [
  "bindgen",
  "cc",
