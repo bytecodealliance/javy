@@ -128,15 +128,15 @@ user-login = "emilio"
 user-name = "Emilio Cobos Álvarez"
 
 [[publisher.clap]]
-version = "4.5.53"
-when = "2025-11-19"
+version = "4.5.54"
+when = "2026-01-02"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.clap_builder]]
-version = "4.5.53"
-when = "2025-11-19"
+version = "4.5.54"
+when = "2026-01-02"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
@@ -282,6 +282,13 @@ user-id = 6825
 user-login = "sunfishcode"
 user-name = "Dan Gohman"
 
+[[publisher.fs-set-times]]
+version = "0.20.3"
+when = "2025-03-10"
+user-id = 6825
+user-login = "sunfishcode"
+user-name = "Dan Gohman"
+
 [[publisher.glob]]
 version = "0.3.3"
 when = "2025-08-11"
@@ -311,6 +318,13 @@ user-name = "Josh Stone"
 
 [[publisher.io-extras]]
 version = "0.18.4"
+when = "2024-12-04"
+user-id = 6825
+user-login = "sunfishcode"
+user-name = "Dan Gohman"
+
+[[publisher.io-lifetimes]]
+version = "2.0.4"
 when = "2024-12-04"
 user-id = 6825
 user-login = "sunfishcode"
@@ -387,8 +401,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.proc-macro2]]
-version = "1.0.103"
-when = "2025-10-23"
+version = "1.0.105"
+when = "2026-01-05"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -413,8 +427,8 @@ user-login = "BurntSushi"
 user-name = "Andrew Gallant"
 
 [[publisher.quote]]
-version = "1.0.42"
-when = "2025-11-06"
+version = "1.0.43"
+when = "2026-01-05"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -455,8 +469,8 @@ user-login = "sunfishcode"
 user-name = "Dan Gohman"
 
 [[publisher.rustix]]
-version = "1.1.2"
-when = "2025-09-09"
+version = "1.1.3"
+when = "2025-12-23"
 user-id = 6825
 user-login = "sunfishcode"
 user-name = "Dan Gohman"
@@ -511,8 +525,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.serde_json]]
-version = "1.0.142"
-when = "2025-07-31"
+version = "1.0.149"
+when = "2026-01-06"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -539,8 +553,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.syn]]
-version = "2.0.111"
-when = "2025-11-23"
+version = "2.0.113"
+when = "2026-01-03"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -593,6 +607,13 @@ when = "2025-09-28"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
+
+[[publisher.tokio]]
+version = "1.49.0"
+when = "2026-01-03"
+user-id = 6741
+user-login = "Darksonn"
+user-name = "Alice Ryhl"
 
 [[publisher.tokio-macros]]
 version = "2.6.0"
@@ -1069,6 +1090,13 @@ version = "0.236.0"
 when = "2025-07-28"
 user-id = 73222
 user-login = "wasmtime-publish"
+
+[[publisher.zmij]]
+version = "1.0.12"
+when = "2026-01-06"
+user-id = 3618
+user-login = "dtolnay"
+user-name = "David Tolnay"
 
 [[audits.bytecode-alliance.wildcard-audits.arbitrary]]
 who = "Nick Fitzgerald <fitzgen@gmail.com>"
@@ -2873,16 +2901,6 @@ who = "David Cook <dcook@divviup.org>"
 criteria = "safe-to-deploy"
 delta = "1.12.1 -> 1.13.0"
 
-[[audits.isrg.audits.serde_json]]
-who = "J.C. Jones <jc@divviup.org>"
-criteria = "safe-to-deploy"
-delta = "1.0.142 -> 1.0.143"
-
-[[audits.isrg.audits.serde_json]]
-who = "J.C. Jones <jc@divviup.org>"
-criteria = "safe-to-deploy"
-delta = "1.0.143 -> 1.0.145"
-
 [[audits.isrg.audits.sha2]]
 who = "David Cook <dcook@divviup.org>"
 criteria = "safe-to-deploy"
@@ -3284,13 +3302,6 @@ notes = """
 Very popular crate. 1 instance of unsafe code, which is used to adjust a slice to work around
 lifetime issues. No network or file access.
 """
-aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
-
-[[audits.mozilla.audits.rmp-serde]]
-who = "Ben Dean-Kawamura <bdk@mozilla.com>"
-criteria = "safe-to-deploy"
-version = "1.3.0"
-notes = "Very popular crate. No unsafe code, network or file access."
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
 [[audits.mozilla.audits.rustc-hash]]

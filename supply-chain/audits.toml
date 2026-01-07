@@ -238,7 +238,7 @@ end = "2025-01-03"
 criteria = "safe-to-deploy"
 user-id = 6825 # Dan Gohman (sunfishcode)
 start = "2020-09-15"
-end = "2024-07-25"
+end = "2027-01-06"
 
 [[trusted.glob]]
 criteria = "safe-to-deploy"
@@ -304,7 +304,7 @@ end = "2026-03-03"
 criteria = "safe-to-deploy"
 user-id = 6825 # Dan Gohman (sunfishcode)
 start = "2021-06-12"
-end = "2024-07-25"
+end = "2027-01-06"
 
 [[trusted.is-terminal]]
 criteria = "safe-to-deploy"
@@ -466,7 +466,7 @@ end = "2024-10-03"
 criteria = "safe-to-deploy"
 user-id = 6825 # Dan Gohman (sunfishcode)
 start = "2021-10-29"
-end = "2025-12-04"
+end = "2027-01-06"
 
 [[trusted.rustversion]]
 criteria = "safe-to-deploy"
@@ -532,7 +532,7 @@ end = "2026-01-07"
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-02-28"
-end = "2025-08-14"
+end = "2027-01-06"
 
 [[trusted.serde_spanned]]
 criteria = "safe-to-deploy"
@@ -604,7 +604,7 @@ end = "2026-04-09"
 criteria = "safe-to-deploy"
 user-id = 6741 # Alice Ryhl (Darksonn)
 start = "2020-12-25"
-end = "2025-01-04"
+end = "2027-01-06"
 
 [[trusted.tokio-macros]]
 criteria = "safe-to-deploy"
@@ -887,3 +887,9 @@ criteria = "safe-to-deploy"
 user-id = 696 # Nick Fitzgerald (fitzgen)
 start = "2021-01-07"
 end = "2026-03-03"
+
+[[trusted.zmij]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2025-12-18"
+end = "2027-01-06"
