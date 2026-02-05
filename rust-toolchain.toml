@@ -1,5 +1,8 @@
 [toolchain]
-channel = "stable"
+# Rust 1.93.0 has a bug where WASI p2 doesn't correctly close file descriptors causing tests to fail.
+# cargo 1.95.0-nightly (fe2f314ae 2026-01-30) runs correctly so presumably we can switch back to stable for 1.94 or
+# 1.95.
+channel = "1.92.0"
 components = ["clippy", "rustfmt"]
 targets = ["wasm32-unknown-unknown", "wasm32-wasip1", "wasm32-wasip2"]
 profile = "default"
