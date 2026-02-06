@@ -265,31 +265,11 @@ criteria = "safe-to-deploy"
 version = "3.0.3"
 criteria = "safe-to-deploy"
 
-[[exemptions.icu_collections]]
-version = "2.1.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.icu_locale_core]]
-version = "2.1.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.icu_normalizer]]
-version = "2.1.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.icu_normalizer_data]]
-version = "2.1.1"
-criteria = "safe-to-deploy"
-
 [[exemptions.icu_properties]]
 version = "2.1.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.icu_properties_data]]
-version = "2.1.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.icu_provider]]
 version = "2.1.1"
 criteria = "safe-to-deploy"
 
@@ -415,10 +395,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.phf_shared]]
 version = "0.11.3"
-criteria = "safe-to-deploy"
-
-[[exemptions.potential_utf]]
-version = "0.1.4"
 criteria = "safe-to-deploy"
 
 [[exemptions.ppv-lite86]]
@@ -705,12 +681,24 @@ criteria = "safe-to-deploy"
 version = "0.5.1"
 criteria = "safe-to-deploy"
 
-[[exemptions.witx]]
-version = "0.9.1"
+[[exemptions.wit-bindgen]]
+version = "0.52.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.writeable]]
-version = "0.6.2"
+[[exemptions.wit-bindgen-core]]
+version = "0.52.0"
+criteria = "safe-to-deploy"
+
+[[exemptions.wit-bindgen-rust]]
+version = "0.52.0"
+criteria = "safe-to-deploy"
+
+[[exemptions.wit-bindgen-rust-macro]]
+version = "0.52.0"
+criteria = "safe-to-deploy"
+
+[[exemptions.witx]]
+version = "0.9.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.wyz]]
@@ -723,14 +711,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.yoke-derive]]
 version = "0.8.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.zerocopy]]
-version = "0.8.27"
-criteria = "safe-to-deploy"
-
-[[exemptions.zerocopy-derive]]
-version = "0.8.27"
 criteria = "safe-to-deploy"
 
 [[exemptions.zerotrie]]
