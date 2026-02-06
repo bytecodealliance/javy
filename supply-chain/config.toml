@@ -197,6 +197,10 @@ criteria = "safe-to-deploy"
 version = "0.1.2"
 criteria = "safe-to-deploy"
 
+[[exemptions.dragonbox_ecma]]
+version = "0.1.0"
+criteria = "safe-to-deploy"
+
 [[exemptions.encode_unicode]]
 version = "1.0.0"
 criteria = "safe-to-run"
@@ -265,31 +269,11 @@ criteria = "safe-to-deploy"
 version = "3.0.3"
 criteria = "safe-to-deploy"
 
-[[exemptions.icu_collections]]
-version = "2.1.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.icu_locale_core]]
-version = "2.1.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.icu_normalizer]]
-version = "2.1.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.icu_normalizer_data]]
-version = "2.1.1"
-criteria = "safe-to-deploy"
-
 [[exemptions.icu_properties]]
 version = "2.1.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.icu_properties_data]]
-version = "2.1.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.icu_provider]]
 version = "2.1.1"
 criteria = "safe-to-deploy"
 
@@ -417,10 +401,6 @@ criteria = "safe-to-deploy"
 version = "0.11.3"
 criteria = "safe-to-deploy"
 
-[[exemptions.potential_utf]]
-version = "0.1.4"
-criteria = "safe-to-deploy"
-
 [[exemptions.ppv-lite86]]
 version = "0.2.21"
 criteria = "safe-to-deploy"
@@ -489,10 +469,6 @@ criteria = "safe-to-deploy"
 version = "0.1.26"
 criteria = "safe-to-deploy"
 
-[[exemptions.ryu-js]]
-version = "1.0.2"
-criteria = "safe-to-deploy"
-
 [[exemptions.scoped-tls]]
 version = "1.0.1"
 criteria = "safe-to-deploy"
@@ -550,27 +526,27 @@ version = "18.0.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_core]]
-version = "54.0.0"
+version = "56.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_ast]]
-version = "19.0.0"
+version = "20.0.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_parser]]
-version = "32.0.0"
+version = "33.0.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_transforms_base]]
-version = "35.0.0"
+version = "36.0.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_utils]]
-version = "25.0.0"
+version = "26.0.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_visit]]
-version = "19.0.0"
+version = "20.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_eq_ignore_macros]]
@@ -709,10 +685,6 @@ criteria = "safe-to-deploy"
 version = "0.9.1"
 criteria = "safe-to-deploy"
 
-[[exemptions.writeable]]
-version = "0.6.2"
-criteria = "safe-to-deploy"
-
 [[exemptions.wyz]]
 version = "0.5.1"
 criteria = "safe-to-deploy"
@@ -723,14 +695,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.yoke-derive]]
 version = "0.8.1"
-criteria = "safe-to-deploy"
-
-[[exemptions.zerocopy]]
-version = "0.8.27"
-criteria = "safe-to-deploy"
-
-[[exemptions.zerocopy-derive]]
-version = "0.8.27"
 criteria = "safe-to-deploy"
 
 [[exemptions.zerotrie]]
