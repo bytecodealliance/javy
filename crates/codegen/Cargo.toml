@@ -31,6 +31,6 @@ tempfile = { workspace = true }
 wasmparser = { workspace = true }
 
 [dev-dependencies]
-insta = "1.46.0"
+insta = "1.46.3"
 tokio = { workspace = true, features = ["macros"] }
 wasmprinter = "0.243.0"
