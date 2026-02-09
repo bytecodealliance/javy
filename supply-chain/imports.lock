@@ -37,8 +37,8 @@ user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.anyhow]]
-version = "1.0.100"
-when = "2025-09-19"
+version = "1.0.101"
+when = "2026-02-05"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -128,22 +128,22 @@ user-login = "emilio"
 user-name = "Emilio Cobos Álvarez"
 
 [[publisher.clap]]
-version = "4.5.54"
-when = "2026-01-02"
+version = "4.5.57"
+when = "2026-02-03"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.clap_builder]]
-version = "4.5.54"
-when = "2026-01-02"
+version = "4.5.57"
+when = "2026-02-03"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.clap_derive]]
-version = "4.5.49"
-when = "2025-10-13"
+version = "4.5.55"
+when = "2026-01-27"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
@@ -401,8 +401,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.proc-macro2]]
-version = "1.0.105"
-when = "2026-01-05"
+version = "1.0.106"
+when = "2026-01-21"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -427,8 +427,8 @@ user-login = "BurntSushi"
 user-name = "Andrew Gallant"
 
 [[publisher.quote]]
-version = "1.0.43"
-when = "2026-01-05"
+version = "1.0.44"
+when = "2026-01-23"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -553,8 +553,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.syn]]
-version = "2.0.113"
-when = "2026-01-03"
+version = "2.0.114"
+when = "2026-01-07"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
