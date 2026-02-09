@@ -33,4 +33,4 @@ wasmparser = { workspace = true }
 [dev-dependencies]
 insta = "1.46.0"
 tokio = { workspace = true, features = ["macros"] }
-wasmprinter = "0.243.0"
+wasmprinter = "0.244.0"

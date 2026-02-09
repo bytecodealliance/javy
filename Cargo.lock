@@ -1645,7 +1645,7 @@ dependencies = [
  "walrus",
  "wasm-opt",
  "wasmparser 0.244.0",
- "wasmprinter 0.243.0",
+ "wasmprinter 0.244.0",
  "wasmtime",
  "wasmtime-wasi",
  "wasmtime-wizer",
@@ -3533,13 +3533,13 @@ dependencies = [
 
 [[package]]
 name = "wasmprinter"
-version = "0.243.0"
+version = "0.244.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb2b6035559e146114c29a909a3232928ee488d6507a1504d8934e8607b36d7b"
+checksum = "09390d7b2bd7b938e563e4bff10aa345ef2e27a3bc99135697514ef54495e68f"
 dependencies = [
  "anyhow",
  "termcolor",
- "wasmparser 0.243.0",
+ "wasmparser 0.244.0",
 ]
 
 [[package]]
