@@ -78,6 +78,13 @@ user-id = 6741
 user-login = "Darksonn"
 user-name = "Alice Ryhl"
 
+[[publisher.bytes]]
+version = "1.11.1"
+when = "2026-02-03"
+user-id = 6741
+user-login = "Darksonn"
+user-name = "Alice Ryhl"
+
 [[publisher.cap-fs-ext]]
 version = "3.4.5"
 when = "2025-10-24"
