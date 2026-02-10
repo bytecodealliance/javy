@@ -338,7 +338,7 @@ version = "15.1.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.insta]]
-version = "1.46.0"
+version = "1.46.3"
 criteria = "safe-to-run"
 
 [[exemptions.ipnet]]
@@ -626,7 +626,7 @@ version = "2.0.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.tempfile]]
-version = "3.24.0"
+version = "3.25.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.tinystr]]
@@ -646,7 +646,7 @@ version = "1.4.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.uuid]]
-version = "1.19.0"
+version = "1.20.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.value-trait]]
@@ -670,7 +670,7 @@ version = "0.8.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.walrus]]
-version = "0.24.4"
+version = "0.24.5"
 criteria = "safe-to-deploy"
 
 [[exemptions.walrus-macro]]
