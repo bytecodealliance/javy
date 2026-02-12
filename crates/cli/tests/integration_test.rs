@@ -1,7 +1,7 @@
 use anyhow::{Result, bail};
 use javy_runner::{Builder, Plugin, Runner, RunnerError, Source};
 use std::{io::Read, path::PathBuf, process::Command, str};
-use wasmtime::{AsContextMut, Engine, Linker, Module, Store};
+use wasmtime::{AsContext, AsContextMut, Engine, Linker, Module, Store};
 use wasmtime_wasi::WasiCtxBuilder;
 
 use javy_test_macros::javy_cli_test;
@@ -408,11 +408,20 @@ fn test_init_plugin() -> Result<()> {
     // Check that plugin is in fact uninitialized at this point.
     let module = Module::from_file(&engine, &uninitialized_plugin)?;
     let instance = linker.instantiate(store.as_context_mut(), &module)?;
-    let result = instance
+    let ret_ptr = instance
         .get_typed_func::<(i32, i32), i32>(store.as_context_mut(), "compile-src")?
-        .call(store.as_context_mut(), (0, 0));
-    // This should fail because the runtime is uninitialized.
-    assert!(result.is_err());
+        .call(store.as_context_mut(), (0, 0))?;
+    // Read the result variant from linear memory. The first 4 bytes at the
+    // returned pointer encode the result discriminant: 0 for success, non-zero
+    // for error.
+    let memory = instance
+        .get_memory(store.as_context_mut(), "memory")
+        .unwrap();
+    let mut result_variant = [0u8; 4];
+    memory.read(store.as_context(), ret_ptr as usize, &mut result_variant)?;
+    let result_variant = u32::from_le_bytes(result_variant);
+    // This should indicate an error because the runtime is uninitialized.
+    assert_ne!(result_variant, 0);
 
     // Initialize the plugin.
     let output = Command::new(env!("CARGO_BIN_EXE_javy"))
