@@ -32,7 +32,7 @@ on third parties to continue to provide support for WASI preview 1.
 
 ## WASI preview 1 plugins
 
-Your `Cargo.toml` should look like:
+Your `Cargo.toml` should look like the following:
 
 ```toml
 [package]
@@ -112,7 +112,7 @@ javy-plugin-api = "5.0.0"
 wit-bindgen = "0.47.0"
 ```
 
-You'll need a WIT file in `wit/world.wit` that looks like:
+You'll need a WIT file in `wit/world.wit` that looks like the following code:
 
 ```wit
 package yournamespace:my-javy-plugin@1.0.0;
