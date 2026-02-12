@@ -171,7 +171,9 @@ pub fn compile_src(js_src: &[u8]) -> Result<Vec<u8>> {
     //
     // Setting `config.bignum_extension` to `true` will produce different
     // bytecode than if it were set to `false`.
-    let runtime = unsafe { RUNTIME.get().unwrap() };
+    let runtime = unsafe { RUNTIME.get() }.ok_or_else(|| {
+        anyhow!("Javy runtime not initialized. Ensure `javy init-plugin` has been invoked.")
+    })?;
     runtime.compile_to_bytecode(FUNCTION_MODULE_NAME, &String::from_utf8_lossy(js_src))
 }
 
@@ -183,7 +185,9 @@ pub fn compile_src(js_src: &[u8]) -> Result<Vec<u8>> {
 /// * `bytecode` - The QuickJS bytecode
 /// * `fn_name` - The JS function name
 pub fn invoke(bytecode: &[u8], fn_name: Option<&str>) -> Result<()> {
-    let runtime = unsafe { RUNTIME.get() }.unwrap();
+    let runtime = unsafe { RUNTIME.get() }.ok_or_else(|| {
+        anyhow!("Javy runtime not initialized. Ensure `javy init-plugin` has been invoked.")
+    })?;
     runtime
         .context()
         .with(|this| {
