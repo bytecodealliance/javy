@@ -81,10 +81,6 @@ criteria = "safe-to-deploy"
 version = "0.72.1"
 criteria = "safe-to-deploy"
 
-[[exemptions.bitflags]]
-version = "2.10.0"
-criteria = "safe-to-deploy"
-
 [[exemptions.bitvec]]
 version = "1.0.1"
 criteria = "safe-to-deploy"
@@ -582,31 +578,31 @@ version = "9.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_common]]
-version = "18.0.1"
+version = "19.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_core]]
-version = "56.0.0"
+version = "58.0.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_ast]]
-version = "20.0.1"
+version = "21.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_parser]]
-version = "33.0.1"
+version = "35.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_transforms_base]]
-version = "36.0.1"
+version = "38.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_utils]]
-version = "26.0.1"
+version = "27.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_visit]]
-version = "20.0.0"
+version = "21.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_eq_ignore_macros]]
@@ -618,7 +614,7 @@ version = "1.0.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_sourcemap]]
-version = "9.3.4"
+version = "10.0.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_visit]]
