@@ -37,7 +37,7 @@ jobs:
         run: make build-test-plugins
 
       - name: Upload plugins
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: plugins
           path: target/**/release/*.wasm
