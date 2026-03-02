@@ -57,7 +57,7 @@ jobs:
           cache-prefix: native
 
       - name: Download plugins
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: plugins
           path: target/
