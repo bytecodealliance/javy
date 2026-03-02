@@ -10,7 +10,7 @@ version = "1.0.0"
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2019-03-28"
-end = "2024-10-03"
+end = "2027-03-02"
 
 [[trusted.ambient-authority]]
 criteria = "safe-to-deploy"
@@ -210,11 +210,17 @@ user-id = 3618 # David Tolnay (dtolnay)
 start = "2020-01-08"
 end = "2026-12-02"
 
+[[trusted.env_filter]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2024-01-19"
+end = "2027-03-02"
+
 [[trusted.env_logger]]
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2022-11-24"
-end = "2025-01-02"
+end = "2027-03-02"
 
 [[trusted.equivalent]]
 criteria = "safe-to-deploy"
@@ -342,11 +348,17 @@ user-id = 51017
 start = "2020-03-17"
 end = "2024-10-30"
 
+[[trusted.libc]]
+criteria = "safe-to-deploy"
+user-id = 55123 # rust-lang-owner
+start = "2024-08-15"
+end = "2027-03-02"
+
 [[trusted.libfuzzer-sys]]
 criteria = "safe-to-deploy"
 user-id = 696 # Nick Fitzgerald (fitzgen)
 start = "2020-01-14"
-end = "2025-12-04"
+end = "2027-03-02"
 
 [[trusted.link-cplusplus]]
 criteria = "safe-to-deploy"
@@ -364,7 +376,7 @@ end = "2026-04-08"
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2019-07-07"
-end = "2024-10-03"
+end = "2027-03-02"
 
 [[trusted.num-traits]]
 criteria = "safe-to-deploy"
@@ -412,7 +424,7 @@ end = "2026-03-03"
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2019-05-13"
-end = "2024-10-03"
+end = "2027-03-02"
 
 [[trusted.quote]]
 criteria = "safe-to-deploy"
@@ -448,19 +460,19 @@ end = "2026-12-02"
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2019-02-27"
-end = "2024-10-03"
+end = "2027-03-02"
 
 [[trusted.regex-automata]]
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2019-02-25"
-end = "2024-10-03"
+end = "2027-03-02"
 
 [[trusted.regex-syntax]]
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2019-03-30"
-end = "2024-10-03"
+end = "2027-03-02"
 
 [[trusted.rustix]]
 criteria = "safe-to-deploy"
@@ -784,7 +796,7 @@ end = "2025-10-31"
 criteria = "safe-to-deploy"
 user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2020-01-11"
-end = "2024-10-03"
+end = "2027-03-02"
 
 [[trusted.windows-core]]
 criteria = "safe-to-deploy"
