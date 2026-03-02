@@ -91,7 +91,7 @@ use walrus::{
     DataId, DataKind, ExportItem, FunctionBuilder, FunctionId, LocalId, MemoryId, Module, ValType,
 };
 use wasm_opt::{OptimizationOptions, ShrinkLevel};
-use wasmtime::{Config, Engine, Linker, Store};
+use wasmtime::{Engine, Linker, Store};
 use wasmtime_wasi::{WasiCtxBuilder, p2::pipe::MemoryInputPipe};
 
 use anyhow::Result;
@@ -223,9 +223,7 @@ impl Generator {
         let config = transform::module_config();
         let module = match &self.linking {
             LinkingKind::Static => {
-                let mut cfg = Config::new();
-                cfg.async_support(true);
-                let engine = Engine::new(&cfg)?;
+                let engine = Engine::default();
                 let wasi = WasiCtxBuilder::new()
                     .stdin(MemoryInputPipe::new(self.js_runtime_config.clone()))
                     .inherit_stdout()

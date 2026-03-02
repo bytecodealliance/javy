@@ -232,6 +232,20 @@ user-id = 6825
 user-login = "sunfishcode"
 user-name = "Dan Gohman"
 
+[[publisher.gimli]]
+version = "0.26.2"
+when = "2022-07-17"
+user-id = 4415
+user-login = "philipc"
+user-name = "Philip Craig"
+
+[[publisher.gimli]]
+version = "0.33.0"
+when = "2026-01-24"
+user-id = 4415
+user-login = "philipc"
+user-name = "Philip Craig"
+
 [[publisher.glob]]
 version = "0.3.3"
 when = "2025-08-11"
@@ -299,6 +313,12 @@ when = "2026-02-10"
 user-id = 696
 user-login = "fitzgen"
 user-name = "Nick Fitzgerald"
+
+[[publisher.libm]]
+version = "0.2.16"
+when = "2026-01-24"
+user-id = 55123
+user-login = "rust-lang-owner"
 
 [[publisher.link-cplusplus]]
 version = "1.0.12"
@@ -399,8 +419,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.regalloc2]]
-version = "0.13.3"
-when = "2025-11-13"
+version = "0.13.5"
+when = "2026-01-09"
 user-id = 3726
 user-login = "cfallin"
 user-name = "Chris Fallin"
@@ -1121,6 +1141,12 @@ criteria = "safe-to-deploy"
 delta = "0.25.0 -> 0.25.1"
 notes = "Minor updates, looks like a minor bug fix, nothing awry."
 
+[[audits.bytecode-alliance.audits.addr2line]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.25.1 -> 0.26.0"
+notes = "Nothing out of the ordinary for this update, all DWARF all the time."
+
 [[audits.bytecode-alliance.audits.allocator-api2]]
 who = "Chris Fallin <chris@cfallin.org>"
 criteria = "safe-to-deploy"
@@ -1217,16 +1243,6 @@ who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
 delta = "0.4.0 -> 0.6.1"
 notes = "Major updates, but almost all safe code. Lots of pruning/deletions, nothing out of the ordrinary."
-
-[[audits.bytecode-alliance.audits.fallible-iterator]]
-who = "Alex Crichton <alex@alexcrichton.com>"
-criteria = "safe-to-deploy"
-delta = "0.2.0 -> 0.3.0"
-notes = """
-This major version update has a few minor breaking changes but everything
-this crate has to do with iterators and `Result` and such. No `unsafe` or
-anything like that, all looks good.
-"""
 
 [[audits.bytecode-alliance.audits.fastrand]]
 who = "Alex Crichton <alex@alexcrichton.com>"
@@ -1330,30 +1346,6 @@ hash-consing to support de-duplication required by the format.
 who = "Pat Hickey <p.hickey@f5.com>"
 criteria = "safe-to-deploy"
 delta = "0.6.0 -> 0.8.1"
-
-[[audits.bytecode-alliance.audits.gimli]]
-who = "Alex Crichton <alex@alexcrichton.com>"
-criteria = "safe-to-deploy"
-delta = "0.29.0 -> 0.31.0"
-notes = "Various updates here and there, nothing too major, what you'd expect from a DWARF parsing crate."
-
-[[audits.bytecode-alliance.audits.gimli]]
-who = "Alex Crichton <alex@alexcrichton.com>"
-criteria = "safe-to-deploy"
-delta = "0.31.0 -> 0.31.1"
-notes = "No fundmanetally new `unsafe` code, some small refactoring of existing code. Lots of changes in tests, not as many changes in the rest of the crate. More dwarf!"
-
-[[audits.bytecode-alliance.audits.gimli]]
-who = "Alex Crichton <alex@alexcrichton.com>"
-criteria = "safe-to-deploy"
-delta = "0.31.1 -> 0.32.0"
-notes = "Ever more DWARF to parse, but also no new `unsafe` and everything looks like gimli."
-
-[[audits.bytecode-alliance.audits.gimli]]
-who = "Alex Crichton <alex@alexcrichton.com>"
-criteria = "safe-to-deploy"
-delta = "0.32.0 -> 0.32.3"
-notes = "Ever more dwarf, it never ends! (nothing out of the ordinary)"
 
 [[audits.bytecode-alliance.audits.hashbrown]]
 who = "Chris Fallin <chris@cfallin.org>"
@@ -1631,6 +1623,12 @@ notes = "The Bytecode Alliance is the author of this crate"
 who = "Alex Crichton <alex@alexcrichton.com>"
 criteria = "safe-to-deploy"
 delta = "0.242.0 -> 0.243.0"
+notes = "The Bytecode Alliance is the author of this crate"
+
+[[audits.bytecode-alliance.audits.wasm-compose]]
+who = "Alex Crichton <alex@alexcrichton.com>"
+criteria = "safe-to-deploy"
+delta = "0.243.0 -> 0.244.0"
 notes = "The Bytecode Alliance is the author of this crate"
 
 [[audits.bytecode-alliance.audits.wasm-encoder]]
@@ -2718,23 +2716,6 @@ aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-ch
 who = "Lars Eggert <lars@eggert.org>"
 criteria = "safe-to-deploy"
 delta = "0.3.28 -> 0.3.27"
-aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
-
-[[audits.mozilla.audits.gimli]]
-who = "Alex Franchuk <afranchuk@mozilla.com>"
-criteria = "safe-to-deploy"
-version = "0.30.0"
-notes = """
-Unsafe code blocks are sound. Minimal dependencies used. No use of
-side-effectful std functions.
-"""
-aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
-
-[[audits.mozilla.audits.gimli]]
-who = "Chris Martin <cmartin@mozilla.com>"
-criteria = "safe-to-deploy"
-delta = "0.30.0 -> 0.29.0"
-notes = "No unsafe code, mostly algorithms and parsing. Very unlikely to cause security issues."
 aggregated-from = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
 
 [[audits.mozilla.audits.hashbrown]]
