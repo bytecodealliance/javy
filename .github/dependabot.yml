@@ -15,8 +15,6 @@ updates:
         update-types:
           - "minor"
           - "patch"
-    ignore:
-      - dependency-name: "wasmtime*"
 
   - package-ecosystem: npm
     directory: "/npm/javy"
