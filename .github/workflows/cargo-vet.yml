@@ -10,7 +10,7 @@ jobs:
     name: cargo_vet
     runs-on: ubuntu-latest
     env:
-      CARGO_VET_VERSION: 0.9.0
+      CARGO_VET_VERSION: 0.10.2
     steps:
       - uses: actions/checkout@v6
       - name: Install Rust
