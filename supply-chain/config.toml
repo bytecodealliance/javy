@@ -45,10 +45,6 @@ criteria = "safe-to-deploy"
 version = "0.8.12"
 criteria = "safe-to-deploy"
 
-[[exemptions.aho-corasick]]
-version = "1.1.4"
-criteria = "safe-to-deploy"
-
 [[exemptions.alloc-no-stdlib]]
 version = "2.0.4"
 criteria = "safe-to-deploy"
@@ -79,6 +75,10 @@ criteria = "safe-to-deploy"
 
 [[exemptions.bindgen]]
 version = "0.72.1"
+criteria = "safe-to-deploy"
+
+[[exemptions.bitflags]]
+version = "2.11.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.bitvec]]
@@ -253,10 +253,6 @@ criteria = "safe-to-deploy"
 version = "1.0.0"
 criteria = "safe-to-run"
 
-[[exemptions.env_logger]]
-version = "0.8.4"
-criteria = "safe-to-deploy"
-
 [[exemptions.fallible-iterator]]
 version = "0.2.0"
 criteria = "safe-to-deploy"
@@ -299,6 +295,10 @@ criteria = "safe-to-deploy"
 
 [[exemptions.getrandom]]
 version = "0.3.4"
+criteria = "safe-to-deploy"
+
+[[exemptions.getrandom]]
+version = "0.4.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.gimli]]
@@ -361,10 +361,6 @@ criteria = "safe-to-deploy"
 version = "0.3.82"
 criteria = "safe-to-deploy"
 
-[[exemptions.libc]]
-version = "0.2.177"
-criteria = "safe-to-deploy"
-
 [[exemptions.libloading]]
 version = "0.8.9"
 criteria = "safe-to-deploy"
@@ -387,10 +383,6 @@ criteria = "safe-to-deploy"
 
 [[exemptions.maybe-owned]]
 version = "0.3.4"
-criteria = "safe-to-deploy"
-
-[[exemptions.memchr]]
-version = "2.7.6"
 criteria = "safe-to-deploy"
 
 [[exemptions.minimal-lexical]]
@@ -473,24 +465,20 @@ criteria = "safe-to-deploy"
 version = "0.7.0"
 criteria = "safe-to-deploy"
 
+[[exemptions.rand]]
+version = "0.10.0"
+criteria = "safe-to-deploy"
+
+[[exemptions.rand_core]]
+version = "0.10.0"
+criteria = "safe-to-deploy"
+
 [[exemptions.rand_xoshiro]]
 version = "0.6.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.redox_users]]
 version = "0.4.6"
-criteria = "safe-to-deploy"
-
-[[exemptions.regex]]
-version = "1.12.2"
-criteria = "safe-to-deploy"
-
-[[exemptions.regex-automata]]
-version = "0.4.13"
-criteria = "safe-to-deploy"
-
-[[exemptions.regex-syntax]]
-version = "0.8.8"
 criteria = "safe-to-deploy"
 
 [[exemptions.relative-path]]
@@ -582,7 +570,7 @@ version = "19.0.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_core]]
-version = "58.0.1"
+version = "58.0.4"
 criteria = "safe-to-deploy"
 
 [[exemptions.swc_ecma_ast]]
@@ -622,7 +610,7 @@ version = "2.0.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.tempfile]]
-version = "3.25.0"
+version = "3.26.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.tinystr]]
@@ -642,7 +630,7 @@ version = "1.4.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.uuid]]
-version = "1.20.0"
+version = "1.21.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.value-trait]]
@@ -793,10 +781,6 @@ criteria = "safe-to-deploy"
 version = "0.4.0"
 criteria = "safe-to-deploy"
 
-[[exemptions.winapi-util]]
-version = "0.1.11"
-criteria = "safe-to-deploy"
-
 [[exemptions.winapi-x86_64-pc-windows-gnu]]
 version = "0.4.0"
 criteria = "safe-to-deploy"
@@ -826,7 +810,15 @@ version = "0.5.1"
 criteria = "safe-to-deploy"
 
 [[exemptions.wit-bindgen]]
+version = "0.51.0"
+criteria = "safe-to-deploy"
+
+[[exemptions.wit-bindgen]]
 version = "0.52.0"
+criteria = "safe-to-deploy"
+
+[[exemptions.wit-bindgen-core]]
+version = "0.51.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.wit-bindgen-core]]
@@ -834,7 +826,15 @@ version = "0.52.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.wit-bindgen-rust]]
+version = "0.51.0"
+criteria = "safe-to-deploy"
+
+[[exemptions.wit-bindgen-rust]]
 version = "0.52.0"
+criteria = "safe-to-deploy"
+
+[[exemptions.wit-bindgen-rust-macro]]
+version = "0.51.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.wit-bindgen-rust-macro]]
