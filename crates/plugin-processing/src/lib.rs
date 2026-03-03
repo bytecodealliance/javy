@@ -2,7 +2,7 @@ use anyhow::{Result, bail};
 use std::{borrow::Cow, fs};
 use walrus::{FunctionId, ImportKind, ValType};
 use wasmparser::{Parser, Payload};
-use wasmtime::{Config, Engine, Linker, Store};
+use wasmtime::{Engine, Linker, Store};
 use wasmtime_wasi::WasiCtxBuilder;
 use wasmtime_wizer::Wizer;
 
@@ -126,13 +126,11 @@ fn optimize_module(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
 }
 
 async fn preinitialize_module(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
-    let mut cfg = Config::new();
-    cfg.async_support(true);
-    let engine = Engine::new(&cfg)?;
+    let engine = Engine::default();
     let wasi = WasiCtxBuilder::new().inherit_stderr().build_p1();
     let mut store = Store::new(&engine, wasi);
 
-    Wizer::new()
+    Ok(Wizer::new()
         .init_func("initialize-runtime")
         .keep_init_func(true)
         .run(&mut store, wasm_bytes, async |store, module| {
@@ -143,5 +141,5 @@ async fn preinitialize_module(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
             let instance = linker.instantiate_async(store, module).await?;
             Ok(instance)
         })
-        .await
+        .await?)
 }

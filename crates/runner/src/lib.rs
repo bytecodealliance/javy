@@ -235,7 +235,7 @@ pub struct Runner {
 pub struct RunnerError {
     pub stdout: Vec<u8>,
     pub stderr: String,
-    pub err: anyhow::Error,
+    pub err: wasmtime::Error,
 }
 
 impl Error for RunnerError {}
@@ -652,15 +652,15 @@ impl Runner {
             .get_typed_func::<(u32, u32, u32, u32), u32>(store.as_context_mut(), "cabi_realloc")?;
         let orig_ptr = 0;
         let orig_size = 0;
-        realloc_func.call(
+        Ok(realloc_func.call(
             store.as_context_mut(),
             (orig_ptr, orig_size, alignment, new_size),
-        )
+        )?)
     }
 
     fn extract_store_data(
         &self,
-        call_result: Result<()>,
+        call_result: wasmtime::Result<()>,
         mut store: Store<StoreContext>,
     ) -> Result<(Vec<u8>, Vec<u8>, u64)> {
         let fuel_consumed = self.initial_fuel - store.as_context_mut().get_fuel()?;
