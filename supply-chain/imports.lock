@@ -594,8 +594,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.tokio]]
-version = "1.49.0"
-when = "2026-01-03"
+version = "1.50.0"
+when = "2026-03-03"
 user-id = 6741
 user-login = "Darksonn"
 user-name = "Alice Ryhl"
