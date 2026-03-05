@@ -2,7 +2,7 @@
 	test-wasi-targets test-wasip1-targets test-wasip2-targets wasi-targets \
 	lint-native-targets test-native-targets test-native-targets-ci native-targets \
 	test-wpt test-wpt-ci test-all clean cli build-default-plugin build-test-plugins \
-	vet ci
+	ci
 .DEFAULT_GOAL := cli
 
 # === Format checks ===
@@ -112,14 +112,11 @@ test-all: wasi-targets native-targets test-wpt
 clean:
 	cargo clean
 
-vet:
-	cargo vet --locked
-
 # Intended to simulate what the GitHub Actions CI workflow will run.
 # We don't invoke this directly because we often run out of disk space in
 # GitHub Actions if we try to compile native targets in the same workflow as
 # WASI targets so we have to use a multi-step process in GitHub to avoid that.
-ci: lint-wasi-targets lint-native-targets vet test-all
+ci: lint-wasi-targets lint-native-targets test-all
 
 # First, build the default plugin, which is a dependency to the CLI.
 # No need to run `javy_plugin_processing`, the CLI build.rs will take

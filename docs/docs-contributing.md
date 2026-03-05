@@ -54,15 +54,6 @@ version `3.0.0` has not been published yet so version `3.0.0` can contain
 a mixture of additive and breaking changes from the last `2.x.x` version
 published.
 
-## cargo vet
-
-We use [cargo vet](https://mozilla.github.io/cargo-vet/) to audit dependencies
-for the project. If you need to change or add dependencies, please try to use
-a dependency that has been audited by one one of the audits we import or is
-published by one of the authors we trust (sunfishcode, dtolnay, Amanieu,
-cuviper). This is preferable to adding new exemptions for the project. Do not
-add new audits for crates that are not in this project.
-
 ## Web platform tests (WPT)
 
 We run a subset of the web platform test suite during continuous integration. We

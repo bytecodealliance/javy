@@ -17,15 +17,3 @@ cargo +stable install cargo-hack --locked
 ```
 make fmt tests
 ```
-
-4. If adding new dependencies, vet the dependencies
-
-```
-cargo vet
-```
-
-If this fails, follow on-screen instructions to trust any dependencies it suggests trusting. If `cargo vet` still fails after trusting those dependencies, then run:
-
-```
-cargo vet regenerate exemptions
-```
