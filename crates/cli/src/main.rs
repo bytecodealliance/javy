@@ -48,6 +48,7 @@ async fn main() -> Result<()> {
             generator.source_embedding(source_embedding);
 
             set_producer_version(&mut generator);
+            generator.deterministic(codegen_opts.deterministic);
 
             if codegen_opts.dynamic {
                 generator.linking(LinkingKind::Dynamic);

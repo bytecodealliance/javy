@@ -1,10 +1,35 @@
 use anyhow::{Result, bail};
+use std::time::Duration;
 use std::{borrow::Cow, fs};
 use walrus::{FunctionId, ImportKind, ValType};
 use wasmparser::{Parser, Payload};
 use wasmtime::{Engine, Linker, Store};
-use wasmtime_wasi::WasiCtxBuilder;
+use wasmtime_wasi::{HostMonotonicClock, HostWallClock, WasiCtxBuilder};
 use wasmtime_wizer::Wizer;
+
+struct FixedWallClock;
+
+impl HostWallClock for FixedWallClock {
+    fn resolution(&self) -> Duration {
+        Duration::from_secs(1)
+    }
+
+    fn now(&self) -> Duration {
+        Duration::ZERO
+    }
+}
+
+struct FixedMonotonicClock;
+
+impl HostMonotonicClock for FixedMonotonicClock {
+    fn resolution(&self) -> u64 {
+        1_000_000_000
+    }
+
+    fn now(&self) -> u64 {
+        0
+    }
+}
 
 /// Extract core module if it's a component, then run wasm-opt and Wizer to
 /// initialize a plugin.
@@ -127,7 +152,11 @@ fn optimize_module(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
 
 async fn preinitialize_module(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
     let engine = Engine::default();
-    let wasi = WasiCtxBuilder::new().inherit_stderr().build_p1();
+    let wasi = WasiCtxBuilder::new()
+        .inherit_stderr()
+        .wall_clock(FixedWallClock)
+        .monotonic_clock(FixedMonotonicClock)
+        .build_p1();
     let mut store = Store::new(&engine, wasi);
 
     Ok(Wizer::new()

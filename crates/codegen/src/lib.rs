@@ -15,7 +15,9 @@
 //! a particular version of the QuickJS engine compiled to Wasm.
 //!
 //! The generated Wasm module is self contained and the bytecode version matches
-//! the exact requirements of the embedded QuickJs engine.
+//! the exact requirements of the embedded QuickJs engine. Use
+//! [`Generator::deterministic`] for reproducible builds (e.g., for verification
+//! or caching).
 //!
 //! ## Dynamic code generation
 //!
@@ -72,6 +74,7 @@
 //!   notice.
 
 use std::fs;
+use std::time::Duration;
 
 pub(crate) mod bytecode;
 pub(crate) mod exports;
@@ -92,10 +95,34 @@ use walrus::{
 };
 use wasm_opt::{OptimizationOptions, ShrinkLevel};
 use wasmtime::{Engine, Linker, Store};
-use wasmtime_wasi::{WasiCtxBuilder, p2::pipe::MemoryInputPipe};
+use wasmtime_wasi::{HostMonotonicClock, HostWallClock, WasiCtxBuilder, p2::pipe::MemoryInputPipe};
 
 use anyhow::Result;
 use wasmtime_wizer::Wizer;
+
+struct FixedWallClock;
+
+impl HostWallClock for FixedWallClock {
+    fn resolution(&self) -> Duration {
+        Duration::from_secs(1)
+    }
+
+    fn now(&self) -> Duration {
+        Duration::ZERO
+    }
+}
+
+struct FixedMonotonicClock;
+
+impl HostMonotonicClock for FixedMonotonicClock {
+    fn resolution(&self) -> u64 {
+        1_000_000_000
+    }
+
+    fn now(&self) -> u64 {
+        0
+    }
+}
 
 /// The kind of linking to use.
 #[derive(Debug, Clone, Default)]
@@ -174,6 +201,8 @@ pub struct Generator {
     js_runtime_config: Vec<u8>,
     /// The version string to include in the producers custom section.
     producer_version: Option<String>,
+    /// Whether to use fixed clocks for deterministic builds.
+    deterministic: bool,
 }
 
 impl Generator {
@@ -215,6 +244,13 @@ impl Generator {
         self.producer_version = Some(producer_version);
         self
     }
+
+    /// Enable deterministic builds by using fixed clocks during Wizer
+    /// pre-initialization, ensuring identical output for identical input.
+    pub fn deterministic(&mut self, deterministic: bool) -> &mut Self {
+        self.deterministic = deterministic;
+        self
+    }
 }
 
 impl Generator {
@@ -224,11 +260,17 @@ impl Generator {
         let module = match &self.linking {
             LinkingKind::Static => {
                 let engine = Engine::default();
-                let wasi = WasiCtxBuilder::new()
+                let mut builder = WasiCtxBuilder::new();
+                builder
                     .stdin(MemoryInputPipe::new(self.js_runtime_config.clone()))
                     .inherit_stdout()
-                    .inherit_stderr()
-                    .build_p1();
+                    .inherit_stderr();
+                if self.deterministic {
+                    builder
+                        .wall_clock(FixedWallClock)
+                        .monotonic_clock(FixedMonotonicClock);
+                }
+                let wasi = builder.build_p1();
                 let mut store = Store::new(&engine, wasi);
                 let wasm = Wizer::new()
                     .init_func("initialize-runtime")
