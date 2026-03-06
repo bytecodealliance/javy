@@ -151,6 +151,7 @@ pub struct CodegenOptionGroup {
     pub wit: WitOptions,
     pub source: Source,
     pub plugin: Option<PathBuf>,
+    pub deterministic: bool,
 }
 
 impl Default for CodegenOptionGroup {
@@ -160,6 +161,7 @@ impl Default for CodegenOptionGroup {
             wit: WitOptions::default(),
             source: Source::Compressed,
             plugin: None,
+            deterministic: true,
         }
     }
 }
@@ -186,6 +188,10 @@ option_group! {
         /// linked modules. JavaScript config options are also not supported when
         /// using this parameter.
         Plugin(PathBuf),
+        /// Produce deterministic output by using fixed clocks during
+        /// pre-initialization. Ensures identical input always produces
+        /// identical output.
+        Deterministic(bool),
     }
 }
 
@@ -202,6 +208,7 @@ impl TryFrom<Vec<GroupOption<CodegenOption>>> for CodegenOptionGroup {
         let mut wit_world_specified = false;
         let mut source_specified = false;
         let mut plugin_specified = false;
+        let mut deterministic_specified = false;
 
         for option in value.iter().flat_map(|i| i.0.iter()) {
             match option {
@@ -239,6 +246,13 @@ impl TryFrom<Vec<GroupOption<CodegenOption>>> for CodegenOptionGroup {
                     }
                     options.plugin = Some(path.clone());
                     plugin_specified = true;
+                }
+                CodegenOption::Deterministic(enabled) => {
+                    if deterministic_specified {
+                        bail!("deterministic can only be specified once");
+                    }
+                    options.deterministic = *enabled;
+                    deterministic_specified = true;
                 }
             }
         }

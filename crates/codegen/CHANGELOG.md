@@ -12,6 +12,12 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 - The `generate` method on `Generator` is now async.
 
+### Added
+
+- `Generator::deterministic()` and CLI `-C deterministic` option for reproducible
+  static-linked Wasm builds. When enabled, fixed clocks are used during Wizer
+  pre-initialization to avoid timestamp-induced non-determinism.
+
 ## [3.0.0] - 2025-11-12
 
 ### Changed
