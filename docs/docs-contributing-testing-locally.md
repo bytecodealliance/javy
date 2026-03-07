@@ -3,8 +3,8 @@
 1. Clone submodules
 
 ```
-git submodules init
-git submodules update
+git submodule init
+git submodule update
 ```
 
 2. Install cargo hack

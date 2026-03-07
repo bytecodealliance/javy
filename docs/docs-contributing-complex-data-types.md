@@ -22,7 +22,7 @@ encoded to a JSON string and that string can be passed by encoding it into
 a UTF-8 byte array and using the previous solution. Other serialization formats
 can also be used to encode the structured data to a byte array.
 
-The examples below use Rust and Wasmtime to on the host however any programming
+The examples below use Rust and Wasmtime on the host; however, any programming
 language and WebAssembly runtime should support using the same approach.
 
 ## For exported functions

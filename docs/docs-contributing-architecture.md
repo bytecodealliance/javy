@@ -106,7 +106,7 @@ by a Cargo feature on a case-by-case basis.
 
 The CLI that drives the `javy-codegen` crate to compile JS to Wasm. This
 isn't intended to be a CLI that accommodates all uses for all users but
-rather to provide a useful base of functionality. 
+rather to provide a useful base of functionality.
 
 #### When to add a `cargo` feature
 
@@ -128,13 +128,13 @@ A Rust crate for compiling JS to Wasm.
 ### `javy-plugin-processing`
 
 Contains the logic for initializing a Javy plugin. Used to build the default
-plugin and also be the Javy CLI for its plugin initialization logic.
+plugin and also by the Javy CLI for its plugin initialization logic.
 
 ### `javy-plugin`
 
 Gets compiled to `plugin.wasm` for use by the CLI and in environments for
 running dynamically linked modules. This is the default plugin for Javy.
-This isn't intended to be used as a code library by third parties. Defines a
+This isn't intended to be used as a code library by third parties. Defines
 an `initialize_runtime` function that uses a configuration structure to
 allow the CLI to set various JS runtime configuration options.
 

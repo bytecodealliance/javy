@@ -1,7 +1,7 @@
 # Exporting JavaScript functions through WebAssembly
 
 To export exported JavaScript functions, you can pass a `.wit` file and `wit` world
-when running `javy build`. 
+when running `javy build`.
 
 Only ESM exports are supported (that is, Node.js/CommonJS exports are _not_
 supported). For each exported JavaScript function, Javy will add an additional
@@ -26,7 +26,7 @@ console.log("Hello world!");
 package local:main;
 
 world index-world {
-  export foo: func(); 
+  export foo: func();
 }
 ```
 
@@ -48,7 +48,7 @@ build`.
 
 ## Exports with multiple words
 
-Exported function names with multiple words have to written in kebab-case in the
+Exported function names with multiple words have to be written in kebab-case in the
 `.wit` file (a restriction imposed by `wit`), they are exported from the Wasm
 module as kebab-case to match the WIT, and Javy will match the WIT export to
 a JavaScript export with the same name but in camel-case.
@@ -65,11 +65,11 @@ export function fooBar() {
 package local:main;
 
 world index {
-  export foo-bar: func(); 
+  export foo-bar: func();
 }
 ```
 
-Run: 
+Run:
 
 ```bash
 $ javy build index.js -C wit=index.wit -C wit-world=index -o index.wasm
@@ -95,7 +95,7 @@ export default function () {
 package local:main;
 
 world index {
-  export default: func(); 
+  export default: func();
 }
 ```
 
