@@ -15,10 +15,9 @@ explicitly marked as partially supported in the table below.
 
 |API|Support|Comments|
 |:-:|:-:|:-:|
-|`JSON`|✅| Improved performace through SIMD JSON, when using the `-J simd-json-builtins` flag|
+|`JSON`|✅| Improved performance through SIMD JSON, when using the `-J simd-json-builtins` flag|
 |`String.prototype.normalize`|✅| |
-|`TexDecoder`|🚧| Partial support, not fully compliant|
-|`TextEncoder`|🚧| Partial support, not fully compliant|
+|`TextDecoder`|🚧| Partial support, not fully compliant|
 |`TextEncoder`|🚧| Partial support, not fully compliant|
 |`console`|🚧| Partial support, `console.log` and `console.error`|
 

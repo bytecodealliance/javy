@@ -15,7 +15,7 @@ converted to Wasm modules during the initialization process.
 
 You should write your plugin as a WASI preview 1 plugin if you want to use WASI
 preview 1 APIs to interact with modules generated with your plugin. These APIs
-include reading from standard input and writing to standard output or standard 
+include reading from standard input and writing to standard output or standard
 error. The drawback to using WASI preview 1 is support may not continue to be
 available in various tools because this is a preview API and maintainers for
 some tools and the Rust toolchain may opt to discontinue support.
@@ -88,7 +88,7 @@ javy init-plugin <path_to_plugin> -o <path_to_initialized_module>
 ```
 
 which will validate and initialize the Javy runtime. This `javy init-plugin`
-step is required for the plugin to be useable by the Javy CLI.
+step is required for the plugin to be usable by the Javy CLI.
 
 See our documentation on [using complex data types in Wasm
 functions](./contributing-complex-data-types.md) for how to support Wasm
@@ -223,7 +223,7 @@ export!(Component);
 
 fn config() -> Config {
     Config::default()
-    
+
 }
 
 fn modify_runtime(runtime: Runtime) -> Runtime {
