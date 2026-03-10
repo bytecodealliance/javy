@@ -303,6 +303,23 @@ fn test_same_module_outputs_different_random_result(builder: &mut Builder) -> Re
 }
 
 #[javy_cli_test]
+fn test_deterministic_builds_produce_identical_wasm(builder: &mut Builder) -> Result<()> {
+    let mut builder2 = builder.clone();
+    builder.input("random.js").deterministic(true);
+    builder2.input("random.js").deterministic(true);
+
+    let runner1 = builder.build()?;
+    let runner2 = builder2.build()?;
+
+    assert_eq!(
+        runner1.wasm, runner2.wasm,
+        "Two deterministic builds of the same source should produce identical WASM"
+    );
+    Ok(())
+}
+
+
+#[javy_cli_test]
 fn test_exported_default_arrow_fn(builder: &mut Builder) -> Result<()> {
     let mut runner = builder
         .input("exported-default-arrow-fn.js")

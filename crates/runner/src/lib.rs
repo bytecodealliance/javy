@@ -95,6 +95,8 @@ pub struct Builder {
     plugin: Plugin,
     /// How to embed the source code.
     source_code: Option<Source>,
+    /// Whether to enable deterministic builds.
+    deterministic: Option<bool>,
 }
 
 impl Default for Builder {
@@ -113,6 +115,7 @@ impl Default for Builder {
             event_loop: None,
             plugin: Plugin::Default,
             source_code: None,
+            deterministic: None,
         }
     }
 }
@@ -178,6 +181,11 @@ impl Builder {
         self
     }
 
+    pub fn deterministic(&mut self, enabled: bool) -> &mut Self {
+        self.deterministic = Some(enabled);
+        self
+    }
+
     pub fn build(&mut self) -> Result<Runner> {
         if self.built {
             bail!("Builder already used to build a runner")
@@ -203,6 +211,7 @@ impl Builder {
             preload,
             plugin,
             source_code,
+            deterministic,
         } = std::mem::take(self);
 
         self.built = true;
@@ -220,6 +229,7 @@ impl Builder {
             preload,
             plugin,
             source_code,
+            deterministic,
         )
     }
 }
@@ -289,6 +299,7 @@ impl Runner {
         preload: Option<(String, PathBuf)>,
         plugin: Plugin,
         source_code: Option<Source>,
+        deterministic: Option<bool>,
     ) -> Result<Self> {
         // This directory is unique and will automatically get deleted
         // when `tempdir` goes out of scope.
@@ -309,6 +320,7 @@ impl Runner {
             &event_loop,
             &plugin,
             &source_code,
+            &deterministic,
         );
 
         Self::exec_command(bin, root, args)?;
@@ -415,6 +427,7 @@ impl Runner {
         event_loop: &Option<bool>,
         plugin: &Plugin,
         source_code: &Option<Source>,
+        deterministic: &Option<bool>,
     ) -> Vec<String> {
         let mut args = vec![
             "build".to_string(),
@@ -475,6 +488,14 @@ impl Runner {
                     Source::Compressed => "compressed",
                     Source::Uncompressed => "uncompressed",
                 }
+            ));
+        }
+
+        if let Some(enabled) = *deterministic {
+            args.push("-C".to_string());
+            args.push(format!(
+                "deterministic={}",
+                if enabled { "y" } else { "n" }
             ));
         }
 
