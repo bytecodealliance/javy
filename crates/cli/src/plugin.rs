@@ -47,9 +47,17 @@ impl<'a> UninitializedPlugin<'a> {
         Ok(Self { bytes })
     }
 
-    /// Initializes the plugin.
+    /// Initializes the plugin with the provided configuration.
+    pub(crate) async fn initialize_with_config(
+        &self,
+        config: &javy_plugin_processing::PluginConfig,
+    ) -> Result<Vec<u8>> {
+        javy_plugin_processing::initialize_plugin_with_config(self.bytes, config).await
+    }
+
+    /// Initializes the plugin with default (non-deterministic) configuration.
     pub(crate) async fn initialize(&self) -> Result<Vec<u8>> {
-        javy_plugin_processing::initialize_plugin(self.bytes).await
+        self.initialize_with_config(&Default::default()).await
     }
 
     fn validate(plugin_bytes: &'a [u8]) -> Result<()> {

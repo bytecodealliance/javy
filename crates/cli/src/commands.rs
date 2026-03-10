@@ -83,6 +83,9 @@ pub struct InitPluginCommandOpts {
     #[arg(short, long = "out")]
     /// Output path for the initialized plugin binary (default is stdout).
     pub out: Option<PathBuf>,
+    #[arg(long)]
+    /// Use fixed clocks for deterministic output.
+    pub deterministic: bool,
 }
 
 impl<T> ValueParserFactory for GroupOption<T>
@@ -161,7 +164,7 @@ impl Default for CodegenOptionGroup {
             wit: WitOptions::default(),
             source: Source::Compressed,
             plugin: None,
-            deterministic: true,
+            deterministic: false,
         }
     }
 }

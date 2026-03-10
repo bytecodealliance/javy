@@ -1661,6 +1661,7 @@ dependencies = [
  "brotli",
  "convert_case",
  "insta",
+ "javy-plugin-processing",
  "swc_core",
  "tempfile",
  "tokio",

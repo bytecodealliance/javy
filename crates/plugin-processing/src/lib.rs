@@ -31,13 +31,37 @@ impl HostMonotonicClock for FixedMonotonicClock {
     }
 }
 
+/// Apply fixed clocks to a [`WasiCtxBuilder`] for deterministic builds,
+/// ensuring identical Wizer output for identical input.
+pub fn with_determinism(builder: &mut WasiCtxBuilder) -> &mut WasiCtxBuilder {
+    builder
+        .wall_clock(FixedWallClock)
+        .monotonic_clock(FixedMonotonicClock)
+}
+
+/// Configuration for plugin initialization.
+#[derive(Debug, Clone, Default)]
+pub struct PluginConfig {
+    /// When true, use fixed clocks during Wizer pre-initialization so that
+    /// identical input always produces identical output.
+    pub deterministic: bool,
+}
+
 /// Extract core module if it's a component, then run wasm-opt and Wizer to
 /// initialize a plugin.
 pub async fn initialize_plugin(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
+    initialize_plugin_with_config(wasm_bytes, &PluginConfig::default()).await
+}
+
+/// Extract core module if it's a component, then run wasm-opt and Wizer to
+/// initialize a plugin, using the provided configuration.
+pub async fn initialize_plugin_with_config(
+    wasm_bytes: &[u8],
+    config: &PluginConfig,
+) -> Result<Vec<u8>> {
     let wasm_bytes = extract_core_module_if_necessary(wasm_bytes)?;
-    // Re-encode overlong indexes with wasm-opt before running Wizer.
     let wasm_bytes = optimize_module(&wasm_bytes)?;
-    let wasm_bytes = preinitialize_module(&wasm_bytes).await?;
+    let wasm_bytes = preinitialize_module(&wasm_bytes, config).await?;
     Ok(wasm_bytes)
 }
 
@@ -150,13 +174,14 @@ fn optimize_module(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
     Ok(optimized_wasm_bytes)
 }
 
-async fn preinitialize_module(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
+async fn preinitialize_module(wasm_bytes: &[u8], config: &PluginConfig) -> Result<Vec<u8>> {
     let engine = Engine::default();
-    let wasi = WasiCtxBuilder::new()
-        .inherit_stderr()
-        .wall_clock(FixedWallClock)
-        .monotonic_clock(FixedMonotonicClock)
-        .build_p1();
+    let mut builder = WasiCtxBuilder::new();
+    builder.inherit_stderr();
+    if config.deterministic {
+        with_determinism(&mut builder);
+    }
+    let wasi = builder.build_p1();
     let mut store = Store::new(&engine, wasi);
 
     Ok(Wizer::new()

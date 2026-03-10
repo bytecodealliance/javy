@@ -74,7 +74,6 @@
 //!   notice.
 
 use std::fs;
-use std::time::Duration;
 
 pub(crate) mod bytecode;
 pub(crate) mod exports;
@@ -95,34 +94,10 @@ use walrus::{
 };
 use wasm_opt::{OptimizationOptions, ShrinkLevel};
 use wasmtime::{Engine, Linker, Store};
-use wasmtime_wasi::{HostMonotonicClock, HostWallClock, WasiCtxBuilder, p2::pipe::MemoryInputPipe};
+use wasmtime_wasi::{WasiCtxBuilder, p2::pipe::MemoryInputPipe};
 
 use anyhow::Result;
 use wasmtime_wizer::Wizer;
-
-struct FixedWallClock;
-
-impl HostWallClock for FixedWallClock {
-    fn resolution(&self) -> Duration {
-        Duration::from_secs(1)
-    }
-
-    fn now(&self) -> Duration {
-        Duration::ZERO
-    }
-}
-
-struct FixedMonotonicClock;
-
-impl HostMonotonicClock for FixedMonotonicClock {
-    fn resolution(&self) -> u64 {
-        1_000_000_000
-    }
-
-    fn now(&self) -> u64 {
-        0
-    }
-}
 
 /// The kind of linking to use.
 #[derive(Debug, Clone, Default)]
@@ -266,9 +241,7 @@ impl Generator {
                     .inherit_stdout()
                     .inherit_stderr();
                 if self.deterministic {
-                    builder
-                        .wall_clock(FixedWallClock)
-                        .monotonic_clock(FixedMonotonicClock);
+                    javy_plugin_processing::with_determinism(&mut builder);
                 }
                 let wasi = builder.build_p1();
                 let mut store = Store::new(&engine, wasi);
