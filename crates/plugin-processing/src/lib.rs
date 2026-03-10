@@ -1,49 +1,34 @@
 use anyhow::{Result, bail};
-use std::time::Duration;
 use std::{borrow::Cow, fs};
 use walrus::{FunctionId, ImportKind, ValType};
 use wasmparser::{Parser, Payload};
-use wasmtime::{Engine, Linker, Store};
-use wasmtime_wasi::{HostMonotonicClock, HostWallClock, WasiCtxBuilder};
+use wasmtime::{Config, Engine, Linker, Store};
+use wasmtime_wasi::WasiCtxBuilder;
 use wasmtime_wizer::Wizer;
 
-struct FixedWallClock;
-
-impl HostWallClock for FixedWallClock {
-    fn resolution(&self) -> Duration {
-        Duration::from_secs(1)
-    }
-
-    fn now(&self) -> Duration {
-        Duration::ZERO
-    }
-}
-
-struct FixedMonotonicClock;
-
-impl HostMonotonicClock for FixedMonotonicClock {
-    fn resolution(&self) -> u64 {
-        1_000_000_000
-    }
-
-    fn now(&self) -> u64 {
-        0
-    }
-}
-
-/// Apply fixed clocks to a [`WasiCtxBuilder`] for deterministic builds,
-/// ensuring identical Wizer output for identical input.
-pub fn with_determinism(builder: &mut WasiCtxBuilder) -> &mut WasiCtxBuilder {
-    builder
-        .wall_clock(FixedWallClock)
-        .monotonic_clock(FixedMonotonicClock)
+/// Create a [`wasmtime::Engine`] configured for deterministic compilation.
+///
+/// Disables parallel compilation to eliminate thread-scheduling-dependent
+/// ordering in the compiled output, and enables Cranelift NaN
+/// canonicalization to ensure consistent NaN bit patterns.
+pub fn with_deterministic_engine() -> Result<Engine> {
+    let mut cfg = Config::default();
+    cfg.parallel_compilation(false);
+    cfg.cranelift_nan_canonicalization(true);
+    Ok(Engine::new(&cfg)?)
 }
 
 /// Configuration for plugin initialization.
 #[derive(Debug, Clone, Default)]
 pub struct PluginConfig {
-    /// When true, use fixed clocks during Wizer pre-initialization so that
+    /// When true, use fixed clocks, deterministic RNG (via
+    /// [`deterministic-wasi-ctx`](https://crates.io/crates/deterministic-wasi-ctx)),
+    /// and single-threaded compilation during Wizer pre-initialization so that
     /// identical input always produces identical output.
+    ///
+    /// **Security note:** This replaces both `secure_random` and
+    /// `insecure_random` with a seeded PRNG. WASI random APIs must not be
+    /// relied upon for cryptographic security when this is enabled.
     pub deterministic: bool,
 }
 
@@ -175,11 +160,15 @@ fn optimize_module(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
 }
 
 async fn preinitialize_module(wasm_bytes: &[u8], config: &PluginConfig) -> Result<Vec<u8>> {
-    let engine = Engine::default();
+    let engine = if config.deterministic {
+        with_deterministic_engine()?
+    } else {
+        Engine::default()
+    };
     let mut builder = WasiCtxBuilder::new();
     builder.inherit_stderr();
     if config.deterministic {
-        with_determinism(&mut builder);
+        deterministic_wasi_ctx::add_determinism_to_wasi_ctx_builder(&mut builder);
     }
     let wasi = builder.build_p1();
     let mut store = Store::new(&engine, wasi);

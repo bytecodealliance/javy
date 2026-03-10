@@ -115,4 +115,24 @@ mod tests {
     fn encode_as_component(module: &[u8]) -> Result<Vec<u8>> {
         ComponentEncoder::default().module(module)?.encode()
     }
+
+    #[tokio::test]
+    async fn test_deterministic_init_plugin() -> Result<()> {
+        let plugin_bytes = super::PLUGIN_MODULE;
+        let config = javy_plugin_processing::PluginConfig {
+            deterministic: true,
+        };
+
+        let plugin = UninitializedPlugin::new(plugin_bytes)?;
+        let first = plugin.initialize_with_config(&config).await?;
+
+        let plugin = UninitializedPlugin::new(plugin_bytes)?;
+        let second = plugin.initialize_with_config(&config).await?;
+
+        assert_eq!(
+            first, second,
+            "deterministic init-plugin must produce identical output"
+        );
+        Ok(())
+    }
 }

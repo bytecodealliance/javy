@@ -234,14 +234,18 @@ impl Generator {
         let config = transform::module_config();
         let module = match &self.linking {
             LinkingKind::Static => {
-                let engine = Engine::default();
+                let engine = if self.deterministic {
+                    javy_plugin_processing::with_deterministic_engine()?
+                } else {
+                    Engine::default()
+                };
                 let mut builder = WasiCtxBuilder::new();
                 builder
                     .stdin(MemoryInputPipe::new(self.js_runtime_config.clone()))
                     .inherit_stdout()
                     .inherit_stderr();
                 if self.deterministic {
-                    javy_plugin_processing::with_determinism(&mut builder);
+                    deterministic_wasi_ctx::add_determinism_to_wasi_ctx_builder(&mut builder);
                 }
                 let wasi = builder.build_p1();
                 let mut store = Store::new(&engine, wasi);

@@ -84,7 +84,9 @@ pub struct InitPluginCommandOpts {
     /// Output path for the initialized plugin binary (default is stdout).
     pub out: Option<PathBuf>,
     #[arg(long)]
-    /// Use fixed clocks for deterministic output.
+    /// Produce deterministic output by using fixed clocks and constant
+    /// zero-filled RNG during pre-initialization. Security note: both
+    /// secure_random and insecure_random become non-secure.
     pub deterministic: bool,
 }
 
@@ -191,9 +193,10 @@ option_group! {
         /// linked modules. JavaScript config options are also not supported when
         /// using this parameter.
         Plugin(PathBuf),
-        /// Produce deterministic output by using fixed clocks during
-        /// pre-initialization. Ensures identical input always produces
-        /// identical output.
+        /// Produce deterministic output by using fixed clocks and constant
+        /// zero-filled RNG during pre-initialization. Ensures identical input
+        /// always produces identical output. Security note: both
+        /// secure_random and insecure_random become non-secure.
         Deterministic(bool),
     }
 }

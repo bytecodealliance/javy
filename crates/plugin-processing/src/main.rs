@@ -13,7 +13,10 @@ struct Args {
     #[arg(help = "Output path for the initialized Javy plugin")]
     output: PathBuf,
 
-    #[arg(long, help = "Use fixed clocks for deterministic output")]
+    #[arg(
+        long,
+        help = "Produce deterministic output by using fixed clocks and constant zero-filled RNG. Security note: both secure_random and insecure_random become non-secure."
+    )]
     deterministic: bool,
 }
 

@@ -493,10 +493,7 @@ impl Runner {
 
         if let Some(enabled) = *deterministic {
             args.push("-C".to_string());
-            args.push(format!(
-                "deterministic={}",
-                if enabled { "y" } else { "n" }
-            ));
+            args.push(format!("deterministic={}", if enabled { "y" } else { "n" }));
         }
 
         args
