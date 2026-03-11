@@ -18,35 +18,31 @@ pub fn with_deterministic_engine() -> Result<Engine> {
     Ok(Engine::new(&cfg)?)
 }
 
-/// Configuration for plugin initialization.
-#[derive(Debug, Clone, Default)]
-pub struct PluginConfig {
-    /// When true, use fixed clocks, deterministic RNG (via
-    /// [`deterministic-wasi-ctx`](https://crates.io/crates/deterministic-wasi-ctx)),
-    /// and single-threaded compilation during Wizer pre-initialization so that
-    /// identical input always produces identical output.
-    ///
-    /// **Security note:** This replaces both `secure_random` and
-    /// `insecure_random` with a seeded PRNG. WASI random APIs must not be
-    /// relied upon for cryptographic security when this is enabled.
-    pub deterministic: bool,
-}
-
 /// Extract core module if it's a component, then run wasm-opt and Wizer to
 /// initialize a plugin.
 pub async fn initialize_plugin(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
-    initialize_plugin_with_config(wasm_bytes, &PluginConfig::default()).await
+    initialize_plugin_helper(wasm_bytes, false)
 }
 
 /// Extract core module if it's a component, then run wasm-opt and Wizer to
-/// initialize a plugin, using the provided configuration.
-pub async fn initialize_plugin_with_config(
-    wasm_bytes: &[u8],
-    config: &PluginConfig,
-) -> Result<Vec<u8>> {
+/// initialize a plugin deterministically.
+///
+/// Uses fixed clocks, deterministic RNG (via
+/// [`deterministic-wasi-ctx`](https://crates.io/crates/deterministic-wasi-ctx)),
+/// and single-threaded compilation during Wizer pre-initialization so that
+/// identical input always produces identical output.
+///
+/// **Security note:** This replaces both `secure_random` and
+/// `insecure_random` with a seeded PRNG. WASI random APIs must not be
+/// relied upon for cryptographic security when this is enabled.
+pub async fn initialize_plugin_with_determinism(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
+    initialize_plugin_helper(wasm_bytes, true)
+}
+
+async fn initialize_plugin_helper(wasm_bytes: &[u8], determinism: bool) -> Result<Vec<u8>> {
     let wasm_bytes = extract_core_module_if_necessary(wasm_bytes)?;
     let wasm_bytes = optimize_module(&wasm_bytes)?;
-    let wasm_bytes = preinitialize_module(&wasm_bytes, config).await?;
+    let wasm_bytes = preinitialize_module(&wasm_bytes, determinism).await?;
     Ok(wasm_bytes)
 }
 
@@ -159,15 +155,15 @@ fn optimize_module(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
     Ok(optimized_wasm_bytes)
 }
 
-async fn preinitialize_module(wasm_bytes: &[u8], config: &PluginConfig) -> Result<Vec<u8>> {
-    let engine = if config.deterministic {
+async fn preinitialize_module(wasm_bytes: &[u8], deterministic: bool) -> Result<Vec<u8>> {
+    let engine = if deterministic {
         with_deterministic_engine()?
     } else {
         Engine::default()
     };
     let mut builder = WasiCtxBuilder::new();
     builder.inherit_stderr();
-    if config.deterministic {
+    if deterministic {
         deterministic_wasi_ctx::add_determinism_to_wasi_ctx_builder(&mut builder);
     }
     let wasi = builder.build_p1();

@@ -63,13 +63,12 @@ async fn main() -> Result<()> {
         }
         Command::InitPlugin(opts) => {
             let plugin_bytes = fs::read(&opts.plugin)?;
-            let config = javy_plugin_processing::PluginConfig {
-                deterministic: opts.deterministic,
-            };
-
             let uninitialized_plugin = UninitializedPlugin::new(&plugin_bytes)?;
-            let initialized_plugin_bytes =
-                uninitialized_plugin.initialize_with_config(&config).await?;
+            let initialized_plugin_bytes = if opts.deterministic {
+                uninitialized_plugin.initialize_with_determinism().await?
+            } else {
+                uninitialized_plugin.initialize().await?
+            };
 
             let mut out: Box<dyn Write> = match opts.out.as_ref() {
                 Some(path) => Box::new(File::create(path)?),

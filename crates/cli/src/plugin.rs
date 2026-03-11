@@ -47,17 +47,15 @@ impl<'a> UninitializedPlugin<'a> {
         Ok(Self { bytes })
     }
 
-    /// Initializes the plugin with the provided configuration.
-    pub(crate) async fn initialize_with_config(
-        &self,
-        config: &javy_plugin_processing::PluginConfig,
-    ) -> Result<Vec<u8>> {
-        javy_plugin_processing::initialize_plugin_with_config(self.bytes, config).await
+    /// Initializes the plugin with deterministic clocks, RNG, and
+    /// single-threaded compilation so identical input produces identical output.
+    pub(crate) async fn initialize_with_determinism(&self) -> Result<Vec<u8>> {
+        javy_plugin_processing::initialize_plugin_with_determinism(self.bytes).await
     }
 
     /// Initializes the plugin with default (non-deterministic) configuration.
     pub(crate) async fn initialize(&self) -> Result<Vec<u8>> {
-        self.initialize_with_config(&Default::default()).await
+        javy_plugin_processing::initialize_plugin(self.bytes).await
     }
 
     fn validate(plugin_bytes: &'a [u8]) -> Result<()> {
@@ -119,15 +117,12 @@ mod tests {
     #[tokio::test]
     async fn test_deterministic_init_plugin() -> Result<()> {
         let plugin_bytes = super::PLUGIN_MODULE;
-        let config = javy_plugin_processing::PluginConfig {
-            deterministic: true,
-        };
 
         let plugin = UninitializedPlugin::new(plugin_bytes)?;
-        let first = plugin.initialize_with_config(&config).await?;
+        let first = plugin.initialize_with_determinism().await?;
 
         let plugin = UninitializedPlugin::new(plugin_bytes)?;
-        let second = plugin.initialize_with_config(&config).await?;
+        let second = plugin.initialize_with_determinism().await?;
 
         assert_eq!(
             first, second,
