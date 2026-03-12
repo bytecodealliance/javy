@@ -1,7 +1,3 @@
-// Exercises many runtime code paths during Wizer pre-initialization to stress
-// parallel compilation ordering and NaN canonicalization in Cranelift.
-
-// --- Floating-point operations that produce NaN ---
 const nanResults = [];
 nanResults.push(0 / 0);
 nanResults.push(Math.sqrt(-1));
@@ -13,20 +9,17 @@ nanResults.push(Infinity - Infinity);
 nanResults.push(Infinity * 0);
 nanResults.push(undefined + 1);
 
-// --- Random number generation ---
 const randomResults = [];
 for (let i = 0; i < 50; i++) {
   randomResults.push(Math.random());
 }
 
-// --- Date/time ---
 const timestamps = [];
 for (let i = 0; i < 10; i++) {
   timestamps.push(Date.now());
   timestamps.push(new Date().toISOString());
 }
 
-// --- Many distinct functions to increase compiled function count ---
 function fib(n) { return n <= 1 ? n : fib(n - 1) + fib(n - 2); }
 function factorial(n) { return n <= 1 ? 1 : n * factorial(n - 1); }
 function isPrime(n) {
@@ -92,7 +85,6 @@ function generatePermutations(arr) {
   return result;
 }
 
-// --- Exercise all the functions at init time ---
 const fibResults = [];
 for (let i = 0; i < 20; i++) fibResults.push(fib(i));
 
@@ -120,7 +112,6 @@ for (let i = 0; i < 50; i++) hashes.push(sha256ish("test-string-" + i));
 
 const perms = generatePermutations([1, 2, 3, 4, 5]);
 
-// --- Float operations that stress NaN propagation through computation ---
 const floatChain = [];
 let val = 1.0;
 for (let i = 0; i < 100; i++) {
@@ -129,7 +120,6 @@ for (let i = 0; i < 100; i++) {
   floatChain.push(val);
 }
 
-// --- Build the result ---
 const result = {
   nanCount: nanResults.filter(isNaN).length,
   randomSample: randomResults.slice(0, 5),

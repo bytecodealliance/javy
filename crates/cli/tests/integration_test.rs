@@ -304,25 +304,27 @@ fn test_same_module_outputs_different_random_result(builder: &mut Builder) -> Re
 
 #[javy_cli_test]
 fn test_deterministic_builds_produce_identical_wasm(builder: &mut Builder) -> Result<()> {
-    // Uses a complex fixture with many functions, NaN-producing float ops,
-    // Math.random(), and Date.now() so that parallel compilation ordering
-    // and cranelift NaN canonicalization are exercised during Wizer
-    // pre-initialization.  Multiple iterations increase the chance of
-    // catching thread-scheduling-dependent non-determinism.
-    let builds: Vec<Vec<u8>> = (0..5)
-        .map(|_| {
-            let mut b = builder.clone();
-            b.input("deterministic-complex.js").deterministic(true);
-            b.build().map(|r| r.wasm)
-        })
-        .collect::<Result<_>>()?;
+    let scripts = [
+        "deterministic-complex.js",
+        "deterministic-math.js",
+        "deterministic-strings.js",
+    ];
 
-    for (i, wasm) in builds.iter().enumerate().skip(1) {
-        assert_eq!(
-            builds[0], *wasm,
-            "deterministic build #{} differs from build #0",
-            i
-        );
+    for script in &scripts {
+        let builds: Vec<Vec<u8>> = (0..5)
+            .map(|_| {
+                let mut b = builder.clone();
+                b.input(script).deterministic(true);
+                b.build().map(|r| r.wasm)
+            })
+            .collect::<Result<_>>()?;
+
+        for (i, wasm) in builds.iter().enumerate().skip(1) {
+            assert_eq!(
+                builds[0], *wasm,
+                "deterministic build of {script} #{i} differs from build #0",
+            );
+        }
     }
     Ok(())
 }

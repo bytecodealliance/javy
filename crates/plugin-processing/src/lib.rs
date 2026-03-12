@@ -2,26 +2,14 @@ use anyhow::{Result, bail};
 use std::{borrow::Cow, fs};
 use walrus::{FunctionId, ImportKind, ValType};
 use wasmparser::{Parser, Payload};
-use wasmtime::{Config, Engine, Linker, Store};
+use wasmtime::{Engine, Linker, Store};
 use wasmtime_wasi::WasiCtxBuilder;
 use wasmtime_wizer::Wizer;
-
-/// Create a [`wasmtime::Engine`] configured for deterministic compilation.
-///
-/// Disables parallel compilation to eliminate thread-scheduling-dependent
-/// ordering in the compiled output, and enables Cranelift NaN
-/// canonicalization to ensure consistent NaN bit patterns.
-pub fn with_deterministic_engine() -> Result<Engine> {
-    let mut cfg = Config::default();
-    cfg.parallel_compilation(false);
-    cfg.cranelift_nan_canonicalization(true);
-    Ok(Engine::new(&cfg)?)
-}
 
 /// Extract core module if it's a component, then run wasm-opt and Wizer to
 /// initialize a plugin.
 pub async fn initialize_plugin(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
-    initialize_plugin_helper(wasm_bytes, false)
+    initialize_plugin_helper(wasm_bytes, false).await
 }
 
 /// Extract core module if it's a component, then run wasm-opt and Wizer to
@@ -36,7 +24,7 @@ pub async fn initialize_plugin(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
 /// `insecure_random` with a seeded PRNG. WASI random APIs must not be
 /// relied upon for cryptographic security when this is enabled.
 pub async fn initialize_plugin_with_determinism(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
-    initialize_plugin_helper(wasm_bytes, true)
+    initialize_plugin_helper(wasm_bytes, true).await
 }
 
 async fn initialize_plugin_helper(wasm_bytes: &[u8], determinism: bool) -> Result<Vec<u8>> {
@@ -156,11 +144,7 @@ fn optimize_module(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
 }
 
 async fn preinitialize_module(wasm_bytes: &[u8], deterministic: bool) -> Result<Vec<u8>> {
-    let engine = if deterministic {
-        with_deterministic_engine()?
-    } else {
-        Engine::default()
-    };
+    let engine = Engine::default();
     let mut builder = WasiCtxBuilder::new();
     builder.inherit_stderr();
     if deterministic {

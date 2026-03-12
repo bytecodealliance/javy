@@ -93,7 +93,7 @@ use walrus::{
     DataId, DataKind, ExportItem, FunctionBuilder, FunctionId, LocalId, MemoryId, Module, ValType,
 };
 use wasm_opt::{OptimizationOptions, ShrinkLevel};
-use wasmtime::{Engine, Linker, Store};
+use wasmtime::{Config, Engine, Linker, Store};
 use wasmtime_wasi::{WasiCtxBuilder, p2::pipe::MemoryInputPipe};
 
 use anyhow::Result;
@@ -235,7 +235,10 @@ impl Generator {
         let module = match &self.linking {
             LinkingKind::Static => {
                 let engine = if self.deterministic {
-                    javy_plugin_processing::with_deterministic_engine()?
+                    let mut cfg = Config::default();
+                    cfg.parallel_compilation(false);
+                    cfg.cranelift_nan_canonicalization(true);
+                    Engine::new(&cfg)?
                 } else {
                     Engine::default()
                 };

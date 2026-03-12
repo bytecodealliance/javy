@@ -1678,7 +1678,6 @@ dependencies = [
  "convert_case",
  "deterministic-wasi-ctx",
  "insta",
- "javy-plugin-processing",
  "swc_core",
  "tempfile",
  "tokio",
