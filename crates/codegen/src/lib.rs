@@ -93,7 +93,7 @@ use walrus::{
     DataId, DataKind, ExportItem, FunctionBuilder, FunctionId, LocalId, MemoryId, Module, ValType,
 };
 use wasm_opt::{OptimizationOptions, ShrinkLevel};
-use wasmtime::{Config, Engine, Linker, Store};
+use wasmtime::{Engine, Linker, Store};
 use wasmtime_wasi::{WasiCtxBuilder, p2::pipe::MemoryInputPipe};
 
 use anyhow::Result;
@@ -234,14 +234,7 @@ impl Generator {
         let config = transform::module_config();
         let module = match &self.linking {
             LinkingKind::Static => {
-                let engine = if self.deterministic {
-                    let mut cfg = Config::default();
-                    cfg.parallel_compilation(false);
-                    cfg.cranelift_nan_canonicalization(true);
-                    Engine::new(&cfg)?
-                } else {
-                    Engine::default()
-                };
+                let engine = Engine::default();
                 let mut builder = WasiCtxBuilder::new();
                 builder
                     .stdin(MemoryInputPipe::new(self.js_runtime_config.clone()))
