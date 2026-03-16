@@ -473,6 +473,56 @@ fn test_init_plugin() -> Result<()> {
     Ok(())
 }
 
+#[test]
+fn test_init_plugin_deterministic() -> Result<()> {
+    let uninitialized_plugin = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("..")
+        .join(
+            std::path::Path::new("target")
+                .join("wasm32-wasip1")
+                .join("release")
+                .join("plugin.wasm"),
+        );
+
+    let init_deterministic = || -> Result<Vec<u8>> {
+        let output = Command::new(env!("CARGO_BIN_EXE_javy"))
+            .arg("init-plugin")
+            .arg("--deterministic")
+            .arg(uninitialized_plugin.to_str().unwrap())
+            .output()?;
+        if !output.status.success() {
+            bail!(
+                "init-plugin --deterministic failed: {}",
+                str::from_utf8(&output.stderr)?,
+            );
+        }
+        Ok(output.stdout)
+    };
+
+    let first = init_deterministic()?;
+    let second = init_deterministic()?;
+
+    assert_eq!(
+        first, second,
+        "init-plugin --deterministic must produce identical output across invocations"
+    );
+
+    // Verify the initialized plugin is functional.
+    let engine = Engine::default();
+    let mut linker = Linker::new(&engine);
+    wasmtime_wasi::p1::add_to_linker_sync(&mut linker, |s| s)?;
+    let wasi = WasiCtxBuilder::new().build_p1();
+    let mut store = Store::new(&engine, wasi);
+    let module = Module::new(&engine, &first)?;
+    let instance = linker.instantiate(store.as_context_mut(), &module)?;
+    instance
+        .get_typed_func::<(i32, i32), i32>(store.as_context_mut(), "compile-src")?
+        .call(store.as_context_mut(), (0, 0))?;
+
+    Ok(())
+}
+
 fn run_with_u8s(r: &mut Runner, stdin: u8) -> (u8, String, u64) {
     let (output, logs, fuel_consumed) = run(r, stdin.to_le_bytes().into());
     assert_eq!(1, output.len());
