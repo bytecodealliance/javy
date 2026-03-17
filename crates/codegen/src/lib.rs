@@ -15,7 +15,9 @@
 //! a particular version of the QuickJS engine compiled to Wasm.
 //!
 //! The generated Wasm module is self contained and the bytecode version matches
-//! the exact requirements of the embedded QuickJs engine.
+//! the exact requirements of the embedded QuickJs engine. Use
+//! [`Generator::deterministic`] for reproducible builds (e.g., for verification
+//! or caching).
 //!
 //! ## Dynamic code generation
 //!
@@ -174,6 +176,8 @@ pub struct Generator {
     js_runtime_config: Vec<u8>,
     /// The version string to include in the producers custom section.
     producer_version: Option<String>,
+    /// Whether to use fixed clocks for deterministic builds.
+    deterministic: bool,
 }
 
 impl Generator {
@@ -215,6 +219,13 @@ impl Generator {
         self.producer_version = Some(producer_version);
         self
     }
+
+    /// Enable deterministic builds by using fixed clocks during Wizer
+    /// pre-initialization, ensuring identical output for identical input.
+    pub fn deterministic(&mut self, deterministic: bool) -> &mut Self {
+        self.deterministic = deterministic;
+        self
+    }
 }
 
 impl Generator {
@@ -224,11 +235,15 @@ impl Generator {
         let module = match &self.linking {
             LinkingKind::Static => {
                 let engine = Engine::default();
-                let wasi = WasiCtxBuilder::new()
+                let mut builder = WasiCtxBuilder::new();
+                builder
                     .stdin(MemoryInputPipe::new(self.js_runtime_config.clone()))
                     .inherit_stdout()
-                    .inherit_stderr()
-                    .build_p1();
+                    .inherit_stderr();
+                if self.deterministic {
+                    deterministic_wasi_ctx::add_determinism_to_wasi_ctx_builder(&mut builder);
+                }
+                let wasi = builder.build_p1();
                 let mut store = Store::new(&engine, wasi);
                 let wasm = Wizer::new()
                     .init_func("initialize-runtime")

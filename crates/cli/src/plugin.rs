@@ -47,7 +47,13 @@ impl<'a> UninitializedPlugin<'a> {
         Ok(Self { bytes })
     }
 
-    /// Initializes the plugin.
+    /// Initializes the plugin with deterministic clocks, RNG, and
+    /// single-threaded compilation so identical input produces identical output.
+    pub(crate) async fn initialize_with_determinism(&self) -> Result<Vec<u8>> {
+        javy_plugin_processing::initialize_plugin_with_determinism(self.bytes).await
+    }
+
+    /// Initializes the plugin with default (non-deterministic) configuration.
     pub(crate) async fn initialize(&self) -> Result<Vec<u8>> {
         javy_plugin_processing::initialize_plugin(self.bytes).await
     }
@@ -106,5 +112,22 @@ mod tests {
 
     fn encode_as_component(module: &[u8]) -> Result<Vec<u8>> {
         ComponentEncoder::default().module(module)?.encode()
+    }
+
+    #[tokio::test]
+    async fn test_deterministic_init_plugin() -> Result<()> {
+        let plugin_bytes = super::PLUGIN_MODULE;
+
+        let plugin = UninitializedPlugin::new(plugin_bytes)?;
+        let first = plugin.initialize_with_determinism().await?;
+
+        let plugin = UninitializedPlugin::new(plugin_bytes)?;
+        let second = plugin.initialize_with_determinism().await?;
+
+        assert_eq!(
+            first, second,
+            "deterministic init-plugin must produce identical output"
+        );
+        Ok(())
     }
 }

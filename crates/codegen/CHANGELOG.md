@@ -12,6 +12,19 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 - The `generate` method on `Generator` is now async.
 
+### Added
+
+- `Generator::deterministic()` and CLI `-C deterministic` option for reproducible
+  static-linked Wasm builds. When enabled, fixed clocks and deterministic
+  (zero-filled) RNG are used during Wizer pre-initialization to avoid
+  timestamp- and randomness-induced non-determinism. **Security note:**
+  `secure_random` and `insecure_random` are replaced with a constant
+  deterministic source when this flag is active — do not rely on WASI random
+  APIs for cryptographic security in deterministic mode.
+- `init-plugin --deterministic` now also fixes both the secure and insecure
+  random sources and disables parallel compilation for fully reproducible
+  plugin initialization.
+
 ## [3.0.0] - 2025-11-12
 
 ### Changed

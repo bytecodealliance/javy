@@ -303,6 +303,33 @@ fn test_same_module_outputs_different_random_result(builder: &mut Builder) -> Re
 }
 
 #[javy_cli_test]
+fn test_deterministic_builds_produce_identical_wasm(builder: &mut Builder) -> Result<()> {
+    let scripts = [
+        "deterministic-complex.js",
+        "deterministic-math.js",
+        "deterministic-strings.js",
+    ];
+
+    for script in &scripts {
+        let builds: Vec<Vec<u8>> = (0..5)
+            .map(|_| {
+                let mut b = builder.clone();
+                b.input(script).deterministic(true);
+                b.build().map(|r| r.wasm)
+            })
+            .collect::<Result<_>>()?;
+
+        for (i, wasm) in builds.iter().enumerate().skip(1) {
+            assert_eq!(
+                builds[0], *wasm,
+                "deterministic build of {script} #{i} differs from build #0",
+            );
+        }
+    }
+    Ok(())
+}
+
+#[javy_cli_test]
 fn test_exported_default_arrow_fn(builder: &mut Builder) -> Result<()> {
     let mut runner = builder
         .input("exported-default-arrow-fn.js")
@@ -443,6 +470,56 @@ fn test_init_plugin() -> Result<()> {
     instance
         .get_typed_func::<(i32, i32), i32>(store.as_context_mut(), "compile-src")?
         .call(store.as_context_mut(), (0, 0))?;
+    Ok(())
+}
+
+#[test]
+fn test_init_plugin_deterministic() -> Result<()> {
+    let uninitialized_plugin = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("..")
+        .join(
+            std::path::Path::new("target")
+                .join("wasm32-wasip1")
+                .join("release")
+                .join("plugin.wasm"),
+        );
+
+    let init_deterministic = || -> Result<Vec<u8>> {
+        let output = Command::new(env!("CARGO_BIN_EXE_javy"))
+            .arg("init-plugin")
+            .arg("--deterministic")
+            .arg(uninitialized_plugin.to_str().unwrap())
+            .output()?;
+        if !output.status.success() {
+            bail!(
+                "init-plugin --deterministic failed: {}",
+                str::from_utf8(&output.stderr)?,
+            );
+        }
+        Ok(output.stdout)
+    };
+
+    let first = init_deterministic()?;
+    let second = init_deterministic()?;
+
+    assert_eq!(
+        first, second,
+        "init-plugin --deterministic must produce identical output across invocations"
+    );
+
+    // Verify the initialized plugin is functional.
+    let engine = Engine::default();
+    let mut linker = Linker::new(&engine);
+    wasmtime_wasi::p1::add_to_linker_sync(&mut linker, |s| s)?;
+    let wasi = WasiCtxBuilder::new().build_p1();
+    let mut store = Store::new(&engine, wasi);
+    let module = Module::new(&engine, &first)?;
+    let instance = linker.instantiate(store.as_context_mut(), &module)?;
+    instance
+        .get_typed_func::<(i32, i32), i32>(store.as_context_mut(), "compile-src")?
+        .call(store.as_context_mut(), (0, 0))?;
+
     Ok(())
 }
 

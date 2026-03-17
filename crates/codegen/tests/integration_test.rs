@@ -44,6 +44,37 @@ async fn test_snapshot_for_dynamically_linked_module() -> Result<()> {
     Ok(())
 }
 
+#[tokio::test]
+async fn test_deterministic_builds_produce_identical_output() -> Result<()> {
+    let js = JS::from_file(
+        &cargo_manifest_dir()
+            .join("tests")
+            .join("sample-scripts")
+            .join("empty.js"),
+    )?;
+
+    let generate = || async {
+        let mut generator = Generator::new(default_plugin()?);
+        generator.linking(LinkingKind::Static).deterministic(true);
+        generator.generate(&js).await
+    };
+
+    let first = generate().await?;
+    let second = generate().await?;
+    let third = generate().await?;
+
+    assert_eq!(
+        first, second,
+        "deterministic builds should produce identical output across runs"
+    );
+    assert_eq!(
+        second, third,
+        "deterministic builds should produce identical output across runs"
+    );
+
+    Ok(())
+}
+
 fn cargo_manifest_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
 }

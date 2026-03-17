@@ -9,10 +9,28 @@ use wasmtime_wizer::Wizer;
 /// Extract core module if it's a component, then run wasm-opt and Wizer to
 /// initialize a plugin.
 pub async fn initialize_plugin(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
+    initialize_plugin_helper(wasm_bytes, false).await
+}
+
+/// Extract core module if it's a component, then run wasm-opt and Wizer to
+/// initialize a plugin deterministically.
+///
+/// Uses fixed clocks, deterministic RNG (via
+/// [`deterministic-wasi-ctx`](https://crates.io/crates/deterministic-wasi-ctx)),
+/// and single-threaded compilation during Wizer pre-initialization so that
+/// identical input always produces identical output.
+///
+/// **Security note:** This replaces both `secure_random` and
+/// `insecure_random` with a seeded PRNG. WASI random APIs must not be
+/// relied upon for cryptographic security when this is enabled.
+pub async fn initialize_plugin_with_determinism(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
+    initialize_plugin_helper(wasm_bytes, true).await
+}
+
+async fn initialize_plugin_helper(wasm_bytes: &[u8], determinism: bool) -> Result<Vec<u8>> {
     let wasm_bytes = extract_core_module_if_necessary(wasm_bytes)?;
-    // Re-encode overlong indexes with wasm-opt before running Wizer.
     let wasm_bytes = optimize_module(&wasm_bytes)?;
-    let wasm_bytes = preinitialize_module(&wasm_bytes).await?;
+    let wasm_bytes = preinitialize_module(&wasm_bytes, determinism).await?;
     Ok(wasm_bytes)
 }
 
@@ -125,9 +143,14 @@ fn optimize_module(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
     Ok(optimized_wasm_bytes)
 }
 
-async fn preinitialize_module(wasm_bytes: &[u8]) -> Result<Vec<u8>> {
+async fn preinitialize_module(wasm_bytes: &[u8], deterministic: bool) -> Result<Vec<u8>> {
     let engine = Engine::default();
-    let wasi = WasiCtxBuilder::new().inherit_stderr().build_p1();
+    let mut builder = WasiCtxBuilder::new();
+    builder.inherit_stderr();
+    if deterministic {
+        deterministic_wasi_ctx::add_determinism_to_wasi_ctx_builder(&mut builder);
+    }
+    let wasi = builder.build_p1();
     let mut store = Store::new(&engine, wasi);
 
     Ok(Wizer::new()

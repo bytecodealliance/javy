@@ -48,6 +48,7 @@ async fn main() -> Result<()> {
             generator.source_embedding(source_embedding);
 
             set_producer_version(&mut generator);
+            generator.deterministic(codegen_opts.deterministic);
 
             if codegen_opts.dynamic {
                 generator.linking(LinkingKind::Dynamic);
@@ -62,9 +63,12 @@ async fn main() -> Result<()> {
         }
         Command::InitPlugin(opts) => {
             let plugin_bytes = fs::read(&opts.plugin)?;
-
             let uninitialized_plugin = UninitializedPlugin::new(&plugin_bytes)?;
-            let initialized_plugin_bytes = uninitialized_plugin.initialize().await?;
+            let initialized_plugin_bytes = if opts.deterministic {
+                uninitialized_plugin.initialize_with_determinism().await?
+            } else {
+                uninitialized_plugin.initialize().await?
+            };
 
             let mut out: Box<dyn Write> = match opts.out.as_ref() {
                 Some(path) => Box::new(File::create(path)?),

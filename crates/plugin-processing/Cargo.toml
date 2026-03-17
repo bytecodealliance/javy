@@ -12,6 +12,7 @@ categories = ["wasm"]
 [dependencies]
 anyhow = { workspace = true }
 clap = { workspace = true }
+deterministic-wasi-ctx = { workspace = true }
 tempfile = { workspace = true }
 tokio = { workspace = true, features = ["macros"] }
 walrus = { workspace = true }
