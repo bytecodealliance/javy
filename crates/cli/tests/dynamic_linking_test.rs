@@ -82,7 +82,7 @@ fn test_using_runtime_flag_with_dynamic_triggers_error(builder: &mut Builder) ->
     let build_result = builder.input("console.js").text_encoding(false).build();
     assert!(build_result.is_err_and(|e| {
         e.to_string()
-            .contains("error: Property text-encoding is not supported for runtime configuration")
+            .contains("error: JavaScript runtime options (-J) are not supported when using a plugin (-C plugin=...)")
     }));
     Ok(())
 }
