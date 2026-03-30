@@ -431,6 +431,24 @@ fn test_js_help() -> Result<()> {
 }
 
 #[test]
+fn test_codegen_help() -> Result<()> {
+    let output = Command::new(env!("CARGO_BIN_EXE_javy"))
+        .args(["build", "-C", "help"])
+        .output()?;
+    assert!(
+        output.status.success(),
+        "build -C help failed: {}",
+        str::from_utf8(&output.stderr)?
+    );
+    let stdout = str::from_utf8(&output.stdout)?;
+    assert!(
+        stdout.contains("Available options for codegen"),
+        "unexpected help output: {stdout}"
+    );
+    Ok(())
+}
+
+#[test]
 fn test_init_plugin() -> Result<()> {
     let engine = Engine::default();
     let mut linker = Linker::new(&engine);
