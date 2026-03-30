@@ -1,8 +1,9 @@
 use crate::{
-    CliPlugin, WitOptions,
+    CliPlugin, Plugin, PluginKind, WitOptions,
     js_config::{ConfigSchema, JsConfig},
     option::OptionMeta,
     option_group,
+    plugin::PLUGIN_MODULE,
 };
 use anyhow::{Result, anyhow, bail};
 use clap::{
@@ -65,7 +66,7 @@ pub struct BuildCommandOpts {
     #[arg(short = RUNTIME_CONFIG_ARG_SHORT, long = RUNTIME_CONFIG_ARG_LONG)]
     /// JavaScript runtime options.
     /// Use `-J help` for more details.
-    pub js: Vec<JsGroupValue>,
+    pub js: Vec<JsGroupOption>,
 }
 
 #[derive(Debug, Parser)]
@@ -281,13 +282,6 @@ impl TryFrom<Vec<GroupOption<CodegenOption>>> for CodegenOptionGroup {
     }
 }
 
-/// A runtime config group value.
-#[derive(Debug, Clone)]
-pub(super) enum JsGroupValue {
-    Option(JsGroupOption),
-    Help,
-}
-
 /// A runtime config group option.
 #[derive(Debug, Clone)]
 pub(super) struct JsGroupOption {
@@ -300,7 +294,7 @@ pub(super) struct JsGroupOption {
 #[derive(Debug, Clone)]
 pub(super) struct JsGroupOptionParser;
 
-impl ValueParserFactory for JsGroupValue {
+impl ValueParserFactory for JsGroupOption {
     type Parser = JsGroupOptionParser;
 
     fn value_parser() -> Self::Parser {
@@ -309,7 +303,7 @@ impl ValueParserFactory for JsGroupValue {
 }
 
 impl TypedValueParser for JsGroupOptionParser {
-    type Value = JsGroupValue;
+    type Value = JsGroupOption;
 
     fn parse_ref(
         &self,
@@ -320,7 +314,26 @@ impl TypedValueParser for JsGroupOptionParser {
         let val = StringValueParser::new().parse_ref(cmd, arg, value)?;
 
         if val == "help" {
-            return Ok(JsGroupValue::Help);
+            let cli_plugin = CliPlugin::new(
+                Plugin::new(PLUGIN_MODULE.into()).expect("default plugin to be valid"),
+                PluginKind::Default,
+            );
+            let supported_properties = ConfigSchema::from_cli_plugin(&cli_plugin)
+                .expect("config schema to be retrievable")
+                .map_or(Vec::new(), |schema| schema.supported_properties);
+            fmt_help(
+                RUNTIME_CONFIG_ARG_LONG,
+                &RUNTIME_CONFIG_ARG_SHORT.to_string(),
+                &supported_properties
+                    .into_iter()
+                    .map(|prop| OptionMeta {
+                        name: prop.name,
+                        help: "[=y|n]".to_string(),
+                        doc: prop.doc,
+                    })
+                    .collect::<Vec<_>>(),
+            );
+            std::process::exit(0);
         }
 
         let mut splits = val.splitn(2, '=');
@@ -331,10 +344,10 @@ impl TypedValueParser for JsGroupOptionParser {
             None => true,
             _ => return Err(clap::Error::new(clap::error::ErrorKind::InvalidValue)),
         };
-        Ok(JsGroupValue::Option(JsGroupOption {
+        Ok(JsGroupOption {
             name: key.to_string(),
             enabled: value,
-        }))
+        })
     }
 }
 
@@ -342,7 +355,7 @@ impl JsConfig {
     /// Build a JS runtime config from valid runtime config values.
     pub(super) fn from_group_values(
         cli_plugin: &CliPlugin,
-        group_values: Vec<JsGroupValue>,
+        group_values: Vec<JsGroupOption>,
     ) -> Result<JsConfig> {
         // Always attempt to fetch the supported properties from a plugin.
         let supported_properties = ConfigSchema::from_cli_plugin(cli_plugin)?
@@ -354,40 +367,19 @@ impl JsConfig {
         }
 
         let mut config = HashMap::new();
-        for value in group_values {
-            match value {
-                JsGroupValue::Help => {
-                    fmt_help(
-                        RUNTIME_CONFIG_ARG_LONG,
-                        &RUNTIME_CONFIG_ARG_SHORT.to_string(),
-                        &supported_properties
-                            .into_iter()
-                            .map(|prop| OptionMeta {
-                                name: prop.name,
-                                help: "[=y|n]".to_string(),
-                                doc: prop.doc,
-                            })
-                            .collect::<Vec<_>>(),
-                    );
-                    std::process::exit(0);
+        for JsGroupOption { name, enabled } in group_values {
+            if supported_names.contains(name.as_str()) {
+                if config.contains_key(&name) {
+                    bail!("{name} can only be specified once");
                 }
-                JsGroupValue::Option(JsGroupOption { name, enabled }) => {
-                    if supported_names.contains(name.as_str()) {
-                        if config.contains_key(&name) {
-                            bail!("{name} can only be specified once");
-                        }
-                        config.insert(name, enabled);
-                    } else {
-                        Cli::command()
-                            .error(
-                                ErrorKind::InvalidValue,
-                                format!(
-                                    "Property {name} is not supported for runtime configuration",
-                                ),
-                            )
-                            .exit();
-                    }
-                }
+                config.insert(name, enabled);
+            } else {
+                let msg = if matches!(cli_plugin.kind, PluginKind::User) {
+                    "JavaScript runtime options (-J) are not supported when using a plugin (-C plugin=...)".into()
+                } else {
+                    format!("Property {name} is not supported for runtime configuration",)
+                };
+                Cli::command().error(ErrorKind::InvalidValue, msg).exit();
             }
         }
         Ok(JsConfig::from_hash(config))
@@ -400,7 +392,7 @@ mod tests {
 
     use crate::{
         CliPlugin, Plugin, PluginKind,
-        commands::{JsGroupOption, JsGroupValue, Source},
+        commands::{JsGroupOption, Source},
         js_config::JsConfig,
         plugin::PLUGIN_MODULE,
     };
@@ -419,73 +411,73 @@ mod tests {
 
         let group = JsConfig::from_group_values(
             &plugin,
-            vec![JsGroupValue::Option(JsGroupOption {
+            vec![JsGroupOption {
                 name: "javy-stream-io".to_string(),
                 enabled: false,
-            })],
+            }],
         )?;
         assert_eq!(group.get("javy-stream-io"), Some(false));
 
         let group = JsConfig::from_group_values(
             &plugin,
-            vec![JsGroupValue::Option(JsGroupOption {
+            vec![JsGroupOption {
                 name: "javy-stream-io".to_string(),
                 enabled: true,
-            })],
+            }],
         )?;
         assert_eq!(group.get("javy-stream-io"), Some(true));
 
         let group = JsConfig::from_group_values(
             &plugin,
-            vec![JsGroupValue::Option(JsGroupOption {
+            vec![JsGroupOption {
                 name: "simd-json-builtins".to_string(),
                 enabled: false,
-            })],
+            }],
         )?;
         assert_eq!(group.get("simd-json-builtins"), Some(false));
 
         let group = JsConfig::from_group_values(
             &plugin,
-            vec![JsGroupValue::Option(JsGroupOption {
+            vec![JsGroupOption {
                 name: "simd-json-builtins".to_string(),
                 enabled: true,
-            })],
+            }],
         )?;
         assert_eq!(group.get("simd-json-builtins"), Some(true));
 
         let group = JsConfig::from_group_values(
             &plugin,
-            vec![JsGroupValue::Option(JsGroupOption {
+            vec![JsGroupOption {
                 name: "text-encoding".to_string(),
                 enabled: false,
-            })],
+            }],
         )?;
         assert_eq!(group.get("text-encoding"), Some(false));
 
         let group = JsConfig::from_group_values(
             &plugin,
-            vec![JsGroupValue::Option(JsGroupOption {
+            vec![JsGroupOption {
                 name: "text-encoding".to_string(),
                 enabled: true,
-            })],
+            }],
         )?;
         assert_eq!(group.get("text-encoding"), Some(true));
 
         let group = JsConfig::from_group_values(
             &plugin,
             vec![
-                JsGroupValue::Option(JsGroupOption {
+                JsGroupOption {
                     name: "javy-stream-io".to_string(),
                     enabled: false,
-                }),
-                JsGroupValue::Option(JsGroupOption {
+                },
+                JsGroupOption {
                     name: "simd-json-builtins".to_string(),
                     enabled: false,
-                }),
-                JsGroupValue::Option(JsGroupOption {
+                },
+                JsGroupOption {
                     name: "text-encoding".to_string(),
                     enabled: false,
-                }),
+                },
             ],
         )?;
         assert_eq!(group.get("javy-stream-io"), Some(false));
@@ -603,14 +595,14 @@ mod tests {
         let result = JsConfig::from_group_values(
             &plugin,
             vec![
-                JsGroupValue::Option(JsGroupOption {
+                JsGroupOption {
                     name: "javy-stream-io".to_string(),
                     enabled: false,
-                }),
-                JsGroupValue::Option(JsGroupOption {
+                },
+                JsGroupOption {
                     name: "javy-stream-io".to_string(),
                     enabled: true,
-                }),
+                },
             ],
         );
         assert_eq!(

@@ -150,10 +150,9 @@ fn test_using_wasip1_plugin_with_static_build_fails_with_runtime_config(
         .simd_json_builtins(true)
         .build();
     let err = result.err().unwrap();
-    assert!(
-        err.to_string()
-            .contains("Property simd-json-builtins is not supported for runtime configuration")
-    );
+    assert!(err.to_string().contains(
+        "JavaScript runtime options (-J) are not supported when using a plugin (-C plugin=...)"
+    ));
 
     Ok(())
 }
@@ -167,10 +166,9 @@ fn test_using_wasip2_plugin_with_static_build_fails_with_runtime_config(
         .simd_json_builtins(true)
         .build();
     let err = result.err().unwrap();
-    assert!(
-        err.to_string()
-            .contains("Property simd-json-builtins is not supported for runtime configuration")
-    );
+    assert!(err.to_string().contains(
+        "JavaScript runtime options (-J) are not supported when using a plugin (-C plugin=...)"
+    ));
 
     Ok(())
 }
@@ -410,6 +408,42 @@ fn test_source_code_omitted(builder: &mut Builder) -> Result<()> {
     assert!(
         runner.javy_source_custom_section().is_none(),
         "Should not have a source code section"
+    );
+    Ok(())
+}
+
+#[test]
+fn test_js_help() -> Result<()> {
+    let output = Command::new(env!("CARGO_BIN_EXE_javy"))
+        .args(["build", "-J", "help"])
+        .output()?;
+    assert!(
+        output.status.success(),
+        "build -J help failed: {}",
+        str::from_utf8(&output.stderr)?
+    );
+    let stdout = str::from_utf8(&output.stdout)?;
+    assert!(
+        stdout.contains("Available options for javascript"),
+        "unexpected help output: {stdout}"
+    );
+    Ok(())
+}
+
+#[test]
+fn test_codegen_help() -> Result<()> {
+    let output = Command::new(env!("CARGO_BIN_EXE_javy"))
+        .args(["build", "-C", "help"])
+        .output()?;
+    assert!(
+        output.status.success(),
+        "build -C help failed: {}",
+        str::from_utf8(&output.stderr)?
+    );
+    let stdout = str::from_utf8(&output.stdout)?;
+    assert!(
+        stdout.contains("Available options for codegen"),
+        "unexpected help output: {stdout}"
     );
     Ok(())
 }
