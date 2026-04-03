@@ -1650,7 +1650,7 @@ dependencies = [
 
 [[package]]
 name = "javy-cli"
-version = "8.1.0"
+version = "8.1.1"
 dependencies = [
  "anyhow",
  "brotli",
@@ -1722,7 +1722,7 @@ dependencies = [
 
 [[package]]
 name = "javy-plugin-processing"
-version = "8.1.0"
+version = "8.1.1"
 dependencies = [
  "anyhow",
  "clap",
@@ -1739,7 +1739,7 @@ dependencies = [
 
 [[package]]
 name = "javy-runner"
-version = "8.1.0"
+version = "8.1.1"
 dependencies = [
  "anyhow",
  "tempfile",
@@ -1755,7 +1755,7 @@ version = "0.1.0"
 
 [[package]]
 name = "javy-test-macros"
-version = "8.1.0"
+version = "8.1.1"
 dependencies = [
  "anyhow",
  "proc-macro2",
