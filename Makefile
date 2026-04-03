@@ -22,6 +22,7 @@ lint-wasip1-targets:
 	--exclude=javy-runner \
 	--exclude=javy-test-plugin-wasip2 \
 	--exclude=javy-fuzz \
+	--exclude=javy-release \
 	--target=wasm32-wasip1 --all-targets --all-features -- -D warnings
 
 lint-wasip2-targets:
@@ -33,6 +34,7 @@ lint-wasip2-targets:
 	--exclude=javy-runner \
 	--exclude=javy-test-plugin-wasip1 \
 	--exclude=javy-fuzz \
+	--exclude=javy-release \
 	--target=wasm32-wasip2 --all-targets --all-features -- -D warnings
 
 test-wasi-targets: test-wasip1-targets test-wasip2-targets
@@ -44,6 +46,7 @@ test-wasip1-targets:
 	--exclude=javy-plugin-processing \
 	--exclude=javy-runner \
 	--exclude=javy-fuzz \
+	--exclude=javy-release \
 	--exclude=javy-test-plugin-wasip1 \
 	--exclude=javy-test-plugin-wasip2 \
 	--exclude=javy-test-invalid-plugin \
@@ -57,6 +60,7 @@ test-wasip2-targets:
 	--exclude=javy-plugin-processing \
 	--exclude=javy-runner \
 	--exclude=javy-fuzz \
+	--exclude=javy-release \
 	--exclude=javy-test-plugin-wasip1 \
 	--exclude=javy-test-plugin-wasip2 \
 	--exclude=javy-test-invalid-plugin \

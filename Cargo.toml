@@ -12,6 +12,7 @@ members = [
   "crates/test-plugin-wasip2",
   "crates/runner",
   "fuzz",
+  "release",
 ]
 resolver = "2"
 
