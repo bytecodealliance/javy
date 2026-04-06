@@ -54,6 +54,23 @@ version `3.0.0` has not been published yet so version `3.0.0` can contain
 a mixture of additive and breaking changes from the last `2.x.x` version
 published.
 
+#### Toggling development/relese versions automatically
+
+Before making a release, you can set the release versions
+automatically by running the following command from the root of the
+repository
+
+    ./scripts/release.sh set-release-versions
+
+After the release is complete, you can set the development versions
+automatically by running the following command from the root of the
+repository
+
+    ./scripts/release.sh set-dev-versions
+
+Note that the previous script requires having
+[`jq`](https://github.com/jqlang/jq) installed.
+
 ## Web platform tests (WPT)
 
 We run a subset of the web platform test suite during continuous integration. We
