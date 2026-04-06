@@ -1,9 +1,10 @@
 [package]
 name = "javy-plugin"
-version = "0.2.0"
+version = "0.0.0"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
+publish = false
 
 [lib]
 name = "plugin"
