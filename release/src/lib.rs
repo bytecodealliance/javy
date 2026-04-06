@@ -53,10 +53,13 @@ impl PublishableCrate {
     }
 
     fn update_changelog(&self, version: &str, date: &str) -> Result<()> {
-        let dir_name = self.name.strip_prefix("javy-").unwrap_or(&self.name);
-        let changelog_path = format!("crates/{}/CHANGELOG.md", dir_name);
+        let changelog_path = self
+            .cargo_toml_path
+            .parent()
+            .ok_or_else(|| anyhow::anyhow!("Could not get parent directory of Cargo.toml"))?
+            .join("CHANGELOG.md");
 
-        if !Path::new(&changelog_path).exists() {
+        if !changelog_path.exists() {
             return Ok(());
         }
 
@@ -67,7 +70,9 @@ impl PublishableCrate {
         fs::write(&changelog_path, updated_changelog)?;
         println!(
             "Updated {} with version {} and date {}",
-            changelog_path, version, date
+            changelog_path.display(),
+            version,
+            date
         );
 
         Ok(())
@@ -76,7 +81,14 @@ impl PublishableCrate {
 
 impl PublishableCrates {
     pub fn new(crate_names: &[String]) -> Result<Self> {
-        let root = std::env::current_dir()?;
+        Self::with_root(crate_names, None)
+    }
+
+    pub fn with_root(crate_names: &[String], root: Option<&Path>) -> Result<Self> {
+        let root = match root {
+            Some(r) => r.to_path_buf(),
+            None => std::env::current_dir()?,
+        };
         let mut crates = Vec::new();
 
         for name in crate_names {

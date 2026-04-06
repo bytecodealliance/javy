@@ -22,8 +22,6 @@ fn setup(fixture_name: &str) -> Result<TempDir> {
         fs::copy(changelog, crates_dir.join("CHANGELOG.md"))?;
     }
 
-    std::env::set_current_dir(temp_dir.path())?;
-
     Ok(temp_dir)
 }
 
@@ -31,7 +29,8 @@ fn setup(fixture_name: &str) -> Result<TempDir> {
 fn test_set_release_versions() -> Result<()> {
     let root = setup("with-alpha")?;
 
-    let mut crates = javy_release::PublishableCrates::new(&["test-crate".to_string()])?;
+    let mut crates =
+        javy_release::PublishableCrates::with_root(&["test-crate".to_string()], Some(root.path()))?;
     crates.set_release_versions()?;
 
     let cargo_toml = fs::read_to_string(root.path().join("crates/test-crate/Cargo.toml"))?;
@@ -51,7 +50,8 @@ fn test_set_release_versions() -> Result<()> {
 fn test_set_dev_versions() -> Result<()> {
     let root = setup("without-alpha")?;
 
-    let mut crates = javy_release::PublishableCrates::new(&["test-crate".to_string()])?;
+    let mut crates =
+        javy_release::PublishableCrates::with_root(&["test-crate".to_string()], Some(root.path()))?;
     crates.set_dev_versions()?;
 
     let cargo_toml = fs::read_to_string(root.path().join("crates/test-crate/Cargo.toml"))?;
@@ -74,9 +74,10 @@ fn test_skips_unpublishable_crates() -> Result<()> {
         crates_dir.join("Cargo.toml"),
     )?;
 
-    std::env::set_current_dir(root.path())?;
-
-    let crates = javy_release::PublishableCrates::new(&["unpublishable".to_string()])?;
+    let crates = javy_release::PublishableCrates::with_root(
+        &["unpublishable".to_string()],
+        Some(root.path()),
+    )?;
 
     assert!(crates.is_empty());
 
@@ -87,7 +88,8 @@ fn test_skips_unpublishable_crates() -> Result<()> {
 fn test_preserves_toml_formatting() -> Result<()> {
     let root = setup("with-alpha")?;
 
-    let mut crates = javy_release::PublishableCrates::new(&["test-crate".to_string()])?;
+    let mut crates =
+        javy_release::PublishableCrates::with_root(&["test-crate".to_string()], Some(root.path()))?;
     crates.set_release_versions()?;
 
     let cargo_toml = fs::read_to_string(root.path().join("crates/test-crate/Cargo.toml"))?;
@@ -104,7 +106,8 @@ fn test_skips_crate_without_alpha_on_set_release_versions() -> Result<()> {
 
     let original_cargo_toml = fs::read_to_string(root.path().join("crates/test-crate/Cargo.toml"))?;
 
-    let mut crates = javy_release::PublishableCrates::new(&["test-crate".to_string()])?;
+    let mut crates =
+        javy_release::PublishableCrates::with_root(&["test-crate".to_string()], Some(root.path()))?;
     crates.set_release_versions()?;
 
     let cargo_toml = fs::read_to_string(root.path().join("crates/test-crate/Cargo.toml"))?;
@@ -116,11 +119,13 @@ fn test_skips_crate_without_alpha_on_set_release_versions() -> Result<()> {
 #[test]
 fn test_handles_missing_crates_gracefully() -> Result<()> {
     let root = TempDir::new().unwrap();
-    std::env::set_current_dir(root.path())?;
 
     fs::create_dir_all(root.path().join("crates"))?;
 
-    let crates = javy_release::PublishableCrates::new(&["non-existent".to_string()])?;
+    let crates = javy_release::PublishableCrates::with_root(
+        &["non-existent".to_string()],
+        Some(root.path()),
+    )?;
 
     assert!(crates.is_empty());
 
