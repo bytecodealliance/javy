@@ -1653,7 +1653,7 @@ dependencies = [
 
 [[package]]
 name = "javy"
-version = "7.0.0"
+version = "7.0.0-alpha.1"
 dependencies = [
  "anyhow",
  "bitflags",
@@ -1692,7 +1692,7 @@ dependencies = [
 
 [[package]]
 name = "javy-codegen"
-version = "4.0.0"
+version = "4.0.0-alpha.1"
 dependencies = [
  "anyhow",
  "brotli",
@@ -1735,7 +1735,7 @@ dependencies = [
 
 [[package]]
 name = "javy-plugin-api"
-version = "6.0.0"
+version = "6.0.0-alpha.1"
 dependencies = [
  "anyhow",
  "javy",
