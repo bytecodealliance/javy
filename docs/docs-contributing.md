@@ -39,7 +39,7 @@ breaking changes, increment the number in the suffix, for example `-alpha.2`.
 When releasing, remove the suffix and then publish.
 
 For example, let's say the last published version of `javy` is `2.0.0`, so the
-current version in the Cargo.toml file is `2.0.0-alpha.1`. If you add a new
+current version in the Cargo.toml file is `2.0.1-alpha.1`. If you add a new
 public function, you would change the version to `2.1.0-alpha.1`. This is
 because adding a new public function is considered an additive change. After
 merging those changes, if you add a new public function, you would change the
