@@ -37,7 +37,8 @@ impl PublishableCrate {
             if let Some(version_item) = package.get("version") {
                 if let Some(version_str) = version_item.as_str() {
                     if !version_str.contains("-alpha") {
-                        let new_version = format!("{}-alpha.1", version_str);
+                        let new_version = bump_patch_and_add_alpha(version_str)
+                            .unwrap_or_else(|| format!("{}-alpha.1", version_str));
                         package["version"] = value(&new_version);
                     }
                 }
@@ -180,6 +181,15 @@ impl PublishableCrates {
         println!("\nDev versions set successfully!");
         Ok(())
     }
+}
+
+fn bump_patch_and_add_alpha(version: &str) -> Option<String> {
+    let parts: Vec<&str> = version.splitn(3, '.').collect();
+    if parts.len() != 3 {
+        return None;
+    }
+    let patch: u64 = parts[2].parse().ok()?;
+    Some(format!("{}.{}.{}-alpha.1", parts[0], parts[1], patch + 1))
 }
 
 fn is_publishable(doc: &DocumentMut) -> bool {

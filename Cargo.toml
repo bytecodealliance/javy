@@ -31,7 +31,7 @@ wasmtime-wasi = "43"
 wasmtime-wizer = "43"
 wasm-opt = "0.116.1"
 anyhow = "1.0"
-javy = { path = "crates/javy", version = "7.0.0-alpha.1" }
+javy = { path = "crates/javy", version = "7.0.1-alpha.1" }
 tempfile = "3.27.0"
 tokio = "1"
 uuid = { version = "1.23", features = ["v4"] }

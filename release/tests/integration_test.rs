@@ -56,7 +56,7 @@ fn test_set_dev_versions() -> Result<()> {
 
     let cargo_toml = fs::read_to_string(root.path().join("crates/test-crate/Cargo.toml"))?;
 
-    assert!(cargo_toml.contains(r#"version = "1.0.0-alpha.1""#));
+    assert!(cargo_toml.contains(r#"version = "1.0.1-alpha.1""#));
 
     Ok(())
 }
