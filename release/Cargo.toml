@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 chrono = "0.4"
-toml_edit = "0.22"
+toml_edit = "0.23"
 anyhow = { workspace = true }
 
 [dev-dependencies]
