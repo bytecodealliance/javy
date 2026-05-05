@@ -9,6 +9,9 @@ homepage = "https://github.com/bytecodealliance/javy/tree/main/crates/javy"
 repository = "https://github.com/bytecodealliance/javy/tree/main/crates/javy"
 categories = ["wasm"]
 
+[package.metadata.javy]
+targets = ["wasip1", "wasip2"]
+
 [dependencies]
 anyhow = { workspace = true }
 rquickjs = { version = "0.11.0", features = [
