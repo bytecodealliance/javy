@@ -6,8 +6,12 @@ authors.workspace = true
 edition.workspace = true
 license.workspace = true
 
+[package.metadata.javy]
+targets = ["wasip1", "wasip2"]
+
 [lib]
 name = "test_invalid_plugin"
 crate-type = ["cdylib"]
+test = false
 
 [dependencies]

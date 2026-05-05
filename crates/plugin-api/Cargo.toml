@@ -9,6 +9,9 @@ homepage = "https://github.com/bytecodealliance/javy/tree/main/crates/plugin-api
 repository = "https://github.com/bytecodealliance/javy/tree/main/crates/plugin-api"
 categories = ["wasm"]
 
+[package.metadata.javy]
+targets = ["wasip1", "wasip2"]
+
 [dependencies]
 anyhow = { workspace = true }
 javy = { workspace = true }
