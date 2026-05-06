@@ -1023,7 +1023,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -1669,7 +1669,7 @@ dependencies = [
  "walrus",
  "wasm-opt",
  "wasmparser 0.244.0",
- "wasmprinter 0.244.0",
+ "wasmprinter",
  "wasmtime",
  "wasmtime-wasi",
  "wasmtime-wizer",
@@ -2491,7 +2491,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.12.1",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -3024,7 +3024,7 @@ dependencies = [
  "getrandom 0.4.1",
  "once_cell",
  "rustix 1.1.4",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -3596,17 +3596,6 @@ dependencies = [
 
 [[package]]
 name = "wasmprinter"
-version = "0.244.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09390d7b2bd7b938e563e4bff10aa345ef2e27a3bc99135697514ef54495e68f"
-dependencies = [
- "anyhow",
- "termcolor",
- "wasmparser 0.244.0",
-]
-
-[[package]]
-name = "wasmprinter"
 version = "0.246.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e41f7493ba994b8a779430a4c25ff550fd5a40d291693af43a6ef48688f00e3"
@@ -3695,7 +3684,7 @@ dependencies = [
  "target-lexicon",
  "wasm-encoder 0.246.2",
  "wasmparser 0.246.2",
- "wasmprinter 0.246.2",
+ "wasmprinter",
  "wasmtime-internal-component-util",
  "wasmtime-internal-core",
 ]
@@ -4022,7 +4011,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
