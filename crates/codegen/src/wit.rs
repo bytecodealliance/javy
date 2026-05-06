@@ -71,7 +71,7 @@ pub(crate) fn parse_exports(wit: impl AsRef<Path>, world: &str) -> Result<Vec<St
                     exported_functions.push(f.name.clone())
                 }
             }
-            WorldItem::Type(_) => bail!("Exported types are not supported"),
+            WorldItem::Type { .. } => bail!("Exported types are not supported"),
         }
     }
     Ok(exported_functions)
