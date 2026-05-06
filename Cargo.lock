@@ -1306,7 +1306,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9229cfe53dfd69f0609a49f65461bd93001ea1ef889cd5529dd176593f5338a1"
 dependencies = [
  "foldhash 0.1.5",
- "serde",
 ]
 
 [[package]]
@@ -1329,6 +1328,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4f467dd6dccf739c208452f8014c75c18bb8301b050ad1cfb27153803edb0f51"
 dependencies = [
  "foldhash 0.2.0",
+ "serde",
+ "serde_core",
 ]
 
 [[package]]
@@ -1668,7 +1669,7 @@ dependencies = [
  "tokio",
  "walrus",
  "wasm-opt",
- "wasmparser 0.244.0",
+ "wasmparser 0.248.0",
  "wasmprinter",
  "wasmtime",
  "wasmtime-wasi",
@@ -1716,7 +1717,7 @@ dependencies = [
  "tokio",
  "walrus",
  "wasm-opt",
- "wasmparser 0.244.0",
+ "wasmparser 0.248.0",
  "wasmtime",
  "wasmtime-wasi",
  "wasmtime-wizer",
@@ -1740,7 +1741,7 @@ dependencies = [
  "anyhow",
  "tempfile",
  "uuid",
- "wasmparser 0.244.0",
+ "wasmparser 0.248.0",
  "wasmtime",
  "wasmtime-wasi",
 ]
@@ -3586,7 +3587,6 @@ dependencies = [
  "hashbrown 0.15.5",
  "indexmap",
  "semver",
- "serde",
 ]
 
 [[package]]
@@ -3637,6 +3637,7 @@ dependencies = [
  "hashbrown 0.17.0",
  "indexmap",
  "semver",
+ "serde",
 ]
 
 [[package]]
