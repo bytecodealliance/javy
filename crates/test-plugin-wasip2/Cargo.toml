@@ -17,4 +17,4 @@ test = false
 [dependencies]
 anyhow = { workspace = true }
 javy-plugin-api = { path = "../plugin-api", features = ["json"] }
-wit-bindgen = "0.52.0"
+wit-bindgen = "0.57.1"
