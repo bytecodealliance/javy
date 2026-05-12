@@ -108,27 +108,27 @@ mod tests {
     use anyhow::{Result, anyhow};
     use std::collections::HashMap;
     use walrus::InstrLocId;
+    use walrus::Module;
     use walrus::ir::Instr;
 
-    fn to_bytes(wat: &str) -> Result<Vec<u8>> {
-        Ok(wat::parse_str(wat)?)
+    fn make(wat: &str, threshold: u32) -> Result<(Module, State)> {
+        let bytes = wat::parse_str(wat)?;
+        let module = ModuleConfig::new().parse(&bytes)?;
+        let state = State::from_bytes_with_threshold(&bytes, threshold)?;
+        Ok((module, state))
     }
 
     /// Map every instruction's byte offset to the corresponding
-    /// instruction in the dispatch function.
-    fn pc2instr(state: &State) -> Result<HashMap<u32, Instr>> {
-        let func = state
-            .module()
+    /// instruction in the function at index `fid`.
+    fn pc2instr(module: &Module, fid: u32) -> Result<HashMap<u32, Instr>> {
+        let func = module
             .funcs
             .iter()
-            .nth(state.dispatch_func_idx as usize)
-            .ok_or_else(|| anyhow!("no function at index {}", state.dispatch_func_idx))?;
+            .nth(fid as usize)
+            .ok_or_else(|| anyhow!("no function at index {fid}"))?;
         let local = match &func.kind {
             FunctionKind::Local(l) => l,
-            _ => bail!(
-                "function at index {} is not a local function",
-                state.dispatch_func_idx
-            ),
+            _ => bail!("function at index {fid} is not a local function"),
         };
 
         #[derive(Default)]
@@ -150,8 +150,8 @@ mod tests {
         format!("br_table {labels} 0")
     }
 
-    fn assert_all_byte_loads(state: &State) -> Result<()> {
-        let map = pc2instr(state)?;
+    fn assert_all_byte_loads(module: &Module, state: &State) -> Result<()> {
+        let map = pc2instr(module, state.dispatch_func_idx)?;
         for &pc in &state.dispatch_loads {
             let instr = map
                 .get(&pc)
@@ -182,11 +182,11 @@ mod tests {
             "#,
             br_table = br_table(3)
         );
-        let state = State::from_bytes_with_threshold(&to_bytes(&wat)?, 3)?;
+        let (module, state) = make(&wat, 3)?;
 
         assert!(state.is_dispatch_func(state.dispatch_func_idx));
         assert_eq!(state.dispatch_loads.len(), 1, "expected one dispatch load");
-        assert_all_byte_loads(&state)?;
+        assert_all_byte_loads(&module, &state)?;
         Ok(())
     }
 
@@ -206,14 +206,14 @@ mod tests {
             "#,
             br_table = br_table(3)
         );
-        let state = State::from_bytes_with_threshold(&to_bytes(&wat)?, 3)?;
+        let (module, state) = make(&wat, 3)?;
 
         assert_eq!(
             state.dispatch_loads.len(),
             1,
             "and must not drop provenance"
         );
-        assert_all_byte_loads(&state)?;
+        assert_all_byte_loads(&module, &state)?;
         Ok(())
     }
 
@@ -233,10 +233,10 @@ mod tests {
             "#,
             br_table = br_table(3)
         );
-        let state = State::from_bytes_with_threshold(&to_bytes(&wat)?, 3)?;
+        let (module, state) = make(&wat, 3)?;
 
         assert_eq!(state.dispatch_loads.len(), 1);
-        assert_all_byte_loads(&state)?;
+        assert_all_byte_loads(&module, &state)?;
         Ok(())
     }
 
@@ -265,10 +265,10 @@ mod tests {
             "#,
             br_table = br_table(3)
         );
-        let state = State::from_bytes_with_threshold(&to_bytes(&wat)?, 3)?;
+        let (module, state) = make(&wat, 3)?;
 
         assert_eq!(state.dispatch_loads.len(), 2, "both loads must be recorded");
-        assert_all_byte_loads(&state)?;
+        assert_all_byte_loads(&module, &state)?;
         Ok(())
     }
 
@@ -296,10 +296,10 @@ mod tests {
             "#,
             br_table = br_table(3)
         );
-        let state = State::from_bytes_with_threshold(&to_bytes(&wat)?, 3)?;
+        let (module, state) = make(&wat, 3)?;
 
         assert_eq!(state.dispatch_loads.len(), 2);
-        assert_all_byte_loads(&state)?;
+        assert_all_byte_loads(&module, &state)?;
         Ok(())
     }
 
@@ -317,7 +317,7 @@ mod tests {
             "#,
             br_table = br_table(3)
         );
-        let state = State::from_bytes_with_threshold(&to_bytes(&wat)?, 3)?;
+        let (_module, state) = make(&wat, 3)?;
 
         assert!(
             state.dispatch_loads.is_empty(),
@@ -338,7 +338,7 @@ mod tests {
             "#,
             br_table = br_table(3)
         );
-        let state = State::from_bytes_with_threshold(&to_bytes(&wat)?, 3)?;
+        let (_module, state) = make(&wat, 3)?;
 
         assert!(state.dispatch_loads.is_empty());
         Ok(())
@@ -358,7 +358,7 @@ mod tests {
             "#,
             br_table = br_table(3)
         );
-        let state = State::from_bytes_with_threshold(&to_bytes(&wat)?, 3)?;
+        let (_module, state) = make(&wat, 3)?;
 
         assert!(state.is_dispatch_func(state.dispatch_func_idx));
         assert!(!state.is_dispatch_func(state.dispatch_func_idx + 1));
@@ -379,7 +379,7 @@ mod tests {
             "#,
             br_table = br_table(3)
         );
-        let state = State::from_bytes_with_threshold(&to_bytes(&wat)?, 3)?;
+        let (_module, state) = make(&wat, 3)?;
 
         let pc = *state.dispatch_loads.iter().next().unwrap();
         assert!(state.is_dispatch_load(state.dispatch_func_idx, pc));
