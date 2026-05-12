@@ -18,7 +18,7 @@ static STATE: std::sync::LazyLock<State> =
 /// function according to the heuristics defined in the [`state`]
 /// module.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn is_dipatch_func(index: u32) -> bool {
+pub extern "C" fn is_dipatch_func(index: u32) -> bool {
     STATE.is_dispatch_func(index)
 }
 
@@ -26,6 +26,6 @@ pub unsafe extern "C" fn is_dipatch_func(index: u32) -> bool {
 /// a dispatch load which feeds the index argument for the `br_table`
 /// dispatch.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn is_dispatch_load(fid: u32, pc: u32) -> bool {
+pub extern "C" fn is_dispatch_load(fid: u32, pc: u32) -> bool {
     STATE.is_dispatch_load(fid, pc)
 }

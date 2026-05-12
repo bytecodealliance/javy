@@ -139,12 +139,13 @@ impl<'a> AbstractInterp<'a> {
             state.locals.insert(*arg, Provenance::new());
         }
 
-        let mut frames = Vec::new();
-        // Push the implicit start control block.
-        frames.push(ControlFrame::Block {
-            seq_id: func.entry_block(),
-            target: AbstractState::default(),
-        });
+        let frames = vec![
+            // Push the implicit start control block.
+            ControlFrame::Block {
+                seq_id: func.entry_block(),
+                target: AbstractState::default(),
+            },
+        ];
 
         Self {
             module,
