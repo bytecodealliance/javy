@@ -1,4 +1,4 @@
-mod ai;
+mod interpreter;
 mod state;
 
 use state::State;

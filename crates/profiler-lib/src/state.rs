@@ -5,7 +5,7 @@ use std::collections::BTreeSet;
 use walrus::ir::{BrTable, Visitor, dfs_in_order};
 use walrus::{FunctionId, FunctionKind, LocalFunction, ModuleConfig};
 
-use crate::ai;
+use crate::interpreter;
 
 /// Threshold above which a `br_table` qualifies as the interpreter
 /// dispatch loop.
@@ -58,7 +58,7 @@ impl State {
             // given the filtering above.
             _ => unreachable!("filtered to local functions only"),
         };
-        let dispatch_loads = ai::analyze(&module, local, threshold);
+        let dispatch_loads = interpreter::analyze(&module, local, threshold);
 
         Ok(Self {
             dispatch_func_idx,
@@ -158,7 +158,7 @@ mod tests {
                 .ok_or_else(|| anyhow!("pc {pc} not found in function"))?;
             match instr {
                 Instr::Load(l) => {
-                    if !ai::is_byte_load(l) {
+                    if !interpreter::is_byte_load(l) {
                         bail!("pc {pc} is a load but not a byte load: {:?}", l.kind);
                     }
                 }
