@@ -13,6 +13,7 @@ members = [
   "crates/runner",
   "fuzz",
   "release",
+  "crates/profiler-lib",
 ]
 resolver = "2"
 

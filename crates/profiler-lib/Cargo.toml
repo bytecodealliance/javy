@@ -1,0 +1,21 @@
+[package]
+name = "javy-profiler-lib"
+version = "0.0.0"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+name = "javy_profiler_lib"
+crate-type = ["cdylib"]
+
+[dependencies]
+anyhow = { workspace = true }
+walrus = { workspace = true }
+
+[dev-dependencies]
+wat = "1"
+
+[package.metadata.javy]
+targets = ["wasip1"]
