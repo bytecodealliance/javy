@@ -12,24 +12,28 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: npm/javy/package.json
+
       - uses: actions/setup-node@v6
         with:
           registry-url: "https://registry.npmjs.org"
 
       - name: Install package dependencies
-        run: npm install
+        run: pnpm install
         working-directory: npm/javy
 
       - name: Build NPM package
-        run: npm run build
+        run: pnpm run build
         working-directory: npm/javy
 
       - name: Publish NPM package if new version
         run: |
-          if [[ $(cat package.json | jq -r .version) == $(npm view javy version) ]]; then
+          if [[ $(cat package.json | jq -r .version) == $(pnpm view javy version) ]]; then
             echo "Skipping publish because the version is already published"
           else
-            npm publish
+            pnpm publish --no-git-checks
           fi
         working-directory: npm/javy
         env:
