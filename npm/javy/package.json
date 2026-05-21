@@ -5,6 +5,7 @@
 	"type": "module",
 	"author": "Surma <surma@shopify.com>",
 	"license": "Apache-2.0",
+	"packageManager": "pnpm@10.28.0",
 	"scripts": {
 		"build": "vite build",
 		"test": "node ./tests/runner.js"

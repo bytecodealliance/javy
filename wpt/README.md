@@ -9,7 +9,7 @@ Web Platform Tests are included as a submodule.
 ```
 $ git submodule init
 $ git submodule update
-$ npm i
+$ pnpm install
 ```
 
 ## Testing
@@ -21,7 +21,7 @@ This command uses [rollup] with a custom plugin to bundle all selected tests int
 If wasmtime generates no output, all tests have been passed. Otherwise, it's a failure.
 
 ```
-$ npm test
+$ pnpm test
 ```
 
 ## Test selection

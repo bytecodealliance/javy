@@ -68,7 +68,11 @@ jobs:
       - name: Test
         run: make test-native-targets-ci
 
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: wpt/package.json
+
       - name: WPT
         run: |
-          npm install --prefix wpt
-          npm test --prefix wpt
+          pnpm -C wpt install
+          pnpm -C wpt test

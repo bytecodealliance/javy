@@ -35,8 +35,8 @@ writeFileSync(STDIO.Stderr, textEncoder.encode(stderrContent));
 
 ## Tests
 
-To run the tests, run `npm test`. It requires you to have a release build of `javy` and have `wasmtime` installed.
+To run the tests, run `pnpm test`. It requires you to have a release build of `javy` and have `wasmtime` installed.
 
 ## Publishing
 
-Run `npm run build` before running `npm publish`.
+Run `pnpm run build` before running `pnpm publish`.

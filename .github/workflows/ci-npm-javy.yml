@@ -28,8 +28,12 @@ jobs:
           tar xvf /tmp/wasmtime.tar.xz --strip-components=1 -C /tmp/wasmtime
           echo "/tmp/wasmtime" >> $GITHUB_PATH
 
-      - run: npm install
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: npm/javy/package.json
+
+      - run: pnpm install
         working-directory: npm/javy
 
-      - run: npm test
+      - run: pnpm test
         working-directory: npm/javy

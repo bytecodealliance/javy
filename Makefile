@@ -93,8 +93,8 @@ native-targets: lint-native-targets test-native-targets
 
 # For usage in CI, in which we assume pre-existing assets.
 test-wpt-ci:
-	npm install --prefix wpt
-	npm test --prefix wpt
+	pnpm -C wpt install
+	pnpm -C wpt test
 
 test-wpt: cli test-wpt-ci
 
