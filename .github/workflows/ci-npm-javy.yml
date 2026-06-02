@@ -17,7 +17,8 @@ jobs:
         id: wasmtime_version
         shell: bash
         run: |
-          VERSION=$(cargo metadata --format-version=1 --locked | jq '.packages[] | select(.name == "wasmtime") | .version' -r)
+          VERSION=$(cargo metadata --format-version=1 --locked \
+            | jq -r '.workspace_members as $ws | (.packages|map({(.id):.version})|add) as $ver | [ .resolve.nodes[] | select(.id as $id | $ws|index($id)) | .deps[] | select(.name=="wasmtime") | .pkg ] | map($ver[.]) | unique | first')
           echo "wasmtime_version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Install wasmtime-cli
