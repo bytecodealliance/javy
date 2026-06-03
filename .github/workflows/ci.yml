@@ -68,7 +68,7 @@ jobs:
       - name: Test
         run: make test-native-targets-ci
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           package_json_file: wpt/package.json
 
