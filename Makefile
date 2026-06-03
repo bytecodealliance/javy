@@ -2,7 +2,8 @@
 	test-wasi-targets test-wasip1-targets test-wasip2-targets wasi-targets \
 	lint-native-targets lint-native-targets-ci test-native-targets \
 	test-native-targets-ci native-targets test-wpt test-wpt-ci test-all \
-	clean cli build-default-plugin build-test-plugins ci
+	clean cli build-default-plugin build-requested-feature-assets \
+	build-all-feature-assets build-test-plugins ci
 .DEFAULT_GOAL := cli
 
 # Selection for linting / testing.
@@ -41,6 +42,33 @@ WASIP1_TEST_CRATES := $(call select_crates_for,wasip1,test)
 WASIP2_LINT_CRATES := $(call select_crates_for,wasip2,lint)
 WASIP2_TEST_CRATES := $(call select_crates_for,wasip2,test)
 
+# Building optional feature assets
+#
+# In stable Rust, it is impossible to specify binary dependencies (see
+# https://rust-lang.github.io/rfcs/3028-cargo-binary-dependencies.html).
+# This function queries through the CLI metadata, the command(s)
+# needed to build asset dependencies belonging to any of the specified
+# features, e.g.,
+#
+#     make cli features=profiler
+#
+# it will retrive `cargo build -p javy-profiler-lib
+# --target=wasm32-wasip1 --release` as defined the CLI's Cargo.toml
+define feature_asset_cmds
+$(shell cargo metadata --format-version=1 --no-deps | jq -r \
+  --arg feats "$(1)" '\
+    .packages[] \
+    | select(.name == "javy-cli") \
+    | (.metadata.javy."feature-assets" // {}) as $$m \
+    | ($$feats | gsub(","; " ") | split(" ") | map(select(length > 0))) as $$req \
+    | [ $$m | to_entries[] \
+        | select($$feats == "all" or (.key as $$k | $$req | index($$k))) \
+        | .value | if type == "array" then .[] else . end ] \
+    | join(" && ")')
+endef
+
+cargo_features = $(if $(strip $(features)),--features "$(features)")
+
 # === Format checks ===
 fmt-check:
 	cargo fmt --all --check
@@ -71,13 +99,13 @@ test-wasip2-targets:
 wasi-targets: lint-wasi-targets test-wasi-targets
 
 # === Lint & Test Native Targets ===
-lint-native-targets: build-default-plugin lint-native-targets-ci
+lint-native-targets: build-default-plugin build-all-feature-assets lint-native-targets-ci
 
 lint-native-targets-ci: fmt-check
 	CARGO_PROFILE_RELEASE_LTO=off cargo clippy $(NATIVE_LINT_CRATES) \
 	--release --all-targets --all-features -- -D warnings
 
-test-native-targets: build-default-plugin build-test-plugins test-native-targets-ci
+test-native-targets: build-default-plugin build-all-feature-assets build-test-plugins test-native-targets-ci
 
 # This command assumes a CI environment in which the test plugin
 # assets have been previously created in the expected directories.
@@ -115,12 +143,24 @@ ci: lint-wasi-targets lint-native-targets test-all
 # First, build the default plugin, which is a dependency to the CLI.
 # No need to run `javy_plugin_processing`, the CLI build.rs will take
 # care of doing that.
-cli: build-default-plugin
-	CARGO_PROFILE_RELEASE_LTO=off cargo build -p=javy-cli --release
+#
+# Any optional features are excluded from the default build;
+# use `make cli features=<list>` to enable them.
+cli: build-default-plugin build-requested-feature-assets
+	CARGO_PROFILE_RELEASE_LTO=off cargo build -p=javy-cli --release $(cargo_features)
 
 # Build the default plugin
 build-default-plugin:
 	cargo build -p=javy-plugin --target=wasm32-wasip1 --release
+
+# Build the assets for the requested features via `features=<list>`.
+build-requested-feature-assets:
+	$(call feature_asset_cmds,$(features))
+
+# Build all feature assets, this is useful for testing/liting since
+# all features will be enabled.
+build-all-feature-assets:
+	$(call feature_asset_cmds,all)
 
 # Build auxiliary plugins, for testing
 build-test-plugins:

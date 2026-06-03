@@ -14,6 +14,7 @@ members = [
   "fuzz",
   "release",
   "crates/profiler-lib",
+  "crates/profiler",
 ]
 resolver = "2"
 

@@ -43,6 +43,10 @@ pub enum Command {
     /// Initializes a plugin binary.
     #[command(arg_required_else_help = true)]
     InitPlugin(InitPluginCommandOpts),
+    /// Profiling commands for Javy-generated WebAssembly modules.
+    #[cfg(feature = "profiler")]
+    #[command(arg_required_else_help = true, subcommand)]
+    Profile(crate::profiler::ProfileCommand),
 }
 
 const RUNTIME_CONFIG_ARG_SHORT: char = 'J';

@@ -1,0 +1,17 @@
+[package]
+name = "javy-profiler"
+# We do not want to publish this crate. It is only meant to be used by
+# the CLI.
+publish = false
+version = "0.0.0"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+whamm = { git = "https://github.com/saulecabrera/whamm", branch = "binary-entrypoints" }
+javy-profiler-lib = { path = "../profiler-lib" }
+anyhow = { workspace = true }
+wasmtime = { workspace = true }
+wasmtime-wasi = { workspace = true }
+wasmtime-wizer = { workspace = true, features = ["wasmtime"] }

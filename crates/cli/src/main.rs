@@ -2,6 +2,8 @@ mod commands;
 mod js_config;
 mod option;
 mod plugin;
+#[cfg(feature = "profiler")]
+mod profiler;
 
 use crate::commands::{Cli, Command, EmitPluginCommandOpts};
 use anyhow::Result;
@@ -61,6 +63,8 @@ async fn main() -> Result<()> {
             fs::write(&opts.output, wasm)?;
             Ok(())
         }
+        #[cfg(feature = "profiler")]
+        Command::Profile(cmd) => profiler::run(cmd).await,
         Command::InitPlugin(opts) => {
             let plugin_bytes = fs::read(&opts.plugin)?;
             let uninitialized_plugin = UninitializedPlugin::new(&plugin_bytes)?;
