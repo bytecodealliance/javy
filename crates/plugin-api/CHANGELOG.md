@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic
 Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed
+
+- Bumped rquickjs to 0.12. If you are using a plugin for dynamic linking, you
+  are strongly encouraged to change the import namespace.
+
+### Removed
+
+- `big_int` on `Config`. `big_int` is enabled unconditionally.
+
 ## [6.0.0] - 2026-03-17
 
 ### Changed

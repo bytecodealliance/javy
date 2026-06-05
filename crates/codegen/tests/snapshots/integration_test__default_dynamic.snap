@@ -6,9 +6,9 @@ expression: wat
   (type (;0;) (func))
   (type (;1;) (func (param i32 i32 i32 i32) (result i32)))
   (type (;2;) (func (param i32 i32 i32 i32 i32)))
-  (import "javy-default-plugin-v3" "cabi_realloc" (func (;0;) (type 1)))
-  (import "javy-default-plugin-v3" "invoke" (func (;1;) (type 2)))
-  (import "javy-default-plugin-v3" "memory" (memory (;0;) 0))
+  (import "javy-default-plugin-v4" "cabi_realloc" (func (;0;) (type 1)))
+  (import "javy-default-plugin-v4" "invoke" (func (;1;) (type 2)))
+  (import "javy-default-plugin-v4" "memory" (memory (;0;) 0))
   (export "_start" (func 4))
   (export "log" (func 2))
   (export "log2" (func 3))
@@ -17,11 +17,11 @@ expression: wat
     i32.const 0
     i32.const 0
     i32.const 1
-    i32.const 396
+    i32.const 403
     call 0
     local.tee 0
     i32.const 0
-    i32.const 396
+    i32.const 403
     memory.init 0
     data.drop 0
     i32.const 0
@@ -35,7 +35,7 @@ expression: wat
     memory.init 1
     data.drop 1
     local.get 0
-    i32.const 396
+    i32.const 403
     i32.const 1
     local.get 1
     i32.const 3
@@ -46,11 +46,11 @@ expression: wat
     i32.const 0
     i32.const 0
     i32.const 1
-    i32.const 396
+    i32.const 403
     call 0
     local.tee 0
     i32.const 0
-    i32.const 396
+    i32.const 403
     memory.init 0
     data.drop 0
     i32.const 0
@@ -64,7 +64,7 @@ expression: wat
     memory.init 2
     data.drop 2
     local.get 0
-    i32.const 396
+    i32.const 403
     i32.const 1
     local.get 1
     i32.const 4
@@ -75,20 +75,20 @@ expression: wat
     i32.const 0
     i32.const 0
     i32.const 1
-    i32.const 396
+    i32.const 403
     call 0
     local.tee 0
     i32.const 0
-    i32.const 396
+    i32.const 403
     memory.init 0
     local.get 0
-    i32.const 396
+    i32.const 403
     i32.const 0
     i32.const 0
     i32.const 0
     call 1
   )
-  (data (;0;) "\15\07\01\18function.mjs\01\06log\01\08log2\01\0econsole\01(Hello from function!\01*Hello from function2!\014Hello from top-level scope\0d\c6\03\00\02\00\00\c8\03\00\01\ca\03\00\00\00\0c \0a\01\a2\01\00\00\00\03\02\02\1f\00\c8\03\00\01\ca\03\01\01\0cC\0a\01\c8\03\00\00\00\03\00\00\13\009\e6\00\00\00C\e4\00\00\00\04\e7\00\00\00$\01\00)\c6\03\01\07\04\03\034\10;function log() {\0a    console.log(\22Hello from function!\22);\0a}\0cC\0a\01\ca\03\00\00\00\03\00\00\13\009\e6\00\00\00C\e4\00\00\00\04\e8\00\00\00$\01\00)\c6\03\05\08\04\03\054\10=function log2() {\0a    console.log(\22Hello from function2!\22);\0a}\08\ec\08\c1\00\e3\c1\01\e4)9\e6\00\00\00C\e4\00\00\00\04\e9\00\00\00$\01\00\0e\06/\c6\03\01\01\06\00\0a\10\004\10\00")
+  (data (;0;) "\1a\1c\e9\e7\b6\07\01\18function.mjs\01\06log\01\08log2\01\0econsole\01(Hello from function!\01*Hello from function2!\014Hello from top-level scope\0d\e4\03\00\02\00\00\e6\03\00\01\e8\03\00\00\00\0c \0a\01\a8\01\00\00\00\03\00\02\02\1f\00\e6\03\00\06\e8\03\01\06\0cC\0a\01\e6\03\00\00\00\03\00\00\00\13\008\f5\00\00\00A\f3\00\00\00\04\f6\00\00\00$\01\00)\e4\03\01\07\04\03\034\10;function log() {\0a    console.log(\22Hello from function!\22);\0a}\0cC\0a\01\e8\03\00\00\00\03\00\00\00\13\008\f5\00\00\00A\f3\00\00\00\04\f7\00\00\00$\01\00)\e4\03\05\08\04\03\054\10=function log2() {\0a    console.log(\22Hello from function2!\22);\0a}\08\f0\08\c5\00\e7\c5\01\e8)8\f5\00\00\00A\f3\00\00\00\04\f8\00\00\00$\01\00\0e\06/\e4\03\01\01\06\00\0a\10\004\10\00")
   (data (;1;) "log")
   (data (;2;) "log2")
   (@producers

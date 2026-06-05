@@ -110,10 +110,6 @@ impl Runtime {
                 unsafe { intrinsic::Promise::add_intrinsic(ctx.as_raw()) }
             }
 
-            if intrinsics.contains(JSIntrinsics::BIG_INT) {
-                unsafe { intrinsic::BigInt::add_intrinsic(ctx.as_raw()) }
-            }
-
             if intrinsics.contains(JSIntrinsics::TEXT_ENCODING) {
                 text_encoding::register(ctx.clone())
                     .expect("registering TextEncoding APIs to succeed");

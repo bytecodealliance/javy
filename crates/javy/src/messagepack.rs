@@ -11,8 +11,8 @@ use rquickjs_serde::{de::Deserializer, ser::Serializer};
 pub fn transcode_input<'js>(context: Ctx<'js>, bytes: &[u8]) -> Result<Value<'js>> {
     let mut deserializer = rmp_serde::Deserializer::from_read_ref(bytes);
     let mut serializer = Serializer::from_context(context.clone())?;
-    serde_transcode::transcode(&mut deserializer, &mut serializer)?;
-    Ok(serializer.value)
+    let value = serde_transcode::transcode(&mut deserializer, &mut serializer)?;
+    Ok(value)
 }
 
 /// Transcodes a [`JSValueRef`] into a MessagePack encoded byte vector.

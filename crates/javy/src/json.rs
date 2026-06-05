@@ -6,9 +6,8 @@ use rquickjs_serde::{de::Deserializer, ser::Serializer};
 pub fn parse<'js>(context: Ctx<'js>, bytes: &mut [u8]) -> Result<Value<'js>> {
     let mut deserializer = simd_json::Deserializer::from_slice(bytes)?;
     let mut serializer = Serializer::from_context(context.clone())?;
-    serde_transcode::transcode(&mut deserializer, &mut serializer)?;
-
-    Ok(serializer.value)
+    let value = serde_transcode::transcode(&mut deserializer, &mut serializer)?;
+    Ok(value)
 }
 
 /// Transcodes a [Value] into a slice of JSON bytes.
