@@ -19,7 +19,7 @@ bitflags! {
         const MAP_SET = 1 << 6;
         const TYPED_ARRAY  = 1 << 7;
         const PROMISE  = 1 << 8;
-        const BIG_INT = 1 << 9;
+        // Removed 9 representing BIG_INT.
         // Removed 10 and 11 representing BIG_FLOAT and BIG_DECIMAL.
         const OPERATORS = 1 << 12;
         const BIGNUM_EXTENSION = 1 << 13;
@@ -146,12 +146,6 @@ impl Config {
     /// Configures whether the `Promise` instrinsic will be available.
     pub fn promise(&mut self, enable: bool) -> &mut Self {
         self.intrinsics.set(JSIntrinsics::PROMISE, enable);
-        self
-    }
-
-    /// Configures whether supoort for `BigInt` will be available.
-    pub fn big_int(&mut self, enable: bool) -> &mut Self {
-        self.intrinsics.set(JSIntrinsics::BIG_INT, enable);
         self
     }
 

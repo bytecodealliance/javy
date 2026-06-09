@@ -11,7 +11,7 @@ fn test_empty(builder: &mut Builder) -> Result<()> {
     let mut runner = builder.input("empty.js").build()?;
 
     let (_, _, fuel_consumed) = run(&mut runner, vec![]);
-    assert_fuel_consumed_within_threshold(22_448, fuel_consumed);
+    assert_fuel_consumed_within_threshold(18_182, fuel_consumed);
     Ok(())
 }
 
@@ -21,7 +21,7 @@ fn test_identity(builder: &mut Builder) -> Result<()> {
 
     let (output, _, fuel_consumed) = run_with_u8s(&mut runner, 42);
     assert_eq!(42, output);
-    assert_fuel_consumed_within_threshold(46_797, fuel_consumed);
+    assert_fuel_consumed_within_threshold(43_248, fuel_consumed);
     Ok(())
 }
 
@@ -31,7 +31,7 @@ fn test_fib(builder: &mut Builder) -> Result<()> {
 
     let (output, _, fuel_consumed) = run_with_u8s(&mut runner, 5);
     assert_eq!(8, output);
-    assert_fuel_consumed_within_threshold(64_681, fuel_consumed);
+    assert_fuel_consumed_within_threshold(62_358, fuel_consumed);
     Ok(())
 }
 
@@ -81,7 +81,7 @@ fn test_console_log(builder: &mut Builder) -> Result<()> {
     let (output, logs, fuel_consumed) = run(&mut runner, vec![]);
     assert_eq!(b"hello world from console.log\n".to_vec(), output);
     assert_eq!("hello world from console.error\n", logs.as_str());
-    assert_fuel_consumed_within_threshold(34_983, fuel_consumed);
+    assert_fuel_consumed_within_threshold(29_616, fuel_consumed);
     Ok(())
 }
 
@@ -238,7 +238,7 @@ fn test_exported_functions(builder: &mut Builder) -> Result<()> {
         .build()?;
     let (_, logs, fuel_consumed) = run_fn(&mut runner, "foo", vec![]);
     assert_eq!("Hello from top-level\nHello from foo\n", logs);
-    assert_fuel_consumed_within_threshold(59_981, fuel_consumed);
+    assert_fuel_consumed_within_threshold(56_778, fuel_consumed);
     let (_, logs, _) = run_fn(&mut runner, "foo-bar", vec![]);
     assert_eq!("Hello from top-level\nHello from fooBar\n", logs);
     Ok(())
@@ -337,7 +337,7 @@ fn test_exported_default_arrow_fn(builder: &mut Builder) -> Result<()> {
 
     let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", vec![]);
     assert_eq!(logs, "42\n");
-    assert_fuel_consumed_within_threshold(37_298, fuel_consumed);
+    assert_fuel_consumed_within_threshold(32_716, fuel_consumed);
     Ok(())
 }
 
@@ -350,7 +350,7 @@ fn test_exported_default_fn(builder: &mut Builder) -> Result<()> {
         .build()?;
     let (_, logs, fuel_consumed) = run_fn(&mut runner, "default", vec![]);
     assert_eq!(logs, "42\n");
-    assert_fuel_consumed_within_threshold(39_147, fuel_consumed);
+    assert_fuel_consumed_within_threshold(33_868, fuel_consumed);
     Ok(())
 }
 
@@ -359,7 +359,7 @@ fn test_string_normalize(builder: &mut Builder) -> Result<()> {
     let mut runner = builder.input("normalize.js").build()?;
     let (_, logs, fuel_consumed) = run(&mut runner, vec![]);
     assert_eq!(logs, "true\n");
-    assert_fuel_consumed_within_threshold(55_418, fuel_consumed);
+    assert_fuel_consumed_within_threshold(50_886, fuel_consumed);
     Ok(())
 }
 
