@@ -8,6 +8,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [7.0.0] - 2026-06-10
+
 ### Changed
 
 - Bumped rquickjs to 0.12. If you are using a plugin for dynamic linking, you
