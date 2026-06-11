@@ -186,6 +186,32 @@ pub fn is_byte_load(load: &Load) -> bool {
     matches!(load.kind, LoadKind::I32_8 { .. } | LoadKind::I64_8 { .. })
 }
 
+/// Collect the byte offsets of "countable" opcodes.
+pub(crate) fn countable_opcodes(func: &LocalFunction) -> BTreeSet<u32> {
+    #[derive(Default)]
+    struct Collect {
+        countable: BTreeSet<u32>,
+    }
+    impl<'instr> Visitor<'instr> for Collect {
+        fn visit_instr(&mut self, instr: &'instr Instr, loc: &'instr InstrLocId) {
+            let excluded = matches!(
+                instr,
+                Instr::Block(_)
+                    | Instr::Loop(_)
+                    | Instr::Drop(_)
+                    | Instr::Return(_)
+                    | Instr::Unreachable(_)
+            );
+            if !excluded {
+                self.countable.insert(loc.data());
+            }
+        }
+    }
+    let mut v = Collect::default();
+    dfs_in_order(&mut v, func, func.entry_block());
+    v.countable
+}
+
 impl<'f, 'instr> Visitor<'instr> for AbstractInterp<'f> {
     fn visit_instr(&mut self, _: &'instr Instr, loc: &'instr InstrLocId) {
         // Save the program counter before visiting each operator.

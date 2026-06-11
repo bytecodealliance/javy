@@ -1,16 +1,28 @@
+pub mod format;
 mod interpreter;
 mod state;
 
-use state::State;
+use state::{Profiler, State};
+use std::cell::RefCell;
 use std::io::Read;
 use std::sync::OnceLock;
 
 static STATE: OnceLock<State> = OnceLock::new();
 
+thread_local! {
+    /// Runtime profiling state.
+    static PROFILER: RefCell<Profiler> = RefCell::new(Profiler::new());
+}
+
 fn state() -> &'static State {
     STATE
         .get()
         .expect("STATE must be initialized via `wizer.initialize`")
+}
+
+/// Run `f` with mutable access to the runtime [`Profiler`].
+fn with_profiler<R>(f: impl FnOnce(&mut Profiler) -> R) -> R {
+    PROFILER.with_borrow_mut(f)
 }
 
 /// Use Wizer to pre-initialize the user library module that will be
@@ -63,32 +75,55 @@ pub extern "C" fn is_dispatch_load(fid: u32, pc: u32) -> bool {
 /// Start a new JS function frame.
 #[unsafe(no_mangle)]
 pub extern "C" fn start_func() {
-    todo!()
+    with_profiler(|p| p.start_func());
 }
 
-/// Exit the top most JS function frame.
+/// Pop the top most JS function frame. The outermost activation closes
+/// out the final opcode with the instruction count at this point.
 #[unsafe(no_mangle)]
-pub extern "C" fn exit_func() {
-    todo!()
+pub extern "C" fn exit_func(instruction_count: i64) {
+    with_profiler(|p| p.exit_func(instruction_count as u64));
 }
 
-/// Set current dispatch function target. i.e., the `br_table` target.
+/// Switch to the dispatch `br_table` target, closing out the previous
+/// opcode with the instruction count at this point.
 #[unsafe(no_mangle)]
-pub extern "C" fn set_dispatch_target(_target: u32) {
-    todo!()
+pub extern "C" fn set_dispatch_target(target: u32, instruction_count: i64) {
+    with_profiler(|p| p.set_dispatch_target(target, instruction_count as u64));
 }
 
 /// Set the effective address (i.e., the start address) of the current
 /// function which uniquely identifies it.
 #[unsafe(no_mangle)]
-pub extern "C" fn set_func_addr(_addr: u32) {
-    todo!()
+pub extern "C" fn set_func_addr(addr: u32) {
+    with_profiler(|p| p.set_func_addr(addr));
 }
 
-/// Handle the execution of the given opcode.
+/// Whether the opcode at offset `pc` in function `fid` is counted by
+/// the profiler.
 #[unsafe(no_mangle)]
-pub extern "C" fn handle_opcode(_pc: u32) {
-    todo!()
+pub extern "C" fn is_countable_opcode(fid: u32, pc: u32) -> bool {
+    state().is_countable_opcode(fid, pc)
+}
+
+/// Flush the profiler results into a buffer.
+#[unsafe(no_mangle)]
+pub extern "C" fn report() {
+    with_profiler(|p| p.report());
+}
+
+// TODO: Validate that `report` must run exactly once per profile
+// invocation.
+/// Linear-memory offset of the serialized report buffer.
+#[unsafe(no_mangle)]
+pub extern "C" fn report_ptr() -> u32 {
+    with_profiler(|p| p.report_bytes().as_ptr() as u32)
+}
+
+/// Length in bytes of the serialized report buffer.
+#[unsafe(no_mangle)]
+pub extern "C" fn report_len() -> u32 {
+    with_profiler(|p| p.report_bytes().len() as u32)
 }
 
 #[cfg(test)]
