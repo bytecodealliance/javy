@@ -22,7 +22,7 @@ pub struct State {
     dispatch_loads: BTreeSet<u32>,
     /// Per function, the byte offsets of the opcodes the
     /// profiler counts.
-    /// Calcualted eagerly so that at runtime the calculation becomes
+    /// Calculated eagerly so that at runtime the calculation becomes
     /// a simple lookup in the `BTreeSet`.
     countable_opcodes: HashMap<u32, BTreeSet<u32>>,
 }
@@ -563,13 +563,13 @@ mod tests {
         p.set_func_addr(0xA00);
         p.set_dispatch_target(1, 0);
 
-	// Nested call.
+        // Nested call.
         p.start_func();
         p.set_func_addr(0xB00);
         p.set_dispatch_target(2, 10);
         p.exit_func(13);
 
-	// Back to the parent function call.
+        // Back to the parent function call.
         p.set_dispatch_target(3, 15);
         p.exit_func(20);
 
@@ -577,8 +577,14 @@ mod tests {
             p.counts.get(&(FuncAddr(0xA00), DispatchTarget(1))),
             Some(&10)
         );
-        assert_eq!(p.counts.get(&(FuncAddr(0xB00), DispatchTarget(2))), Some(&5));
-        assert_eq!(p.counts.get(&(FuncAddr(0xA00), DispatchTarget(3))), Some(&5));
+        assert_eq!(
+            p.counts.get(&(FuncAddr(0xB00), DispatchTarget(2))),
+            Some(&5)
+        );
+        assert_eq!(
+            p.counts.get(&(FuncAddr(0xA00), DispatchTarget(3))),
+            Some(&5)
+        );
     }
 
     #[test]
