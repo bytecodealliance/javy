@@ -4744,8 +4744,9 @@ dependencies = [
 
 [[package]]
 name = "whamm"
-version = "1.0.0-rc1"
-source = "git+https://github.com/saulecabrera/whamm?branch=binary-entrypoints#666984d3465ae8b981db2f46a1e38f8b843d02b4"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d4e58bcb2642ea728fee4c58698d5aa0a0f39db418cc7d5db6878f61caafbf6a"
 dependencies = [
  "anyhow",
  "clap",

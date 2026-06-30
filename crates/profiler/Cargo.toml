@@ -9,7 +9,7 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
-whamm = { git = "https://github.com/saulecabrera/whamm", branch = "binary-entrypoints" }
+whamm =  "1.0.0"
 javy-profiler-lib = { path = "../profiler-lib" }
 anyhow = { workspace = true }
 wasmtime = { workspace = true }
