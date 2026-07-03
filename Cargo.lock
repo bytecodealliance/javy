@@ -1893,7 +1893,7 @@ dependencies = [
  "tokio",
  "walrus",
  "wasm-opt",
- "wasmparser 0.251.0",
+ "wasmparser 0.252.0",
  "wasmprinter 0.251.0",
  "wasmtime 46.0.0",
  "wasmtime-wasi",
@@ -1941,7 +1941,7 @@ dependencies = [
  "tokio",
  "walrus",
  "wasm-opt",
- "wasmparser 0.251.0",
+ "wasmparser 0.252.0",
  "wasmtime 46.0.0",
  "wasmtime-wasi",
  "wasmtime-wizer",
@@ -1986,7 +1986,7 @@ dependencies = [
  "anyhow",
  "tempfile",
  "uuid",
- "wasmparser 0.251.0",
+ "wasmparser 0.252.0",
  "wasmtime 46.0.0",
  "wasmtime-wasi",
 ]
@@ -4125,6 +4125,7 @@ dependencies = [
  "hashbrown 0.17.0",
  "indexmap",
  "semver",
+ "serde",
 ]
 
 [[package]]
