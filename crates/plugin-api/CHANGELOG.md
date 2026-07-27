@@ -8,6 +8,14 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+
+- Added `Config::strip_source` and `Config::strip_debug` to configure stripping
+  source code and debug information when generating QuickJS bytecode.
+  Source stripping is enabled by default; debug-information stripping is
+  disabled. Source stripping affects the output of
+  `Function.prototype.toString()`.
+
 ## [7.0.0] - 2026-06-10
 
 ### Changed

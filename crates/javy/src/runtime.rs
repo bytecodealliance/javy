@@ -36,15 +36,26 @@ pub struct Runtime {
     /// The inner QuickJS runtime representation.
     // Read above on the usage of `ManuallyDrop`.
     inner: ManuallyDrop<QRuntime>,
+    /// Whether source code is omitted from compiled bytecode.
+    strip_source: bool,
+    /// Whether debug information is omitted from compiled bytecode.
+    strip_debug: bool,
 }
 
 impl Runtime {
     /// Creates a new [Runtime].
     pub fn new(config: Config) -> Result<Self> {
         let rt = ManuallyDrop::new(QRuntime::new()?);
+        let strip_source = config.strip_source;
+        let strip_debug = config.strip_debug;
 
         let context = Self::build_from_config(&rt, config)?;
-        Ok(Self { inner: rt, context })
+        Ok(Self {
+            inner: rt,
+            context,
+            strip_source,
+            strip_debug,
+        })
     }
 
     fn build_from_config(rt: &QRuntime, cfg: Config) -> Result<ManuallyDrop<Context>> {
@@ -163,11 +174,19 @@ impl Runtime {
         self.inner.is_job_pending()
     }
 
+    fn bytecode_write_options(&self) -> WriteOptions {
+        WriteOptions {
+            strip_source: self.strip_source,
+            strip_debug: self.strip_debug,
+            ..WriteOptions::default()
+        }
+    }
+
     /// Compiles the given module to bytecode.
     pub fn compile_to_bytecode(&self, name: &str, contents: &str) -> Result<Vec<u8>> {
         self.context()
             .with(|this| {
-                Module::declare(this.clone(), name, contents)?.write(WriteOptions::default())
+                Module::declare(this.clone(), name, contents)?.write(self.bytecode_write_options())
             })
             .map_err(|e| self.context().with(|cx| from_js_error(cx.clone(), e)))
     }
@@ -180,5 +199,22 @@ impl Default for Runtime {
     /// This function panics if there is an error setting up the runtime.
     fn default() -> Self {
         Self::new(Config::default()).unwrap()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Runtime;
+    use crate::Config;
+
+    #[test]
+    fn bytecode_write_options_follow_config() {
+        let mut config = Config::default();
+        config.strip_source(false).strip_debug(true);
+
+        let runtime = Runtime::new(config).unwrap();
+        let options = runtime.bytecode_write_options();
+        assert!(!options.strip_source);
+        assert!(options.strip_debug);
     }
 }

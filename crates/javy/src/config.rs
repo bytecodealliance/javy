@@ -76,6 +76,10 @@ pub struct Config {
     pub(crate) log_stream: Box<dyn Write>,
     /// The stream to use for calls to `console.error`.
     pub(crate) err_stream: Box<dyn Write>,
+    /// Whether to omit source code from compiled bytecode. Enabled by default.
+    pub(crate) strip_source: bool,
+    /// Whether to omit debug information from compiled bytecode. Disabled by default.
+    pub(crate) strip_debug: bool,
 }
 
 impl Default for Config {
@@ -94,6 +98,8 @@ impl Default for Config {
             max_stack_size: 256 * 1024, // from rquickjs
             log_stream: Box::new(std::io::stdout()),
             err_stream: Box::new(std::io::stderr()),
+            strip_source: true,
+            strip_debug: false,
         }
     }
 }
@@ -235,6 +241,18 @@ impl Config {
         self
     }
 
+    /// Configures whether source code will be omitted from compiled bytecode.
+    pub fn strip_source(&mut self, enable: bool) -> &mut Self {
+        self.strip_source = enable;
+        self
+    }
+
+    /// Configures whether debug information will be omitted from compiled bytecode.
+    pub fn strip_debug(&mut self, enable: bool) -> &mut Self {
+        self.strip_debug = enable;
+        self
+    }
+
     /// Whether the `WeakRef` instrinsic will be enabled.
     pub fn weak_ref(&mut self, enable: bool) -> &mut Self {
         self.intrinsics.set(JSIntrinsics::WEAK_REF, enable);
@@ -257,10 +275,21 @@ impl Config {
 }
 
 #[cfg(test)]
-#[cfg(feature = "json")]
 mod tests {
     use super::Config;
 
+    #[test]
+    fn bytecode_stripping_defaults_and_configuration() {
+        let mut config = Config::default();
+        assert!(config.strip_source);
+        assert!(!config.strip_debug);
+
+        config.strip_source(false).strip_debug(true);
+        assert!(!config.strip_source);
+        assert!(config.strip_debug);
+    }
+
+    #[cfg(feature = "json")]
     #[test]
     fn err_config_validation() {
         let mut config = Config::default();
@@ -270,6 +299,7 @@ mod tests {
         assert!(config.validate().is_err());
     }
 
+    #[cfg(feature = "json")]
     #[test]
     fn ok_config_validation() {
         let mut config = Config::default();
