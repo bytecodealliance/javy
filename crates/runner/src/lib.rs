@@ -6,7 +6,7 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::str;
-use tempfile::TempDir;
+use tempfile::{NamedTempFile, TempDir};
 use wasmtime::{AsContextMut, Config, Engine, Instance, Linker, Module, OptLevel, Store};
 use wasmtime_wasi::p2::pipe::{MemoryInputPipe, MemoryOutputPipe};
 use wasmtime_wasi::{WasiCtxBuilder, p1::WasiP1Ctx};
@@ -239,6 +239,37 @@ pub struct Runner {
     linker: Linker<StoreContext>,
     initial_fuel: u64,
     preload: Option<(String, Vec<u8>)>,
+}
+
+// We need this to standardize fuel accounting between Linux and MacOS.
+// Using `Module::from_binary` on Linux, Wasmtime creates a file-backed initialization image using
+// `memfd_create`. There is no equivalent for MacOS so no file-backed initialization image is
+// created. There is a startup Wasm function that is generated and invoked which consumes fuel.
+// When a file-backed initialization image is used, this startup function skips copying active data
+// segments into linear memory. If a file-backed initialization image is not used, then this
+// startup function copies active data segments into linear memory resulting in higher fuel use.
+struct MappedModule {
+    // Keep the file alive and unchanged while the module's mmap is in use.
+    // `module` is declared first so it is dropped before `_file`.
+    module: Module,
+    _file: NamedTempFile,
+}
+
+impl MappedModule {
+    fn new(engine: &Engine, wasm: &[u8]) -> Result<Self> {
+        let precompiled = engine.precompile_module(wasm)?;
+        let mut file = NamedTempFile::new()?;
+        file.as_file_mut().write_all(&precompiled)?;
+
+        // SAFETY: `precompiled` was created by this exact engine immediately
+        // before deserialization. The file is retained by `MappedModule` for
+        // as long as the module is in use.
+        let module = unsafe { Module::deserialize_open_file(engine, file.reopen()?)? };
+        Ok(Self {
+            module,
+            _file: file,
+        })
+    }
 }
 
 #[derive(Debug)]
@@ -545,21 +576,27 @@ impl Runner {
 
     pub fn exec_func(&mut self, func: &str, input: Vec<u8>) -> Result<(Vec<u8>, Vec<u8>, u64)> {
         let mut store = Self::setup_store(self.linker.engine(), input)?;
-        let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
 
         if let Some((name, bytes)) = &self.preload {
-            let module = Module::from_binary(self.linker.engine(), bytes)?;
+            let module = MappedModule::new(self.linker.engine(), bytes)?;
             // Allow unknown imports for dynamically linked `test-plugin`.
-            self.linker.define_unknown_imports_as_traps(&module)?;
-            let instance = self.linker.instantiate(store.as_context_mut(), &module)?;
+            self.linker
+                .define_unknown_imports_as_traps(&module.module)?;
+            let instance = self
+                .linker
+                .instantiate(store.as_context_mut(), &module.module)?;
             self.linker.allow_shadowing(true);
             self.linker
                 .instance(store.as_context_mut(), name, instance)?;
         }
 
+        let module = MappedModule::new(self.linker.engine(), &self.wasm)?;
         // Allow unknown imports for statically linked `test-plugin`.
-        self.linker.define_unknown_imports_as_traps(&module)?;
-        let instance = self.linker.instantiate(store.as_context_mut(), &module)?;
+        self.linker
+            .define_unknown_imports_as_traps(&module.module)?;
+        let instance = self
+            .linker
+            .instantiate(store.as_context_mut(), &module.module)?;
         let run = instance.get_typed_func::<(), ()>(store.as_context_mut(), func)?;
 
         let res = run.call(store.as_context_mut(), ());
@@ -573,9 +610,11 @@ impl Runner {
         func: Option<&str>,
     ) -> Result<(Vec<u8>, Vec<u8>, u64)> {
         let mut store = Self::setup_store(self.linker.engine(), vec![])?;
-        let module = Module::from_binary(self.linker.engine(), &self.wasm)?;
+        let module = MappedModule::new(self.linker.engine(), &self.wasm)?;
 
-        let instance = self.linker.instantiate(store.as_context_mut(), &module)?;
+        let instance = self
+            .linker
+            .instantiate(store.as_context_mut(), &module.module)?;
 
         let (bc_ptr, bc_len) = Self::compile(src.as_bytes(), store.as_context_mut(), &instance)?;
         let (fn_ptr, fn_len) = match func {
