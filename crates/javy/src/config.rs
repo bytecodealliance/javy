@@ -49,6 +49,28 @@ bitflags! {
     }
 }
 
+/// Controls which optional information QuickJS retains in compiled bytecode.
+///
+/// Stripping source code reduces bytecode size, but changes
+/// `Function.prototype.toString()` to no longer return the function's source
+/// code. Stripping debug information further reduces bytecode size, but removes
+/// line/column locations from JavaScript error stack traces.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum BytecodeStripping {
+    /// Retain source code and debug information.
+    None,
+    /// Omit source code while retaining debug information.
+    ///
+    /// For compiled functions, `Function.prototype.toString()` no longer
+    /// returns the function's source code.
+    #[default]
+    Source,
+    /// Omit debug information, which also omits source code.
+    ///
+    /// Error stack traces no longer include line/column locations.
+    Debug,
+}
+
 /// A configuration for [`Runtime`](crate::Runtime).
 ///
 /// These are the global configuration options to create a [`Runtime`](crate::Runtime),
@@ -76,10 +98,8 @@ pub struct Config {
     pub(crate) log_stream: Box<dyn Write>,
     /// The stream to use for calls to `console.error`.
     pub(crate) err_stream: Box<dyn Write>,
-    /// Whether to omit source code from compiled bytecode. Enabled by default.
-    pub(crate) strip_source: bool,
-    /// Whether to omit debug information from compiled bytecode. Disabled by default.
-    pub(crate) strip_debug: bool,
+    /// Which optional information to omit from compiled bytecode.
+    pub(crate) bytecode_stripping: BytecodeStripping,
 }
 
 impl Default for Config {
@@ -98,8 +118,7 @@ impl Default for Config {
             max_stack_size: 256 * 1024, // from rquickjs
             log_stream: Box::new(std::io::stdout()),
             err_stream: Box::new(std::io::stderr()),
-            strip_source: true,
-            strip_debug: false,
+            bytecode_stripping: BytecodeStripping::default(),
         }
     }
 }
@@ -241,15 +260,9 @@ impl Config {
         self
     }
 
-    /// Configures whether source code will be omitted from compiled bytecode.
-    pub fn strip_source(&mut self, enable: bool) -> &mut Self {
-        self.strip_source = enable;
-        self
-    }
-
-    /// Configures whether debug information will be omitted from compiled bytecode.
-    pub fn strip_debug(&mut self, enable: bool) -> &mut Self {
-        self.strip_debug = enable;
+    /// Configures which optional information is omitted from compiled bytecode.
+    pub fn bytecode_stripping(&mut self, stripping: BytecodeStripping) -> &mut Self {
+        self.bytecode_stripping = stripping;
         self
     }
 
@@ -276,17 +289,15 @@ impl Config {
 
 #[cfg(test)]
 mod tests {
-    use super::Config;
+    use super::{BytecodeStripping, Config};
 
     #[test]
     fn bytecode_stripping_defaults_and_configuration() {
         let mut config = Config::default();
-        assert!(config.strip_source);
-        assert!(!config.strip_debug);
+        assert_eq!(config.bytecode_stripping, BytecodeStripping::Source);
 
-        config.strip_source(false).strip_debug(true);
-        assert!(!config.strip_source);
-        assert!(config.strip_debug);
+        config.bytecode_stripping(BytecodeStripping::Debug);
+        assert_eq!(config.bytecode_stripping, BytecodeStripping::Debug);
     }
 
     #[cfg(feature = "json")]

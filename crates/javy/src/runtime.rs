@@ -3,7 +3,7 @@ use super::from_js_error;
 #[cfg(feature = "json")]
 use crate::apis::json;
 use crate::{
-    Config,
+    BytecodeStripping, Config,
     apis::{console, random, stream_io, text_encoding},
     config::{JSIntrinsics, JavyIntrinsics},
 };
@@ -36,25 +36,21 @@ pub struct Runtime {
     /// The inner QuickJS runtime representation.
     // Read above on the usage of `ManuallyDrop`.
     inner: ManuallyDrop<QRuntime>,
-    /// Whether source code is omitted from compiled bytecode.
-    strip_source: bool,
-    /// Whether debug information is omitted from compiled bytecode.
-    strip_debug: bool,
+    /// Which optional information is omitted from compiled bytecode.
+    bytecode_stripping: BytecodeStripping,
 }
 
 impl Runtime {
     /// Creates a new [Runtime].
     pub fn new(config: Config) -> Result<Self> {
         let rt = ManuallyDrop::new(QRuntime::new()?);
-        let strip_source = config.strip_source;
-        let strip_debug = config.strip_debug;
+        let bytecode_stripping = config.bytecode_stripping;
 
         let context = Self::build_from_config(&rt, config)?;
         Ok(Self {
             inner: rt,
             context,
-            strip_source,
-            strip_debug,
+            bytecode_stripping,
         })
     }
 
@@ -175,10 +171,19 @@ impl Runtime {
     }
 
     fn bytecode_write_options(&self) -> WriteOptions {
-        WriteOptions {
-            strip_source: self.strip_source,
-            strip_debug: self.strip_debug,
-            ..WriteOptions::default()
+        match self.bytecode_stripping {
+            BytecodeStripping::None => WriteOptions::default(),
+            BytecodeStripping::Source => WriteOptions {
+                strip_source: true,
+                ..WriteOptions::default()
+            },
+            // QuickJS stores source code in its debug-information block, so
+            // stripping debug information necessarily strips source as well.
+            BytecodeStripping::Debug => WriteOptions {
+                strip_source: true,
+                strip_debug: true,
+                ..WriteOptions::default()
+            },
         }
     }
 
@@ -205,16 +210,26 @@ impl Default for Runtime {
 #[cfg(test)]
 mod tests {
     use super::Runtime;
-    use crate::Config;
+    use crate::{BytecodeStripping, Config};
 
     #[test]
     fn bytecode_write_options_follow_config() {
         let mut config = Config::default();
-        config.strip_source(false).strip_debug(true);
-
-        let runtime = Runtime::new(config).unwrap();
-        let options = runtime.bytecode_write_options();
+        config.bytecode_stripping(BytecodeStripping::None);
+        let options = Runtime::new(config).unwrap().bytecode_write_options();
         assert!(!options.strip_source);
+        assert!(!options.strip_debug);
+
+        let mut config = Config::default();
+        config.bytecode_stripping(BytecodeStripping::Source);
+        let options = Runtime::new(config).unwrap().bytecode_write_options();
+        assert!(options.strip_source);
+        assert!(!options.strip_debug);
+
+        let mut config = Config::default();
+        config.bytecode_stripping(BytecodeStripping::Debug);
+        let options = Runtime::new(config).unwrap().bytecode_write_options();
+        assert!(options.strip_source);
         assert!(options.strip_debug);
     }
 }
