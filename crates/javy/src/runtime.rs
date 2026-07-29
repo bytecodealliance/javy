@@ -179,7 +179,7 @@ impl Runtime {
             },
             // QuickJS stores source code in its debug-information block, so
             // stripping debug information necessarily strips source as well.
-            BytecodeStripping::Debug => WriteOptions {
+            BytecodeStripping::SourceAndDebug => WriteOptions {
                 strip_source: true,
                 strip_debug: true,
                 ..WriteOptions::default()
@@ -227,7 +227,7 @@ mod tests {
         assert!(!options.strip_debug);
 
         let mut config = Config::default();
-        config.bytecode_stripping(BytecodeStripping::Debug);
+        config.bytecode_stripping(BytecodeStripping::SourceAndDebug);
         let options = Runtime::new(config).unwrap().bytecode_write_options();
         assert!(options.strip_source);
         assert!(options.strip_debug);

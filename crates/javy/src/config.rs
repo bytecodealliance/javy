@@ -68,7 +68,7 @@ pub enum BytecodeStripping {
     /// Omit debug information, which also omits source code.
     ///
     /// Error stack traces no longer include line/column locations.
-    Debug,
+    SourceAndDebug,
 }
 
 /// A configuration for [`Runtime`](crate::Runtime).
@@ -296,8 +296,8 @@ mod tests {
         let mut config = Config::default();
         assert_eq!(config.bytecode_stripping, BytecodeStripping::Source);
 
-        config.bytecode_stripping(BytecodeStripping::Debug);
-        assert_eq!(config.bytecode_stripping, BytecodeStripping::Debug);
+        config.bytecode_stripping(BytecodeStripping::SourceAndDebug);
+        assert_eq!(config.bytecode_stripping, BytecodeStripping::SourceAndDebug);
     }
 
     #[cfg(feature = "json")]
