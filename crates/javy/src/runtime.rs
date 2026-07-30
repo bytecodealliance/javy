@@ -3,7 +3,7 @@ use super::from_js_error;
 #[cfg(feature = "json")]
 use crate::apis::json;
 use crate::{
-    Config,
+    BytecodeStripping, Config,
     apis::{console, random, stream_io, text_encoding},
     config::{JSIntrinsics, JavyIntrinsics},
 };
@@ -36,15 +36,22 @@ pub struct Runtime {
     /// The inner QuickJS runtime representation.
     // Read above on the usage of `ManuallyDrop`.
     inner: ManuallyDrop<QRuntime>,
+    /// Which optional information is omitted from compiled bytecode.
+    bytecode_stripping: BytecodeStripping,
 }
 
 impl Runtime {
     /// Creates a new [Runtime].
     pub fn new(config: Config) -> Result<Self> {
         let rt = ManuallyDrop::new(QRuntime::new()?);
+        let bytecode_stripping = config.bytecode_stripping;
 
         let context = Self::build_from_config(&rt, config)?;
-        Ok(Self { inner: rt, context })
+        Ok(Self {
+            inner: rt,
+            context,
+            bytecode_stripping,
+        })
     }
 
     fn build_from_config(rt: &QRuntime, cfg: Config) -> Result<ManuallyDrop<Context>> {
@@ -163,11 +170,28 @@ impl Runtime {
         self.inner.is_job_pending()
     }
 
+    fn bytecode_write_options(&self) -> WriteOptions {
+        match self.bytecode_stripping {
+            BytecodeStripping::None => WriteOptions::default(),
+            BytecodeStripping::Source => WriteOptions {
+                strip_source: true,
+                ..WriteOptions::default()
+            },
+            // QuickJS stores source code in its debug-information block, so
+            // stripping debug information necessarily strips source as well.
+            BytecodeStripping::SourceAndDebug => WriteOptions {
+                strip_source: true,
+                strip_debug: true,
+                ..WriteOptions::default()
+            },
+        }
+    }
+
     /// Compiles the given module to bytecode.
     pub fn compile_to_bytecode(&self, name: &str, contents: &str) -> Result<Vec<u8>> {
         self.context()
             .with(|this| {
-                Module::declare(this.clone(), name, contents)?.write(WriteOptions::default())
+                Module::declare(this.clone(), name, contents)?.write(self.bytecode_write_options())
             })
             .map_err(|e| self.context().with(|cx| from_js_error(cx.clone(), e)))
     }
@@ -180,5 +204,32 @@ impl Default for Runtime {
     /// This function panics if there is an error setting up the runtime.
     fn default() -> Self {
         Self::new(Config::default()).unwrap()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Runtime;
+    use crate::{BytecodeStripping, Config};
+
+    #[test]
+    fn bytecode_write_options_follow_config() {
+        let mut config = Config::default();
+        config.bytecode_stripping(BytecodeStripping::None);
+        let options = Runtime::new(config).unwrap().bytecode_write_options();
+        assert!(!options.strip_source);
+        assert!(!options.strip_debug);
+
+        let mut config = Config::default();
+        config.bytecode_stripping(BytecodeStripping::Source);
+        let options = Runtime::new(config).unwrap().bytecode_write_options();
+        assert!(options.strip_source);
+        assert!(!options.strip_debug);
+
+        let mut config = Config::default();
+        config.bytecode_stripping(BytecodeStripping::SourceAndDebug);
+        let options = Runtime::new(config).unwrap().bytecode_write_options();
+        assert!(options.strip_source);
+        assert!(options.strip_debug);
     }
 }

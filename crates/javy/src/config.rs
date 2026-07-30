@@ -49,6 +49,28 @@ bitflags! {
     }
 }
 
+/// Controls which optional information QuickJS retains in compiled bytecode.
+///
+/// Stripping source code reduces bytecode size, but changes
+/// `Function.prototype.toString()` to no longer return the function's source
+/// code. Stripping debug information further reduces bytecode size, but removes
+/// line/column locations from JavaScript error stack traces.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum BytecodeStripping {
+    /// Retain source code and debug information.
+    None,
+    /// Omit source code while retaining debug information.
+    ///
+    /// For compiled functions, `Function.prototype.toString()` no longer
+    /// returns the function's source code.
+    #[default]
+    Source,
+    /// Omit debug information, which also omits source code.
+    ///
+    /// Error stack traces no longer include line/column locations.
+    SourceAndDebug,
+}
+
 /// A configuration for [`Runtime`](crate::Runtime).
 ///
 /// These are the global configuration options to create a [`Runtime`](crate::Runtime),
@@ -76,6 +98,8 @@ pub struct Config {
     pub(crate) log_stream: Box<dyn Write>,
     /// The stream to use for calls to `console.error`.
     pub(crate) err_stream: Box<dyn Write>,
+    /// Which optional information to omit from compiled bytecode.
+    pub(crate) bytecode_stripping: BytecodeStripping,
 }
 
 impl Default for Config {
@@ -94,6 +118,7 @@ impl Default for Config {
             max_stack_size: 256 * 1024, // from rquickjs
             log_stream: Box::new(std::io::stdout()),
             err_stream: Box::new(std::io::stderr()),
+            bytecode_stripping: BytecodeStripping::default(),
         }
     }
 }
@@ -235,6 +260,12 @@ impl Config {
         self
     }
 
+    /// Configures which optional information is omitted from compiled bytecode.
+    pub fn bytecode_stripping(&mut self, stripping: BytecodeStripping) -> &mut Self {
+        self.bytecode_stripping = stripping;
+        self
+    }
+
     /// Whether the `WeakRef` instrinsic will be enabled.
     pub fn weak_ref(&mut self, enable: bool) -> &mut Self {
         self.intrinsics.set(JSIntrinsics::WEAK_REF, enable);
@@ -257,10 +288,19 @@ impl Config {
 }
 
 #[cfg(test)]
-#[cfg(feature = "json")]
 mod tests {
-    use super::Config;
+    use super::{BytecodeStripping, Config};
 
+    #[test]
+    fn bytecode_stripping_defaults_and_configuration() {
+        let mut config = Config::default();
+        assert_eq!(config.bytecode_stripping, BytecodeStripping::Source);
+
+        config.bytecode_stripping(BytecodeStripping::SourceAndDebug);
+        assert_eq!(config.bytecode_stripping, BytecodeStripping::SourceAndDebug);
+    }
+
+    #[cfg(feature = "json")]
     #[test]
     fn err_config_validation() {
         let mut config = Config::default();
@@ -270,6 +310,7 @@ mod tests {
         assert!(config.validate().is_err());
     }
 
+    #[cfg(feature = "json")]
     #[test]
     fn ok_config_validation() {
         let mut config = Config::default();

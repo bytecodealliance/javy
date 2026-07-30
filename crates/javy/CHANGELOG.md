@@ -8,6 +8,13 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+
+- Added `Config::bytecode_stripping` to configure which optional information is
+  retained when generating QuickJS bytecode. Source code is stripped by
+  default; debug information is retained. Source stripping affects the output
+  of `Function.prototype.toString()`.
+
 ## [8.0.0] - 2026-06-10
 
 ### Changed

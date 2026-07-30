@@ -192,7 +192,7 @@ fn test_readme_script(builder: &mut Builder) -> Result<()> {
 
     let (output, _, fuel_consumed) = run(&mut runner, r#"{ "n": 2, "bar": "baz" }"#.into());
     assert_eq!(r#"{"foo":3,"newBar":"baz!"}"#.as_bytes(), output);
-    assert_fuel_consumed_within_threshold(265_289, fuel_consumed);
+    assert_fuel_consumed_within_threshold(256_087, fuel_consumed);
     Ok(())
 }
 
@@ -238,7 +238,7 @@ fn test_exported_functions(builder: &mut Builder) -> Result<()> {
         .build()?;
     let (_, logs, fuel_consumed) = run_fn(&mut runner, "foo", vec![]);
     assert_eq!("Hello from top-level\nHello from foo\n", logs);
-    assert_fuel_consumed_within_threshold(59_651, fuel_consumed);
+    assert_fuel_consumed_within_threshold(57_013, fuel_consumed);
     let (_, logs, _) = run_fn(&mut runner, "foo-bar", vec![]);
     assert_eq!("Hello from top-level\nHello from fooBar\n", logs);
     Ok(())
