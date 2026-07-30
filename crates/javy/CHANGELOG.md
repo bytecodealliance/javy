@@ -8,6 +8,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [8.1.0] - 2026-07-30
+
 ### Added
 
 - Added `Config::bytecode_stripping` to configure which optional information is
