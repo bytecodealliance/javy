@@ -36,5 +36,8 @@ jobs:
       - run: pnpm install
         working-directory: npm/javy
 
+      - run: pnpm run build
+        working-directory: npm/javy
+
       - run: pnpm test
         working-directory: npm/javy
