@@ -1795,7 +1795,7 @@ dependencies = [
  "tokio",
  "walrus",
  "wasm-opt",
- "wasmparser 0.252.0",
+ "wasmparser 0.255.0",
  "wasmprinter 0.255.0",
  "wasmtime 46.0.0",
  "wasmtime-wasi",
@@ -1843,7 +1843,7 @@ dependencies = [
  "tokio",
  "walrus",
  "wasm-opt",
- "wasmparser 0.252.0",
+ "wasmparser 0.255.0",
  "wasmtime 46.0.0",
  "wasmtime-wasi",
  "wasmtime-wizer",
@@ -1888,7 +1888,7 @@ dependencies = [
  "anyhow",
  "tempfile",
  "uuid",
- "wasmparser 0.252.0",
+ "wasmparser 0.255.0",
  "wasmtime 46.0.0",
  "wasmtime-wasi",
 ]
@@ -4001,7 +4001,6 @@ dependencies = [
  "hashbrown 0.17.0",
  "indexmap",
  "semver",
- "serde",
 ]
 
 [[package]]
@@ -4011,8 +4010,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e8e329ef4b5d46e73b91d3ac6924417cad55a8cbbf869c199283383427c3320b"
 dependencies = [
  "bitflags",
+ "hashbrown 0.17.0",
  "indexmap",
  "semver",
+ "serde",
 ]
 
 [[package]]
