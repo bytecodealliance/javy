@@ -27,10 +27,10 @@ license = "Apache-2.0 WITH LLVM-exception"
 [workspace.dependencies]
 brotli = "8.0.3"
 clap = { version = "4.6.1", features = ["derive"] }
-deterministic-wasi-ctx = "=4.0.5"
-wasmtime = "46.0.0"
-wasmtime-wasi = "46.0.0"
-wasmtime-wizer = "46.0.0"
+deterministic-wasi-ctx = "=4.0.6"
+wasmtime = "47.0.3"
+wasmtime-wasi = "47.0.3"
+wasmtime-wizer = "47.0.3"
 wasm-opt = "0.116.1"
 anyhow = "1.0"
 javy = { path = "crates/javy", version = "8.1.1-alpha.1" }
