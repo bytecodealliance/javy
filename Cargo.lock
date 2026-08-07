@@ -313,7 +313,7 @@ dependencies = [
  "cap-primitives 4.0.2",
  "cap-std 4.0.2",
  "io-lifetimes 3.0.1",
- "windows-sys 0.61.2",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -360,7 +360,7 @@ dependencies = [
  "maybe-owned",
  "rustix",
  "rustix-linux-procfs",
- "windows-sys 0.61.2",
+ "windows-sys 0.60.2",
  "winx",
 ]
 
@@ -1189,7 +1189,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -1753,7 +1753,7 @@ checksum = "3640c1c38b8e4e43584d8df18be5fc6b0aa314ce6ebf51b53313d4306cca8e46"
 dependencies = [
  "hermit-abi",
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -1841,7 +1841,7 @@ dependencies = [
  "tempfile",
  "tokio",
  "walrus",
- "wasmtime 46.0.0",
+ "wasmtime 47.0.3",
  "wasmtime-wasi 46.0.0",
  "wit-component 0.254.0",
 ]
@@ -1862,7 +1862,7 @@ dependencies = [
  "wasm-opt",
  "wasmparser 0.255.0",
  "wasmprinter 0.255.0",
- "wasmtime 46.0.0",
+ "wasmtime 47.0.3",
  "wasmtime-wasi 46.0.0",
  "wasmtime-wizer",
  "wit-parser 0.254.0",
@@ -1909,7 +1909,7 @@ dependencies = [
  "walrus",
  "wasm-opt",
  "wasmparser 0.255.0",
- "wasmtime 46.0.0",
+ "wasmtime 47.0.3",
  "wasmtime-wasi 46.0.0",
  "wasmtime-wizer",
 ]
@@ -1920,7 +1920,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "javy-profiler-lib",
- "wasmtime 46.0.0",
+ "wasmtime 47.0.3",
  "wasmtime-wasi 46.0.0",
  "wasmtime-wizer",
  "whamm",
@@ -1954,7 +1954,7 @@ dependencies = [
  "tempfile",
  "uuid",
  "wasmparser 0.255.0",
- "wasmtime 46.0.0",
+ "wasmtime 47.0.3",
  "wasmtime-wasi 46.0.0",
 ]
 
@@ -2759,7 +2759,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -2965,7 +2965,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3a766e1110788c36f4fa1c2b71b387a7815aa65f88ce0229841826633d93723e"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -3290,7 +3290,7 @@ dependencies = [
  "getrandom 0.4.1",
  "once_cell",
  "rustix",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -3671,23 +3671,6 @@ dependencies = [
 
 [[package]]
 name = "wasm-compose"
-version = "0.251.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b089037d7eb453ed57b560fe7833de0707411c8b9fdc429745ced77e2a1bacb9"
-dependencies = [
- "anyhow",
- "heck 0.5.0",
- "indexmap",
- "log",
- "petgraph",
- "smallvec",
- "wasm-encoder 0.251.0",
- "wasmparser 0.251.0",
- "wat",
-]
-
-[[package]]
-name = "wasm-compose"
 version = "0.252.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d59b710751a35d54732a63851cdfacbfb2266b7160ce174faf269d3f4e84e31b"
@@ -3963,9 +3946,6 @@ dependencies = [
  "cfg-if",
  "encoding_rs",
  "futures",
- "fxprof-processed-profile",
- "gimli 0.33.0",
- "ittapi",
  "libc",
  "log",
  "mach2",
@@ -3974,17 +3954,12 @@ dependencies = [
  "once_cell",
  "postcard",
  "pulley-interpreter 46.0.0",
- "rayon",
  "rustix",
  "semver",
  "serde",
  "serde_derive",
- "serde_json",
  "smallvec",
  "target-lexicon",
- "tempfile",
- "wasm-compose 0.251.0",
- "wasm-encoder 0.251.0",
  "wasmparser 0.251.0",
  "wasmtime-environ 46.0.0",
  "wasmtime-internal-cache 46.0.0",
@@ -3997,9 +3972,7 @@ dependencies = [
  "wasmtime-internal-jit-icache-coherence 46.0.0",
  "wasmtime-internal-unwinder 46.0.0",
  "wasmtime-internal-versioned-export-macros 46.0.0",
- "wat",
  "windows-sys 0.61.2",
- "wit-parser 0.251.0",
 ]
 
 [[package]]
@@ -4036,7 +4009,7 @@ dependencies = [
  "smallvec",
  "target-lexicon",
  "tempfile",
- "wasm-compose 0.252.0",
+ "wasm-compose",
  "wasm-encoder 0.252.0",
  "wasmparser 0.252.0",
  "wasmtime-environ 47.0.3",
@@ -4205,7 +4178,6 @@ version = "46.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4f6ce74d60a8ed870548e7efa9710c54f982bbfcf80e5ee5eee8498318616483"
 dependencies = [
- "anyhow",
  "hashbrown 0.17.0",
  "libm",
  "serde",
@@ -4314,8 +4286,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5090e9a302bb5729a84766e4af07b6b10efe733e437bc266dd954a957114df63"
 dependencies = [
  "cc",
- "object",
- "rustix",
  "wasmtime-internal-versioned-export-macros 46.0.0",
 ]
 
@@ -4682,7 +4652,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
