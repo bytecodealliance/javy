@@ -68,8 +68,10 @@ pub fn read(bytes: &[u8]) -> Result<Vec<Record>> {
         count * RECORD_LEN
     );
 
-    let records = body
-        .chunks_exact(RECORD_LEN)
+    let (chunks, _) = body.as_chunks::<RECORD_LEN>();
+
+    let records = chunks
+        .iter()
         .map(|c| Record {
             func_addr: u32::from_le_bytes(c[0..4].try_into().unwrap()),
             target: u32::from_le_bytes(c[4..8].try_into().unwrap()),
