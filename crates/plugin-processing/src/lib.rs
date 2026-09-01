@@ -58,7 +58,8 @@ fn extract_core_module(component_bytes: &[u8]) -> Result<Vec<u8>> {
             unchecked_range,
         } = payload?
         {
-            let module_bytes = &component_bytes[unchecked_range.start..unchecked_range.end];
+            let module_bytes = &component_bytes
+                [usize::try_from(unchecked_range.start)?..usize::try_from(unchecked_range.end)?];
             let mut extract_this_module = false;
             for payload in parser.parse_all(module_bytes) {
                 match payload? {
