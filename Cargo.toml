@@ -27,7 +27,7 @@ license = "Apache-2.0 WITH LLVM-exception"
 [workspace.dependencies]
 brotli = "8.0.3"
 clap = { version = "4.6.1", features = ["derive"] }
-deterministic-wasi-ctx = "=4.0.6"
+deterministic-wasi-ctx = "=4.0.7"
 wasmtime = "47.0.3"
 wasmtime-wasi = "47.0.3"
 wasmtime-wizer = "47.0.3"
