@@ -1,10 +1,10 @@
 //! Instrumentation state to derive probe insertion.
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
+use wirm::Module;
 use wirm::ir::module::module_functions::{FuncKind, LocalFunction};
 use wirm::wasmparser::Operator;
-use wirm::Module;
 
 use crate::format;
 use crate::interpreter;
@@ -285,7 +285,7 @@ fn has_dispatch_br_table(local: &LocalFunction, threshold: u32) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use anyhow::{anyhow, Result};
+    use anyhow::{Result, anyhow};
 
     /// A wirm `Module` borrows the bytes it was parsed from, so tests hold the
     /// bytes and re-parse where they need to inspect the module.
