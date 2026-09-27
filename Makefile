@@ -1,5 +1,6 @@
 .PHONY: fmt fmt-check lint-wasi-targets lint-wasip1-targets lint-wasip2-targets \
 	test-wasi-targets test-wasip1-targets test-wasip2-targets wasi-targets \
+	check-native-feature-matrix \
 	lint-native-targets lint-native-targets-ci test-native-targets \
 	test-native-targets-ci native-targets test-wpt test-wpt-ci test-all \
 	clean cli build-default-plugin build-requested-feature-assets \
@@ -101,18 +102,31 @@ wasi-targets: lint-wasi-targets test-wasi-targets
 # === Lint & Test Native Targets ===
 lint-native-targets: build-default-plugin build-all-feature-assets lint-native-targets-ci
 
-lint-native-targets-ci: fmt-check
+lint-native-targets-ci: fmt-check check-native-feature-matrix
 	CARGO_PROFILE_RELEASE_LTO=off cargo clippy $(NATIVE_LINT_CRATES) \
 	--release --all-targets --all-features -- -D warnings
+
+# Peform a check of each native feature.
+#
+# Native tests are not feature dependent
+# NB this is deliberately native-only. The WASI crates do have
+# feature-dependent tests (see the cfg(feature) gates in
+# crates/javy/tests).
+check-native-feature-matrix:
+	CARGO_PROFILE_RELEASE_LTO=off cargo hack check $(NATIVE_LINT_CRATES) \
+	--release --all-targets --each-feature
 
 test-native-targets: build-default-plugin build-all-feature-assets build-test-plugins test-native-targets-ci
 
 # This command assumes a CI environment in which the test plugin
 # assets have been previously created in the expected directories.
 # This ensures that we can recycle CI time.
+#
+# Feature permutations are covered by check-native-feature-matrix, a
+# prerequisite of lint-native-targets-ci.
 test-native-targets-ci:
-	CARGO_PROFILE_RELEASE_LTO=off cargo hack test $(NATIVE_TEST_CRATES) \
-	--release --each-feature -- --nocapture
+	CARGO_PROFILE_RELEASE_LTO=off cargo test $(NATIVE_TEST_CRATES) \
+	--release --all-features -- --nocapture
 
 
 native-targets: lint-native-targets test-native-targets
