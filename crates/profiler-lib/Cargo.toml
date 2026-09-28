@@ -12,7 +12,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 anyhow = { workspace = true }
-walrus = { workspace = true }
+wirm = "4"
 
 [dev-dependencies]
 wat = "1"

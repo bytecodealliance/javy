@@ -2,15 +2,20 @@
 
 use anyhow::{Result, bail};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
-use walrus::ir::{BrTable, Visitor, dfs_in_order};
-use walrus::{FunctionId, FunctionKind, LocalFunction, ModuleConfig};
+use wirm::Module;
+use wirm::ir::module::module_functions::{FuncKind, LocalFunction};
+use wirm::wasmparser::Operator;
 
 use crate::format;
 use crate::interpreter;
 
-/// Threshold above which a `br_table` qualifies as the interpreter
-/// dispatch loop.
-pub const DISPATCH_TARGET_THRESHOLD: u32 = 250;
+/// Minimum number of *distinct* target blocks for a `br_table` to qualify as
+/// the interpreter's opcode dispatch.
+///
+/// QuickJS contains several switches over roughly the opcode space, and most of
+/// them also decode a byte out of a buffer, so neither table width nor
+/// byte-load provenance singles out the interpreter.
+pub const DISPATCH_DISTINCT_TARGETS: u32 = 100;
 
 pub struct State {
     /// Wasm function index, which contains a `br_table` with at least
@@ -30,54 +35,61 @@ pub struct State {
 impl State {
     /// Construct a `State` from the given Wasm bytes.
     pub fn from_bytes(bytes: &[u8]) -> Result<Self> {
-        Self::from_bytes_with_threshold(bytes, DISPATCH_TARGET_THRESHOLD)
+        Self::from_bytes_with_threshold(bytes, DISPATCH_DISTINCT_TARGETS)
     }
 
     /// Construct a `State` with a custom `br_table` target threshold.
     pub(crate) fn from_bytes_with_threshold(bytes: &[u8], threshold: u32) -> Result<Self> {
-        let module = ModuleConfig::new().parse(bytes)?;
+        let module = Module::parse(bytes, false, true)
+            .map_err(|e| anyhow::anyhow!("failed to parse the target module: {e:?}"))?;
 
-        let candidates: Vec<(u32, FunctionId)> = module
-            .funcs
-            .iter()
-            .enumerate()
-            .filter_map(|(idx, func)| match &func.kind {
-                FunctionKind::Local(local) if has_large_br_table(local, threshold) => {
-                    Some((idx as u32, func.id()))
-                }
-                _ => None,
-            })
-            .collect();
-
-        if candidates.len() != 1 {
-            bail!(
-                "Unexpected number of dispatch functions. Expected 1, found {}",
-                candidates.len()
-            );
+        let mut candidates: Vec<(u32, BTreeSet<u32>)> = vec![];
+        for local in local_functions(&module) {
+            if !has_dispatch_br_table(local, threshold) {
+                continue;
+            }
+            let loads = interpreter::analyze(&module, local, threshold)?;
+            if !loads.is_empty() {
+                candidates.push((local.func_id.0, loads));
+            }
         }
 
-        let (dispatch_func_idx, dispatch_func_id) = candidates[0];
-
-        let local = match &module.funcs.get(dispatch_func_id).kind {
-            FunctionKind::Local(l) => l,
-            // Mostly for completeness, this should not be possible,
-            // given the filtering above.
-            _ => unreachable!("filtered to local functions only"),
+        let (dispatch_func_idx, dispatch_loads) = match candidates.as_slice() {
+            [(idx, loads)] => (*idx, loads.clone()),
+            [] => bail!(
+                "No interpreter dispatch function found: no function contains a \
+                 `br_table` with at least {threshold} distinct targets whose \
+                 index is loaded from memory. Note that the dispatch loop lives \
+                 in the Javy plugin, so a dynamically linked module cannot be \
+                 instrumented; instrument the plugin instead."
+            ),
+            several => bail!(
+                "Ambiguous interpreter dispatch function: {} functions contain a \
+                 `br_table` with at least {threshold} distinct targets driven by \
+                 a byte load (function indices {:?}). Exactly one is expected.",
+                several.len(),
+                several.iter().map(|(idx, _)| *idx).collect::<Vec<_>>()
+            ),
         };
-        let dispatch_loads = interpreter::analyze(&module, local, threshold);
 
-        let countable_opcodes = module
-            .funcs
-            .iter()
-            .enumerate()
-            .filter_map(|(idx, func)| match &func.kind {
-                FunctionKind::Local(local) => {
-                    let pcs = interpreter::countable_opcodes(local);
-                    (!pcs.is_empty()).then_some((idx as u32, pcs))
-                }
-                _ => None,
-            })
-            .collect();
+        let dispatch = local_function(&module, dispatch_func_idx)?;
+        for &pc in &dispatch_loads {
+            let op = operator_at(dispatch, pc)?;
+            if !interpreter::is_byte_load(op) {
+                bail!(
+                    "internal error: pc {pc} of function {dispatch_func_idx} was \
+                     recorded as a dispatch load but holds {op:?}"
+                );
+            }
+        }
+
+        let mut countable_opcodes = HashMap::new();
+        for local in local_functions(&module) {
+            let pcs = interpreter::countable_opcodes(local)?;
+            if !pcs.is_empty() {
+                countable_opcodes.insert(local.func_id.0, pcs);
+            }
+        }
 
         Ok(Self {
             dispatch_func_idx,
@@ -220,283 +232,446 @@ impl Profiler {
     }
 }
 
-/// True iff `func` contains a `br_table` whose target list has at
-/// least `threshold` entries.
-fn has_large_br_table(func: &LocalFunction, threshold: u32) -> bool {
-    struct Detect {
-        threshold: u32,
-        found: bool,
-    }
-    impl<'instr> Visitor<'instr> for Detect {
-        fn visit_br_table(&mut self, br_table: &BrTable) {
-            if br_table.blocks.len() >= self.threshold as usize {
-                self.found = true;
-            }
+/// Every local (non-imported) function in the module, in Wasm index order.
+fn local_functions<'a, 'b>(module: &'a Module<'b>) -> impl Iterator<Item = &'a LocalFunction<'b>> {
+    module
+        .functions
+        .iter()
+        .filter_map(|func| match func.kind() {
+            FuncKind::Local(local) => Some(&**local),
+            FuncKind::Import(_) => None,
+        })
+}
+
+/// The local function at Wasm function index `idx`.
+fn local_function<'a, 'b>(module: &'a Module<'b>, idx: u32) -> Result<&'a LocalFunction<'b>> {
+    local_functions(module)
+        .find(|local| local.func_id.0 == idx)
+        .ok_or_else(|| anyhow::anyhow!("no local function at index {idx}"))
+}
+
+/// The operator whamm binds `pc` to in `local`.
+fn operator_at<'a, 'b>(local: &'a LocalFunction<'b>, pc: u32) -> Result<&'a Operator<'b>> {
+    for (idx, op) in local.body.instructions.get_ops().iter().enumerate() {
+        if interpreter::whamm_pc(local, idx)? == pc {
+            return Ok(op);
         }
     }
-    let mut d = Detect {
-        threshold,
-        found: false,
-    };
-    dfs_in_order(&mut d, func, func.entry_block());
-    d.found
+    Err(anyhow::anyhow!(
+        "no instruction at pc {pc} in function {}",
+        local.func_id.0
+    ))
+}
+
+/// The number of distinct target blocks a `br_table` reaches. Repeated targets
+/// are cases sharing a handler, so they say nothing about how many opcodes the
+/// switch really distinguishes.
+fn distinct_targets(targets: &wirm::wasmparser::BrTable) -> Result<usize> {
+    let depths: BTreeSet<u32> = targets.targets().collect::<Result<_, _>>()?;
+    Ok(depths.len())
+}
+
+/// True iff `local` contains a `br_table` with at least `threshold` distinct
+/// target blocks.
+fn has_dispatch_br_table(local: &LocalFunction, threshold: u32) -> bool {
+    local.body.instructions.get_ops().iter().any(|op| match op {
+        Operator::BrTable { targets } => {
+            distinct_targets(targets).is_ok_and(|n| n >= threshold as usize)
+        }
+        _ => false,
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use anyhow::{Result, anyhow};
-    use std::collections::HashMap;
-    use walrus::InstrLocId;
-    use walrus::Module;
-    use walrus::ir::Instr;
 
-    fn make(wat: &str, threshold: u32) -> Result<(Module, State)> {
+    /// A wirm `Module` borrows the bytes it was parsed from, so tests hold the
+    /// bytes and re-parse where they need to inspect the module.
+    fn make(wat: &str, threshold: u32) -> Result<(Vec<u8>, State)> {
         let bytes = wat::parse_str(wat)?;
-        let module = ModuleConfig::new().parse(&bytes)?;
         let state = State::from_bytes_with_threshold(&bytes, threshold)?;
-        Ok((module, state))
+        Ok((bytes, state))
     }
 
-    /// Map every instruction's byte offset to the corresponding
-    /// instruction in the function at index `fid`.
-    fn pc2instr(module: &Module, fid: u32) -> Result<HashMap<u32, Instr>> {
-        let func = module
-            .funcs
-            .iter()
-            .nth(fid as usize)
-            .ok_or_else(|| anyhow!("no function at index {fid}"))?;
-        let local = match &func.kind {
-            FunctionKind::Local(l) => l,
-            _ => bail!("function at index {fid} is not a local function"),
-        };
-
-        #[derive(Default)]
-        struct Collect {
-            map: HashMap<u32, Instr>,
-        }
-        impl<'i> Visitor<'i> for Collect {
-            fn visit_instr(&mut self, instr: &'i Instr, loc: &'i InstrLocId) {
-                self.map.insert(loc.data(), instr.clone());
-            }
-        }
-        let mut v = Collect::default();
-        dfs_in_order(&mut v, local, local.entry_block());
-        Ok(v.map)
+    fn parse(bytes: &[u8]) -> Result<Module<'_>> {
+        Module::parse(bytes, false, true).map_err(|e| anyhow!("failed to parse: {e:?}"))
     }
 
+    /// Opening blocks for a dispatch with `n` distinct handlers. Each nested
+    /// block is one branch target, so `br_table 0 1 .. n-1` reaches `n`
+    /// distinct blocks — the shape of a real interpreter dispatch, where every
+    /// opcode has its own handler.
+    fn dispatch_open(n: usize) -> String {
+        "(block ".repeat(n)
+    }
+
+    /// A `br_table` with `n` distinct targets. The trailing label is the
+    /// default, which reuses the innermost block.
     fn br_table(n: usize) -> String {
-        let labels = vec!["0"; n].join(" ");
+        let labels = (0..n).map(|i| i.to_string()).collect::<Vec<_>>().join(" ");
         format!("br_table {labels} 0")
     }
 
-    fn assert_all_byte_loads(module: &Module, state: &State) -> Result<()> {
-        let map = pc2instr(module, state.dispatch_func_idx)?;
+    fn dispatch_close(n: usize) -> String {
+        ")".repeat(n)
+    }
+
+    /// A module whose sole function dispatches on a byte through `n` distinct
+    /// handlers, with `body` executed before the table.
+    fn dispatch_module(n: usize, body: &str) -> String {
+        format!(
+            r#"
+            (module
+              (memory 1)
+              (func (param $p i32) (local $byte i32)
+                {open}
+                {body}
+                {table}
+                {close}))
+            "#,
+            open = dispatch_open(n),
+            table = br_table(n),
+            close = dispatch_close(n),
+        )
+    }
+
+    /// Repeated targets are cases sharing a handler, so they do not count.
+    #[test]
+    fn distinct_targets_ignores_repeats() -> Result<()> {
+        let shared = format!(
+            r#"
+            (module
+              (memory 1)
+              (func (param $p i32)
+                {open}
+                local.get $p
+                i32.load8_u
+                br_table 0 0 0 0 0
+                {close}))
+            "#,
+            open = dispatch_open(3),
+            close = dispatch_close(3),
+        );
+        let err = make(&shared, 3)
+            .err()
+            .expect("five cases sharing one block is not a dispatch");
+        assert!(
+            err.to_string().contains("No interpreter dispatch function"),
+            "unexpected error: {err}"
+        );
+        Ok(())
+    }
+
+    fn assert_all_byte_loads(bytes: &[u8], state: &State) -> Result<()> {
+        let module = parse(bytes)?;
+        let local = local_function(&module, state.dispatch_func_idx)?;
         for &pc in &state.dispatch_loads {
-            let instr = map
-                .get(&pc)
-                .ok_or_else(|| anyhow!("pc {pc} not found in function"))?;
-            match instr {
-                Instr::Load(l) => {
-                    if !interpreter::is_byte_load(l) {
-                        bail!("pc {pc} is a load but not a byte load: {:?}", l.kind);
-                    }
-                }
-                other => bail!("pc {pc} is {other:?}, not a load"),
+            let op = operator_at(local, pc)?;
+            if !interpreter::is_byte_load(op) {
+                bail!("pc {pc} is not a byte load: {op:?}");
             }
         }
+        Ok(())
+    }
+
+    /// whamm derives `pc` as wirm's body-relative offset plus one, and neither
+    /// half is documented — the bias lives in whamm's emitter, the base in
+    /// wirm's parser. This pins the base against an independent walk and states
+    /// the bias, so a change upstream shows up here rather than as a profiler
+    /// that silently records nothing.
+    #[test]
+    fn whamm_pc_is_body_relative_plus_one() -> Result<()> {
+        use wirm::wasmparser::{Parser, Payload};
+
+        let bytes = wat::parse_str(
+            r#"
+            (module
+              (memory 1)
+              (func (param $p i32) (local $l i32)
+                local.get $p
+                drop))
+            "#,
+        )?;
+
+        // Independently recover the coordinate from the raw binary.
+        let mut expected = None;
+        for payload in Parser::new(0).parse_all(&bytes) {
+            if let Payload::CodeSectionEntry(body) = payload? {
+                let locals_start = body
+                    .get_locals_reader()?
+                    .get_binary_reader()
+                    .original_position();
+                let (_, first_abs) = body
+                    .get_operators_reader()?
+                    .into_iter_with_offsets()
+                    .next()
+                    .ok_or_else(|| anyhow!("function has no instructions"))??;
+                expected = Some((first_abs - locals_start + 1) as u32);
+                break;
+            }
+        }
+        let expected = expected.ok_or_else(|| anyhow!("no code section"))?;
+
+        let module = parse(&bytes)?;
+        let local = local_function(&module, 0)?;
+        assert_eq!(
+            interpreter::whamm_pc(local, 0)?,
+            expected,
+            "pc must be the body-relative offset plus one"
+        );
         Ok(())
     }
 
     #[test]
     fn straight_line_load() -> Result<()> {
-        let wat = format!(
+        let wat = dispatch_module(
+            3,
             r#"
-            (module
-              (memory 1)
-              (func (param $p i32)
-                (block
-                  local.get $p
-                  i32.load8_u
-                  {br_table})))
+            local.get $p
+            i32.load8_u
             "#,
-            br_table = br_table(3)
         );
-        let (module, state) = make(&wat, 3)?;
+        let (bytes, state) = make(&wat, 3)?;
 
         assert!(state.is_dispatch_func(state.dispatch_func_idx));
         assert_eq!(state.dispatch_loads.len(), 1, "expected one dispatch load");
-        assert_all_byte_loads(&module, &state)?;
+        assert_all_byte_loads(&bytes, &state)?;
         Ok(())
     }
 
     #[test]
     fn provenance_survives_i32_and() -> Result<()> {
-        let wat = format!(
+        let wat = dispatch_module(
+            3,
             r#"
-            (module
-              (memory 1)
-              (func (param $p i32)
-                (block
-                  local.get $p
-                  i32.load8_u
-                  i32.const 0xff
-                  i32.and
-                  {br_table})))
+            local.get $p
+            i32.load8_u
+            i32.const 0xff
+            i32.and
             "#,
-            br_table = br_table(3)
         );
-        let (module, state) = make(&wat, 3)?;
+        let (bytes, state) = make(&wat, 3)?;
 
         assert_eq!(
             state.dispatch_loads.len(),
             1,
             "and must not drop provenance"
         );
-        assert_all_byte_loads(&module, &state)?;
+        assert_all_byte_loads(&bytes, &state)?;
         Ok(())
     }
 
     #[test]
     fn provenance_flows_through_local_roundtrip() -> Result<()> {
-        let wat = format!(
+        let wat = dispatch_module(
+            3,
             r#"
-            (module
-              (memory 1)
-              (func (param $p i32) (local $byte i32)
-                (block
-                  local.get $p
-                  i32.load8_u
-                  local.set $byte
-                  local.get $byte
-                  {br_table})))
+            local.get $p
+            i32.load8_u
+            local.set $byte
+            local.get $byte
             "#,
-            br_table = br_table(3)
         );
-        let (module, state) = make(&wat, 3)?;
+        let (bytes, state) = make(&wat, 3)?;
 
         assert_eq!(state.dispatch_loads.len(), 1);
-        assert_all_byte_loads(&module, &state)?;
+        assert_all_byte_loads(&bytes, &state)?;
         Ok(())
     }
 
     #[test]
     fn if_else_merge_collects_both_loads() -> Result<()> {
-        let wat = format!(
+        let wat = dispatch_module(
+            3,
             r#"
-            (module
-              (memory 1)
-              (func (param $p i32) (local $byte i32)
-                (block
-                  local.get $p
-                  i32.const 1
-                  i32.lt_s
-                  if
-                    local.get $p
-                    i32.load8_u offset=0
-                    local.set $byte
-                  else
-                    local.get $p
-                    i32.load8_u offset=4
-                    local.set $byte
-                  end
-                  local.get $byte
-                  {br_table})))
+            local.get $p
+            i32.const 1
+            i32.lt_s
+            if
+              local.get $p
+              i32.load8_u offset=0
+              local.set $byte
+            else
+              local.get $p
+              i32.load8_u offset=4
+              local.set $byte
+            end
+            local.get $byte
             "#,
-            br_table = br_table(3)
         );
-        let (module, state) = make(&wat, 3)?;
+        let (bytes, state) = make(&wat, 3)?;
 
         assert_eq!(state.dispatch_loads.len(), 2, "both loads must be recorded");
-        assert_all_byte_loads(&module, &state)?;
+        assert_all_byte_loads(&bytes, &state)?;
         Ok(())
     }
 
     #[test]
     fn conditional_value() -> Result<()> {
-        let wat = format!(
+        let wat = dispatch_module(
+            3,
             r#"
-            (module
-              (memory 1)
-              (func (param $p i32) (local $byte i32)
-                (block
-                  local.get $p
-                  i32.load8_u offset=0
-                  local.set $byte
-                  local.get $p
-                  i32.const 200
-                  i32.lt_s
-                  if
-                    local.get $p
-                    i32.load8_u offset=1
-                    local.set $byte
-                  end
-                  local.get $byte
-                  {br_table})))
+            local.get $p
+            i32.load8_u offset=0
+            local.set $byte
+            local.get $p
+            i32.const 200
+            i32.lt_s
+            if
+              local.get $p
+              i32.load8_u offset=1
+              local.set $byte
+            end
+            local.get $byte
             "#,
-            br_table = br_table(3)
         );
-        let (module, state) = make(&wat, 3)?;
+        let (bytes, state) = make(&wat, 3)?;
 
         assert_eq!(state.dispatch_loads.len(), 2);
-        assert_all_byte_loads(&module, &state)?;
+        assert_all_byte_loads(&bytes, &state)?;
         Ok(())
     }
 
+    /// A dispatch-shaped `br_table` fed by a full-width load is not decoding
+    /// opcodes, so a module containing only that has no dispatch function.
     #[test]
-    fn non_byte_load_is_not_recorded() -> Result<()> {
+    fn non_byte_load_is_not_a_dispatch() -> Result<()> {
+        let wat = dispatch_module(
+            3,
+            r#"
+            local.get $p
+            i32.load
+            "#,
+        );
+        let err = make(&wat, 3)
+            .err()
+            .expect("a non-byte-driven br_table is not a dispatch");
+        assert!(
+            err.to_string().contains("No interpreter dispatch function"),
+            "unexpected error: {err}"
+        );
+        Ok(())
+    }
+
+    /// Likewise for a `br_table` on a constant: nothing was loaded, so nothing
+    /// is being decoded.
+    #[test]
+    fn br_table_without_load_is_not_a_dispatch() -> Result<()> {
+        let wat = dispatch_module(3, "i32.const 0");
+        let err = make(&wat, 3)
+            .err()
+            .expect("a constant-index br_table is not a dispatch");
+        assert!(
+            err.to_string().contains("No interpreter dispatch function"),
+            "unexpected error: {err}"
+        );
+        Ok(())
+    }
+
+    /// Two byte-driven dispatches in one module is not something a Javy module
+    /// produces, and guessing between them would silently profile the wrong
+    /// function, so it is an error naming both.
+    #[test]
+    fn two_byte_driven_dispatches_are_ambiguous() -> Result<()> {
+        let func = format!(
+            r#"
+            (func (param $p i32)
+              {open}
+              local.get $p
+              i32.load8_u
+              {table}
+              {close})
+            "#,
+            open = dispatch_open(3),
+            table = br_table(3),
+            close = dispatch_close(3),
+        );
+        let wat = format!("(module (memory 1) {func} {func})");
+        let err = make(&wat, 3)
+            .err()
+            .expect("two dispatches must be an error");
+        let msg = err.to_string();
+        assert!(
+            msg.contains("Ambiguous interpreter dispatch function"),
+            "unexpected error: {msg}"
+        );
+        Ok(())
+    }
+
+    /// Width alone would pick the wrong function. Measured on a Javy module: a
+    /// 254-target switch collapsing onto 4 blocks sits alongside the
+    /// interpreter's 251-target, 225-block dispatch.
+    #[test]
+    fn wide_br_table_without_byte_load_provenance_is_not_a_candidate() -> Result<()> {
         let wat = format!(
             r#"
             (module
               (memory 1)
               (func (param $p i32)
-                (block
+                {open_wide}
                   local.get $p
                   i32.load
-                  {br_table})))
+                  {wide}
+                {close_wide})
+              (func (param $p i32)
+                {open_narrow}
+                  local.get $p
+                  i32.load8_u
+                  {narrow}
+                {close_narrow}))
             "#,
-            br_table = br_table(3)
+            open_wide = dispatch_open(6),
+            close_wide = dispatch_close(6),
+            open_narrow = dispatch_open(3),
+            close_narrow = dispatch_close(3),
+            // The impostor: a wider table, but its index is a full i32 load.
+            wide = br_table(6),
+            // The interpreter: byte-driven, and still over the threshold.
+            narrow = br_table(3)
         );
         let (_module, state) = make(&wat, 3)?;
 
-        assert!(
-            state.dispatch_loads.is_empty(),
-            "non-byte load must not be recorded"
+        assert_eq!(
+            state.dispatch_func_idx, 1,
+            "the byte-driven dispatcher must win over the wider non-byte one"
         );
         Ok(())
     }
 
     #[test]
-    fn br_table_without_load_is_empty() -> Result<()> {
-        let wat = format!(
-            r#"
+    fn no_candidate_is_an_error_that_mentions_dynamic_linking() -> Result<()> {
+        let wat = r#"
             (module
+              (memory 1)
               (func (param $p i32)
-                (block
-                  i32.const 0
-                  {br_table})))
-            "#,
-            br_table = br_table(3)
+                local.get $p
+                drop))
+        "#;
+        let err = make(wat, 3)
+            .err()
+            .expect("missing dispatch must be an error");
+        let msg = err.to_string();
+        assert!(
+            msg.contains("No interpreter dispatch function found"),
+            "unexpected error: {msg}"
         );
-        let (_module, state) = make(&wat, 3)?;
-
-        assert!(state.dispatch_loads.is_empty());
+        assert!(
+            msg.contains("dynamically linked"),
+            "the error should point at the dynamic-linking case: {msg}"
+        );
         Ok(())
     }
 
     #[test]
     fn correctly_identifies_dispatch_func() -> Result<()> {
-        let wat = format!(
+        let wat = dispatch_module(
+            3,
             r#"
-            (module
-              (memory 1)
-              (func (param $p i32)
-                (block
-                  local.get $p
-                  i32.load8_u
-                  {br_table})))
+            local.get $p
+            i32.load8_u
             "#,
-            br_table = br_table(3)
         );
         let (_module, state) = make(&wat, 3)?;
 
@@ -507,17 +682,12 @@ mod tests {
 
     #[test]
     fn dispatch_load_is_scoped_to_dispatch_func() -> Result<()> {
-        let wat = format!(
+        let wat = dispatch_module(
+            3,
             r#"
-            (module
-              (memory 1)
-              (func (param $p i32)
-                (block
-                  local.get $p
-                  i32.load8_u
-                  {br_table})))
+            local.get $p
+            i32.load8_u
             "#,
-            br_table = br_table(3)
         );
         let (_module, state) = make(&wat, 3)?;
 
