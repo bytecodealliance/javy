@@ -1807,7 +1807,7 @@ dependencies = [
  "tokio",
  "walrus",
  "wasm-opt",
- "wasmparser 0.258.0",
+ "wasmparser 0.259.0",
  "wasmprinter 0.258.0",
  "wasmtime 48.0.1",
  "wasmtime-wasi 48.0.1",
@@ -1855,7 +1855,7 @@ dependencies = [
  "tokio",
  "walrus",
  "wasm-opt",
- "wasmparser 0.258.0",
+ "wasmparser 0.259.0",
  "wasmtime 48.0.1",
  "wasmtime-wasi 48.0.1",
  "wasmtime-wizer",
@@ -1900,7 +1900,7 @@ dependencies = [
  "anyhow",
  "tempfile",
  "uuid",
- "wasmparser 0.258.0",
+ "wasmparser 0.259.0",
  "wasmtime 48.0.1",
  "wasmtime-wasi 48.0.1",
 ]
@@ -3734,7 +3734,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e974fe6821a8cf64575d51ea2194e2c8f77e7b66e9afe7419ce8a97f9ee0d251"
 dependencies = [
  "leb128fmt",
- "wasmparser 0.258.0",
+ "wasmparser 0.258.3",
 ]
 
 [[package]]
@@ -3780,7 +3780,7 @@ dependencies = [
  "anyhow",
  "indexmap",
  "wasm-encoder 0.258.0",
- "wasmparser 0.258.0",
+ "wasmparser 0.258.3",
 ]
 
 [[package]]
@@ -3901,15 +3901,14 @@ dependencies = [
 
 [[package]]
 name = "wasmparser"
-version = "0.258.0"
+version = "0.258.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9a61719f93a87b16d325921e251800c4833f8fab50fa21c7de73aed50086313"
+checksum = "fe9269dd817e0e7021bf534ccd9761bc2d64778b6708e41228b8439d75eaa0b1"
 dependencies = [
  "bitflags",
  "hashbrown 0.17.0",
  "indexmap",
  "semver",
- "serde",
 ]
 
 [[package]]
@@ -3919,8 +3918,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0f7c12eac7bb587801590f6a67ff0bc84d0748513864b71108e4b311cc3df694"
 dependencies = [
  "bitflags",
+ "hashbrown 0.17.0",
  "indexmap",
  "semver",
+ "serde",
 ]
 
 [[package]]
@@ -3953,7 +3954,7 @@ checksum = "3a65e30fb2cd3cc5cb7761a6064787b2abf017e6566d8d0dedf2bb7f55ad5383"
 dependencies = [
  "anyhow",
  "termcolor",
- "wasmparser 0.258.0",
+ "wasmparser 0.258.3",
 ]
 
 [[package]]
@@ -5099,7 +5100,7 @@ dependencies = [
  "serde_json",
  "wasm-encoder 0.258.0",
  "wasm-metadata 0.258.0",
- "wasmparser 0.258.0",
+ "wasmparser 0.258.3",
  "wit-parser 0.258.0",
 ]
 
@@ -5175,7 +5176,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "unicode-ident",
- "wasmparser 0.258.0",
+ "wasmparser 0.258.3",
 ]
 
 [[package]]
