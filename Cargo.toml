@@ -28,7 +28,7 @@ license = "Apache-2.0 WITH LLVM-exception"
 brotli = "8.0.3"
 clap = { version = "4.6.1", features = ["derive"] }
 deterministic-wasi-ctx = "=4.0.7"
-wasmtime = "48.0.1"
+wasmtime = "49.0.1"
 wasmtime-wasi = "48.0.1"
 wasmtime-wizer = "48.0.1"
 wasm-opt = "0.116.1"
