@@ -637,6 +637,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "cranelift-bforest"
+version = "0.136.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f4710c34489bc844e45c1c0005d3e44d3d2b29cee77187507ba8d0bb400c621f"
+dependencies = [
+ "cranelift-entity 0.136.1",
+ "wasmtime-internal-core 49.0.1",
+]
+
+[[package]]
 name = "cranelift-bitset"
 version = "0.134.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -656,6 +666,17 @@ dependencies = [
  "serde",
  "serde_derive",
  "wasmtime-internal-core 48.0.1",
+]
+
+[[package]]
+name = "cranelift-bitset"
+version = "0.136.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "76b63a4b0cfea80610150fffda11b1a9c3dc5a835403d9f381bf7d1a2874b4d7"
+dependencies = [
+ "serde",
+ "serde_derive",
+ "wasmtime-internal-core 49.0.1",
 ]
 
 [[package]]
@@ -798,6 +819,18 @@ dependencies = [
  "serde",
  "serde_derive",
  "wasmtime-internal-core 48.0.1",
+]
+
+[[package]]
+name = "cranelift-entity"
+version = "0.136.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e73c65538d460b1062cb9a97428ee6bb4b616f5cb17be3b3ac0a3e4f1f789166"
+dependencies = [
+ "cranelift-bitset 0.136.1",
+ "serde",
+ "serde_derive",
+ "wasmtime-internal-core 49.0.1",
 ]
 
 [[package]]
@@ -1789,7 +1822,7 @@ dependencies = [
  "tokio",
  "walrus",
  "wasmtime 48.0.1",
- "wasmtime-wasi 48.0.1",
+ "wasmtime-wasi 49.0.1",
  "wit-component 0.258.0",
 ]
 
@@ -1810,7 +1843,7 @@ dependencies = [
  "wasmparser 0.258.0",
  "wasmprinter 0.258.0",
  "wasmtime 48.0.1",
- "wasmtime-wasi 48.0.1",
+ "wasmtime-wasi 49.0.1",
  "wasmtime-wizer",
  "wit-parser 0.258.0",
 ]
@@ -1857,7 +1890,7 @@ dependencies = [
  "wasm-opt",
  "wasmparser 0.258.0",
  "wasmtime 48.0.1",
- "wasmtime-wasi 48.0.1",
+ "wasmtime-wasi 49.0.1",
  "wasmtime-wizer",
 ]
 
@@ -1868,7 +1901,7 @@ dependencies = [
  "anyhow",
  "javy-profiler-lib",
  "wasmtime 48.0.1",
- "wasmtime-wasi 48.0.1",
+ "wasmtime-wasi 49.0.1",
  "wasmtime-wizer",
  "whamm",
 ]
@@ -1902,7 +1935,7 @@ dependencies = [
  "uuid",
  "wasmparser 0.258.0",
  "wasmtime 48.0.1",
- "wasmtime-wasi 48.0.1",
+ "wasmtime-wasi 49.0.1",
 ]
 
 [[package]]
@@ -2199,6 +2232,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "object"
+version = "0.40.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd229a0361b9d0d4396176e02d65897f487eebeab7caa6d443855ee152ca0b9c"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
 name = "once_cell"
 version = "1.21.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2424,6 +2466,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "pulley-interpreter"
+version = "49.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0091857bc410bd7117eb6ac042ced7714c69f994a8b9c2ae30add2f73e3a25ac"
+dependencies = [
+ "cranelift-bitset 0.136.1",
+ "log",
+ "pulley-macros 49.0.1",
+ "wasmtime-internal-core 49.0.1",
+]
+
+[[package]]
 name = "pulley-macros"
 version = "47.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2439,6 +2493,17 @@ name = "pulley-macros"
 version = "48.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c7e69fa1c4a555946f82e7894a7df88b0e9ee03b4266829b4811467c616ce51d"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "pulley-macros"
+version = "49.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8798ebc6bf0ef227e204fa3fad05b04970599a85f456fd28365450fd679b2600"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3977,7 +4042,7 @@ dependencies = [
  "log",
  "mach2",
  "memfd",
- "object",
+ "object 0.39.1",
  "once_cell",
  "postcard",
  "pulley-interpreter 47.0.3",
@@ -4029,7 +4094,7 @@ dependencies = [
  "log",
  "mach2",
  "memfd",
- "object",
+ "object 0.39.1",
  "once_cell",
  "postcard",
  "pulley-interpreter 48.0.1",
@@ -4063,6 +4128,47 @@ dependencies = [
 ]
 
 [[package]]
+name = "wasmtime"
+version = "49.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "942ddd2fc5800ec01d4b11c28ad62ab00517dcd416aff728f7d73fddf75872c1"
+dependencies = [
+ "addr2line",
+ "async-trait",
+ "bitflags",
+ "bumpalo",
+ "bytes",
+ "cc",
+ "encoding_rs",
+ "futures",
+ "libc",
+ "log",
+ "mach2",
+ "memfd",
+ "object 0.40.0",
+ "once_cell",
+ "postcard",
+ "pulley-interpreter 49.0.1",
+ "rustix",
+ "semver",
+ "serde",
+ "serde_derive",
+ "smallvec",
+ "target-lexicon",
+ "wasmparser 0.258.0",
+ "wasmtime-environ 49.0.1",
+ "wasmtime-internal-component-macro 49.0.1",
+ "wasmtime-internal-component-util 49.0.1",
+ "wasmtime-internal-core 49.0.1",
+ "wasmtime-internal-fiber 49.0.1",
+ "wasmtime-internal-jit-debug 49.0.1",
+ "wasmtime-internal-jit-icache-coherence 49.0.1",
+ "wasmtime-internal-unwinder 49.0.1",
+ "wasmtime-internal-versioned-export-macros 49.0.1",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
 name = "wasmtime-environ"
 version = "47.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4077,7 +4183,7 @@ dependencies = [
  "hashbrown 0.17.0",
  "indexmap",
  "log",
- "object",
+ "object 0.39.1",
  "postcard",
  "rustc-demangle",
  "semver",
@@ -4108,7 +4214,7 @@ dependencies = [
  "hashbrown 0.17.0",
  "indexmap",
  "log",
- "object",
+ "object 0.39.1",
  "postcard",
  "rustc-demangle",
  "semver",
@@ -4122,6 +4228,35 @@ dependencies = [
  "wasmprinter 0.254.0",
  "wasmtime-internal-component-util 48.0.1",
  "wasmtime-internal-core 48.0.1",
+]
+
+[[package]]
+name = "wasmtime-environ"
+version = "49.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "98f2ca21b23a51c1b1944297e9671a628c368e92aa6250e4c38f48e2dc251f0c"
+dependencies = [
+ "anyhow",
+ "cpp_demangle",
+ "cranelift-bforest 0.136.1",
+ "cranelift-bitset 0.136.1",
+ "cranelift-entity 0.136.1",
+ "gimli 0.33.0",
+ "hashbrown 0.17.0",
+ "indexmap",
+ "log",
+ "object 0.40.0",
+ "postcard",
+ "rustc-demangle",
+ "semver",
+ "serde",
+ "serde_derive",
+ "sha2",
+ "smallvec",
+ "target-lexicon",
+ "wasmparser 0.258.0",
+ "wasmtime-internal-component-util 49.0.1",
+ "wasmtime-internal-core 49.0.1",
 ]
 
 [[package]]
@@ -4195,6 +4330,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "wasmtime-internal-component-macro"
+version = "49.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "92c42f95d879875994319bd6689b17570e68aebd1a17e0dc54430928ed0699b5"
+dependencies = [
+ "anyhow",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+ "wasmtime-internal-component-util 49.0.1",
+ "wasmtime-internal-wit-bindgen 49.0.1",
+ "wit-parser 0.258.0",
+]
+
+[[package]]
 name = "wasmtime-internal-component-util"
 version = "47.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4205,6 +4355,12 @@ name = "wasmtime-internal-component-util"
 version = "48.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2c0fe8292115fda08875f29064ae9f7f0b2c1ffbb323146eae538ae34b8a613f"
+
+[[package]]
+name = "wasmtime-internal-component-util"
+version = "49.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "294c7f12f062ceb148cd26c77170ff739552db76d1f203f6127f249684988a70"
 
 [[package]]
 name = "wasmtime-internal-core"
@@ -4231,6 +4387,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "wasmtime-internal-core"
+version = "49.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "64b67114739063bb72bb8ed2b4994b8b22809d354432db68553ad529850f9536"
+dependencies = [
+ "hashbrown 0.17.0",
+ "libm",
+ "serde",
+]
+
+[[package]]
 name = "wasmtime-internal-cranelift"
 version = "47.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4245,7 +4412,7 @@ dependencies = [
  "gimli 0.33.0",
  "itertools 0.14.0",
  "log",
- "object",
+ "object 0.39.1",
  "pulley-interpreter 47.0.3",
  "smallvec",
  "target-lexicon",
@@ -4271,7 +4438,7 @@ dependencies = [
  "gimli 0.33.0",
  "itertools 0.14.0",
  "log",
- "object",
+ "object 0.39.1",
  "pulley-interpreter 48.0.1",
  "smallvec",
  "target-lexicon",
@@ -4313,13 +4480,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "wasmtime-internal-fiber"
+version = "49.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4f1999aee268c3f625666b12ba0ded55a6ac2c800b60b426af7d164d63411908"
+dependencies = [
+ "cc",
+ "libc",
+ "rustix",
+ "wasmtime-environ 49.0.1",
+ "wasmtime-internal-versioned-export-macros 49.0.1",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
 name = "wasmtime-internal-jit-debug"
 version = "47.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed621ba25d7bf78b7edd7b4749abbb27c2e5cdba836c9504a424ee74b6c23149"
 dependencies = [
  "cc",
- "object",
+ "object 0.39.1",
  "rustix",
  "wasmtime-internal-versioned-export-macros 47.0.3",
 ]
@@ -4331,9 +4512,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "365faed74827bb0116785bab5872372df1baaec9ec0003c83bc99ccdc595f689"
 dependencies = [
  "cc",
- "object",
+ "object 0.39.1",
  "rustix",
  "wasmtime-internal-versioned-export-macros 48.0.1",
+]
+
+[[package]]
+name = "wasmtime-internal-jit-debug"
+version = "49.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "33ca2499301c6f11cc9eb42c2beafc8efae396ae4cb91077e3ac080dc5d765e4"
+dependencies = [
+ "cc",
+ "wasmtime-internal-versioned-export-macros 49.0.1",
 ]
 
 [[package]]
@@ -4360,6 +4551,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "wasmtime-internal-jit-icache-coherence"
+version = "49.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7162d829c56265e183d23b17d67afc5c6876433daaed54c137388a8078a1bb6b"
+dependencies = [
+ "libc",
+ "wasmtime-internal-core 49.0.1",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
 name = "wasmtime-internal-unwinder"
 version = "47.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4368,7 +4570,7 @@ dependencies = [
  "cfg-if",
  "cranelift-codegen 0.134.3",
  "log",
- "object",
+ "object 0.39.1",
  "wasmtime-environ 47.0.3",
 ]
 
@@ -4380,8 +4582,19 @@ checksum = "a1fdea09d51e39c774984ca68a7d7486767e5b2935f5e686fa654aabcfc3c42d"
 dependencies = [
  "cranelift-codegen 0.135.1",
  "log",
- "object",
+ "object 0.39.1",
  "wasmtime-environ 48.0.1",
+]
+
+[[package]]
+name = "wasmtime-internal-unwinder"
+version = "49.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4e167cf144f3cee40838f7663e3a589f93bba65151efa084a2d58b2bd47469f1"
+dependencies = [
+ "log",
+ "object 0.40.0",
+ "wasmtime-environ 49.0.1",
 ]
 
 [[package]]
@@ -4400,6 +4613,17 @@ name = "wasmtime-internal-versioned-export-macros"
 version = "48.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97e48a5f514c38c2f74249724cb3501e45548d3311ca9e3881694859fd6ba116"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "wasmtime-internal-versioned-export-macros"
+version = "49.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8d09e038ad69c741dae29da4606ccfc0df66f156e62cb7f0664c8d7d1272a36d"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4431,6 +4655,20 @@ dependencies = [
  "indexmap",
  "wit-component 0.254.0",
  "wit-parser 0.254.0",
+]
+
+[[package]]
+name = "wasmtime-internal-wit-bindgen"
+version = "49.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c63d97a742fc9b415dad7ed2ac33ddb8fe6c5413fcd0c7ee58907f2ab6f9a430"
+dependencies = [
+ "anyhow",
+ "bitflags",
+ "heck 0.5.0",
+ "indexmap",
+ "wit-component 0.258.0",
+ "wit-parser 0.258.0",
 ]
 
 [[package]]
@@ -4484,6 +4722,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "wasmtime-wasi"
+version = "49.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ce11727cb331abeaace3681a4b072e4fe04818d7b99786d183b318671f9e4e0e"
+dependencies = [
+ "async-trait",
+ "bitflags",
+ "bytes",
+ "cap-primitives 4.0.3",
+ "futures",
+ "rand 0.10.1",
+ "rustix",
+ "rustix-linux-procfs",
+ "thiserror 2.0.17",
+ "tokio",
+ "tracing",
+ "url",
+ "wasmtime 49.0.1",
+ "wasmtime-wasi-io 49.0.1",
+ "wiggle 49.0.1",
+ "windows-sys 0.61.2",
+ "winx",
+]
+
+[[package]]
 name = "wasmtime-wasi-io"
 version = "47.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4507,6 +4770,19 @@ dependencies = [
  "futures",
  "tracing",
  "wasmtime 48.0.1",
+]
+
+[[package]]
+name = "wasmtime-wasi-io"
+version = "49.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "35f5ed8d710d8daf71cb4742c6b90c1fd121acb62b6848556eb4e0661cbd28bd"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "futures",
+ "tracing",
+ "wasmtime 49.0.1",
 ]
 
 [[package]]
@@ -4608,6 +4884,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "wiggle"
+version = "49.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3dfb96da9ecf96621fee71a01916ca99038cc8f212cd19a8923fb32c36060477"
+dependencies = [
+ "bitflags",
+ "thiserror 2.0.17",
+ "tracing",
+ "wasmtime 49.0.1",
+ "wasmtime-environ 49.0.1",
+ "wiggle-macro 49.0.1",
+]
+
+[[package]]
 name = "wiggle-generate"
 version = "47.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4636,6 +4926,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "wiggle-generate"
+version = "49.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba7cbdab1c5fa79f98a96c3b0b02b81f83585a4cdc3ce1d2744e6cfa2aef333b"
+dependencies = [
+ "heck 0.5.0",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+ "wasmtime-environ 49.0.1",
+ "witx",
+]
+
+[[package]]
 name = "wiggle-macro"
 version = "47.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4657,6 +4961,18 @@ dependencies = [
  "quote",
  "syn 2.0.119",
  "wiggle-generate 48.0.1",
+]
+
+[[package]]
+name = "wiggle-macro"
+version = "49.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "daa97f5b7ad6ace3254b6bec1f82ef53f7c49c4cf5f117fad4171acc15fd6ff0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+ "wiggle-generate 49.0.1",
 ]
 
 [[package]]
