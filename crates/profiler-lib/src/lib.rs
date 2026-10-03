@@ -106,14 +106,13 @@ pub extern "C" fn is_countable_opcode(fid: u32, pc: u32) -> bool {
     state().is_countable_opcode(fid, pc)
 }
 
-/// Flush the profiler results into a buffer.
+/// Flush the profiler results into a buffer. Called by the host once
+/// the profiled execution has finished.
 #[unsafe(no_mangle)]
 pub extern "C" fn report() {
     with_profiler(|p| p.report());
 }
 
-// TODO: Validate that `report` must run exactly once per profile
-// invocation.
 /// Linear-memory offset of the serialized report buffer.
 #[unsafe(no_mangle)]
 pub extern "C" fn report_ptr() -> u32 {

@@ -39,8 +39,3 @@ wasm:opcode:*load*:before / expect_first_load && @static {{LIBRARY_NAME}}.is_dis
     {{LIBRARY_NAME}}.set_func_addr(effective_addr as i32);
     expect_first_load = false;
 }
-
-wasm:func:exit / fname == "_start" / {
-    // At program exit emit the single, whole-execution report.
-    {{LIBRARY_NAME}}.report();
-}
