@@ -64,7 +64,7 @@ async fn main() -> Result<()> {
             Ok(())
         }
         #[cfg(feature = "profiler")]
-        Command::Profile(cmd) => profiler::run(cmd).await,
+        Command::Profile(opts) => profiler::run(opts).await,
         Command::InitPlugin(opts) => {
             let plugin_bytes = fs::read(&opts.plugin)?;
             let uninitialized_plugin = UninitializedPlugin::new(&plugin_bytes)?;
