@@ -1,18 +1,18 @@
 //! Javy's profiler entrypoint.
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use javy_profiler_lib::monitor;
 use wasmtime::{Engine, Linker, Module, Store};
-use wasmtime_wasi::{p2::pipe::MemoryInputPipe, I32Exit, WasiCtxBuilder};
+use wasmtime_wasi::{I32Exit, WasiCtxBuilder, p2::pipe::MemoryInputPipe};
 use wasmtime_wizer::Wizer;
-use whamm::api::instrument::{instrument_with_rewriting, UserLibs};
+use whamm::api::instrument::{UserLibs, instrument_with_rewriting};
 
 /// The profiler state library.
 const PROFILER_LIB_MODULE: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/profiler_lib.wasm"));
 
+use javy_profiler_lib::LIBRARY_NAME;
 /// Re-export of the profiler library's report encoding.
 pub use javy_profiler_lib::format;
-use javy_profiler_lib::LIBRARY_NAME;
 
 /// Export invoked by default: a WASI command module's entry function.
 pub const DEFAULT_INVOKE: &str = "_start";
@@ -103,10 +103,10 @@ async fn run(output: &ProfileOutput, invoke: &str) -> Result<Vec<u8>> {
     linker.define_unknown_imports_as_default_values(&mut store, &app)?;
     let app = linker.instantiate_async(&mut store, &app).await?;
     let func = app.get_typed_func::<(), ()>(&mut store, invoke)?;
-    if let Err(e) = func.call_async(&mut store, ()).await {
-        if e.downcast_ref::<I32Exit>().is_none() {
-            return Err(e.into());
-        }
+    if let Err(e) = func.call_async(&mut store, ()).await
+        && e.downcast_ref::<I32Exit>().is_none()
+    {
+        return Err(e.into());
     }
 
     let report = state_lib.get_typed_func::<(), ()>(&mut store, "report")?;
