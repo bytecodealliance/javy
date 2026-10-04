@@ -7,13 +7,13 @@
 //! report is already in whamm's `pc` coordinate. THIS IS FRAGILE, since using
 //! any other library will result in `pc` coordinates not matching.
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use std::collections::{BTreeSet, HashMap};
+use wirm::Module;
 use wirm::ir::id::{FunctionID, TypeID};
 use wirm::ir::module::module_functions::{FuncKind, LocalFunction};
 use wirm::ir::module::module_types::Types;
 use wirm::wasmparser::Operator;
-use wirm::Module;
 
 /// whamm reports `pc` as wirm's function body-relative instruction offset plus
 /// one, to match Wizard's convention of pointing just past the opcode. See

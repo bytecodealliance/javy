@@ -90,8 +90,9 @@ fn test_profile() -> Result<()> {
     // Records are keyed by the QuickJS opcode itself. `console.log(...)`
     // must show up as the opcodes it compiles to; an off-by-one or
     // rebased key would miss them.
-    let opcodes: Vec<u32> = trace[REPORT_HEADER_LEN..]
-        .chunks_exact(REPORT_RECORD_LEN)
+    let (records_bytes, _) = trace[REPORT_HEADER_LEN..].as_chunks::<REPORT_RECORD_LEN>();
+    let opcodes: Vec<u32> = records_bytes
+        .iter()
         .map(|r| u32::from_le_bytes(r[4..8].try_into().unwrap()))
         .collect();
     for (name, opcode) in [
