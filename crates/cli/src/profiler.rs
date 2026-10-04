@@ -67,12 +67,12 @@ pub async fn run(opts: &ProfileOpts) -> Result<()> {
     // TODO: Symbolize records into JS function names. Until then, list
     // the raw records, hottest first.
     records.sort_by_key(|r| std::cmp::Reverse(r.count));
-    let mut profile = format!("{:>10}  {:>6}  {:>12}\n", "func_addr", "target", "count");
+    let mut profile = format!("{:>10}  {:>6}  {:>12}\n", "func_addr", "opcode", "count");
     for r in &records {
         writeln!(
             profile,
             "{:#010x}  {:>6}  {:>12}",
-            r.func_addr, r.target, r.count
+            r.func_addr, r.opcode, r.count
         )?;
     }
     fs::write(&opts.output, profile)?;

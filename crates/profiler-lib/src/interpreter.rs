@@ -7,13 +7,13 @@
 //! report is already in whamm's `pc` coordinate. THIS IS FRAGILE, since using
 //! any other library will result in `pc` coordinates not matching.
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use std::collections::{BTreeSet, HashMap};
-use wirm::Module;
 use wirm::ir::id::{FunctionID, TypeID};
 use wirm::ir::module::module_functions::{FuncKind, LocalFunction};
 use wirm::ir::module::module_types::Types;
 use wirm::wasmparser::Operator;
+use wirm::Module;
 
 /// whamm reports `pc` as wirm's function body-relative instruction offset plus
 /// one, to match Wizard's convention of pointing just past the opcode. See
@@ -173,14 +173,10 @@ fn is_structural(op: &Operator) -> bool {
     )
 }
 
+/// Whether `op` is a byte load that can feed the dispatch. Only the `i32`
+/// qualify.
 pub(crate) fn is_byte_load(op: &Operator) -> bool {
-    matches!(
-        op,
-        Operator::I32Load8U { .. }
-            | Operator::I32Load8S { .. }
-            | Operator::I64Load8U { .. }
-            | Operator::I64Load8S { .. }
-    )
+    matches!(op, Operator::I32Load8U { .. } | Operator::I32Load8S { .. })
 }
 
 fn is_load(op: &Operator) -> bool {

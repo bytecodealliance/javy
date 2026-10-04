@@ -7,9 +7,9 @@
 //! magic   : b"JPRF"   (4 bytes)
 //! version : u8        (== VERSION)
 //! records : u32       (number of records that follow)
-//! record[] :          (16 bytes each, ordered by (func_addr, target))
+//! record[] :          (16 bytes each, ordered by (func_addr, opcode))
 //!   func_addr : u32
-//!   target    : u32
+//!   opcode    : u32
 //!   count     : u64
 //! ```
 
@@ -20,13 +20,13 @@ const VERSION: u8 = 1;
 const HEADER_LEN: usize = MAGIC.len() + size_of::<u8>() + size_of::<u32>();
 const RECORD_LEN: usize = size_of::<u32>() + size_of::<u32>() + size_of::<u64>();
 
-/// A single `(func_addr, target) -> count` report entry.
+/// A single `(func_addr, opcode) -> count` report entry.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Record {
     /// QuickJS bytecode buffer start address, identifying the JS function.
     pub func_addr: u32,
-    /// The `br_table` target, i.e. the QuickJS opcode.
-    pub target: u32,
+    /// The QuickJS opcode, i.e. the byte read by the dispatch load.
+    pub opcode: u32,
     /// Total countable Wasm instructions attributed to that opcode.
     pub count: u64,
 }
@@ -42,7 +42,7 @@ where
     out.extend_from_slice(&(records.len() as u32).to_le_bytes());
     for r in records {
         out.extend_from_slice(&r.func_addr.to_le_bytes());
-        out.extend_from_slice(&r.target.to_le_bytes());
+        out.extend_from_slice(&r.opcode.to_le_bytes());
         out.extend_from_slice(&r.count.to_le_bytes());
     }
     out
@@ -74,7 +74,7 @@ pub fn read(bytes: &[u8]) -> Result<Vec<Record>> {
         .iter()
         .map(|c| Record {
             func_addr: u32::from_le_bytes(c[0..4].try_into().unwrap()),
-            target: u32::from_le_bytes(c[4..8].try_into().unwrap()),
+            opcode: u32::from_le_bytes(c[4..8].try_into().unwrap()),
             count: u64::from_le_bytes(c[8..16].try_into().unwrap()),
         })
         .collect();
@@ -91,12 +91,12 @@ mod tests {
         let records = vec![
             Record {
                 func_addr: 0x1000,
-                target: 5,
+                opcode: 5,
                 count: 3,
             },
             Record {
                 func_addr: 0x1000,
-                target: 7,
+                opcode: 7,
                 count: 5,
             },
         ];
@@ -121,7 +121,7 @@ mod tests {
     fn rejects_truncated_body() {
         let bytes = write(std::iter::once(Record {
             func_addr: 1,
-            target: 2,
+            opcode: 2,
             count: 3,
         }));
         assert!(read(&bytes[..bytes.len() - 1]).is_err());

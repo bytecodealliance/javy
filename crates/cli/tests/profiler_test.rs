@@ -13,6 +13,11 @@ const REPORT_MAGIC: &[u8; 4] = b"JPRF";
 const REPORT_HEADER_LEN: usize = 9;
 const REPORT_RECORD_LEN: usize = 16;
 
+// QuickJS opcode numbers, from the order of `DEF`s in `quickjs-opcode.h`.
+const OP_CALL_METHOD: u32 = 36;
+const OP_GET_VAR: u32 = 56;
+const OP_GET_FIELD2: u32 = 65;
+
 fn javy(args: &[&str], cwd: &Path) -> Result<Output> {
     Ok(Command::new(env!("CARGO_BIN_EXE_javy"))
         .current_dir(cwd)
@@ -81,6 +86,24 @@ fn test_profile() -> Result<()> {
         trace.len(),
         "trace length does not match its record count"
     );
+
+    // Records are keyed by the QuickJS opcode itself. `console.log(...)`
+    // must show up as the opcodes it compiles to; an off-by-one or
+    // rebased key would miss them.
+    let opcodes: Vec<u32> = trace[REPORT_HEADER_LEN..]
+        .chunks_exact(REPORT_RECORD_LEN)
+        .map(|r| u32::from_le_bytes(r[4..8].try_into().unwrap()))
+        .collect();
+    for (name, opcode) in [
+        ("OP_call_method", OP_CALL_METHOD),
+        ("OP_get_var", OP_GET_VAR),
+        ("OP_get_field2", OP_GET_FIELD2),
+    ] {
+        assert!(
+            opcodes.contains(&opcode),
+            "{name} ({opcode}) missing from {opcodes:?}"
+        );
+    }
 
     // One line per record, plus the column headings.
     let profile = fs::read_to_string(dir.path().join("profile.txt"))?;
