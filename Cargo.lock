@@ -1879,7 +1879,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "wat",
- "wirm",
+ "wirm 5.0.1",
 ]
 
 [[package]]
@@ -4598,7 +4598,7 @@ dependencies = [
  "wasmtime 47.0.3",
  "wasmtime-wasi 47.0.3",
  "wat",
- "wirm",
+ "wirm 4.0.6",
 ]
 
 [[package]]
@@ -4951,6 +4951,18 @@ name = "wirm"
 version = "4.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3398cfb47e9ac60f209294450b58f9577ba3019e299da09e9b1efeeba726930a"
+dependencies = [
+ "log",
+ "paste",
+ "wasm-encoder 0.247.0",
+ "wasmparser 0.247.0",
+]
+
+[[package]]
+name = "wirm"
+version = "5.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a2285df100cab99d5841211d0fc03affcebfb6debf650410838329bb0736df4"
 dependencies = [
  "log",
  "paste",
