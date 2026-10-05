@@ -85,11 +85,11 @@ pub extern "C" fn exit_func(instruction_count: i64) {
     with_profiler(|p| p.exit_func(instruction_count as u64));
 }
 
-/// Switch to the dispatch `br_table` target, closing out the previous
-/// opcode with the instruction count at this point.
+/// Switch to `opcode`, the byte read by the dispatch load, closing out
+/// the previous opcode with the instruction count at this point.
 #[unsafe(no_mangle)]
-pub extern "C" fn set_dispatch_target(target: u32, instruction_count: i64) {
-    with_profiler(|p| p.set_dispatch_target(target, instruction_count as u64));
+pub extern "C" fn set_opcode(opcode: u32, instruction_count: i64) {
+    with_profiler(|p| p.set_opcode(opcode, instruction_count as u64));
 }
 
 /// Set the effective address (i.e., the start address) of the current
@@ -106,14 +106,13 @@ pub extern "C" fn is_countable_opcode(fid: u32, pc: u32) -> bool {
     state().is_countable_opcode(fid, pc)
 }
 
-/// Flush the profiler results into a buffer.
+/// Flush the profiler results into a buffer. Called by the host once
+/// the profiled execution has finished.
 #[unsafe(no_mangle)]
 pub extern "C" fn report() {
     with_profiler(|p| p.report());
 }
 
-// TODO: Validate that `report` must run exactly once per profile
-// invocation.
 /// Linear-memory offset of the serialized report buffer.
 #[unsafe(no_mangle)]
 pub extern "C" fn report_ptr() -> u32 {

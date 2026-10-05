@@ -173,14 +173,10 @@ fn is_structural(op: &Operator) -> bool {
     )
 }
 
+/// Whether `op` is a byte load that can feed the dispatch. Only the `i32`
+/// qualify.
 pub(crate) fn is_byte_load(op: &Operator) -> bool {
-    matches!(
-        op,
-        Operator::I32Load8U { .. }
-            | Operator::I32Load8S { .. }
-            | Operator::I64Load8U { .. }
-            | Operator::I64Load8S { .. }
-    )
+    matches!(op, Operator::I32Load8U { .. } | Operator::I32Load8S { .. })
 }
 
 fn is_load(op: &Operator) -> bool {

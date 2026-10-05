@@ -121,7 +121,7 @@ impl State {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-struct DispatchTarget(u32);
+struct Opcode(u32);
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct FuncAddr(u32);
 
@@ -148,12 +148,12 @@ struct Frame {
 pub struct Profiler {
     /// JS function frames.
     stack: Vec<Frame>,
-    /// The current dispatch target scope.
-    current: Option<(FuncAddr, DispatchTarget)>,
-    /// Instruction count belonging to the last dispatch target.
+    /// The function and opcode currently being attributed to.
+    current: Option<(FuncAddr, Opcode)>,
+    /// Instruction count at the last opcode switch.
     last_instruction_count: u64,
-    /// Per-function-and-dispatch target count.
-    counts: BTreeMap<(FuncAddr, DispatchTarget), u64>,
+    /// Per-function-and-opcode count.
+    counts: BTreeMap<(FuncAddr, Opcode), u64>,
     /// Serialized counts report.
     report: Vec<u8>,
 }
@@ -183,12 +183,12 @@ impl Profiler {
         }
     }
 
-    /// Switch the dispatch target to `target` (the QuickJS opcode whose
-    /// handler is about to run). This also closes out the opcode that was
-    /// running, charging it the instructions executed since the previous
-    /// switch. `instruction_count` is the running count of executed
-    /// countable Wasm instructions.
-    pub fn set_dispatch_target(&mut self, target: u32, instruction_count: u64) {
+    /// Switch to `opcode`, the QuickJS opcode whose handler is about to
+    /// run. This also closes out the opcode that was running, charging it
+    /// the instructions executed since the previous switch.
+    /// `instruction_count` is the running count of executed countable
+    /// Wasm instructions.
+    pub fn set_opcode(&mut self, opcode: u32, instruction_count: u64) {
         // Close out the opcode that just finished.
         if let Some(key) = self.current {
             *self.counts.entry(key).or_default() +=
@@ -198,7 +198,7 @@ impl Profiler {
 
         // Begin attributing to the opcode being dispatched.
         if let Some(addr) = self.stack.last().and_then(|frame| frame.func_addr) {
-            self.current = Some((addr, DispatchTarget(target)));
+            self.current = Some((addr, Opcode(opcode)));
         }
     }
 
@@ -218,9 +218,9 @@ impl Profiler {
             format::write(
                 self.counts
                     .iter()
-                    .map(|(&(addr, target), &count)| format::Record {
+                    .map(|(&(addr, opcode), &count)| format::Record {
                         func_addr: addr.0,
-                        target: target.0,
+                        opcode: opcode.0,
                         count,
                     }),
             );
@@ -438,6 +438,26 @@ mod tests {
         assert!(state.is_dispatch_func(state.dispatch_func_idx));
         assert_eq!(state.dispatch_loads.len(), 1, "expected one dispatch load");
         assert_all_byte_loads(&bytes, &state)?;
+        Ok(())
+    }
+
+    #[test]
+    fn i64_dispatch_load_is_not_a_candidate() -> Result<()> {
+        let wat = dispatch_module(
+            3,
+            r#"
+            local.get $p
+            i64.load8_u
+            i32.wrap_i64
+            "#,
+        );
+        let err = make(&wat, 3)
+            .err()
+            .expect("an i64 byte load does not drive a dispatch");
+        assert!(
+            err.to_string().contains("No interpreter dispatch function"),
+            "unexpected error: {err}"
+        );
         Ok(())
     }
 
@@ -698,32 +718,32 @@ mod tests {
     }
 
     #[test]
-    fn set_dispatch_target_attributes_deltas_per_opcode() {
+    fn set_opcode_attributes_deltas_per_opcode() {
         let mut p = Profiler::new();
         p.start_func();
         p.set_func_addr(0x1000);
 
-        p.set_dispatch_target(5, 0);
-        p.set_dispatch_target(7, 3);
-        p.set_dispatch_target(5, 8);
+        p.set_opcode(5, 0);
+        p.set_opcode(7, 3);
+        p.set_opcode(5, 8);
         p.exit_func(12);
 
         let f = FuncAddr(0x1000);
-        assert_eq!(p.counts.get(&(f, DispatchTarget(5))), Some(&7)); // 3 + 4
-        assert_eq!(p.counts.get(&(f, DispatchTarget(7))), Some(&5));
+        assert_eq!(p.counts.get(&(f, Opcode(5))), Some(&7)); // 3 + 4
+        assert_eq!(p.counts.get(&(f, Opcode(7))), Some(&5));
         assert_eq!(p.counts.len(), 2);
     }
 
     #[test]
-    fn first_dispatch_target_charges_nothing() {
+    fn first_opcode_charges_nothing() {
         let mut p = Profiler::new();
         p.start_func();
         p.set_func_addr(0x10);
-        p.set_dispatch_target(0, 5);
+        p.set_opcode(0, 5);
         assert!(p.counts.is_empty());
 
-        p.set_dispatch_target(1, 8);
-        assert_eq!(p.counts.get(&(FuncAddr(0x10), DispatchTarget(0))), Some(&3));
+        p.set_opcode(1, 8);
+        assert_eq!(p.counts.get(&(FuncAddr(0x10), Opcode(0))), Some(&3));
     }
 
     #[test]
@@ -731,30 +751,21 @@ mod tests {
         let mut p = Profiler::new();
         p.start_func();
         p.set_func_addr(0xA00);
-        p.set_dispatch_target(1, 0);
+        p.set_opcode(1, 0);
 
         // Nested call.
         p.start_func();
         p.set_func_addr(0xB00);
-        p.set_dispatch_target(2, 10);
+        p.set_opcode(2, 10);
         p.exit_func(13);
 
         // Back to the parent function call.
-        p.set_dispatch_target(3, 15);
+        p.set_opcode(3, 15);
         p.exit_func(20);
 
-        assert_eq!(
-            p.counts.get(&(FuncAddr(0xA00), DispatchTarget(1))),
-            Some(&10)
-        );
-        assert_eq!(
-            p.counts.get(&(FuncAddr(0xB00), DispatchTarget(2))),
-            Some(&5)
-        );
-        assert_eq!(
-            p.counts.get(&(FuncAddr(0xA00), DispatchTarget(3))),
-            Some(&5)
-        );
+        assert_eq!(p.counts.get(&(FuncAddr(0xA00), Opcode(1))), Some(&10));
+        assert_eq!(p.counts.get(&(FuncAddr(0xB00), Opcode(2))), Some(&5));
+        assert_eq!(p.counts.get(&(FuncAddr(0xA00), Opcode(3))), Some(&5));
     }
 
     #[test]
@@ -762,8 +773,8 @@ mod tests {
         let mut p = Profiler::new();
         p.start_func();
         p.set_func_addr(0x1000);
-        p.set_dispatch_target(7, 0);
-        p.set_dispatch_target(5, 5);
+        p.set_opcode(7, 0);
+        p.set_opcode(5, 5);
         p.exit_func(8);
 
         p.report();
@@ -774,12 +785,12 @@ mod tests {
             vec![
                 format::Record {
                     func_addr: 0x1000,
-                    target: 5,
+                    opcode: 5,
                     count: 3
                 },
                 format::Record {
                     func_addr: 0x1000,
-                    target: 7,
+                    opcode: 7,
                     count: 5
                 },
             ]

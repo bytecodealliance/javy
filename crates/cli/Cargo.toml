@@ -32,6 +32,7 @@ profiler = ["dep:javy-profiler"]
 brotli = { workspace = true }
 javy-runner = { path = "../runner/" }
 javy-test-macros = { path = "../test-macros/" }
+tempfile = { workspace = true }
 wasmtime-wasi = { workspace = true }
 wit-component = "0.258.0"
 
