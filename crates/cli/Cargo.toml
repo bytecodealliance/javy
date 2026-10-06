@@ -34,7 +34,7 @@ javy-runner = { path = "../runner/" }
 javy-test-macros = { path = "../test-macros/" }
 tempfile = { workspace = true }
 wasmtime-wasi = { workspace = true }
-wit-component = "0.258.0"
+wit-component = "0.259.0"
 
 [build-dependencies]
 anyhow = { workspace = true }
