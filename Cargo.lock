@@ -1812,7 +1812,7 @@ dependencies = [
  "wasmtime 48.0.1",
  "wasmtime-wasi 48.0.1",
  "wasmtime-wizer",
- "wit-parser 0.258.0",
+ "wit-parser 0.259.0",
 ]
 
 [[package]]
@@ -5134,7 +5134,7 @@ dependencies = [
  "wasm-encoder 0.258.0",
  "wasm-metadata 0.258.0",
  "wasmparser 0.258.3",
- "wit-parser 0.258.0",
+ "wit-parser 0.258.3",
 ]
 
 [[package]]
@@ -5214,9 +5214,9 @@ dependencies = [
 
 [[package]]
 name = "wit-parser"
-version = "0.258.0"
+version = "0.258.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ff4daaa3cd97ae49ecd0a99dc009d453f93e0f083dd3be38c0f24a83a93e37ac"
+checksum = "72a2127663dcf3ee16614fb0e3c33d5c6c66fec9dad317a8b0fdd3869487a533"
 dependencies = [
  "anyhow",
  "hashbrown 0.17.0",
