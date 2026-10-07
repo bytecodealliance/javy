@@ -8,6 +8,12 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+
+- Updated `javy` to 9.0.0-alpha.1, which bumps rquickjs to 0.14.0. If you are
+  using a plugin for dynamic linking, you are strongly encouraged to change
+  the import namespace.
+
 ## [7.1.0] - 2026-06-30
 
 ### Added

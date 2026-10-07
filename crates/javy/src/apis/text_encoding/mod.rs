@@ -47,8 +47,10 @@ fn decode(args: Args<'_>) -> Result<Value<'_>> {
         .as_object()
         .ok_or_else(|| anyhow!("buffer must be an object"))?
         .as_array_buffer()
-        .ok_or_else(|| anyhow!("buffer must be an ArrayBuffer"))?
-        .as_bytes()
+        .ok_or_else(|| anyhow!("buffer must be an ArrayBuffer"))?;
+    // SAFETY: No JavaScript runs while the slice is alive; it is only read
+    // during UTF-8 decoding below.
+    let buffer = unsafe { buffer.as_bytes() }
         .ok_or_else(|| anyhow!("Couldn't retrive &[u8] from buffer"))?;
 
     let byte_offset = args[1]
