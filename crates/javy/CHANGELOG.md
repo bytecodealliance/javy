@@ -8,6 +8,10 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+
+- Bumped rquickjs to 0.14.0. The bytecode format has changed in a breaking way.
+
 ## [8.1.0] - 2026-07-30
 
 ### Added

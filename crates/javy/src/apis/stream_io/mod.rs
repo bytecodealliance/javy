@@ -83,9 +83,11 @@ fn write(args: Args<'_>) -> Result<Value<'_>> {
         .as_object()
         .ok_or_else(|| anyhow!("Data must be an Object"))?
         .as_array_buffer()
-        .ok_or_else(|| anyhow!("Data must be an ArrayBuffer"))?
-        .as_bytes()
-        .ok_or_else(|| anyhow!("Could not represent data as &[u8]"))?;
+        .ok_or_else(|| anyhow!("Data must be an ArrayBuffer"))?;
+    // SAFETY: No JavaScript runs while the slice is alive; it is only read by
+    // the synchronous stdout/stderr write below.
+    let data =
+        unsafe { data.as_bytes() }.ok_or_else(|| anyhow!("Could not represent data as &[u8]"))?;
 
     let offset = offset
         .as_number()
