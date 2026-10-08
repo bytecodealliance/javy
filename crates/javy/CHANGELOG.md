@@ -11,6 +11,10 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 
 - Bumped rquickjs to 0.14.0. The bytecode format has changed in a breaking way.
+- `Javy.IO.readSync` and `Javy.IO.writeSync` now bounds-check the supplied
+  offset and length against the backing `ArrayBuffer` and return an error for an
+  out-of-range or overflowing range instead of panicking. `readSync` no longer
+  builds its mutable slice through raw FFI.
 
 ## [8.1.0] - 2026-07-30
 

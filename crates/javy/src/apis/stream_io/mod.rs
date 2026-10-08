@@ -3,7 +3,7 @@ use std::io::{Read, Stdin, Write};
 
 use crate::{
     Args, hold, hold_and_release,
-    quickjs::{Ctx, Function, Object, Value, qjs::JS_GetArrayBuffer},
+    quickjs::{Ctx, Function, Object, Value},
     to_js_error,
 };
 
@@ -95,7 +95,10 @@ fn write(args: Args<'_>) -> Result<Value<'_>> {
     let length = length
         .as_number()
         .ok_or_else(|| anyhow!("offset must be a number"))? as usize;
-    let data = &data[offset..(offset + length)];
+    let data = offset
+        .checked_add(length)
+        .and_then(|end| data.get(offset..end))
+        .ok_or_else(|| anyhow!("Provided offset and length is not valid for provided buffer"))?;
     let n = match fd {
         Fd::Stdout => {
             let mut fd = std::io::stdout();
@@ -126,6 +129,19 @@ fn read(args: Args<'_>) -> Result<Value<'_>> {
         x => anyhow::bail!("Unsupported file descriptor: {x}. Only stdin(0) is supported"),
     };
 
+    let buffer = data
+        .as_object()
+        .ok_or_else(|| anyhow!("Data must be an Object"))?
+        .as_array_buffer()
+        .ok_or_else(|| anyhow!("Data must be an ArrayBuffer"))?;
+    let mut raw = buffer
+        .as_raw()
+        .ok_or_else(|| anyhow!("Could not represent data as &mut [u8]"))?;
+    // SAFETY: No JavaScript runs while the slice is alive; it is only written
+    // by the synchronous stdin read below. The slice is bounds-checked against
+    // the buffer's own length before it is handed out.
+    let data = unsafe { raw.as_mut() };
+
     let offset = offset
         .as_number()
         .ok_or_else(|| anyhow!("offset must be a number"))? as usize;
@@ -133,25 +149,10 @@ fn read(args: Args<'_>) -> Result<Value<'_>> {
         .as_number()
         .ok_or_else(|| anyhow!("length must be a number"))? as usize;
 
-    // Safety
-    // This is one of the unfortunate unsafe pieces of the APIs, currently.
-    // This is a port of the previous implementation.
-    // This should ideally be revisited in order to make it safe.
-    // This is unsafe only if the length of the buffer doesn't match the length
-    // and offset passed as arguments, the caller must ensure that this is true.
-    // We could make this API safe by changing the expectations of the
-    // JavaScript side of things in `io.js`.
-    let data = unsafe {
-        let mut len = 0;
-        let ptr = JS_GetArrayBuffer(cx.as_raw().as_ptr(), &mut len, data.as_raw());
-        if ptr.is_null() {
-            bail!("Data must be an ArrayBuffer");
-        }
-
-        Ok::<_, Error>(std::slice::from_raw_parts_mut(ptr, len as _))
-    }?;
-
-    let data = &mut data[offset..(offset + length)];
+    let data = offset
+        .checked_add(length)
+        .and_then(|end| data.get_mut(offset..end))
+        .ok_or_else(|| anyhow!("Provided offset and length is not valid for provided buffer"))?;
     let n = fd.read(data)?;
 
     Ok(Value::new_number(cx, n as f64))
