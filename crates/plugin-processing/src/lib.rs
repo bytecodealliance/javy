@@ -58,8 +58,14 @@ fn extract_core_module(component_bytes: &[u8]) -> Result<Vec<u8>> {
             unchecked_range,
         } = payload?
         {
-            let module_bytes = &component_bytes
-                [usize::try_from(unchecked_range.start)?..usize::try_from(unchecked_range.end)?];
+            let start = usize::try_from(unchecked_range.start)?;
+            let end = usize::try_from(unchecked_range.end)?;
+            // wasmparser reports this range straight from the section's length
+            // header and does not check it against the buffer, so a crafted
+            // component can point it past the end. Validate before slicing.
+            let module_bytes = component_bytes
+                .get(start..end)
+                .ok_or_else(|| anyhow::anyhow!("module section range is out of bounds"))?;
             let mut extract_this_module = false;
             for payload in parser.parse_all(module_bytes) {
                 match payload? {
@@ -166,4 +172,26 @@ async fn preinitialize_module(wasm_bytes: &[u8], deterministic: bool) -> Result<
             Ok(instance)
         })
         .await?)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::extract_core_module_if_necessary;
+
+    #[test]
+    fn module_section_length_past_end_is_rejected() {
+        // A component whose core module section declares a length that runs
+        // past the end of the buffer. wasmparser hands back the declared range
+        // without checking it against the input, so slicing with it directly
+        // used to panic.
+        let bytes = [
+            0x00, 0x61, 0x73, 0x6d, // "\0asm"
+            0x0d, 0x00, 0x01, 0x00, // component preamble
+            0x01, // core module section id
+            0x10, // declared section length (16 bytes) with no content following
+        ];
+        let err = extract_core_module_if_necessary(&bytes)
+            .expect_err("malformed module section should be an error, not a panic");
+        assert!(err.to_string().contains("out of bounds"), "{err}");
+    }
 }
