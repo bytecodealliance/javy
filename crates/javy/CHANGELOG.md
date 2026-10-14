@@ -16,6 +16,12 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   out-of-range or overflowing range instead of panicking. `readSync` no longer
   builds its mutable slice through raw FFI.
 
+### Fixed
+
+- `to_string_lossy` no longer leaks the engine-allocated copy of the string it
+  converts, and no longer constructs a slice from a null pointer when that
+  allocation fails.
+
 ## [8.1.0] - 2026-07-30
 
 ### Added

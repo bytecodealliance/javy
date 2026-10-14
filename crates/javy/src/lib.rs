@@ -158,6 +158,11 @@ pub fn to_string_lossy<'js>(cx: &Ctx<'js>, string: &JSString<'js>, error: JSErro
     let mut len: qjs::size_t = 0;
     let ptr =
         unsafe { qjs::JS_ToCStringLen2(cx.as_raw().as_ptr(), &mut len, string.as_raw(), false) };
+    if ptr.is_null() {
+        // The conversion only fails when the engine cannot allocate the
+        // buffer for the converted copy, so there are no bytes to decode.
+        return String::new();
+    }
     let buffer = unsafe { std::slice::from_raw_parts(ptr as *const u8, len as usize) };
 
     // The error here *must* be a Utf8 error; the `JSString::to_string()` may
@@ -203,6 +208,9 @@ pub fn to_string_lossy<'js>(cx: &Ctx<'js>, string: &JSString<'js>, error: JSErro
             Err(e) => utf8_error = e,
         }
     }
+    // The engine allocates a new reference-counted string for the converted
+    // copy on every call; release it now that `res` owns the decoded contents.
+    unsafe { qjs::JS_FreeCString(cx.as_raw().as_ptr(), ptr) };
     res
 }
 
