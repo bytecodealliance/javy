@@ -1,0 +1,6 @@
+/* The book's own styling on top of Starlight's defaults. Fonts are
+   self-hosted through @fontsource (see `customCss` in astro.config.mjs). */
+:root {
+	--sl-font: 'IBM Plex Sans Variable', system-ui, sans-serif;
+	--sl-font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}

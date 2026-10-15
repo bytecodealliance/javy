@@ -1,0 +1,60 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+
+// Mirrors the table of contents in `docs/index.md`.
+const usage = [
+	['Runtime requirements', 'using/runtime-requirements'],
+	['Extending', 'using/extending'],
+	['Exporting functions', 'using/exports'],
+	['Invoking modules', 'using/invoking'],
+	['JavaScript API Support', 'using/js-api-support'],
+];
+const contributing = [
+	['General guidelines', 'contributing'],
+	['Architecture', 'contributing/architecture'],
+	['Build requirements', 'contributing/building'],
+	['Development requirements', 'contributing/developing'],
+	['Running tests locally', 'contributing/testing-locally'],
+	['Releasing', 'contributing/releasing'],
+];
+---
+
+<StarlightPage
+	frontmatter={{
+		title: 'Javy: Seamless JavaScript on WebAssembly',
+		// Use the full title as-is instead of Starlight's "<page> | <site>".
+		head: [{ tag: 'title', content: 'Javy: Seamless JavaScript on WebAssembly' }],
+		template: 'splash',
+		hero: {
+			title: 'Javy',
+			// The introduction from the README.
+			tagline:
+				'<strong>Seamless JavaScript on WebAssembly.</strong> Javy takes your JavaScript code, and executes it in a WebAssembly embedded JavaScript runtime. Javy can create <em>very</em> small Wasm modules in the 1 to 16 KB range with use of dynamic linking.',
+			actions: [
+				{ text: 'Read the docs', link: `${base}using/runtime-requirements/` },
+				{
+					text: 'Releases',
+					link: 'https://github.com/bytecodealliance/javy/releases',
+					variant: 'minimal',
+				},
+			],
+		},
+	}}
+>
+	<h2>Usage</h2>
+	<CardGrid>
+		{usage.map(([title, slug]) => <LinkCard title={title} href={`${base}${slug}/`} />)}
+	</CardGrid>
+
+	<h2>Contributing</h2>
+	<p>
+		We welcome feedback, bug reports and bug fixes. We're also happy to discuss feature development
+		but please discuss the features in an issue before contributing.
+	</p>
+	<CardGrid>
+		{contributing.map(([title, slug]) => <LinkCard title={title} href={`${base}${slug}/`} />)}
+	</CardGrid>
+</StarlightPage>
