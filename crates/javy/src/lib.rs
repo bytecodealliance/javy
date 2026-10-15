@@ -153,15 +153,24 @@ pub fn to_js_error(cx: Ctx, e: Error) -> JSError {
 
 /// Converts the JavaScript value to a string, replacing any invalid UTF-8 sequences with the
 /// Unicode replacement character (U+FFFD).
+///
+/// Returns [`JSError::Exception`] if the engine runs out of memory while
+/// converting the string; the out-of-memory exception is left pending on the
+/// context.
 // TODO: Upstream this?
-pub fn to_string_lossy<'js>(cx: &Ctx<'js>, string: &JSString<'js>, error: JSError) -> String {
+pub fn to_string_lossy<'js>(
+    cx: &Ctx<'js>,
+    string: &JSString<'js>,
+    error: JSError,
+) -> rquickjs::Result<String> {
     let mut len: qjs::size_t = 0;
     let ptr =
         unsafe { qjs::JS_ToCStringLen2(cx.as_raw().as_ptr(), &mut len, string.as_raw(), false) };
     if ptr.is_null() {
         // The conversion only fails when the engine cannot allocate the
-        // buffer for the converted copy, so there are no bytes to decode.
-        return String::new();
+        // buffer for the converted copy, in which case it has thrown an
+        // out-of-memory exception.
+        return Err(JSError::Exception);
     }
     let buffer = unsafe { std::slice::from_raw_parts(ptr as *const u8, len as usize) };
 
@@ -211,7 +220,7 @@ pub fn to_string_lossy<'js>(cx: &Ctx<'js>, string: &JSString<'js>, error: JSErro
     // The engine allocates a new reference-counted string for the converted
     // copy on every call; release it now that `res` owns the decoded contents.
     unsafe { qjs::JS_FreeCString(cx.as_raw().as_ptr(), ptr) };
-    res
+    Ok(res)
 }
 
 /// Retrieves the string representation of a JavaScript value.
@@ -220,17 +229,16 @@ pub fn val_to_string<'js>(this: &Ctx<'js>, val: Value<'js>) -> Result<String> {
         if let Some(description) = symbol.description()?.into_string() {
             let description = description
                 .to_string()
-                .unwrap_or_else(|e| to_string_lossy(this, &description, e));
+                .or_else(|e| to_string_lossy(this, &description, e))?;
             Ok(format!("Symbol({description})"))
         } else {
             Ok("Symbol()".into())
         }
     } else {
-        let stringified = <convert::Coerced<JSString>>::from_js(this, val).map(|string| {
-            string
-                .to_string()
-                .unwrap_or_else(|e| to_string_lossy(this, &string.0, e))
-        })?;
+        let string = <convert::Coerced<JSString>>::from_js(this, val)?;
+        let stringified = string
+            .to_string()
+            .or_else(|e| to_string_lossy(this, &string.0, e))?;
         Ok(stringified)
     }
 }

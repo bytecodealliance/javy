@@ -58,7 +58,7 @@ fn to_string_lossy_frees_engine_cstring() -> anyhow::Result<()> {
             let error = string
                 .to_string()
                 .expect_err("conversion should fail on the lone surrogate");
-            let lossy = to_string_lossy(&this, &string, error);
+            let lossy = to_string_lossy(&this, &string, error)?;
             assert!(lossy.ends_with(char::REPLACEMENT_CHARACTER));
         }
         Ok::<_, anyhow::Error>(())

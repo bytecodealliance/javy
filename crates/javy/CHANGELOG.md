@@ -15,6 +15,8 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   offset and length against the backing `ArrayBuffer` and return an error for an
   out-of-range or overflowing range instead of panicking. `readSync` no longer
   builds its mutable slice through raw FFI.
+- `to_string_lossy` now returns `rquickjs::Result<String>` and returns
+  `Error::Exception` if the engine runs out of memory converting the string.
 
 ### Fixed
 
