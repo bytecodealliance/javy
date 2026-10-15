@@ -1,0 +1,47 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { tableOfContents } from '../toc';
+
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+
+// The sections of the table of contents in `docs/index.md`.
+const toc = tableOfContents();
+---
+
+<StarlightPage
+	frontmatter={{
+		title: 'Javy: Seamless JavaScript on WebAssembly',
+		// Use the full title as-is instead of Starlight's "<page> | <site>".
+		head: [{ tag: 'title', content: 'Javy: Seamless JavaScript on WebAssembly' }],
+		template: 'splash',
+		hero: {
+			title: 'Javy',
+			// The introduction from the README.
+			tagline:
+				'<strong>Seamless JavaScript on WebAssembly.</strong> Javy takes your JavaScript code, and executes it in a WebAssembly embedded JavaScript runtime. Javy can create <em>very</em> small Wasm modules in the 1 to 16 KB range with use of dynamic linking.',
+			actions: [
+				{ text: 'Read the docs', link: `${base}${toc[0].entries[0].slug}/` },
+				{
+					text: 'Releases',
+					link: 'https://github.com/bytecodealliance/javy/releases',
+					variant: 'minimal',
+				},
+			],
+		},
+	}}
+>
+	{
+		toc.map(({ title, intro, entries }) => (
+			<>
+				<h2>{title}</h2>
+				{intro && <p>{intro}</p>}
+				<CardGrid>
+					{entries.map(({ title, slug }) => (
+						<LinkCard title={title} href={`${base}${slug}/`} />
+					))}
+				</CardGrid>
+			</>
+		))
+	}
+</StarlightPage>

@@ -1,0 +1,76 @@
+name: Book
+
+on:
+  push:
+    paths:
+      - "docs/**"
+      - "book/**"
+      - ".github/workflows/book.yml"
+  pull_request:
+    paths:
+      - "docs/**"
+      - "book/**"
+      - ".github/workflows/book.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Let an in-progress deployment finish rather than cancelling it halfway.
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build book
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Full history so each page can show when it was last updated.
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: book/package.json
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: book/pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+        working-directory: book
+
+      - run: pnpm run build
+        working-directory: book
+        env:
+          # Deploy to the Pages site of whichever account owns the repo, so
+          # forks get a working preview at https://<owner>.github.io/javy/.
+          BOOK_SITE: https://${{ github.repository_owner }}.github.io
+          ASTRO_TELEMETRY_DISABLED: 1
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: book/dist
+
+  deploy:
+    name: Deploy book
+    # Upstream deploys from main only. Forks deploy from any branch, so the
+    # book can be previewed on the fork's Pages site before opening a PR.
+    if: >-
+      github.event_name != 'pull_request' &&
+      (github.ref == 'refs/heads/main' || github.repository != 'bytecodealliance/javy')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
