@@ -4,9 +4,8 @@ use std::{
     process, ptr, slice,
 };
 
-static mut COMPILE_SRC_RET_AREA: [u32; 3] = [0; 3];
-
 thread_local! {
+    static COMPILE_SRC_RET_AREA: OnceCell<[u32; 3]> = const { OnceCell::new() };
     static BYTECODE: OnceCell<Vec<u8>> = const { OnceCell::new() };
 }
 
@@ -67,13 +66,16 @@ unsafe extern "C" fn compile_src(src_ptr: *const u8, src_len: usize) -> *const u
         Err(err) => (1, err.to_string().into_bytes()),
     };
     let len = bytes.len();
-    unsafe {
-        BYTECODE.with(|key| key.set(bytes)).unwrap();
-        COMPILE_SRC_RET_AREA[0] = res;
-        COMPILE_SRC_RET_AREA[1] = BYTECODE.with(|key| key.get().unwrap().as_ptr()) as u32;
-        COMPILE_SRC_RET_AREA[2] = len as u32;
-        COMPILE_SRC_RET_AREA.as_ptr()
-    }
+    BYTECODE.with(|key| key.set(bytes)).unwrap();
+    COMPILE_SRC_RET_AREA.with(|key| {
+        key.set([
+            res,
+            BYTECODE.with(|key| key.get().unwrap().as_ptr()) as u32,
+            len as u32,
+        ])
+        .unwrap();
+        key.get().unwrap().as_ptr()
+    })
 }
 
 #[unsafe(export_name = "invoke")]
