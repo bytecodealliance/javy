@@ -90,15 +90,11 @@
 //! * `json` - enables the `json` feature in the `javy` crate.
 //! * `messagepack` - enables the `messagepack` feature in the `javy` crate.
 
-// Allow these in this file because we only run this program single threaded
-// and we can safely reason about the accesses to the Javy Runtime. We also
-// don't want to introduce overhead from taking unnecessary mutex locks.
-#![allow(static_mut_refs)]
 use anyhow::{Result, anyhow, bail};
 pub use config::Config;
 use javy::quickjs::{self, Ctx, Error as JSError, Function, Module, Value};
 use javy::{Runtime, from_js_error};
-use std::cell::OnceCell;
+use std::cell::{Cell, OnceCell, RefCell};
 use std::str;
 
 pub use javy;
@@ -111,12 +107,13 @@ mod wasi_p1;
 
 const FUNCTION_MODULE_NAME: &str = "function.mjs";
 
+// Plugins run single threaded, so thread locals give the same storage as a
+// plain static without locking, while keeping access checked.
 thread_local! {
-    static COMPILE_SRC_RET_AREA: OnceCell<[u32; 2]> = const { OnceCell::new() }
+    static COMPILE_SRC_RET_AREA: OnceCell<[u32; 2]> = const { OnceCell::new() };
+    static RUNTIME: RefCell<Option<Runtime>> = const { RefCell::new(None) };
+    static EVENT_LOOP_ENABLED: Cell<bool> = const { Cell::new(false) };
 }
-
-static mut RUNTIME: OnceCell<Runtime> = OnceCell::new();
-static mut EVENT_LOOP_ENABLED: bool = false;
 
 static EVENT_LOOP_ERR: &str = r#"
                 Pending jobs in the event queue.
@@ -133,17 +130,9 @@ where
     let config = config();
     let runtime = Runtime::new(config.runtime_config)?;
     let runtime = modify_runtime(runtime);
-    unsafe {
-        RUNTIME.take(); // Allow re-initializing.
-        RUNTIME
-            .set(runtime)
-            // `unwrap` requires error `T` to implement `Debug` but `set`
-            // returns the `javy::Runtime` on error and `javy::Runtime` does not
-            // implement `Debug`.
-            .map_err(|_| anyhow!("Could not pre-initialize javy::Runtime"))
-            .unwrap();
-        EVENT_LOOP_ENABLED = config.event_loop;
-    };
+    // Allow re-initializing.
+    RUNTIME.replace(Some(runtime));
+    EVENT_LOOP_ENABLED.set(config.event_loop);
     Ok(())
 }
 
@@ -171,10 +160,12 @@ pub fn compile_src(js_src: &[u8]) -> Result<Vec<u8>> {
     //
     // Setting `config.bignum_extension` to `true` will produce different
     // bytecode than if it were set to `false`.
-    let runtime = unsafe { RUNTIME.get() }.ok_or_else(|| {
-        anyhow!("Javy runtime not initialized. Ensure `javy init-plugin` has been invoked.")
-    })?;
-    runtime.compile_to_bytecode(FUNCTION_MODULE_NAME, &String::from_utf8_lossy(js_src))
+    RUNTIME.with_borrow(|runtime| {
+        let runtime = runtime.as_ref().ok_or_else(|| {
+            anyhow!("Javy runtime not initialized. Ensure `javy init-plugin` has been invoked.")
+        })?;
+        runtime.compile_to_bytecode(FUNCTION_MODULE_NAME, &String::from_utf8_lossy(js_src))
+    })
 }
 
 /// Evaluates QuickJS bytecode and optionally invokes exported JS function with
@@ -185,35 +176,37 @@ pub fn compile_src(js_src: &[u8]) -> Result<Vec<u8>> {
 /// * `bytecode` - The QuickJS bytecode
 /// * `fn_name` - The JS function name
 pub fn invoke(bytecode: &[u8], fn_name: Option<&str>) -> Result<()> {
-    let runtime = unsafe { RUNTIME.get() }.ok_or_else(|| {
-        anyhow!("Javy runtime not initialized. Ensure `javy init-plugin` has been invoked.")
-    })?;
-    runtime
-        .context()
-        .with(|this| {
-            let module = unsafe { Module::load(this.clone(), bytecode)? };
-            let (module, promise) = module.eval()?;
+    RUNTIME.with_borrow(|runtime| {
+        let runtime = runtime.as_ref().ok_or_else(|| {
+            anyhow!("Javy runtime not initialized. Ensure `javy init-plugin` has been invoked.")
+        })?;
+        runtime
+            .context()
+            .with(|this| {
+                let module = unsafe { Module::load(this.clone(), bytecode)? };
+                let (module, promise) = module.eval()?;
 
-            handle_maybe_promise(this.clone(), promise.into())?;
+                handle_maybe_promise(this.clone(), promise.into())?;
 
-            if let Some(fn_name) = fn_name {
-                let fun: Function = module.get(fn_name)?;
-                // Exported functions are guaranteed not to have arguments so
-                // we can safely pass an empty tuple for arguments.
-                let value = fun.call(())?;
-                handle_maybe_promise(this.clone(), value)?
-            }
-            Ok(())
-        })
-        .map_err(|e| runtime.context().with(|cx| from_js_error(cx.clone(), e)))
-        .and_then(|_: ()| ensure_pending_jobs(runtime))
+                if let Some(fn_name) = fn_name {
+                    let fun: Function = module.get(fn_name)?;
+                    // Exported functions are guaranteed not to have arguments so
+                    // we can safely pass an empty tuple for arguments.
+                    let value = fun.call(())?;
+                    handle_maybe_promise(this.clone(), value)?
+                }
+                Ok(())
+            })
+            .map_err(|e| runtime.context().with(|cx| from_js_error(cx.clone(), e)))
+            .and_then(|_: ()| ensure_pending_jobs(runtime))
+    })
 }
 
 /// Handles the promise returned by evaluating the JS bytecode.
 fn handle_maybe_promise(this: Ctx, value: Value) -> quickjs::Result<()> {
     match value.as_promise() {
         Some(promise) => {
-            if unsafe { EVENT_LOOP_ENABLED } {
+            if EVENT_LOOP_ENABLED.get() {
                 // If the event loop is enabled, trigger it.
                 let resolved = promise.finish::<Value>();
                 // `Promise::finish` returns Err(Wouldblock) when the all
@@ -236,7 +229,7 @@ fn handle_maybe_promise(this: Ctx, value: Value) -> quickjs::Result<()> {
 }
 
 fn ensure_pending_jobs(rt: &Runtime) -> Result<()> {
-    if unsafe { EVENT_LOOP_ENABLED } {
+    if EVENT_LOOP_ENABLED.get() {
         rt.resolve_pending_jobs()
     } else if rt.has_pending_jobs() {
         bail!(EVENT_LOOP_ERR);
