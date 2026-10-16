@@ -99,9 +99,11 @@ fn call_json_parse(args: Args<'_>) -> Result<Value<'_>> {
                 bail!(Exception::throw_type(&this, "Expected string primitive"));
             }
 
-            let mut string = val_to_string(&this, args[0].clone())?;
-            let bytes = unsafe { string.as_bytes_mut() };
-            json::parse(this.clone(), bytes).map_err(|original| {
+            // simd-json unescapes strings in place, which can leave the
+            // buffer holding invalid UTF-8, so parse from an owned byte
+            // buffer rather than the `String`'s bytes.
+            let mut bytes = val_to_string(&this, args[0].clone())?.into_bytes();
+            json::parse(this.clone(), &mut bytes).map_err(|original| {
                 if original.downcast_ref::<SError>().is_none() {
                     return original;
                 }
