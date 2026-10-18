@@ -91,7 +91,7 @@ which will validate and initialize the Javy runtime. This `javy init-plugin`
 step is required for the plugin to be usable by the Javy CLI.
 
 See our documentation on [using complex data types in Wasm
-functions](./contributing-complex-data-types.md) for how to support Wasm
+functions](./docs-contributing-complex-data-types.md) for how to support Wasm
 functions that need to use byte arrays, strings, or structured data.
 
 ## WASI preview 2 plugins
@@ -144,7 +144,7 @@ Wasm equivalents. You can also use `s32`, `f32`, `s64`, and `f64` as the
 parameter and result types and use the exported `cabi_realloc` Wasm function to
 handle structured data (arrays, strings) as you would have with core Wasm
 modules. See our documentation on
-[using complex data types in Wasm functions](./contributing-complex-data-types.md)
+[using complex data types in Wasm functions](./docs-contributing-complex-data-types.md)
 for more details.
 
 For the world with the imported function, the `src/lib.rs` should look like:
