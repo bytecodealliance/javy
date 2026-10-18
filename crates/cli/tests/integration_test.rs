@@ -1,8 +1,10 @@
 use anyhow::{Result, bail};
 use javy_runner::{Builder, Plugin, Runner, RunnerError, Source};
 use std::{io::Read, path::PathBuf, process::Command, str};
-use wasmtime::{AsContext, AsContextMut, Engine, Linker, Module, Store};
-use wasmtime_wasi::WasiCtxBuilder;
+use wasmtime::{
+    AsContext, AsContextMut, Engine, Linker, Module, Store, StoreLimits, StoreLimitsBuilder, Trap,
+};
+use wasmtime_wasi::{WasiCtxBuilder, p1::WasiP1Ctx, p2::pipe::MemoryOutputPipe};
 
 use javy_test_macros::javy_cli_test;
 
@@ -554,6 +556,57 @@ fn test_init_plugin_deterministic() -> Result<()> {
         .get_typed_func::<(i32, i32), i32>(store.as_context_mut(), "compile-src")?
         .call(store.as_context_mut(), (0, 0))?;
 
+    Ok(())
+}
+
+#[test]
+fn test_cabi_realloc_traps_when_allocation_fails() -> Result<()> {
+    struct State {
+        wasi: WasiP1Ctx,
+        limits: StoreLimits,
+    }
+
+    let plugin = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("..")
+        .join(
+            std::path::Path::new("target")
+                .join("wasm32-wasip1")
+                .join("release")
+                .join("plugin.wasm"),
+        );
+
+    let engine = Engine::default();
+    let mut linker = Linker::new(&engine);
+    wasmtime_wasi::p1::add_to_linker_sync(&mut linker, |s: &mut State| &mut s.wasi)?;
+    let stderr = MemoryOutputPipe::new(usize::MAX);
+    let wasi = WasiCtxBuilder::new().stderr(stderr.clone()).build_p1();
+    // Cap the instance's memory so the allocation below cannot be satisfied.
+    let limits = StoreLimitsBuilder::new()
+        .memory_size(16 * 1024 * 1024)
+        .build();
+    let mut store = Store::new(&engine, State { wasi, limits });
+    store.limiter(|s| &mut s.limits);
+
+    let module = Module::from_file(&engine, &plugin)?;
+    let instance = linker.instantiate(store.as_context_mut(), &module)?;
+    let result = instance
+        .get_typed_func::<(u32, u32, u32, u32), u32>(store.as_context_mut(), "cabi_realloc")?
+        .call(store.as_context_mut(), (0, 0, 1, 64 * 1024 * 1024));
+
+    // Address 0 is ordinary linear memory, so a null pointer would be handed
+    // back to the host as a valid buffer. The failed allocation must trap.
+    let err = result.expect_err("cabi_realloc should trap when the allocation fails");
+    assert_eq!(
+        err.downcast_ref::<Trap>(),
+        Some(&Trap::UnreachableCodeReached),
+        "{err}"
+    );
+    let stderr = String::from_utf8(stderr.contents().to_vec())?;
+    assert!(
+        stderr.contains("memory allocation of 67108864 bytes failed"),
+        "unexpected stderr: {stderr}"
+    );
     Ok(())
 }
 

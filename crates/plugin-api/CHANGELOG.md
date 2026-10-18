@@ -8,6 +8,11 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+
+- `cabi_realloc` now aborts when an allocation fails instead of returning a
+  null pointer, which the host would have used as a valid buffer at address 0.
+
 ### Changed
 
 - Updated `javy` to 9.0.0-alpha.1, which bumps rquickjs to 0.14.0. If you are
