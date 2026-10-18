@@ -85,18 +85,12 @@ pub extern "C" fn exit_func(instruction_count: i64) {
     with_profiler(|p| p.exit_func(instruction_count as u64));
 }
 
-/// Switch to `opcode`, the byte read by the dispatch load, closing out
-/// the previous opcode with the instruction count at this point.
+/// Record a dispatch. `opcode` is the byte read by the dispatch load and
+/// `addr` the address it was read from. Closes out the previous site
+/// with the instruction count at this point.
 #[unsafe(no_mangle)]
-pub extern "C" fn set_opcode(opcode: u32, instruction_count: i64) {
-    with_profiler(|p| p.set_opcode(opcode, instruction_count as u64));
-}
-
-/// Set the effective address (i.e., the start address) of the current
-/// function which uniquely identifies it.
-#[unsafe(no_mangle)]
-pub extern "C" fn set_func_addr(addr: u32) {
-    with_profiler(|p| p.set_func_addr(addr));
+pub extern "C" fn dispatch(opcode: u32, addr: u32, instruction_count: i64) {
+    with_profiler(|p| p.dispatch(opcode, addr, instruction_count as u64));
 }
 
 /// Whether the opcode at offset `pc` in function `fid` is counted by
@@ -106,8 +100,8 @@ pub extern "C" fn is_countable_opcode(fid: u32, pc: u32) -> bool {
     state().is_countable_opcode(fid, pc)
 }
 
-/// Flush the profiler results into a buffer. Called by the host once
-/// the profiled execution has finished.
+/// Flush the profiler results into a buffer. Called by the host exactly
+/// once, after the profiled execution has finished; a second call traps.
 #[unsafe(no_mangle)]
 pub extern "C" fn report() {
     with_profiler(|p| p.report());

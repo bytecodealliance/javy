@@ -123,37 +123,91 @@ impl State {
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct Opcode(u32);
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-struct FuncAddr(u32);
+struct Addr(u32);
 
-/// A JavaScript function frame.
+/// An opcode read at an absolute address. The opcode is
+/// part of the key so that, should a freed bytecode buffer be reused for
+/// another function, different opcodes at the same address stay apart.
+type Site = (Addr, Opcode);
+
+/// Live interpreter activations their starting location.
+///
+/// An activation's first dispatch is recorded as an entry hint. Only the
+/// innermost activation can still be waiting for its first dispatch.
+/// Nested calls are made from opcode handlers, so a caller has always
+/// dispatched by the time its callee returns. A depth and a single flag
+/// therefore stand in for a stack of frames.
+///
+/// The one exception is a generator resumed with `throw()` while
+/// suspended in a `for...of`: unwinding may call the inner iterator's JS
+/// `return()` before the generator dispatches, and that call's exit clears
+/// the flag, losing the generator's resume hint. Symbolization does not
+/// need resume hints, only the first-run hint, so only that resume's count
+/// is lost.
 #[derive(Default)]
-struct Frame {
-    /// The function's bytecode buffer start address, which uniquely
-    /// identifies the JS function being executed.
-    func_addr: Option<FuncAddr>,
+struct Activations {
+    /// Number of live activations.
+    depth: u32,
+    /// Whether the innermost activation has yet to dispatch.
+    pending: bool,
+    /// Number of activations per first-dispatch address.
+    entries: BTreeMap<Addr, u64>,
+}
+
+impl Activations {
+    fn enter(&mut self) {
+        self.depth += 1;
+        self.pending = true;
+    }
+
+    /// Leave the innermost activation. Returns whether it was the
+    /// outermost one.
+    fn exit(&mut self) -> bool {
+        self.depth = self
+            .depth
+            .checked_sub(1)
+            .expect("exit without a matching entry");
+        // The caller, if any, has already dispatched.
+        self.pending = false;
+        self.depth == 0
+    }
+
+    /// Record `addr` as an entry hint if this is the innermost
+    /// activation's first dispatch.
+    fn dispatch(&mut self, addr: Addr) {
+        if std::mem::take(&mut self.pending) {
+            *self.entries.entry(addr).or_default() += 1;
+        }
+    }
 }
 
 /// Profiling state.
 ///
-/// It tracks the interpreter's stack frames and accumulates the cost
-/// of each JS opcode, per JS function.
+/// It records, per bytecode site, the cost of the opcode read there, plus where
+/// each interpreter activation started. Sites are keyed by absolute address.
+/// Which function a site belongs to is not decided at runtime. Symbolization
+/// does that against the module's bytecode, using the entry hints as candidate
+/// function starts. A hint is byte 0 of the function for a normal call, and the
+/// suspension point for a resumed generator or async function, so it cannot
+/// serve as the function's identity.
 ///
-/// Cost is an approximation: an opcode is charged every instruction
-/// from the dispatch into its handler until the next dispatch. That spans
-/// the handler, any helper functions it calls, and the decode of the
-/// following opcode. This could result in an overapproximation in
-/// some cases, e.g., handling the last opcode in the bytecode buffer
-/// for a given JS function.
+/// A site is charged every instruction from the dispatch into its handler until
+/// the next dispatch. That spans the handler, any helper functions it calls,
+/// and the decode of the following opcode. This could result in an
+/// overapproximation in some cases, e.g., handling the last opcode in the
+/// bytecode buffer for a given JS function.
 #[derive(Default)]
 pub struct Profiler {
-    /// JS function frames.
-    stack: Vec<Frame>,
-    /// The function and opcode currently being attributed to.
-    current: Option<(FuncAddr, Opcode)>,
-    /// Instruction count at the last opcode switch.
+    /// Interpreter activations and their entry hints.
+    activations: Activations,
+    /// The site currently being attributed to.
+    current: Option<Site>,
+    /// Instruction count at the last dispatch.
     last_instruction_count: u64,
-    /// Per-function-and-opcode count.
-    counts: BTreeMap<(FuncAddr, Opcode), u64>,
+    /// Per-site count.
+    sites: BTreeMap<Site, u64>,
+    /// Whether [`Profiler::report`] has run.
+    reported: bool,
     /// Serialized counts report.
     report: Vec<u8>,
 }
@@ -163,67 +217,66 @@ impl Profiler {
         Self::default()
     }
 
-    /// Push a new interpreter frame.
+    /// Enter a new interpreter activation.
     pub fn start_func(&mut self) {
-        self.stack.push(Frame::default());
+        self.activations.enter();
     }
 
-    /// End the current function's frame. When the outermost interpreter
-    /// activation returns, close out the final opcode passing in the
-    /// instruction count up until that point.
+    /// Leave the innermost interpreter activation. When the outermost one
+    /// returns, close out the final opcode passing in the instruction
+    /// count up until that point.
     pub fn exit_func(&mut self, instruction_count: u64) {
-        self.stack.pop().expect("Function frame to exist");
-        if self.stack.is_empty() {
-            if let Some(key) = self.current {
-                *self.counts.entry(key).or_default() +=
-                    instruction_count.saturating_sub(self.last_instruction_count);
-            }
-            self.last_instruction_count = instruction_count;
+        if self.activations.exit() {
+            self.close_current(instruction_count);
             self.current = None;
         }
     }
 
-    /// Switch to `opcode`, the QuickJS opcode whose handler is about to
-    /// run. This also closes out the opcode that was running, charging it
-    /// the instructions executed since the previous switch.
-    /// `instruction_count` is the running count of executed countable
-    /// Wasm instructions.
-    pub fn set_opcode(&mut self, opcode: u32, instruction_count: u64) {
-        // Close out the opcode that just finished.
-        if let Some(key) = self.current {
-            *self.counts.entry(key).or_default() +=
+    /// Charge the site that was running the instructions executed since
+    /// the previous dispatch.
+    fn close_current(&mut self, instruction_count: u64) {
+        if let Some(site) = self.current {
+            *self.sites.entry(site).or_default() +=
                 instruction_count.saturating_sub(self.last_instruction_count);
         }
         self.last_instruction_count = instruction_count;
-
-        // Begin attributing to the opcode being dispatched.
-        if let Some(addr) = self.stack.last().and_then(|frame| frame.func_addr) {
-            self.current = Some((addr, Opcode(opcode)));
-        }
     }
 
-    /// Record the start address of the topmost function frame.
-    pub fn set_func_addr(&mut self, addr: u32) {
-        if let Some(frame) = self.stack.last_mut() {
-            frame.func_addr = Some(FuncAddr(addr));
-        }
+    /// Record a dispatch of `opcode`, read from address `addr`, whose
+    /// handler is about to run. This also closes out the site that was
+    /// running. An activation's first dispatch is recorded as an entry
+    /// hint. `instruction_count` is the running count of executed
+    /// countable Wasm instructions.
+    pub fn dispatch(&mut self, opcode: u32, addr: u32, instruction_count: u64) {
+        self.close_current(instruction_count);
+
+        self.activations.dispatch(Addr(addr));
+        self.current = Some((Addr(addr), Opcode(opcode)));
     }
 
     /// Serialize the accumulated counts into the internal report buffer
-    /// using the [`crate::format`] encoding. Call once at program exit;
-    /// afterwards [`Profiler::report_bytes`] exposes the buffer for the
-    /// host to read out of linear memory.
+    /// using the [`crate::format`] encoding. Must be called exactly once,
+    /// at program exit; afterwards [`Profiler::report_bytes`] exposes the
+    /// buffer for the host to read out of linear memory.
     pub fn report(&mut self) {
-        self.report =
-            format::write(
-                self.counts
-                    .iter()
-                    .map(|(&(addr, opcode), &count)| format::Record {
-                        func_addr: addr.0,
-                        opcode: opcode.0,
-                        count,
-                    }),
-            );
+        assert!(!self.reported, "the report must only be generated once");
+        self.reported = true;
+        self.report = format::write(
+            self.activations
+                .entries
+                .iter()
+                .map(|(&addr, &count)| format::Entry {
+                    addr: addr.0,
+                    count,
+                }),
+            self.sites
+                .iter()
+                .map(|(&(addr, opcode), &count)| format::Site {
+                    addr: addr.0,
+                    opcode: opcode.0,
+                    count,
+                }),
+        );
     }
 
     /// The serialized report buffer.
@@ -717,90 +770,209 @@ mod tests {
         Ok(())
     }
 
+    fn count_at(p: &Profiler, addr: u32, opcode: u32) -> Option<u64> {
+        p.sites.get(&(Addr(addr), Opcode(opcode))).copied()
+    }
+
+    fn entries(p: &Profiler) -> Vec<(u32, u64)> {
+        p.activations
+            .entries
+            .iter()
+            .map(|(a, &n)| (a.0, n))
+            .collect()
+    }
+
     #[test]
-    fn set_opcode_attributes_deltas_per_opcode() {
+    fn dispatch_attributes_deltas_per_site() {
         let mut p = Profiler::new();
         p.start_func();
-        p.set_func_addr(0x1000);
 
-        p.set_opcode(5, 0);
-        p.set_opcode(7, 3);
-        p.set_opcode(5, 8);
+        p.dispatch(5, 0x1000, 0);
+        p.dispatch(7, 0x1002, 3);
+        p.dispatch(5, 0x1000, 8);
         p.exit_func(12);
 
-        let f = FuncAddr(0x1000);
-        assert_eq!(p.counts.get(&(f, Opcode(5))), Some(&7)); // 3 + 4
-        assert_eq!(p.counts.get(&(f, Opcode(7))), Some(&5));
-        assert_eq!(p.counts.len(), 2);
+        assert_eq!(count_at(&p, 0x1000, 5), Some(7)); // 3 + 4
+        assert_eq!(count_at(&p, 0x1002, 7), Some(5));
+        assert_eq!(p.sites.len(), 2);
+    }
+
+    /// The same opcode at two addresses is two sites.
+    #[test]
+    fn same_opcode_at_two_addresses_is_two_sites() {
+        let mut p = Profiler::new();
+        p.start_func();
+
+        p.dispatch(5, 0x1000, 0);
+        p.dispatch(5, 0x1001, 2);
+        p.exit_func(5);
+
+        assert_eq!(count_at(&p, 0x1000, 5), Some(2));
+        assert_eq!(count_at(&p, 0x1001, 5), Some(3));
+    }
+
+    /// Different opcodes at one address, as after a bytecode buffer is
+    /// freed and reused, are two sites.
+    #[test]
+    fn two_opcodes_at_one_address_are_two_sites() {
+        let mut p = Profiler::new();
+        p.start_func();
+
+        p.dispatch(5, 0x1000, 0);
+        p.dispatch(6, 0x1000, 2);
+        p.exit_func(5);
+
+        assert_eq!(count_at(&p, 0x1000, 5), Some(2));
+        assert_eq!(count_at(&p, 0x1000, 6), Some(3));
     }
 
     #[test]
-    fn first_opcode_charges_nothing() {
+    fn first_dispatch_charges_nothing() {
         let mut p = Profiler::new();
         p.start_func();
-        p.set_func_addr(0x10);
-        p.set_opcode(0, 5);
-        assert!(p.counts.is_empty());
+        p.dispatch(0, 0x10, 5);
+        assert!(p.sites.is_empty());
 
-        p.set_opcode(1, 8);
-        assert_eq!(p.counts.get(&(FuncAddr(0x10), Opcode(0))), Some(&3));
+        p.dispatch(1, 0x13, 8);
+        assert_eq!(count_at(&p, 0x10, 0), Some(3));
+    }
+
+    /// Only an activation's first dispatch is an entry hint, and repeated
+    /// activations at one address are counted.
+    #[test]
+    fn entries_count_first_dispatch_per_activation() {
+        let mut p = Profiler::new();
+        for _ in 0..2 {
+            p.start_func();
+            p.dispatch(1, 0xA00, 0);
+            p.dispatch(2, 0xA01, 1);
+            p.exit_func(2);
+        }
+        // A resumed generator enters mid-buffer.
+        p.start_func();
+        p.dispatch(3, 0xA05, 3);
+        p.exit_func(4);
+
+        assert_eq!(entries(&p), vec![(0xA00, 2), (0xA05, 1)]);
+    }
+
+    /// An activation that never dispatches, such as a call into a C
+    /// function, records no entry and does not hide its caller's.
+    #[test]
+    fn activation_without_dispatch_records_no_entry() {
+        let mut p = Profiler::new();
+        p.start_func();
+        p.dispatch(1, 0xA00, 0);
+
+        p.start_func();
+        p.exit_func(3);
+
+        p.dispatch(2, 0xA03, 5);
+        p.exit_func(6);
+
+        assert_eq!(entries(&p), vec![(0xA00, 1)]);
+        assert_eq!(count_at(&p, 0xA00, 1), Some(5));
+        assert_eq!(count_at(&p, 0xA03, 2), Some(1));
+    }
+
+    /// A C function calling back into JS, e.g. `[1].map(f)`: the C
+    /// activation never dispatches, its JS callee records its own entry,
+    /// and the caller is unaffected.
+    #[test]
+    fn js_called_from_activation_without_dispatch() {
+        let mut p = Profiler::new();
+        p.start_func();
+        p.dispatch(1, 0xA00, 0);
+
+        // `map`, a C function.
+        p.start_func();
+        // `f`, called by `map`.
+        p.start_func();
+        p.dispatch(2, 0xB00, 4);
+        p.exit_func(6);
+        p.exit_func(7);
+
+        p.dispatch(3, 0xA03, 9);
+        p.exit_func(10);
+
+        assert_eq!(entries(&p), vec![(0xA00, 1), (0xB00, 1)]);
+        assert_eq!(count_at(&p, 0xA00, 1), Some(4));
+        assert_eq!(count_at(&p, 0xB00, 2), Some(5));
+        assert_eq!(count_at(&p, 0xA03, 3), Some(1));
     }
 
     #[test]
-    fn exit_func_restores_caller_function() {
+    #[should_panic(expected = "exit without a matching entry")]
+    fn exit_without_entry_panics() {
+        Profiler::new().exit_func(0);
+    }
+
+    #[test]
+    fn nested_activation_is_its_own_entry() {
         let mut p = Profiler::new();
         p.start_func();
-        p.set_func_addr(0xA00);
-        p.set_opcode(1, 0);
+        p.dispatch(1, 0xA00, 0);
 
         // Nested call.
         p.start_func();
-        p.set_func_addr(0xB00);
-        p.set_opcode(2, 10);
+        p.dispatch(2, 0xB00, 10);
         p.exit_func(13);
 
         // Back to the parent function call.
-        p.set_opcode(3, 15);
+        p.dispatch(3, 0xA05, 15);
         p.exit_func(20);
 
-        assert_eq!(p.counts.get(&(FuncAddr(0xA00), Opcode(1))), Some(&10));
-        assert_eq!(p.counts.get(&(FuncAddr(0xB00), Opcode(2))), Some(&5));
-        assert_eq!(p.counts.get(&(FuncAddr(0xA00), Opcode(3))), Some(&5));
+        assert_eq!(entries(&p), vec![(0xA00, 1), (0xB00, 1)]);
+        assert_eq!(count_at(&p, 0xA00, 1), Some(10));
+        assert_eq!(count_at(&p, 0xB00, 2), Some(5));
+        assert_eq!(count_at(&p, 0xA05, 3), Some(5));
     }
 
     #[test]
-    fn report_encodes_records_in_order() {
+    fn report_encodes_entries_and_sites_in_order() {
         let mut p = Profiler::new();
         p.start_func();
-        p.set_func_addr(0x1000);
-        p.set_opcode(7, 0);
-        p.set_opcode(5, 5);
+        p.dispatch(7, 0x1000, 0);
+        p.dispatch(5, 0x1004, 5);
+        p.dispatch(6, 0x1002, 6);
         p.exit_func(8);
 
         p.report();
-        let records = format::read(p.report_bytes()).unwrap();
+        let report = format::read(p.report_bytes()).unwrap();
 
         assert_eq!(
-            records,
-            vec![
-                format::Record {
-                    func_addr: 0x1000,
-                    opcode: 5,
-                    count: 3
-                },
-                format::Record {
-                    func_addr: 0x1000,
-                    opcode: 7,
-                    count: 5
-                },
-            ]
+            report.entries,
+            vec![format::Entry {
+                addr: 0x1000,
+                count: 1
+            }]
         );
+        let site = |addr, opcode, count| format::Site {
+            addr,
+            opcode,
+            count,
+        };
+        assert_eq!(
+            report.sites,
+            vec![site(0x1000, 7, 5), site(0x1002, 6, 2), site(0x1004, 5, 1)]
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "only be generated once")]
+    fn report_twice_panics() {
+        let mut p = Profiler::new();
+        p.report();
+        p.report();
     }
 
     #[test]
     fn report_with_no_counts_reads_back_empty() {
         let mut p = Profiler::new();
         p.report();
-        assert!(format::read(p.report_bytes()).unwrap().is_empty());
+        assert_eq!(
+            format::read(p.report_bytes()).unwrap(),
+            format::Report::default()
+        );
     }
 }

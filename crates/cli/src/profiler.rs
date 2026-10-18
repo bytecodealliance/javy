@@ -15,7 +15,7 @@
 //! The tradeoff is that the program runs under this command's host
 //! rather than its real embedder:
 //!
-//! - WASI is real: the program's stdin, stdout and stderr are the
+//! - The program's stdin, stdout and stderr are the
 //!   terminal's.
 //! - Every other import is mocked with default values. Calls to host
 //!   functions are not observed, and a program whose behavior depends on
@@ -29,6 +29,7 @@
 
 use anyhow::Result;
 use clap::Parser;
+use std::collections::HashMap;
 use std::fmt::Write as _;
 use std::fs;
 use std::path::PathBuf;
@@ -62,17 +63,22 @@ pub async fn run(opts: &ProfileOpts) -> Result<()> {
         fs::write(path, &report)?;
     }
 
-    let mut records = javy_profiler::format::read(&report)?;
+    let report = javy_profiler::format::read(&report)?;
 
-    // TODO: Symbolize records into JS function names. Until then, list
-    // the raw records, hottest first.
-    records.sort_by_key(|r| std::cmp::Reverse(r.count));
-    let mut profile = format!("{:>10}  {:>6}  {:>12}\n", "func_addr", "opcode", "count");
-    for r in &records {
+    // TODO: Symbolize sites into JS functions. Until then, list the raw
+    // sites in address order, so each function's sites are contiguous,
+    // with the number of activations that started at each address.
+    let entries: HashMap<u32, u64> = report.entries.iter().map(|e| (e.addr, e.count)).collect();
+    let mut profile = format!(
+        "{:>10}  {:>6}  {:>12}  {:>7}\n",
+        "addr", "opcode", "count", "entries"
+    );
+    for s in &report.sites {
+        let entries = entries.get(&s.addr).map(u64::to_string).unwrap_or_default();
         writeln!(
             profile,
-            "{:#010x}  {:>6}  {:>12}",
-            r.func_addr, r.opcode, r.count
+            "{:#010x}  {:>6}  {:>12}  {:>7}",
+            s.addr, s.opcode, s.count, entries
         )?;
     }
     fs::write(&opts.output, profile)?;

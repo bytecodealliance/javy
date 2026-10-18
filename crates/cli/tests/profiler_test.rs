@@ -1,6 +1,7 @@
 #![cfg(feature = "profiler")]
 
 use anyhow::{Result, ensure};
+use javy_profiler::format;
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -9,14 +10,15 @@ use std::{
 };
 use tempfile::TempDir;
 
-const REPORT_MAGIC: &[u8; 4] = b"JPRF";
-const REPORT_HEADER_LEN: usize = 9;
-const REPORT_RECORD_LEN: usize = 16;
-
 // QuickJS opcode numbers, from the order of `DEF`s in `quickjs-opcode.h`.
-const OP_CALL_METHOD: u32 = 36;
 const OP_GET_VAR: u32 = 56;
 const OP_GET_FIELD2: u32 = 65;
+const OP_INITIAL_YIELD: u32 = 134;
+const OP_YIELD: u32 = 135;
+// Encoded sizes, from the `DEF`s in `quickjs-opcode.h`.
+const OP_GET_VAR_SIZE: u32 = 5;
+// `initial_yield` and `yield` are both this size.
+const OP_YIELD_SIZE: u32 = 1;
 
 fn javy(args: &[&str], cwd: &Path) -> Result<Output> {
     Ok(Command::new(env!("CARGO_BIN_EXE_javy"))
@@ -53,7 +55,14 @@ fn test_profile() -> Result<()> {
             for (let i = 0; i < n; i++) s += i;
             return s;
         }
-        console.log(`sum: ${sum(100)}`);
+        function thrower() { throw new Error("boom"); }
+        function middle() { thrower(); }
+        let caught = false;
+        try { middle(); } catch (e) { caught = true; }
+        function* gen() { yield 1; yield 2; }
+        let total = 0;
+        for (const v of gen()) total += v;
+        console.log(`sum: ${sum(100)}, caught: ${caught}, gen: ${total}`);
         "#,
         &[],
     )?;
@@ -74,41 +83,73 @@ fn test_profile() -> Result<()> {
 
     // The program runs with the terminal's stdio, and nothing else is
     // written to it.
-    assert_eq!("sum: 4950\n", str::from_utf8(&output.stdout)?);
+    assert_eq!(
+        "sum: 4950, caught: true, gen: 3\n",
+        str::from_utf8(&output.stdout)?
+    );
     assert_eq!("", stderr);
 
-    let trace = fs::read(dir.path().join("trace.bin"))?;
-    assert!(trace.starts_with(REPORT_MAGIC), "bad trace magic");
-    let records = u32::from_le_bytes(trace[5..9].try_into()?) as usize;
-    assert!(records > 0, "the trace has no records");
-    assert_eq!(
-        REPORT_HEADER_LEN + records * REPORT_RECORD_LEN,
-        trace.len(),
-        "trace length does not match its record count"
-    );
+    let report = format::read(&fs::read(dir.path().join("trace.bin"))?)?;
+    assert!(!report.sites.is_empty(), "the trace has no sites");
 
-    // Records are keyed by the QuickJS opcode itself. `console.log(...)`
-    // must show up as the opcodes it compiles to; an off-by-one or
-    // rebased key would miss them.
-    let (records_bytes, _) = trace[REPORT_HEADER_LEN..].as_chunks::<REPORT_RECORD_LEN>();
-    let opcodes: Vec<u32> = records_bytes
-        .iter()
-        .map(|r| u32::from_le_bytes(r[4..8].try_into().unwrap()))
-        .collect();
-    for (name, opcode) in [
-        ("OP_call_method", OP_CALL_METHOD),
-        ("OP_get_var", OP_GET_VAR),
-        ("OP_get_field2", OP_GET_FIELD2),
-    ] {
+    // One entry hint per distinct activation start: the top level, `sum`,
+    // `middle`, `thrower`, and `gen` four times. Calling `gen()` runs it
+    // from byte 0 to its implicit `initial_yield`; each of the three
+    // `next()` calls then resumes it right after the previous
+    // `initial_yield` or `yield`. Calls into C functions never dispatch,
+    // so they record none.
+    assert_eq!(
+        8,
+        report.entries.len(),
+        "unexpected entries {:?}",
+        report.entries
+    );
+    // Every entry is the address of a dispatch, so it is also a site.
+    for entry in &report.entries {
         assert!(
-            opcodes.contains(&opcode),
-            "{name} ({opcode}) missing from {opcodes:?}"
+            report.sites.iter().any(|s| s.addr == entry.addr),
+            "entry {:#x} is not a site",
+            entry.addr
         );
     }
 
-    // One line per record, plus the column headings.
+    // Resumed activations enter mid-buffer, right after the suspending
+    // opcode: once after `initial_yield` and twice after a `yield`.
+    let resumes_after = |opcode| {
+        report
+            .sites
+            .iter()
+            .filter(|s| s.opcode == opcode)
+            .filter(|s| {
+                report
+                    .entries
+                    .iter()
+                    .any(|e| e.addr == s.addr + OP_YIELD_SIZE)
+            })
+            .count()
+    };
+    assert_eq!(1, resumes_after(OP_INITIAL_YIELD));
+    assert_eq!(2, resumes_after(OP_YIELD));
+
+    // `console.log` compiles to `get_var console` immediately followed by
+    // `get_field2 log`: the opcode and its address must both be right.
+    let has_site = |addr, opcode| {
+        report
+            .sites
+            .iter()
+            .any(|s| s.addr == addr && s.opcode == opcode)
+    };
+    assert!(
+        report
+            .sites
+            .iter()
+            .any(|s| s.opcode == OP_GET_VAR && has_site(s.addr + OP_GET_VAR_SIZE, OP_GET_FIELD2)),
+        "no `get_var` followed by `get_field2` in {:?}",
+        report.sites
+    );
+
     let profile = fs::read_to_string(dir.path().join("profile.txt"))?;
-    assert_eq!(records + 1, profile.lines().count());
+    assert_eq!(report.sites.len() + 1, profile.lines().count());
     Ok(())
 }
 
