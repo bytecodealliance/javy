@@ -42,8 +42,19 @@ unsafe extern "C" fn cabi_realloc(
 
     let new_mem = match new_size {
         0 => ZERO_SIZE_ALLOCATION_PTR,
-        // this call to `alloc` is safe since `new_size` must be > 0
-        _ => unsafe { alloc::alloc(Layout::from_size_align(new_size, alignment).unwrap()) },
+        _ => {
+            let layout = Layout::from_size_align(new_size, alignment).unwrap();
+            // this call to `alloc` is safe since `new_size` must be > 0
+            let new_mem = unsafe { alloc::alloc(layout) };
+            // Address 0 is ordinary linear memory on Wasm, so a null pointer
+            // here would be handed to the host as a valid buffer and the copy
+            // below would write over the start of memory. Abort instead, like
+            // every other failed allocation in the plugin.
+            if new_mem.is_null() {
+                alloc::handle_alloc_error(layout);
+            }
+            new_mem
+        }
     };
 
     if !original_ptr.is_null() && original_size != 0 {
