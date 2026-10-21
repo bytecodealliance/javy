@@ -531,15 +531,6 @@ dependencies = [
 
 [[package]]
 name = "convert_case"
-version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "633458d4ef8c78b72454de2d54fd6ab2e60f9e02be22f3c6104cdc8a4e0fceb9"
-dependencies = [
- "unicode-segmentation",
-]
-
-[[package]]
-name = "convert_case"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1af709f1f33454bf52eadfc8c78b3b9ef9cb26fb54d16dc9cd9a7299f899fd1b"
@@ -1793,7 +1784,7 @@ version = "4.0.1-alpha.1"
 dependencies = [
  "anyhow",
  "brotli",
- "convert_case 0.10.0",
+ "convert_case",
  "deterministic-wasi-ctx",
  "insta",
  "swc_core",
@@ -2692,7 +2683,7 @@ version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0a2ea9adb03b669c933482ff740b683cd36be7cef23891657a8ccb850401d286"
 dependencies = [
- "convert_case 0.12.0",
+ "convert_case",
  "indexmap",
  "proc-macro-crate",
  "proc-macro2",
