@@ -23,6 +23,10 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 - `to_string_lossy` no longer leaks the engine-allocated copy of the string it
   converts, and no longer constructs a slice from a null pointer when that
   allocation fails.
+- `JSON.stringify` with `simd_json_builtins` enabled now propagates an
+  exception thrown while looking up the top-level value's `toJSON` property
+  (an accessor or proxy trap that throws) instead of dropping it and
+  continuing.
 
 ## [8.1.0] - 2026-07-30
 

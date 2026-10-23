@@ -76,3 +76,22 @@ fn to_string_lossy_frees_engine_cstring() -> anyhow::Result<()> {
     );
     Ok(())
 }
+
+#[cfg(feature = "json")]
+#[test]
+fn json_stringify_propagates_to_json_lookup_errors() -> Result<()> {
+    let mut config = Config::default();
+    config.simd_json_builtins(true);
+
+    let source = include_bytes!("stringify_tojson_throws.js");
+    let rt = Runtime::new(config)?;
+
+    rt.context().with(|this| {
+        let _: () = this
+            .eval_with_options(*source, EvalOptions::default())
+            .inspect_err(|e| println!("{e}"))
+            .expect("source evaluation to succeed");
+    });
+
+    Ok(())
+}

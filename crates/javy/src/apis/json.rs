@@ -24,7 +24,6 @@ use crate::{
         atom::PredefinedAtom,
         function::This,
         prelude::{MutFn, Rest},
-        qjs::JS_GetProperty,
     },
     to_js_error, val_to_string,
 };
@@ -137,7 +136,7 @@ fn call_json_stringify(args: Args<'_>) -> Result<Value<'_>> {
         1 => {
             let arg = args[0].clone();
             let val: Value = if arg.is_object() {
-                if let Some(f) = get_to_json(&arg) {
+                if let Some(f) = get_to_json(&arg)? {
                     f.call((
                         This(arg.clone()),
                         JSString::from_str(arg.ctx().clone(), "")?.into_value(),
@@ -172,20 +171,13 @@ fn call_json_stringify(args: Args<'_>) -> Result<Value<'_>> {
     }
 }
 
-fn get_to_json<'a>(value: &Value<'a>) -> Option<Function<'a>> {
-    let f = unsafe {
-        JS_GetProperty(
-            value.ctx().as_raw().as_ptr(),
-            value.as_raw(),
-            PredefinedAtom::ToJSON as u32,
-        )
+/// Looks up the `toJSON` property of an object, propagating any exception
+/// thrown by a getter or proxy trap during the lookup.
+fn get_to_json<'a>(value: &Value<'a>) -> Result<Option<Function<'a>>> {
+    let Some(object) = value.as_object() else {
+        return Ok(None);
     };
-    let f = unsafe { Value::from_raw(value.ctx().clone(), f) };
-    if f.is_function()
-        && let Some(f) = f.into_function()
-    {
-        Some(f)
-    } else {
-        None
-    }
+    Ok(object
+        .get::<_, Value<'a>>(PredefinedAtom::ToJSON)?
+        .into_function())
 }
