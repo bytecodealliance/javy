@@ -5,13 +5,20 @@ updates:
     schedule:
       interval: "monthly"
     open-pull-requests-limit: 100
+    # Wasmtime major upgrades are done by hand: they must be bumped in
+    # lockstep with other crates (e.g. `deterministic-wasi-ctx`) and
+    # usually require code changes, so Dependabot PRs for them never
+    # succeed on their own.
+    ignore:
+      - dependency-name: "wasmtime*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "deterministic-wasi-ctx"
     groups:
       wasmtime:
         patterns:
           - "wasmtime*"
       nonbreaking:
         exclude-patterns:
-          - "deterministic-wasi-ctx"
           - "rquickjs*"
         update-types:
           - "minor"
