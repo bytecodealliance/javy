@@ -58,11 +58,13 @@ jobs:
 
   deploy:
     name: Deploy book
-    # Upstream deploys from main only. Forks deploy from any branch, so the
-    # book can be previewed on the fork's Pages site before opening a PR.
+    # Deploy only from the default branch. The `github-pages` environment
+    # rejects other branches by default, so deploying from a fork's PR branch
+    # would fail and show up as a failing check on the upstream PR. Forks can
+    # preview the book by pushing to their default branch.
     if: >-
       github.event_name != 'pull_request' &&
-      (github.ref == 'refs/heads/main' || github.repository != 'bytecodealliance/javy')
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     needs: build
     runs-on: ubuntu-latest
     permissions:
