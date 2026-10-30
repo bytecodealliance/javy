@@ -73,13 +73,13 @@ async fn inject(wasm: Vec<u8>) -> Result<ProfileOutput> {
     );
 
     let instrumented = instrument_with_rewriting(wasm, monitor(), user_libs, None, None)
-        .map_err(|mut e| {
-            e.report();
+        .map_err(|e| {
+            eprintln!("{}", e.render(false));
             anyhow!("Instrumentation failed. This is considered a bug. Please report this behavior upstream.")
         })?;
 
     Ok(ProfileOutput {
-        instrumented,
+        instrumented: instrumented.module,
         state_lib: initialized_state_lib,
     })
 }
