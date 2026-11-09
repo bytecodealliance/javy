@@ -30,6 +30,13 @@ Versioning](https://semver.org/spec/v2.0.0.html).
 - `JSON.parse` with `simd_json_builtins` enabled now throws a `SyntaxError`
   when passed `NaN`, `Infinity`, or `-Infinity` instead of returning the
   number unchanged, and returns `0` instead of `-0` when passed `-0`.
+- `JSON.parse` with `simd_json_builtins` enabled now matches the built-in
+  `JSON.parse` for `-0` in JSON text (previously parsed as `0`), out of range
+  numbers such as `1e400` (previously a `SyntaxError`, now `Infinity`), and
+  lone surrogate escapes such as `"\ud800"` (previously a `SyntaxError`).
+  Input that the SIMD parser rejects is now re-parsed by the built-in
+  `JSON.parse`, so error types and messages for invalid JSON match the
+  built-in implementation.
 
 ## [8.1.0] - 2026-07-30
 
