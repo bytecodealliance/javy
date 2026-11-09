@@ -89,9 +89,17 @@ fn call_json_parse(args: Args<'_>) -> Result<Value<'_>> {
         )),
         1 => {
             let val = args[0].clone();
-            // Fast path. Number and null are treated as identity.
-            if val.is_number() || val.is_null() {
+            // Fast path. `null` and numbers that round-trip through their
+            // string form are treated as identity. NaN, +/-Infinity and -0 are
+            // excluded: their string forms are either invalid JSON or parse to
+            // a different value, so they take the regular path.
+            if val.is_null() {
                 return Ok(val);
+            }
+            if let Some(n) = val.as_number() {
+                if n.is_finite() && !(n == 0.0 && n.is_sign_negative()) {
+                    return Ok(val);
+                }
             }
 
             if val.is_symbol() {
@@ -180,4 +188,52 @@ fn get_to_json<'a>(value: &Value<'a>) -> Result<Option<Function<'a>>> {
     Ok(object
         .get::<_, Value<'a>>(PredefinedAtom::ToJSON)?
         .into_function())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{Config, Runtime};
+    use anyhow::Result;
+
+    fn runtime() -> Result<Runtime> {
+        let mut config = Config::default();
+        config.simd_json_builtins(true);
+        Runtime::new(config)
+    }
+
+    #[test]
+    fn test_parse_non_json_numbers_throw() -> Result<()> {
+        let rt = runtime()?;
+        rt.context().with(|cx| {
+            for input in ["NaN", "Infinity", "-Infinity"] {
+                let threw: bool = cx.eval(format!(
+                    "try {{ JSON.parse({input}); false }} catch (e) {{ e instanceof SyntaxError }}"
+                ))?;
+                assert!(threw, "JSON.parse({input}) should throw a SyntaxError");
+            }
+            Ok::<_, anyhow::Error>(())
+        })
+    }
+
+    #[test]
+    fn test_parse_negative_zero_is_positive_zero() -> Result<()> {
+        let rt = runtime()?;
+        rt.context().with(|cx| {
+            let is_pos_zero: bool = cx.eval("Object.is(JSON.parse(-0), 0)")?;
+            assert!(is_pos_zero);
+            Ok::<_, anyhow::Error>(())
+        })
+    }
+
+    #[test]
+    fn test_parse_numbers_and_null_fast_path() -> Result<()> {
+        let rt = runtime()?;
+        rt.context().with(|cx| {
+            let ok: bool = cx.eval(
+                "JSON.parse(1) === 1 && JSON.parse(-1.5) === -1.5 && JSON.parse(0) === 0 && JSON.parse(null) === null",
+            )?;
+            assert!(ok);
+            Ok::<_, anyhow::Error>(())
+        })
+    }
 }

@@ -27,6 +27,9 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   exception thrown while looking up the top-level value's `toJSON` property
   (an accessor or proxy trap that throws) instead of dropping it and
   continuing.
+- `JSON.parse` with `simd_json_builtins` enabled now throws a `SyntaxError`
+  when passed `NaN`, `Infinity`, or `-Infinity` instead of returning the
+  number unchanged, and returns `0` instead of `-0` when passed `-0`.
 
 ## [8.1.0] - 2026-07-30
 
