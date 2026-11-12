@@ -37,6 +37,11 @@ Versioning](https://semver.org/spec/v2.0.0.html).
   Input that the SIMD parser rejects is now re-parsed by the built-in
   `JSON.parse`, so error types and messages for invalid JSON match the
   built-in implementation.
+- `TextDecoder.prototype.decode` now checks that the input is an `ArrayBuffer`
+  or an `ArrayBufferView` before it reads `byteOffset` and `byteLength`.
+  Passing `null` now throws a `TypeError`, and a `byteOffset` property set on an
+  `ArrayBuffer` no longer changes the decoded result. The offset and length
+  check for the backing buffer no longer overflows.
 
 ## [8.1.0] - 2026-07-30
 
