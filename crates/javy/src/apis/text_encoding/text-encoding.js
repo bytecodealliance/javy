@@ -26,14 +26,17 @@
                 throw new Error("Streaming decode is not supported");
             }
 
-            // backing buffer would not have byteOffset and may have different byteLength
-            let byteOffset = input.byteOffset || 0;
-            let byteLength = input.byteLength;
+            let byteOffset;
+            let byteLength;
             if (ArrayBuffer.isView(input)) {
+                // backing buffer would not have byteOffset and may have different byteLength
+                byteOffset = input.byteOffset;
+                byteLength = input.byteLength;
                 input = input.buffer;
-            }
-
-            if (!(input instanceof ArrayBuffer)) {
+            } else if (input instanceof ArrayBuffer) {
+                byteOffset = 0;
+                byteLength = input.byteLength;
+            } else {
                 throw new TypeError("The provided value is not of type '(ArrayBuffer or ArrayBufferView)'");
             }
 
